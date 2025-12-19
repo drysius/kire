@@ -1,4 +1,5 @@
 import { readFile, readdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import type { Kire, KirePlugin } from "kire";
 import { join } from "node:path";
 import "./types";
@@ -126,15 +127,20 @@ function createReadDir(options: ResolverOptions = {}) {
 	};
 }
 
-export const KireResolver: KirePlugin<ResolverOptions> = {
-	name: "@kirejs/resolver",
+export const KireNode: KirePlugin<ResolverOptions> = {
+	name: "@kirejs/node",
 	options: {},
 	load(kire: Kire, opts) {
 		// Assign the new resolver
 		kire.$resolver = createResolver(opts);
 		kire.$readdir = createReadDir(opts);
+		kire.$ctx("$readdir", kire.$readdir);
+		// Register Node.js specific helpers
+		kire.$ctx("$md5", (str: string) =>
+			createHash("md5").update(str).digest("hex"),
+		);
 	},
 };
 
-export default KireResolver;
+export default KireNode;
 export { createResolver };

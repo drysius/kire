@@ -1,0 +1,94 @@
+<div class="flex min-h-full flex-col items-start bg-base-200 is-drawer-close:w-14 is-drawer-open:w-80 transition-all duration-200 border-r border-base-300">
+  <!-- Topo / Logo -->
+  <div class="w-full border-b border-base-300 px-4 py-4 is-drawer-close:px-2 is-drawer-close:py-2 flex justify-center is-drawer-open:justify-start">
+    <a href="/" class="flex items-center gap-3 overflow-hidden">
+      <!-- Icone Logo (sempre visível) -->
+      <div class="avatar placeholder">
+        <div class="bg-neutral text-neutral-content rounded-full w-8">
+          <span class="text-xs font-bold">K</span>
+        </div>
+      </div>
+      
+      <!-- Texto (escondido quando fechado) -->
+      <div class="is-drawer-close:hidden whitespace-nowrap">
+        <div class="text-xl font-black leading-tight tracking-tight">Kire</div>
+        <p class="text-xs text-base-content/70">Framework • Docs</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Navegação -->
+  <nav class="w-full flex-1 overflow-y-auto overflow-x-hidden py-4 text-sm scrollbar-thin">
+    <ul class="menu w-full px-2 gap-2">
+      
+      <!-- Visão Geral -->
+      <li>
+        <a href="/" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="Overview">
+          <iconify icon="mdi:home-variant-outline" class="size-5 group-[.active]:text-primary" />
+          <span class="is-drawer-close:hidden font-medium">Overview</span>
+        </a>
+      </li>
+
+      <!-- Getting Started -->
+      <li>
+        <a href="/docs/getting-started" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="Getting Started">
+          <iconify icon="mdi:rocket-launch-outline" class="size-5 group-[.active]:text-primary" />
+          <span class="is-drawer-close:hidden font-medium">Getting Started</span>
+        </a>
+      </li>
+
+      <li class="menu-title mt-4 is-drawer-close:hidden px-4"><span>Packages</span></li>
+      <li class="is-drawer-close:block hidden border-t border-base-300 my-2 mx-2"></li>
+
+      <!-- Lista de Pacotes (Icones individuais quando fechado) -->
+      <li>
+        <a href="/packages/core" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/core">
+          <iconify icon="mdi:engine-outline" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Core</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/iconify" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/iconify">
+          <iconify icon="mdi:emoticon-outline" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Iconify</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/markdown" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/markdown">
+          <iconify icon="mdi:language-markdown" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Markdown</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/tailwind" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/tailwind">
+          <iconify icon="mdi:tailwind" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Tailwind</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/assets" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/assets">
+          <iconify icon="mdi:folder" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Assets</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/ssg" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/ssg">
+          <iconify icon="mdi:server-network" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">SSG</span>
+        </a>
+      </li>
+      <li>
+        <a href="/packages/node" class="group is-drawer-close:tooltip is-drawer-close:tooltip-right is-drawer-close:p-2 is-drawer-close:justify-center" data-tip="@kirejs/node">
+          <iconify icon="mdi:nodejs" class="size-5 opacity-70 group-[.active]:text-primary group-[.active]:opacity-100" />
+          <span class="is-drawer-close:hidden">Node</span>
+        </a>
+      </li>
+
+    </ul>
+  </nav>
+
+  <!-- Rodapé -->
+  <div class="w-full border-t border-base-300 p-2 text-center is-drawer-close:hidden">
+    <p class="text-xs text-base-content/50">v1.0.0</p>
+  </div>
+</div>

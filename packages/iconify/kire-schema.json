@@ -10,22 +10,19 @@
             "name": "icon",
             "params": [
                 "name:string",
-                "className:string"
+                "className:string",
+                "attrs:object"
             ],
-            "description": "Renders an Iconify icon SVG inline.",
-            "example": "@icon('mdi:home', 'text-blue-500')"
+            "description": "Renders an Iconify icon SVG.",
+            "example": "@icon('mdi:home', 'text-blue-500', { width: '24' })"
         }
     ],
     "elements": [
         {
             "name": "iconify",
-            "description": "Renders an Iconify icon based on the 'icon' or 'i' attribute.",
-            "example": "<iconify icon=\"mdi:home\" class=\"text-blue-500\" />",
+            "description": "Renders an Iconify icon.",
             "void": true
         }
     ],
-    "globals": {
-        "~$pre": [],
-        "~$pos": []
-    }
+    "globals": {}
 }

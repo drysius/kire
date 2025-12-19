@@ -29,8 +29,5 @@
             "example": "<!-- Internal Use -->"
         }
     ],
-    "globals": {
-        "~$pre": [],
-        "~$pos": []
-    }
+    "globals": {}
 }

@@ -26,7 +26,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			if (kire.$readdir) {
 				return kire.$readdir(pattern);
 			}
-			console.warn("kire.$readdir is not defined. Make sure @kirejs/resolver is loaded.");
+			console.warn("kire.$readdir is not defined. Make sure @kirejs/node is loaded.");
 			return [];
 		});
 

@@ -1,133 +1,284 @@
 @include('layouts/_main.kire', { title: (packageName || 'Package') + ' | Kire' })
 
 @define('content')
-    @code
-        const item = $ctx.packages.find(p => p.package === packageName || p.package === '@kirejs/' + packageName);
-    @end
+  @code
+    const item = $ctx.packages.find(
+      p => p.package === packageName || p.package === '@kirejs/' + packageName
+    );
 
-    @if(item)
-        <div class="space-y-8">
-            <div class="border-b border-base-300 pb-6">
-                <div class="flex items-center gap-4 mb-2">
-                    <h1 class="text-4xl font-bold m-0">{{ item.package }}</h1>
-                    @if(item.version)
-                        <span class="badge badge-primary badge-lg">{{ item.version }}</span>
-                    @end
+    const repoUrl = item?.repository?.url ? item.repository.url.replace('git+', '') : null;
+    const dirCount = item?.directives?.length || 0;
+    const elCount  = item?.elements?.length || 0;
+    const installCmd = item?.package ? `npm i ${item.package}` : null;
+  @end
+
+  @if(item)
+    <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+
+      <!-- Header Section -->
+      <header class="space-y-4">
+        <!-- Breadcrumbs -->
+        <div class="breadcrumbs text-sm">
+          <ul>
+            <li>
+              <a href="/">
+                <iconify icon="mdi:home-variant-outline" class="size-4 opacity-70 group-hover:opacity-100" />
+                Home
+              </a>
+            </li>
+            <li>
+              <a href="/">
+                <iconify icon="mdi:package-variant-closed" class="size-4 opacity-70 group-hover:opacity-100" />
+                Packages
+              </a>
+            </li>
+            <li>
+              <span class="inline-flex items-center gap-2">
+                <iconify icon="mdi:chevron-right" class="size-4 opacity-30" />
+                {{ item.package }}
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-base-200 pb-6">
+          <div class="space-y-2">
+            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-base-content">{{ item.package }}</h1>
+            <p class="text-lg md:text-xl text-base-content/70 max-w-2xl leading-relaxed">
+              {{ item.description || 'Official Kire package.' }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            @if(item.version)
+              <span class="badge badge-primary badge-lg font-mono">{{ item.version }}</span>
+            @end
+            @if(item.status)
+              <span class="badge badge-outline badge-lg">{{ item.status }}</span>
+            @end
+          </div>
+        </div>
+      </header>
+
+      <!-- Main Layout -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_20rem] gap-8 items-start">
+        
+        <!-- Left Column: Main Content -->
+        <div class="space-y-10 min-w-0">
+          
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="stats shadow border border-base-200">
+              <div class="stat">
+                <div class="stat-figure text-primary">
+                  <iconify icon="mdi:tag-outline" class="size-8" />
                 </div>
-                <p class="text-xl opacity-75">{{ item.description || 'Official Kire package.' }}</p>
-                
-                @if(item.repository && item.repository.url)
-                    <div class="mt-4">
-                         <a href="{{ item.repository.url.replace('git+', '') }}" target="_blank" class="btn btn-sm btn-outline gap-2">
-                            <iconify icon="mdi:github" class="text-lg" />
-                            Repository
-                        </a>
+                <div class="stat-title">Version</div>
+                <div class="stat-value text-primary text-2xl">{{ item.version || '—' }}</div>
+                <div class="stat-desc">Latest Release</div>
+              </div>
+            </div>
+            
+            <div class="stats shadow border border-base-200">
+              <div class="stat">
+                <div class="stat-figure text-secondary">
+                  <iconify icon="mdi:function-variant" class="size-8" />
+                </div>
+                <div class="stat-title">Directives</div>
+                <div class="stat-value text-secondary text-2xl">{{ dirCount }}</div>
+                <div class="stat-desc">Available</div>
+              </div>
+            </div>
+
+            <div class="stats shadow border border-base-200">
+              <div class="stat">
+                <div class="stat-figure text-accent">
+                  <iconify icon="mdi:code-tags" class="size-8" />
+                </div>
+                <div class="stat-title">Elements</div>
+                <div class="stat-value text-accent text-2xl">{{ elCount }}</div>
+                <div class="stat-desc">Components</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Directives Section -->
+          @if(item.directives && item.directives.length > 0)
+            <section id="directives" class="scroll-mt-24 space-y-4">
+              <div class="flex items-center gap-2 pb-2 border-b border-base-200">
+                <iconify icon="mdi:function-variant" class="text-2xl text-primary" />
+                <h2 class="text-2xl font-bold">Directives</h2>
+              </div>
+
+              <div class="join join-vertical w-full bg-base-100 border border-base-200 rounded-box shadow-sm">
+                @for(dir of item.directives)
+                  <div id="@{{ dir.name }}" class="collapse collapse-plus join-item border-b border-base-200 last:border-none">
+                    <input type="radio" name="directives-accordion" />
+                    
+                    <div class="collapse-title flex flex-wrap items-center gap-3 pr-12">
+                      <code class="text-lg font-bold text-primary">@{{ dir.name }}</code>
+                      
+                      @if(dir.params && dir.params.length > 0)
+                        <span class="hidden sm:inline-flex badge badge-ghost font-mono text-xs opacity-70">
+                          {{ dir.params.join(', ') }}
+                        </span>
+                      @end
+
+                      <div class="ml-auto flex items-center gap-2">
+                        @if(dir.type)
+                          <span class="badge badge-sm badge-outline uppercase text-[10px] font-bold tracking-wider
+                            {{ dir.type == 'js' ? 'badge-warning' : (dir.type == 'css' ? 'badge-info' : 'badge-success') }}">
+                            {{ dir.type }}
+                          </span>
+                        @end
+                      </div>
                     </div>
+
+                    <div class="collapse-content space-y-4">
+                      @if(dir.description)
+                        <p class="text-base-content/80">{{ dir.description }}</p>
+                      @end
+
+                      @if(dir.example)
+                        <div class="mockup-code text-sm">
+                          <pre><code>{{ dir.example }}</code></pre>
+                        </div>
+                      @end
+                      
+                      <div class="flex justify-end pt-2">
+                         <button class="btn btn-xs btn-ghost gap-1" onclick="navigator.clipboard.writeText('#@{{ dir.name }}')">
+                           <iconify icon="mdi:link" /> Anchor
+                         </button>
+                      </div>
+                    </div>
+                  </div>
                 @end
-            </div>
+              </div>
+            </section>
+          @end
 
-            <!-- Directives Section -->
-            @if(item.directives && item.directives.length > 0)
-                <div>
-                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                        <iconify icon="mdi:function-variant" class="text-primary" /> 
-                        Directives
-                    </h3>
-                    <div class="join join-vertical w-full bg-base-100 border border-base-300 rounded-box shadow-sm">
-                        @for(dir of item.directives)
-                            <div class="collapse collapse-arrow join-item border-b border-base-300 last:border-none">
-                                <input type="radio" name="directives-{{ item.package }}" /> 
-                                <div class="collapse-title text-lg font-medium flex flex-wrap items-center gap-2 py-4">
-                                    <code class="text-primary font-bold bg-primary/10 px-2 py-0.5 rounded">@{{ dir.name }}</code>
-                                    @if(dir.params && dir.params.length > 0)
-                                        <span class="badge badge-sm badge-ghost font-mono opacity-70 hidden sm:inline-flex">
-                                            {{ dir.params.join(', ') }}
-                                        </span>
-                                    @end
-                                    @if(dir.type)
-                                        <span class="badge badge-sm badge-{{ dir.type == 'js' ? 'warning' : (dir.type == 'css' ? 'info' : 'success') }} badge-outline ml-auto">
-                                            {{ dir.type.toUpperCase() }}
-                                        </span>
-                                    @end
-                                </div>
-                                <div class="collapse-content bg-base-100">
-                                    <div class="pt-2 pb-4 space-y-4">
-                                        @if(dir.params && dir.params.length > 0)
-                                            <div class="sm:hidden">
-                                                <span class="text-xs font-bold opacity-50 uppercase block mb-1">Params</span>
-                                                <code class="text-xs bg-base-200 px-1 rounded">{{ dir.params.join(', ') }}</code>
-                                            </div>
-                                        @end
-                                        
-                                        <p class="opacity-90 text-base-content/80">{{ dir.description }}</p>
-                                        
-                                        @if(dir.example)
-                                            <div class="mockup-code text-sm bg-base-300 text-base-content shadow-inner">
-                                                <pre><code>{{ dir.example }}</code></pre>
-                                            </div>
-                                        @end
+          <!-- Elements Section -->
+          @if(item.elements && item.elements.length > 0)
+            <section id="elements" class="scroll-mt-24 space-y-4">
+              <div class="flex items-center gap-2 pb-2 border-b border-base-200">
+                <iconify icon="mdi:code-tags" class="text-2xl text-secondary" />
+                <h2 class="text-2xl font-bold">Elements</h2>
+              </div>
 
-                                        @if(dir.parents && dir.parents.length > 0)
-                                            <div class="bg-base-200/50 rounded-lg p-4 mt-4">
-                                                <span class="text-xs font-bold uppercase opacity-50 tracking-wider block mb-2">Related / Sub-directives</span>
-                                                <div class="space-y-3">
-                                                    @for(sub of dir.parents)
-                                                        <div class="pl-3 border-l-2 border-secondary">
-                                                            <div class="font-mono font-bold text-secondary flex items-center gap-2">
-                                                                @{{ sub.name }} 
-                                                                <span class="opacity-50 font-normal text-xs">{{ sub.params ? '(' + sub.params.join(', ') + ')' : '' }}</span>
-                                                            </div>
-                                                            <div class="opacity-75 text-sm mt-0.5">{{ sub.description }}</div>
-                                                        </div>
-                                                    @end
-                                                </div>
-                                            </div>
-                                        @end
-                                    </div>
-                                </div>
-                            </div>
+              <div class="grid grid-cols-1 gap-4">
+                @for(el of item.elements)
+                  <div class="card bg-base-100 border border-base-200 shadow-sm">
+                    <div class="card-body p-5">
+                      <div class="flex items-center justify-between">
+                        <h3 class="card-title font-mono text-secondary">&lt;{{ el.name }}&gt;</h3>
+                        @if(el.void)
+                          <span class="badge badge-outline opacity-60">void</span>
                         @end
-                    </div>
-                </div>
-            @end
+                      </div>
+                      
+                      @if(el.description)
+                        <p class="text-base-content/75 text-sm">{{ el.description }}</p>
+                      @end
 
-            <!-- Elements Section -->
-            @if(item.elements && item.elements.length > 0)
-                <div>
-                    <h3 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                        <iconify icon="mdi:code-tags" class="text-secondary" /> 
-                        Elements
-                    </h3>
-                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                        @for(el of item.elements)
-                            <div class="card bg-base-100 shadow-sm border border-base-200 hover:border-secondary/30 transition-colors">
-                                <div class="card-body">
-                                    <div class="flex items-center gap-3 mb-2">
-                                        <h4 class="card-title font-mono text-secondary text-xl">&lt;{{ el.name }}>;</h4>
-                                        @if(el.void)
-                                            <div class="badge badge-xs badge-outline opacity-50 tooltip" data-tip="Void element (no closing tag), e.g., <{{ el.name }}/>">void</div>
-                                        @end
-                                    </div>
-                                    <p class="opacity-80 mb-4">{{ el.description }}</p>
-                                    @if(el.example)
-                                        <div class="mockup-code text-xs bg-base-300 text-base-content w-full">
-                                            <pre><code>{{ el.example }}</code></pre>
-                                        </div>
-                                    @end
-                                </div>
-                            </div>
-                        @end
+                      @if(el.example)
+                        <div class="mockup-code text-xs mt-3">
+                          <pre><code>{{ el.example }}</code></pre>
+                        </div>
+                      @end
                     </div>
+                  </div>
+                @end
+              </div>
+            </section>
+          @end
+
+        </div>
+
+        <!-- Right Column: Sticky Sidebar -->
+        <aside class="hidden lg:block space-y-6 sticky top-24 h-fit">
+          
+          <!-- Install Box -->
+          @if(installCmd)
+            <div class="card bg-base-100 border border-base-200 shadow-sm compact">
+              <div class="card-body gap-1">
+                <h3 class="font-bold text-sm uppercase tracking-wider opacity-60">Installation</h3>
+                <div class="join w-full mt-1">
+                  <input type="text" class="input input-sm input-bordered join-item w-full font-mono text-xs bg-base-200/50" value="{{ installCmd }}" readonly />
+                  <button class="btn btn-sm btn-square join-item" onclick="navigator.clipboard.writeText('{{ installCmd }}')">
+                    <iconify icon="mdi:content-copy" />
+                  </button>
                 </div>
-            @end
-        </div>
-    @else
-        <div class="alert alert-error">
-            <iconify icon="mdi:alert" class="text-2xl" />
-            <div>
-                <h3 class="font-bold">Package not found</h3>
-                <div class="text-sm">Could not find package data for "{{ pkgName }}".</div>
+              </div>
             </div>
+          @end
+
+          <!-- Quick Links -->
+          <div class="card bg-base-100 border border-base-200 shadow-sm compact">
+            <div class="card-body p-0">
+              <div class="p-4 border-b border-base-200">
+                <h3 class="font-bold text-sm uppercase tracking-wider opacity-60">Quick Access</h3>
+              </div>
+              <ul class="menu w-full menu-sm p-2">
+                @if(repoUrl)
+                  <li>
+                    <a href="{{ repoUrl }}" target="_blank" class="flex justify-between">
+                      <span class="flex items-center gap-2"><iconify icon="mdi:github" /> Repository</span>
+                      <iconify icon="mdi:open-in-new" class="opacity-50 text-xs" />
+                    </a>
+                  </li>
+                @end
+                @if(item.directives?.length)
+                  <li>
+                    <a href="#directives" class="flex justify-between">
+                      <span class="flex items-center gap-2"><iconify icon="mdi:function-variant" /> Directives</span>
+                      <span class="badge badge-sm badge-ghost">{{ dirCount }}</span>
+                    </a>
+                  </li>
+                @end
+                @if(item.elements?.length)
+                  <li>
+                    <a href="#elements" class="flex justify-between">
+                      <span class="flex items-center gap-2"><iconify icon="mdi:code-tags" /> Elements</span>
+                      <span class="badge badge-sm badge-ghost">{{ elCount }}</span>
+                    </a>
+                  </li>
+                @end
+              </ul>
+            </div>
+          </div>
+
+          <!-- Shortcuts List -->
+          @if(item.directives && item.directives.length > 0)
+            <div class="card bg-base-100 border border-base-200 shadow-sm compact max-h-[40vh] overflow-y-auto scrollbar-thin">
+              <div class="card-body p-4">
+                <h3 class="font-bold text-sm uppercase tracking-wider opacity-60 mb-2">Directives List</h3>
+                <ul class="space-y-1">
+                  @for(dir of item.directives)
+                    <li>
+                      <a href="#@{{ dir.name }}" class="block text-sm text-base-content/70 hover:text-primary hover:underline truncate">
+                        <span class="opacity-50 select-none">@</span>{{ dir.name }}
+                      </a>
+                    </li>
+                  @end
+                </ul>
+              </div>
+            </div>
+          @end
+
+        </aside>
+
+      </div>
+
+    </div>
+  @else
+    <div class="hero min-h-[50vh]">
+      <div class="hero-content text-center">
+        <div class="max-w-md">
+          <iconify icon="mdi:package-variant-closed-remove" class="text-6xl text-error mb-4" />
+          <h1 class="text-3xl font-bold">Package Not Found</h1>
+          <p class="py-6">We couldn't find the package "{{ packageName }}". It might be missing from the registry or renamed.</p>
+          <a href="/packages" class="btn btn-primary">Back to Packages</a>
         </div>
-    @end
+      </div>
+    </div>
+  @end
 @end

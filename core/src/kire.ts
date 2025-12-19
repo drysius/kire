@@ -234,7 +234,7 @@ export class Kire {
 		return resolvePath(filepath, this.root, this.alias, this.extension, currentFile);
 	}
 
-	public async run(mainFn: Function, locals: Record<string, any>) {
+	public async run(mainFn: Function, locals: Record<string, any>, children = false) {
 		const rctx: any = {};
 		for (const [k, v] of this.$globals) {
 			rctx[k] = v;
@@ -304,7 +304,7 @@ export class Kire {
 			resultHtml = finalCtx['~res'];
 		}
 
-		if (this.$elements.size > 0) {
+		if (!children && this.$elements.size > 0) {
 			for (const def of this.$elements) {
 				const tagName =
 					def.name instanceof RegExp ? def.name.source : def.name;
@@ -341,10 +341,10 @@ export class Kire {
 					}
 
 					const attributes: Record<string, string> = {};
-					const attrRegex = /(\w+)="([^"]*)"/g;
+					const attrRegex = /([a-zA-Z0-9_-]+)(?:="([^"]*)")?/g;
 					let attrMatch:RegExpExecArray | null;
 					while ((attrMatch = attrRegex.exec(m.attrs!)) !== null) {
-						attributes[attrMatch[1]!] = attrMatch[2]!;
+						attributes[attrMatch[1]!] = attrMatch[2] ?? "";
 					}
 
 					const elCtx: any = Object.create(finalCtx);

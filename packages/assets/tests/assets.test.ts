@@ -32,6 +32,51 @@ describe("KireAssets", () => {
     expect(result).toContain('<script src="/_assets/');
   });
 
+  it("should ignore script and style tags with nocache attribute", async () => {
+    const kire = new Kire({
+        plugins: [[KireAssets, { prefix: '_assets' }]]
+    });
+
+    const template = `
+      <html>
+        <head>
+          @assets()
+          <style nocache>
+            .dynamic { color: {{ color }}; }
+          </style>
+        </head>
+        <body>
+          <script nocache>
+            const user = "{{ name }}";
+          </script>
+        </body>
+      </html>
+    `;
+
+    const result = await kire.render(template, { color: 'blue', name: 'John' });
+
+    // Should contain interpolated content
+    expect(result).toContain(".dynamic { color: blue; }");
+    expect(result).toContain('const user = "John";');
+    
+    // Should NOT contain links (assets should be empty)
+    expect(result).not.toContain('<link rel="stylesheet"');
+    expect(result).not.toContain('<script src="/_assets/');
+    
+    // Should contain the original tags
+    // Note: The Kire parser might strip/normalize attributes depending on implementation
+    // but the content should definitely be there inline.
+    // The current implementation of Kire element directives replaces the WHOLE element if matched.
+    // Since we return early in onCall, the element should remain touched only by standard compilation?
+    // Actually, if element handler returns without doing anything, the element is output as is by Kire runtime?
+    // Let's verify Kire core behavior. 
+    // If onCall returns, the element is output normally.
+    
+    // Check if tags are present
+    expect(result).toContain('<style nocache>');
+    expect(result).toContain('<script nocache>');
+  });
+
   it("should serve assets via KireFS middleware", async () => {
     const kire = new Kire({
         plugins: [KireAssets]

@@ -1,6 +1,6 @@
 {
-	"name": "@kirejs/resolver",
-	"description": "Filepath Resolver of Kire.",
+	"name": "@kirejs/node",
+	"description": "Node.js runtime integration for Kire.",
 	"version": "0.1.0",
 	"main": "dist/cjs/index.cjs",
 	"module": "dist/mjs/index.js",

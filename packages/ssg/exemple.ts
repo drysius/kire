@@ -5,7 +5,7 @@ import KireTailwind from '../tailwind/src/index';
 import { Kire } from '../../core/src/index';
 
 // Mock resolver for example purposes since we don't have a full file structure here
-// In a real app, you'd use @kirejs/resolver or the default file system resolver
+// In a real app, you'd use @kirejs/node or the default file system resolver
 const kire = new Kire({
     root: './examples', // Assumes an examples folder exists or will be created
     plugins: [

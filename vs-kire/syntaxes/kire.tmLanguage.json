@@ -1,0 +1,50 @@
+{
+    "scopeName": "text.html.kire",
+    "patterns": [
+        {
+            "include": "#comments"
+        },
+        {
+            "include": "#directives"
+        },
+        {
+            "include": "#interpolations"
+        },
+        {
+            "include": "text.html.basic"
+        }
+    ],
+    "repository": {
+        "comments": {
+            "patterns": [
+                {
+                    "begin": "<!--",
+                    "end": "-->",
+                    "name": "comment.block.html"
+                }
+            ]
+        },
+        "directives": {
+            "patterns": [
+                {
+                    "match": "(@[a-zA-Z0-9_]+)",
+                    "name": "keyword.control.kire"
+                }
+            ]
+        },
+        "interpolations": {
+            "patterns": [
+                {
+                    "begin": "{{",
+                    "end": "}}",
+                    "name": "meta.embedded.expression.kire",
+                    "patterns": [
+                        {
+                            "include": "source.js"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

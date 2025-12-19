@@ -30,9 +30,23 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 	},
 	load(kire: Kire, opts) {
 		const prefix = opts?.prefix || "_kire";
+		console.log(`[KireAssets] Loaded with prefix: ${prefix}`);
 		const domain = opts?.domain || "";
 		const injectionTag = "kire-assets-injection-point";
-		// Do not cache the cache reference here, as it may be cleared by kire.cacheClear()
+		const MAX_CACHE_SIZE = 500;
+
+		const addToCache = (
+			cache: Map<string, KireAsset>,
+			key: string,
+			value: KireAsset,
+		) => {
+			if (cache.has(key)) return;
+			if (cache.size >= MAX_CACHE_SIZE) {
+				const firstKey = cache.keys().next().value;
+				if (firstKey) cache.delete(firstKey);
+			}
+			cache.set(key, value);
+		};
 
 		// 1. Register handlers for script and style tags to capture inline content
 		// Important: Register these BEFORE the injection tag handler so they run first
@@ -43,6 +57,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			description: "Captures inline styles to be injected via @assets.",
 			example: "<style>body { color: red; }</style>",
 			onCall(ctx) {
+				if (ctx.element.attributes.nocache !== undefined) return;
 				const content = ctx.element.inner;
 				if (!content.trim()) return;
 
@@ -56,9 +71,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 				const cache = kire.cached<KireAsset>("@kirejs/assets");
 
 				// Store in global cache
-				if (!cache.has(hash)) {
-					cache.set(hash, { hash, content, type: "css" });
-				}
+				addToCache(cache, hash, { hash, content, type: "css" });
 
 				// Add to request context
 				if (ctx._assets) {
@@ -76,7 +89,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			example: "<script>console.log('hello');</script>",
 			onCall(ctx) {
 				// Check if it's an inline script (no src attribute)
-				if (ctx.element.attributes.src) return;
+				if (ctx.element.attributes.src || ctx.element.attributes.nocache !== undefined) return;
 
 				const content = ctx.element.inner;
 				if (!content.trim()) return;
@@ -98,9 +111,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				const cache = kire.cached<KireAsset>("@kirejs/assets");
 
-				if (!cache.has(hash)) {
-					cache.set(hash, { hash, content, type });
-				}
+				addToCache(cache, hash, { hash, content, type });
 
 				if (ctx._assets) {
 					ctx._assets.scripts.push(hash);

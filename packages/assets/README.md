@@ -20,6 +20,6 @@ If you use `@markdown('glob/*.md')`, the SSG plugin will treat this `docs.kire` 
 It will find all markdown files matching the glob, and for each one:
 1. Render the markdown content.
 2. Inject it into the `docs.kire` template (where `@markdown` is called).
-3. Generate an HTML file for each markdown file (e.g., `docs/intro.md` -> `dist/docs/intro.html`).
+3. Generate an HTML file for each markdown file (e.g., `docs/intro.md` -> `dist/docs/intro`).
 
 This allows you to have a single layout file drive the generation of your entire documentation site.

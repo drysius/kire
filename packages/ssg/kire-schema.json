@@ -5,10 +5,14 @@
         "url": "git+https://github.com/drysius/kire.git"
     },
     "version": "0.1.0",
-    "directives": [],
+    "directives": [
+        {
+            "name": "dynamicroutes",
+            "params": [
+                "routes:expression"
+            ]
+        }
+    ],
     "elements": [],
-    "globals": {
-        "~$pre": [],
-        "~$pos": []
-    }
+    "globals": {}
 }

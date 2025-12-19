@@ -1,3 +1,0 @@
-@include('layouts/_main.kire', { title: 'Directives' })
-    @markdown('content/directives.md')
-@end

@@ -4,8 +4,10 @@ import KireAssets from "@kirejs/assets";
 import KireTailwind from "@kirejs/tailwind";
 import KireMarkdown from "@kirejs/markdown";
 import KireIconify from "@kirejs/iconify";
-import { readFile } from "fs/promises";
-import { resolve, join } from "path";
+import KireNode from "@kirejs/node";
+
+import { readFile } from "node:fs/promises";
+import { resolve, join } from "node:path";
 
 // Determine paths relative to this script file
 const docsRoot = import.meta.dir; // e.g. /path/to/kire/docs
@@ -19,13 +21,13 @@ const schemas: any[] = [];
 
 // Helper to load schema
 const loadSchema = async (path: string) => {
-    try {
-        const content = await readFile(path, "utf-8");
-        return JSON.parse(content);
-    } catch (e) {
-        console.warn(`Failed to load schema at ${path}`);
-        return null;
-    }
+  try {
+    const content = await readFile(path, "utf-8");
+    return JSON.parse(content);
+  } catch (e) {
+    console.warn(`Failed to load schema at ${path}`);
+    return null;
+  }
 };
 
 // 1. Core
@@ -37,40 +39,47 @@ else console.warn("Core schema not found at", coreSchemaPath);
 // 2. Packages
 // Using Bun.Glob if available
 if (typeof Bun !== "undefined") {
-    // Glob is relative to cwd if no root specified, or scan(root)
-    // We want to scan `packages/*/kire-schema.json` inside `projectRoot`
-    const glob = new Bun.Glob("packages/*/kire-schema.json");
-    for await (const file of glob.scan(projectRoot)) {
-        const fullPath = join(projectRoot, file);
-        const schema = await loadSchema(fullPath);
-        if (schema) schemas.push(schema);
-    }
+  // Glob is relative to cwd if no root specified, or scan(root)
+  // We want to scan `packages/*/kire-schema.json` inside `projectRoot`
+  const glob = new Bun.Glob("packages/*/kire-schema.json");
+  for await (const file of glob.scan(projectRoot)) {
+    const fullPath = join(projectRoot, file);
+    const schema = await loadSchema(fullPath);
+    if (schema) schemas.push(schema);
+  }
 } else {
-    console.warn("Bun is not defined, skipping package scan.");
+  console.warn("Bun is not defined, skipping package scan.");
 }
 
 console.log(`Loaded ${schemas.length} schemas.`);
 
+const DOMAIN = "https://kire.js.org";
 const kire = new Kire({
   root: resolve(docsRoot, "src"),
-  plugins: [
-    KireMarkdown,
-    KireIconify,
-    [KireTailwind, {}],
-    [KireAssets, { prefix: "assets" }],
-    [KireSsg, { assetsPrefix: "assets" }],
-  ],
-  resolver: async (path) => {
-      try {
-          return await readFile(path, 'utf-8');
-      } catch (e) {
-          throw new Error(`Template not found: ${path}`);
-      }
-  },
 });
 
-// Inject schemas into global context
 kire.$ctx("packages", schemas);
+kire.$ctx('DOMAIN', DOMAIN);
+kire.plugin(KireMarkdown);
+kire.plugin(KireIconify);
+kire.plugin(KireTailwind);
+kire.plugin(KireAssets);
+kire.plugin(KireNode);
+kire.plugin(KireSsg, {
+  routes: "pages",
+  public: "public",
+  poshandler: async (builder) => {
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+${builder.routes.map((r: string) => `  <url>
+    <loc>${DOMAIN}${r}</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>`).join('\n')}
+</urlset>`;
+    await builder.add("sitemap.xml", sitemap);
+  }
+});
 
 if (process.argv.includes("--dev")) {
   console.log("Starting dev server...");

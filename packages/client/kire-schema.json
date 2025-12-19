@@ -44,8 +44,5 @@
         }
     ],
     "elements": [],
-    "globals": {
-        "~$pre": [],
-        "~$pos": []
-    }
+    "globals": {}
 }

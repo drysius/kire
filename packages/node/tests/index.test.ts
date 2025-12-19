@@ -1,6 +1,6 @@
 import { expect, test, describe, mock, afterEach } from "bun:test";
 import { Kire } from "kire";
-import KireResolver from "../src/index";
+import KireNode from "../src/index";
 import { join } from "path";
 
 // --- Mocks ---
@@ -29,7 +29,7 @@ global.fetch = mock(async (url: string) => {
     return { ok: false, statusText: 'Not Found' };
 });
 
-describe("@kirejs/resolver", () => {
+describe("@kirejs/node", () => {
     
     afterEach(() => {
         mock.restore();
@@ -37,7 +37,7 @@ describe("@kirejs/resolver", () => {
 
     test("should use 'node' adapter by default", async () => {
         const kire = new Kire();
-        kire.plugin(KireResolver);
+        kire.plugin(KireNode);
         // Use view() for file resolution
         const content = await kire.view('node-template.kire');
         expect(content).toBe('Hello from Node!');
@@ -65,7 +65,7 @@ describe("@kirejs/resolver", () => {
         };
 
         const kire = new Kire();
-        kire.plugin(KireResolver, { adapter: 'bun' });
+        kire.plugin(KireNode, { adapter: 'bun' });
         
         // Pass the filename without the extension; Kire will resolve it
         const content = await kire.view('template');
@@ -77,14 +77,14 @@ describe("@kirejs/resolver", () => {
 
     test("should throw error for 'deno' adapter when Deno is not available", async () => {
         const kire = new Kire();
-        kire.plugin(KireResolver, { adapter: 'deno' });
+        kire.plugin(KireNode, { adapter: 'deno' });
         // Use view() to trigger resolver
         await expect(kire.view('template.kire')).rejects.toThrow('Deno runtime is not available.');
     });
 
     test("should use 'fetch' adapter for URLs", async () => {
         const kire = new Kire();
-        kire.plugin(KireResolver, { adapter: 'fetch' });
+        kire.plugin(KireNode, { adapter: 'fetch' });
         // Use view() for URL resolution
         const content = await kire.view('http://example.com/template');
         expect(content).toBe('Hello from Fetch!');
@@ -94,9 +94,22 @@ describe("@kirejs/resolver", () => {
 
     test("kire.view() should be able to resolve paths via resolver plugin", async () => {
         const kire = new Kire();
-        kire.plugin(KireResolver);
+        kire.plugin(KireNode);
 
         const content = await kire.view('node-template.kire', { name: 'World' });
         expect(content).toBe('Hello from Node!');
+    });
+
+    test("should register $md5 helper using node crypto", async () => {
+        const kire = new Kire();
+        kire.plugin(KireNode);
+        
+        // "hello" md5 is 5d41402abc4b2a76b9719d911017c592
+        const result = await kire.run(async ($ctx: any) => {
+            const hash = $ctx.$md5("hello");
+            $ctx.res(hash);
+            return $ctx;
+        }, {});
+        expect(result).toBe("5d41402abc4b2a76b9719d911017c592");
     });
 });

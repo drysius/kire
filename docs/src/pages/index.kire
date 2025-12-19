@@ -1,5 +1,86 @@
-@include('layouts/_main.kire', { title: 'Kire Documentation' })
+@include('layouts/_main.kire', { title: 'Kire - Lazy Blade' })
 
 @define('content')
-@markdown('content/index.md')
+  <div class="hero min-h-[calc(100vh-8rem)] bg-base-100">
+    <div class="hero-content text-center">
+      <div class="w-full">
+        
+        <!-- Rotating Text Header -->
+        <h1 class="text-4xl md:text-6xl font-black mb-6 leading-tight">
+          Build <span class="text-primary">Better</span> with Kire
+          <br>
+          <span class="text-2xl md:text-4xl font-bold mt-4 block text-base-content/70">
+            The Framework for 
+            <span class="inline-flex flex-col h-[1.2em] overflow-hidden align-bottom">
+                <span class="animate-text-rotate text-left pl-2">
+                    <span class="block text-teal-600 dark:text-teal-400">Static Sites</span>
+                    <span class="block text-purple-600 dark:text-purple-400">Dynamic Apps</span>
+                    <span class="block text-blue-600 dark:text-blue-400">Server Side</span>
+                    <span class="block text-teal-600 dark:text-teal-400">Static Sites</span>
+                </span>
+            </span>
+          </span>
+        </h1>
+
+        <p class="py-6 text-lg md:text-xl text-base-content/80 max-w-2xl mx-auto leading-relaxed">
+          Kire is a lightweight, type-safe framework that brings the power of 
+          <strong>Directives</strong> and <strong>Plugins</strong> to your HTML. 
+          Combine the simplicity of static files with the flexibility of modern tooling.
+        </p>
+
+        <div class="flex flex-wrap justify-center gap-4 mb-16">
+          <a href="/docs/getting-started" class="btn btn-primary btn-lg gap-2 shadow-lg hover:shadow-primary/30 transition-all">
+            <iconify icon="mdi:rocket-launch" class="text-xl" />
+            Get Started
+          </a>
+          <a href="https://github.com/drysius/kire" target="_blank" class="btn btn-ghost btn-lg gap-2 border border-base-300">
+            <iconify icon="mdi:github" class="text-xl" />
+            GitHub
+          </a>
+        </div>
+
+        <!-- Features Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+          
+          <div class="card bg-base-200/50 border border-base-300 hover:border-primary/50 transition-colors">
+            <div class="card-body p-6">
+              <div class="p-3 bg-yellow-500/10 w-fit rounded-lg mb-4 text-yellow-600 dark:text-yellow-400">
+                <iconify icon="mdi:lightning-bolt" class="text-3xl" />
+              </div>
+              <h3 class="card-title text-xl mb-2">Powerful Directives</h3>
+              <p class="text-base-content/70">
+                Write logic directly in your templates with <code>@@if</code>, <code>@@for</code>, and custom directives. No complex boilerplate.
+              </p>
+            </div>
+          </div>
+
+          <div class="card bg-base-200/50 border border-base-300 hover:border-purple/50 transition-colors">
+            <div class="card-body p-6">
+              <div class="p-3 bg-purple-500/10 w-fit rounded-lg mb-4 text-purple-600 dark:text-purple-400">
+                <iconify icon="mdi:puzzle-outline" class="text-3xl" />
+              </div>
+              <h3 class="card-title text-xl mb-2">Modular Ecosystem</h3>
+              <p class="text-base-content/70">
+                Extend functionality effortlessly with official plugins for <strong>Tailwind</strong>, <strong>Markdown</strong>, and <strong>Icons</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="card bg-base-200/50 border border-base-300 hover:border-blue/50 transition-colors">
+            <div class="card-body p-6">
+              <div class="p-3 bg-blue-500/10 w-fit rounded-lg mb-4 text-blue-600 dark:text-blue-400">
+                <iconify icon="mdi:server-network" class="text-3xl" />
+              </div>
+              <h3 class="card-title text-xl mb-2">SSG & SSR Ready</h3>
+              <p class="text-base-content/70">
+                Generate static sites with dynamic routes or run on the server. Optimized for performance and SEO.
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
 @end

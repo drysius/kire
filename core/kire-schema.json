@@ -13,7 +13,7 @@
             ],
             "children": true,
             "type": "html",
-            "description": "Defines a named, reusable section of content that can be rendered elsewhere.",
+            "description": "Defines a named, reusable section of content.",
             "example": "@define('header')\n  <h1>My Website</h1>\n@end"
         },
         {
@@ -21,9 +21,10 @@
             "params": [
                 "name:string"
             ],
+            "children": "auto",
             "type": "html",
-            "description": "Renders a content section previously created with @define.",
-            "example": "@defined('header')"
+            "description": "Renders defined content or fallback.",
+            "example": "@defined('header')\n  Conteúdo não encontrado\n@end"
         },
         {
             "name": "stack",
@@ -32,7 +33,8 @@
             ],
             "type": "html",
             "description": "Creates a placeholder where content pushed to a named stack will be rendered.",
-            "example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>"
+            "example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>",
+            "children": false
         },
         {
             "name": "push",
@@ -146,35 +148,6 @@
             "example": "@code\n  console.log('This runs during template compilation.');\n@end"
         },
         {
-            "name": "switch",
-            "params": [
-                "expr:string"
-            ],
-            "children": true,
-            "type": "js",
-            "description": "Provides a control flow statement similar to a JavaScript switch block.",
-            "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end",
-            "parents": [
-                {
-                    "name": "case",
-                    "params": [
-                        "val:string"
-                    ],
-                    "children": true,
-                    "type": "js",
-                    "description": "A case clause for a @switch statement.",
-                    "example": "@case('A')\n  <p>Value is A</p>\n@end"
-                },
-                {
-                    "name": "default",
-                    "children": true,
-                    "type": "js",
-                    "description": "The default clause for a @switch statement.",
-                    "example": "@default\n  <p>Value is something else</p>\n@end"
-                }
-            ]
-        },
-        {
             "name": "case",
             "params": [
                 "val:string"
@@ -190,6 +163,16 @@
             "type": "js",
             "description": "The default clause for a @switch statement.",
             "example": "@default\n  <p>Value is something else</p>\n@end"
+        },
+        {
+            "name": "switch",
+            "params": [
+                "expr:string"
+            ],
+            "children": true,
+            "type": "js",
+            "description": "Provides a control flow statement similar to a JavaScript switch block.",
+            "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end"
         },
         {
             "name": "include",
@@ -224,9 +207,11 @@
             "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
         }
     ],
-    "elements": [],
-    "globals": {
-        "~$pre": [],
-        "~$pos": []
-    }
+    "elements": [
+        {
+            "name": "kire:defined",
+            "void": false
+        }
+    ],
+    "globals": {}
 }
