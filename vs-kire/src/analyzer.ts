@@ -1,44 +1,65 @@
 import * as vscode from 'vscode';
-import { kireStore, DirectiveDefinition, ElementDefinition } from './store';
+import { kireStore, type DirectiveDefinition, type ElementDefinition } from './store';
 
-export async function loadSchemas() {
-	// console.log('Loading Kire schemas...');
+export async function loadSchemas(): Promise<void> {
     kireStore.getState().clear();
 
-    const pattern = '**/{kire-schema.json,node_modules/**/kire-schema.json}';
-    // Passing null as second argument disables default excludes (like node_modules)
-    const files = await vscode.workspace.findFiles('**/kire-schema.json', '**/node_modules/**'); 
-    // Wait, if I exclude node_modules, I won't find them. 
-    // But searching ONLY in node_modules is also needed.
-    // Let's do two searches to be safe and clearer.
+    try {
+        // Busca todos os arquivos kire-schema.json em paralelo
+        const [workspaceFiles, nodeModuleFiles] = await Promise.all([
+            // Arquivos do workspace (exclui node_modules por padrão)
+            vscode.workspace.findFiles('**/kire-schema.json', '**/node_modules/**'),
+            // Arquivos dentro de node_modules (sem exclusões)
+            vscode.workspace.findFiles('**/node_modules/**/kire-schema.json', null)
+        ]);
 
-    // 1. Workspace files (respecting ignores, so skipping node_modules usually)
-    const workspaceFiles = await vscode.workspace.findFiles('**/kire-schema.json');
-
-    // 2. Node modules explicitly (ignoring default excludes)
-    // We want to find files inside node_modules.
-    // pattern: '**/node_modules/**/kire-schema.json'
-    // exclude: null (don't exclude node_modules)
-    const nodeModuleFiles = await vscode.workspace.findFiles('**/node_modules/**/kire-schema.json', null);
-
-    const uniqueUris = new Set([...workspaceFiles.map(u => u.toString()), ...nodeModuleFiles.map(u => u.toString())]);
-    
-    // console.log(`Found ${uniqueUris.size} schema files.`);
-
-    for (const uriStr of uniqueUris) {
-        const uri = vscode.Uri.parse(uriStr);
-        try {
-            const content = await vscode.workspace.fs.readFile(uri);
-            const json = JSON.parse(new TextDecoder().decode(content));
-            
-            if (json.directives) {
-                kireStore.getState().addDirectives(json.directives as DirectiveDefinition[]);
-            }
-            if (json.elements) {
-                kireStore.getState().addElements(json.elements as ElementDefinition[]);
-            }
-        } catch (e) {
-            console.error(`Failed to load schema from ${uri.fsPath}:`, e);
+        // Combina e remove duplicados usando Map para preservar ordem
+        const uniqueFiles = new Map<string, vscode.Uri>();
+        
+        // Adiciona workspace files primeiro (mais importantes)
+        for (const uri of workspaceFiles) {
+            uniqueFiles.set(uri.toString(), uri);
         }
+        
+        // Adiciona node modules depois
+        for (const uri of nodeModuleFiles) {
+            const key = uri.toString();
+            if (!uniqueFiles.has(key)) {
+                uniqueFiles.set(key, uri);
+            }
+        }
+
+        // Processa arquivos em paralelo com limite de concorrência
+        const batchSize = 5;
+        const uris = Array.from(uniqueFiles.values());
+        
+        for (let i = 0; i < uris.length; i += batchSize) {
+            const batch = uris.slice(i, i + batchSize);
+            await Promise.all(batch.map(loadSchemaFile));
+        }
+        
+    } catch (error) {
+        console.error('Error loading Kire schemas:', error);
+    }
+}
+
+async function loadSchemaFile(uri: vscode.Uri): Promise<void> {
+    try {
+        const content = await vscode.workspace.fs.readFile(uri);
+        const json = JSON.parse(Buffer.from(content).toString('utf8'));
+        
+        const state = kireStore.getState();
+        
+        if (json.directives?.length) {
+            state.addDirectives(json.directives as DirectiveDefinition[]);
+        }
+        
+        if (json.elements?.length) {
+            state.addElements(json.elements as ElementDefinition[]);
+        }
+        
+    } catch (error) {
+        console.warn(`Failed to load schema from ${uri.fsPath}:`, 
+            error instanceof Error ? error.message : 'Unknown error');
     }
 }

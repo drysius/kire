@@ -60,6 +60,7 @@ export const kireStore = createStore<KireState>((set) => ({
 	addElements: (elements) =>
 		set((state) => {
 			const newMap = new Map(state.elements);
+			// biome-ignore lint/suspicious/useIterableCallbackReturn: ignore
 			elements.forEach((e) => newMap.set(e.name, e));
 			return { elements: newMap };
 		}),

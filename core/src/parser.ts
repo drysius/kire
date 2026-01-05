@@ -2,15 +2,15 @@ import type { Kire } from "./kire";
 import type { DirectiveDefinition, Node } from "./types";
 
 export class Parser {
-    private cursor = 0;
-    private stack: Node[] = [];
-    private rootChildren: Node[] = [];
+    public cursor = 0;
+    public stack: Node[] = [];
+    public rootChildren: Node[] = [];
     public line = 1;
     public column = 1;
 
     constructor(
-        private template: string,
-        private kire: Kire,
+        public template: string,
+        public kire: Kire,
     ) {}
 
     public parse(): Node[] {

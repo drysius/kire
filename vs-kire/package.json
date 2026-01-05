@@ -17,14 +17,14 @@
         "onLanguage:html"
     ],
     "dependencies": {
-        "@types/node": "^24.10.1",
-        "zustand": "^5.0.8",
         "vscode-html-languageservice": "^5.5.1",
-        "typescript": "^5.9.2",
-        "vscode-languageserver-textdocument": "^1.0.12"
+        "vscode-languageserver-textdocument": "^1.0.12",
+        "zustand": "^5.0.8"
     },
     "devDependencies": {
-        "@types/vscode": "^1.104.0"
+        "@types/vscode": "^1.104.0",
+        "@types/node": "^24.10.1",
+        "typescript": "^5.9.2"
     },
     "contributes": {
         "languages": [
@@ -72,8 +72,8 @@
     },
     "scripts": {
         "build": "vsce package",
-        "vscode:prepublish": "bun build  --target=node --external vscode --outdir dist src/extension.ts",
-        "watch": "bun build  --target=node --external vscode --outdir dist src/extension.ts --watch",
+        "vscode:prepublish": "bun build.ts",
+        "watch": "bun build.ts --watch",
         "check": "tsc --noEmit --project tsconfig.json"
     }
 }

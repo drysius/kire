@@ -1,5 +1,4 @@
 @include('layouts/_main.kire', { title: 'Official Packages | Kire' })
-
 @define('content')
 <div class="space-y-8">
   <div class="flex flex-col gap-2">

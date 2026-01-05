@@ -151,7 +151,7 @@ export const KireNode: KirePlugin<ResolverOptions> = {
 		// Assign the new resolver
 		kire.$resolver = createResolver(opts);
 		kire.$readdir = createReadDir(opts);
-
+		kire.$ctx("$readdir", kire.$readdir);
 		// Register Node.js specific helpers
 		kire.$ctx("$md5", (str: string) =>
 			createHash("md5").update(str).digest("hex"),

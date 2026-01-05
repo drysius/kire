@@ -24,7 +24,6 @@
           </button>
         </div>
       </div>
-      
       <div class="mt-12 grid grid-cols-1 gap-4 text-left">
         <h3 class="font-bold text-sm uppercase tracking-widest opacity-50">Links Úteis</h3>
         <div class="join join-vertical w-full border border-base-200">

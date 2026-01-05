@@ -5,7 +5,7 @@ export default (kire: Kire) => {
 		name: "if",
 		params: ["cond:string"],
 		children: true,
-		type: "js",
+		type: "html",
 		description:
 			"Conditionally renders a block of content if the expression is true.",
 		example: `@if(user.isLoggedIn)\n  Welcome, {{ user.name }}!\n@end`,
@@ -14,7 +14,7 @@ export default (kire: Kire) => {
 				name: "elseif",
 				params: ["cond:string"],
 				children: true,
-				type: "js",
+				type: "html",
 				description:
 					"Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
 				example: `@elseif(user.isAdmin)\n  Admin access granted.\n@end`,
@@ -27,7 +27,7 @@ export default (kire: Kire) => {
 				name: "elif", // alias for elseif
 				params: ["cond:string"],
 				children: true,
-				type: "js",
+				type: "html",
 				description: "Alias for @elseif.",
 				example: `@elif(user.isAdmin)\n  Admin access granted.\n@end`,
 				async onCall(compiler) {
@@ -38,7 +38,7 @@ export default (kire: Kire) => {
 			{
 				name: "else",
 				children: true,
-				type: "js",
+				type: "html",
 				description:
 					"Renders a block of content if the preceding @if/@elseif expressions are all false.",
 				example: `@else\n  Please log in.\n@end`,
@@ -60,7 +60,7 @@ export default (kire: Kire) => {
 		name: "for",
 		params: ["expr:string"],
 		children: true,
-		type: "js",
+		type: "html",
 		description:
 			"Iterates over an array or object, similar to a JavaScript for...of loop.",
 		example: `@for(user of users)\n  <p>{{ user.name }}</p>\n@end`,
@@ -84,7 +84,7 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: "const",
 		params: ["expr:string"],
-		type: "js",
+		type: "html",
 		description:
 			"Declares a block-scoped constant, similar to JavaScript `const`.",
 		example: `@const(myVar = 'hello world')`,
@@ -96,7 +96,7 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: "let",
 		params: ["expr:string"],
-		type: "js",
+		type: "html",
 		description:
 			"Declares a block-scoped local variable, similar to JavaScript `let`.",
 		example: `@let(counter = 0)`,
@@ -131,7 +131,7 @@ export default (kire: Kire) => {
 		name: "case",
 		params: ["val:string"],
 		children: true,
-		type: "js",
+		type: "html",
 		description: "A case clause for a @switch statement.",
 		example: `@case('A')\n  <p>Value is A</p>\n@end`,
 		async onCall(c) {
@@ -144,7 +144,7 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: "default",
 		children: true,
-		type: "js",
+		type: "html",
 		description: "The default clause for a @switch statement.",
 		example: `@default\n  <p>Value is something else</p>\n@end`,
 		async onCall(c) {
@@ -158,7 +158,7 @@ export default (kire: Kire) => {
 		name: "switch",
 		params: ["expr:string"],
 		children: true,
-		type: "js",
+		type: "html",
 		description:
 			"Provides a control flow statement similar to a JavaScript switch block.",
 		example: `@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end`,

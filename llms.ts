@@ -11,7 +11,7 @@ class PackageRegistry {
     private packages = new Map<string, PackageInfo>();
 
     async discoverPackages(): Promise<void> {
-        const packagePaths = await glob(['packages/*/', 'core']);
+        const packagePaths = await glob(['packages/*/', 'core', 'vs-kire']);
 
         for (const packagePath of packagePaths) {
             const pkgJsonPath = `${packagePath}/package.json`;

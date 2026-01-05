@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { loadSchemas } from './analyzer';
-import { KireHoverProvider } from './providers/hover';
-import { KireSemanticTokensProvider, legend } from './providers/semanticTokens';
+import { KireLanguageFeatures } from './languages/kire';
+import { HtmlLanguageFeatures, registerHtmlCommands } from './languages/html';
+import { randomBytes } from 'node:crypto';
 
 export async function activate(context: vscode.ExtensionContext) {
     // console.log('Kire extension activated.');
@@ -15,24 +16,17 @@ export async function activate(context: vscode.ExtensionContext) {
     watcher.onDidCreate(() => loadSchemas());
     watcher.onDidDelete(() => loadSchemas());
     context.subscriptions.push(watcher);
-    
-    // Command to manually reload
+
     context.subscriptions.push(vscode.commands.registerCommand('kire.reloadSchemas', async () => {
         await loadSchemas();
         vscode.window.showInformationMessage('Kire schemas reloaded.');
     }));
 
-    const selector = [{ language: 'kire', scheme: 'file' }, { language: 'html', scheme: 'file', pattern: '**/*.kire' }];
+    context.subscriptions.push(KireLanguageFeatures.register(context));
+    context.subscriptions.push(HtmlLanguageFeatures.register(context));
 
-    // Register Hover
-    context.subscriptions.push(
-        vscode.languages.registerHoverProvider(selector, new KireHoverProvider())
-    );
-
-    // Register Semantic Tokens
-    context.subscriptions.push(
-        vscode.languages.registerDocumentSemanticTokensProvider(selector, new KireSemanticTokensProvider(), legend)
-    );
+    registerHtmlCommands(context);
 }
 
-export function deactivate() {}
+randomBytes(12).toString()
+export function deactivate() { }

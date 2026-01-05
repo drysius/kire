@@ -2,15 +2,6 @@
     "scopeName": "text.html.kire",
     "patterns": [
         {
-            "include": "#comments"
-        },
-        {
-            "include": "#directives"
-        },
-        {
-            "include": "#interpolations"
-        },
-        {
             "include": "text.html.basic"
         }
     ],
@@ -24,25 +15,67 @@
                 }
             ]
         },
+        "code-block": {
+            "begin": "(@code)",
+            "beginCaptures": {
+                "1": { "name": "keyword.control.kire" }
+            },
+            "end": "(@end)",
+            "endCaptures": {
+                "1": { "name": "keyword.control.kire" }
+            },
+            "name": "meta.embedded.block.js",
+            "contentName": "source.js",
+            "patterns": [
+                {
+                    "include": "source.js"
+                }
+            ]
+        },
+        "directives-with-args": {
+            "begin": "(@[a-zA-Z0-9_]+)\\s*(\")",
+            "beginCaptures": {
+                "1": { "name": "keyword.control.kire" },
+                "2": { "name": "punctuation.definition.string.begin.js" }
+            },
+            "end": "\"",
+            "endCaptures": {
+                "0": { "name": "punctuation.definition.string.end.js" }
+            },
+            "name": "meta.directive.with-args.kire",
+            "patterns": [
+                {
+                    "include": "source.js"
+                }
+            ]
+        },
         "directives": {
             "patterns": [
                 {
-                    "match": "(@[a-zA-Z0-9_]+)",
+                    "match": "(@[a-zA-Z0-9_]+)(?!\\s*\")",
                     "name": "keyword.control.kire"
                 }
             ]
         },
-        "interpolations": {
+        "interpolations-raw": {
+            "begin": "{{{",
+            "end": "}}}",
+            "name": "meta.embedded.expression.raw.kire",
+            "contentName": "source.js",
             "patterns": [
                 {
-                    "begin": "{{",
-                    "end": "}}",
-                    "name": "meta.embedded.expression.kire",
-                    "patterns": [
-                        {
-                            "include": "source.js"
-                        }
-                    ]
+                    "include": "source.js"
+                }
+            ]
+        },
+        "interpolations": {
+            "begin": "{{",
+            "end": "}}",
+            "name": "meta.embedded.expression.kire",
+            "contentName": "source.js",
+            "patterns": [
+                {
+                    "include": "source.js"
                 }
             ]
         }
