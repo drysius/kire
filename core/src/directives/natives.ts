@@ -105,27 +105,6 @@ export default (kire: Kire) => {
 		},
 	});
 
-	kire.directive({
-		name: "code",
-		children: true,
-		type: "js",
-		description: "Executes a block of raw JavaScript code on the server.",
-		example: `@code\n  console.log('This runs during template compilation.');\n@end`,
-		onCall(compiler) {
-			if (compiler.children) {
-				let code = "";
-				for (const child of compiler.children) {
-					if (child.type === "text" && child.content) {
-						code += child.content;
-					}
-				}
-				if (code) {
-					compiler.raw(code);
-				}
-			}
-		},
-	});
-
 	// Register case and default globally/independently so they are not treated as chained parents of switch
 	kire.directive({
 		name: "case",

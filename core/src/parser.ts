@@ -42,6 +42,21 @@ export class Parser {
                 continue;
             }
 
+            // Check for serverjs <?js ... ?>
+            const serverJsMatch = remaining.match(/^<\?js([\s\S]*?)\?>/);
+            if (serverJsMatch) {
+                const content = serverJsMatch[0];
+                this.addNode({
+                    type: "serverjs",
+                    content: serverJsMatch[1]?.trim(),
+                    start: this.cursor,
+                    end: this.cursor + content.length,
+                    loc: this.getLoc(content),
+                });
+                this.advance(content);
+                continue;
+            }
+
             // Check for interpolation {{ ... }}
             const interpolationMatch = remaining.match(/^\{\{([\s\S]*?)\}\}/);
             if (interpolationMatch) {

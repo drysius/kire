@@ -392,7 +392,7 @@ export interface KirePlugin<Options extends object | undefined = {}> {
 }
 
 // AST Types
-export type NodeType = "text" | "variable" | "directive";
+export type NodeType = "text" | "variable" | "directive" | "serverjs";
 
 export interface SourceLocation {
 	line: number;

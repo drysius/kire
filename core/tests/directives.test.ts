@@ -83,15 +83,15 @@ describe("Kire Native Directives", () => {
 		});
 
 		it("@let", async () => {
-			const tpl = `@let(x = 1){{ x }}@code x++ @end{{ x }}`;
+			const tpl = `@let(x = 1){{ x }}<?js x++ ?>{{ x }}`;
 			expect(await render(tpl)).toBe("12");
 		});
 	});
 
 	describe("Code execution", () => {
-		it("@code", async () => {
+		it("serverjs", async () => {
 			const obj = { val: 0 };
-			await render(`@code it.obj.val = 1; @end`, { obj });
+			await render(`<?js it.obj.val = 1; ?>`, { obj });
 			expect(obj.val).toBe(1);
 		});
 	});

@@ -61,7 +61,7 @@ export const KireDirectives: KirePlugin = {
 
 				// Executa a função compilada com os locals e retorna o HTML
 				// We need to cast kire to any or make run public to access it from here since it was private
-				return (kire as any).run(compiledFn, locals);
+				return (kire as any).run(compiledFn, locals, true);
 			}
 		);
 

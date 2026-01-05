@@ -57,7 +57,7 @@ describe("@kirejs/resolver", () => {
         
         // pattern: packages/resolver/**/*.ts
         if (kire.$readdir) {
-            const files = await kire.$readdir("packages/resolver/src/*.ts");
+            const files = await kire.$readdir("packages/node/src/*.ts");
             expect(files.length).toBeGreaterThan(0);
             expect(files.some(f => f.endsWith("index.ts"))).toBeTrue();
         } else {

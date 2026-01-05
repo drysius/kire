@@ -1,5 +1,4 @@
 @include('layouts/_main.kire', { title: '404 - Page Not Found' })
-
 @define('content')
 <div class="hero min-h-[60dvh] bg-base-100">
   <div class="hero-content text-center">

@@ -3,7 +3,7 @@ import { KireSsg } from "../src/index";
 import { Kire } from "kire";
 import KireMarkdown from "../../markdown/src/index";
 import KireAssets from "../../assets/src/index";
-import KireResolver from "../../resolver/src/index";
+import KireNode from "../../node/src/index";
 import { join } from "path";
 import { mkdir, writeFile, readFile, rm, readdir } from "fs/promises";
 
@@ -82,7 +82,7 @@ describe("KireSsg Build", () => {
                 [KireSsg, { assetsPrefix: 'static' }], 
                 KireMarkdown, 
                 [KireAssets, { prefix: 'static' }],
-                KireResolver // Add resolver to provide $readdir
+                KireNode // Add resolver to provide $readdir
             ],
             // resolver: async (path) => await readFile(path, 'utf-8') // KireResolver handles this now, but we can keep or remove. KireResolver overrides kire.$resolver.
         });
@@ -141,11 +141,11 @@ describe("KireSsg Build", () => {
             // 5. Verify Output
 
             // A. Verify Docs (Generated from Markdown)
-            const introHtml = await readFile(join(outDir, "docs/intro.html"), "utf-8");
+            const introHtml = await readFile(join(outDir, "docs/intro/index.html"), "utf-8");
             expect(introHtml).toContain("<h1>Introduction</h1>");
             expect(introHtml).toContain("<nav>Docs Nav</nav>");
             
-            const setupHtml = await readFile(join(outDir, "docs/setup.html"), "utf-8");
+            const setupHtml = await readFile(join(outDir, "docs/setup/index.html"), "utf-8");
             expect(setupHtml).toContain("<h1>Setup</h1>");
 
             // B. Verify Home Page (Regular Kire)
@@ -155,7 +155,7 @@ describe("KireSsg Build", () => {
             expect(indexHtml).toContain('<script src="/static/');
 
             // C. Verify Nested Blog Post
-            const postHtml = await readFile(join(outDir, "blog/2023/post1.html"), "utf-8");
+            const postHtml = await readFile(join(outDir, "blog/2023/post1/index.html"), "utf-8");
             expect(postHtml).toContain("<h1>First Post</h1>");
             expect(postHtml).toContain("<article>");
 

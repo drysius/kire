@@ -1,11 +1,11 @@
-@code
+<?jsc
     const { docs = "not_found" } = $ctx.$params;
     const files = await $ctx.$readdir('./src/markdowns');
     console.log(files);
     const item = files.find(
       p => p.package === package || p.package === '@kirejs/' + package
     );
-@end
+?>
 
 @dynamicroutes($ctx.packages.map(p => p.package.replace('@kirejs/', '')))
 

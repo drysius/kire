@@ -54,6 +54,10 @@ export class Compiler {
                         );
                     }
                 }
+            } else if (node.type === "serverjs") {
+                if (node.content) {
+                    this.resBuffer.push(node.content);
+                }
             } else if (node.type === "directive") {
                 await this.processDirective(node);
             }

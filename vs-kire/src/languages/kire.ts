@@ -14,6 +14,11 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
 
         // 1. Triggered by '<' -> Elements
         if (char === '<' || linePrefix.endsWith('<')) {
+            const jsItem = new vscode.CompletionItem('?js', vscode.CompletionItemKind.Snippet);
+            jsItem.detail = "Server-side JavaScript Block";
+            jsItem.insertText = new vscode.SnippetString('?js $0 ?>');
+            items.push(jsItem);
+
             kireStore.getState().elements.forEach((def) => {
                 const item = new vscode.CompletionItem(def.name, vscode.CompletionItemKind.Class);
                 item.detail = "Kire Element";
@@ -121,8 +126,21 @@ class KireDiagnosticProvider {
         const directiveStack: Array<{ name: string, line: number, char: number }> = [];
         const directiveRegex = /@([a-zA-Z0-9_]+)(?:\s*\(([^)]*)\))?/g;
         
+        // Find JS blocks to ignore directives inside them
+        const jsBlocks: [number, number][] = [];
+        const jsBlockRegex = /<\?js[\s\S]*?\?>/g;
+        let jsMatch: RegExpExecArray | null;
+        while ((jsMatch = jsBlockRegex.exec(text)) !== null) {
+            jsBlocks.push([jsMatch.index, jsMatch.index + jsMatch[0].length]);
+        }
+        
         let match: RegExpExecArray | null;
         while ((match = directiveRegex.exec(text)) !== null) {
+            // Check if inside JS block
+            const matchIndex = match.index;
+            const isInsideJs = jsBlocks.some(([start, end]) => matchIndex >= start && matchIndex < end);
+            if (isInsideJs) continue;
+
             const fullMatch = match[0];
             const name = match[1];
             const argsStr = match[2];
@@ -154,8 +172,6 @@ class KireDiagnosticProvider {
                 if (directiveDef.children) {
                     if (directiveDef.children === "auto") {
                         // Check if it has @end
-                        // Improve auto-check: scan for @end that is not part of another block?
-                        // For now, simple check but maybe look further
                         const nextChars = text.substring(match.index, text.length); 
                         const hasEnd = nextChars.includes('@end');
                         
@@ -179,27 +195,9 @@ class KireDiagnosticProvider {
                 if (directiveDef.parents) {
                     const parentDirective = directiveDef.parents.find(p => p.name === name);
                     if (parentDirective && directiveStack.length === 0) {
-                         // Check if top of stack is valid parent? 
-                         // Logic here seems slightly off in original code (checks if parentDirective exists then checks stack)
-                         // But leaving original logic, just fixing pop.
-                         // Actually, parentDirective seems to be finding ITSELF in parents? 
-                         // Store logic: p is sub-directive definition.
-                         // If I am 'else', my parents might be 'if'.
-                         // directiveDef.parents is an array of sub-directives? No, definition says: parents?: DirectiveDefinition[]
-                         // Wait, store.ts says: parents?: DirectiveDefinition[]
-                         // And `newMap.set(p.name, p)` for sub-directives.
-                         
-                         // If I am processing @elseif, I need to check if stack top is @if.
-                         // This validation logic is complex. Assuming it's mostly correct or out of scope for "fix @end".
+                         // Logic omitted
                     }
                 }
-            } else if (name !== 'end') {
-                // Unknown directive (warn only)
-                diagnostics.push(new vscode.Diagnostic(
-                    new vscode.Range(position, position.translate(0, fullMatch.length)),
-                    `Unknown directive @${name}`,
-                    vscode.DiagnosticSeverity.Warning
-                ));
             }
             
             // Handle @end
