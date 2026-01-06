@@ -965,12 +965,37 @@ export function registerHtmlCommands(context: vscode.ExtensionContext) {
 
 // --- From: vs-kire/src/languages/kire.ts ---
 import * as vscode from 'vscode';
-import { kireStore, type DirectiveDefinition } from '../store';
+import { KireCompletionItemProvider } from './features/completion';
+import { KireDiagnosticProvider } from './features/diagnostic';
+import { KireDocumentSymbolProvider } from './features/documentSymbol';
+import { KireHoverProvider } from './features/hover';
+import { KireSemanticTokensProvider, semanticTokensLegend } from './features/semanticTokens';
 
-// Semantic Tokens Legend
-const tokenTypes = ['keyword', 'class', 'type', 'parameter', 'variable', 'property'];
-const tokenModifiers = ['declaration', 'documentation'];
-export const semanticTokensLegend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+// biome-ignore lint/complexity/noStaticOnlyClass: ignore not need
+export class KireLanguageFeatures {
+    static register(context: vscode.ExtensionContext): vscode.Disposable {
+        const disposables: vscode.Disposable[] = [];
+        const selector = [{ language: 'kire', scheme: 'file' }, { language: 'html', scheme: 'file', pattern: '**/*.kire' }];
+
+        // Register diagnostic provider
+        disposables.push(new KireDiagnosticProvider().register(context));
+        
+        // Register Providers
+        disposables.push(
+            vscode.languages.registerCompletionItemProvider(selector, new KireCompletionItemProvider(), '@', '<', '{'),
+            vscode.languages.registerHoverProvider(selector, new KireHoverProvider()),
+            vscode.languages.registerDocumentSymbolProvider(selector, new KireDocumentSymbolProvider()),
+            vscode.languages.registerDocumentSemanticTokensProvider(selector, new KireSemanticTokensProvider(), semanticTokensLegend)
+        );
+
+        return vscode.Disposable.from(...disposables);
+    }
+}
+
+
+// --- From: vs-kire/src/languages/features/completion.ts ---
+import * as vscode from 'vscode';
+import { kireStore } from '../../store';
 
 export class KireCompletionItemProvider implements vscode.CompletionItemProvider {
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
@@ -978,12 +1003,29 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
         const char = context.triggerCharacter;
         const linePrefix = document.lineAt(position).text.substr(0, position.character);
 
+        // Check if next char is '>'
+        const lineText = document.lineAt(position).text;
+        const nextChar = position.character < lineText.length ? lineText[position.character] : '';
+        const hasClosingAngle = nextChar === '>';
+        
+        // Define replacement range to consume '>' if present
+        const range = hasClosingAngle ? new vscode.Range(position, position.translate(0, 1)) : undefined;
+
         // 1. Triggered by '<' -> Elements
         if (char === '<' || linePrefix.endsWith('<')) {
+            // <?js
+            const jsItem = new vscode.CompletionItem('?js', vscode.CompletionItemKind.Snippet);
+            jsItem.detail = "Server-side JavaScript Block";
+            jsItem.insertText = new vscode.SnippetString('?js\n\t$0\n?>');
+            if (range) jsItem.range = range;
+            items.push(jsItem);
+
             kireStore.getState().elements.forEach((def) => {
                 const item = new vscode.CompletionItem(def.name, vscode.CompletionItemKind.Class);
                 item.detail = "Kire Element";
                 item.documentation = new vscode.MarkdownString(def.description || '');
+                if (range) item.range = range;
+                
                 if (def.void) {
                      item.insertText = new vscode.SnippetString(`${def.name} $0>`);
                 } else {
@@ -1028,7 +1070,141 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
     }
 }
 
-class KireDiagnosticProvider {
+
+// --- From: vs-kire/src/languages/features/documentSymbol.ts ---
+import * as vscode from 'vscode';
+
+export class KireDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+    provideDocumentSymbols(document: vscode.TextDocument, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.SymbolInformation[] | vscode.DocumentSymbol[]> {
+        const symbols: vscode.DocumentSymbol[] = [];
+        const text = document.getText();
+        const lines = text.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const dirMatch = /@([a-zA-Z0-9_]+)/.exec(line);
+            if (dirMatch) {
+                const dirName = dirMatch[1];
+                if (dirName !== 'end') {
+                    const range = new vscode.Range(i, dirMatch.index, i, dirMatch.index + dirMatch[0].length);
+                    symbols.push(new vscode.DocumentSymbol(
+                        dirName, 'Directive', vscode.SymbolKind.Function, range, range
+                    ));
+                }
+            }
+        }
+        return symbols;
+    }
+}
+
+
+// --- From: vs-kire/src/languages/features/hover.ts ---
+import * as vscode from 'vscode';
+import { kireStore } from '../../store';
+
+export class KireHoverProvider implements vscode.HoverProvider {
+    provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
+        const range = document.getWordRangeAtPosition(position, /(@?[a-zA-Z0-9_\-:]+)/);
+        if (!range) return undefined;
+
+        const word = document.getText(range);
+
+        // Directive
+        if (word.startsWith('@')) {
+            const directiveName = word.substring(1);
+            const def = kireStore.getState().directives.get(directiveName);
+            if (def) {
+                const md = new vscode.MarkdownString();
+                md.appendCodeblock(`@${def.name}${def.params ? `(${def.params.join(', ')})` : ''}`, 'kire');
+                if (def.description) md.appendMarkdown(`\n\n${def.description}`);
+                return new vscode.Hover(md);
+            }
+        } 
+        
+        // Element
+        const elementDef = kireStore.getState().elements.get(word);
+        if (elementDef) {
+             const line = document.lineAt(position.line).text;
+             const preceding = line.substring(0, range.start.character);
+             if (/<(\/)?\s*$/.test(preceding)) {
+                 const md = new vscode.MarkdownString();
+                 md.appendCodeblock(`<${elementDef.name}>`, 'html');
+                 if (elementDef.description) md.appendMarkdown(`\n\n${elementDef.description}`);
+                 return new vscode.Hover(md);
+             }
+        }
+        
+        return undefined;
+    }
+}
+
+
+// --- From: vs-kire/src/languages/features/semanticTokens.ts ---
+import * as vscode from 'vscode';
+import { kireStore } from '../../store';
+
+// Semantic Tokens Legend
+const tokenTypes = ['keyword', 'class', 'type', 'parameter', 'variable', 'property'];
+const tokenModifiers = ['declaration', 'documentation'];
+export const semanticTokensLegend = new vscode.SemanticTokensLegend(tokenTypes, tokenModifiers);
+
+export class KireSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
+    provideDocumentSemanticTokens(
+        document: vscode.TextDocument,
+        _token: vscode.CancellationToken
+    ): vscode.ProviderResult<vscode.SemanticTokens> {
+        const builder = new vscode.SemanticTokensBuilder(semanticTokensLegend);
+        const text = document.getText();
+        
+        // Regex for directives: @directive
+        const directiveRegex = /@([a-zA-Z0-9_-]+)/g;
+        
+        // Regex for elements: <Element> or </Element>
+        const elementRegex = /<\/?([a-zA-Z0-9_-]+)/g;
+
+        let match:RegExpExecArray | null;
+
+        // Find Directives
+        while ((match = directiveRegex.exec(text))) {
+            const startPos = document.positionAt(match.index);
+            const value = match[0]; // Includes @
+            builder.push(
+                startPos.line,
+                startPos.character,
+                value.length,
+                0, // index of 'keyword' in tokenTypes
+                0
+            );
+        }
+
+        // Find Elements
+        while ((match = elementRegex.exec(text))) {
+            const fullMatch = match[0];
+            const tagName = match[1];
+            const startOffset = match.index + (fullMatch.startsWith('</') ? 2 : 1);
+            const startPos = document.positionAt(startOffset);
+            
+            if (kireStore.getState().elements.has(tagName)) {
+                builder.push(
+                    startPos.line,
+                    startPos.character,
+                    tagName.length,
+                    1, // index of 'class' in tokenTypes
+                    0
+                );
+            }
+        }
+
+        return builder.build();
+    }
+}
+
+
+// --- From: vs-kire/src/languages/features/diagnostic.ts ---
+import * as vscode from 'vscode';
+import { kireStore, type DirectiveDefinition } from '../../store';
+
+export class KireDiagnosticProvider {
     private diagnosticCollection: vscode.DiagnosticCollection;
     
     // HTML void elements (self-closing)
@@ -1087,8 +1263,22 @@ class KireDiagnosticProvider {
         const directiveStack: Array<{ name: string, line: number, char: number }> = [];
         const directiveRegex = /@([a-zA-Z0-9_]+)(?:\s*\(([^)]*)\))?/g;
         
+        // Find JS blocks to ignore directives inside them
+        const jsBlocks: [number, number][] = [];
+        // Match both <?js and <?jsc
+        const jsBlockRegex = /<\?js[c]?[ -￿]*?\?>/g;
+        let jsMatch: RegExpExecArray | null;
+        while ((jsMatch = jsBlockRegex.exec(text)) !== null) {
+            jsBlocks.push([jsMatch.index, jsMatch.index + jsMatch[0].length]);
+        }
+        
         let match: RegExpExecArray | null;
         while ((match = directiveRegex.exec(text)) !== null) {
+            // Check if inside JS block
+            const matchIndex = match.index;
+            const isInsideJs = jsBlocks.some(([start, end]) => matchIndex >= start && matchIndex < end);
+            if (isInsideJs) continue;
+
             const fullMatch = match[0];
             const name = match[1];
             const argsStr = match[2];
@@ -1119,9 +1309,6 @@ class KireDiagnosticProvider {
                 // Handle block directives
                 if (directiveDef.children) {
                     if (directiveDef.children === "auto") {
-                        // Check if it has @end
-                        // Improve auto-check: scan for @end that is not part of another block?
-                        // For now, simple check but maybe look further
                         const nextChars = text.substring(match.index, text.length); 
                         const hasEnd = nextChars.includes('@end');
                         
@@ -1140,33 +1327,7 @@ class KireDiagnosticProvider {
                         });
                     }
                 }
-                
-                // Check for parent directives (elseif, else)
-                if (directiveDef.parents) {
-                    const parentDirective = directiveDef.parents.find(p => p.name === name);
-                    if (parentDirective && directiveStack.length === 0) {
-                         // Check if top of stack is valid parent? 
-                         // Logic here seems slightly off in original code (checks if parentDirective exists then checks stack)
-                         // But leaving original logic, just fixing pop.
-                         // Actually, parentDirective seems to be finding ITSELF in parents? 
-                         // Store logic: p is sub-directive definition.
-                         // If I am 'else', my parents might be 'if'.
-                         // directiveDef.parents is an array of sub-directives? No, definition says: parents?: DirectiveDefinition[]
-                         // Wait, store.ts says: parents?: DirectiveDefinition[]
-                         // And `newMap.set(p.name, p)` for sub-directives.
-                         
-                         // If I am processing @elseif, I need to check if stack top is @if.
-                         // This validation logic is complex. Assuming it's mostly correct or out of scope for "fix @end".
-                    }
-                }
-            } else if (name !== 'end') {
-                // Unknown directive (warn only)
-                diagnostics.push(new vscode.Diagnostic(
-                    new vscode.Range(position, position.translate(0, fullMatch.length)),
-                    `Unknown directive @${name}`,
-                    vscode.DiagnosticSeverity.Warning
-                ));
-            }
+            } 
             
             // Handle @end
             if (name === 'end') {
@@ -1565,134 +1726,4 @@ class KireDiagnosticProvider {
     }
 }
 
-export class KireHoverProvider implements vscode.HoverProvider {
-    provideHover(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.Hover> {
-        const range = document.getWordRangeAtPosition(position, /(@?[a-zA-Z0-9_\-:]+)/);
-        if (!range) return undefined;
-
-        const word = document.getText(range);
-
-        // Directive
-        if (word.startsWith('@')) {
-            const directiveName = word.substring(1);
-            const def = kireStore.getState().directives.get(directiveName);
-            if (def) {
-                const md = new vscode.MarkdownString();
-                md.appendCodeblock(`@${def.name}${def.params ? `(${def.params.join(', ')})` : ''}`, 'kire');
-                if (def.description) md.appendMarkdown(`\n\n${def.description}`);
-                return new vscode.Hover(md);
-            }
-        } 
-        
-        // Element
-        const elementDef = kireStore.getState().elements.get(word);
-        if (elementDef) {
-             const line = document.lineAt(position.line).text;
-             const preceding = line.substring(0, range.start.character);
-             if (/<(\/)?\s*$/.test(preceding)) {
-                 const md = new vscode.MarkdownString();
-                 md.appendCodeblock(`<${elementDef.name}>`, 'html');
-                 if (elementDef.description) md.appendMarkdown(`\n\n${elementDef.description}`);
-                 return new vscode.Hover(md);
-             }
-        }
-        
-        return undefined;
-    }
-}
-
-export class KireDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
-    provideDocumentSymbols(document: vscode.TextDocument, _token: vscode.CancellationToken): vscode.ProviderResult<vscode.SymbolInformation[] | vscode.DocumentSymbol[]> {
-        const symbols: vscode.DocumentSymbol[] = [];
-        const text = document.getText();
-        const lines = text.split('\n');
-        
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const dirMatch = /@([a-zA-Z0-9_]+)/.exec(line);
-            if (dirMatch) {
-                const dirName = dirMatch[1];
-                if (dirName !== 'end') {
-                    const range = new vscode.Range(i, dirMatch.index, i, dirMatch.index + dirMatch[0].length);
-                    symbols.push(new vscode.DocumentSymbol(
-                        dirName, 'Directive', vscode.SymbolKind.Function, range, range
-                    ));
-                }
-            }
-        }
-        return symbols;
-    }
-}
-
-export class KireSemanticTokensProvider implements vscode.DocumentSemanticTokensProvider {
-    provideDocumentSemanticTokens(
-        document: vscode.TextDocument,
-        _token: vscode.CancellationToken
-    ): vscode.ProviderResult<vscode.SemanticTokens> {
-        const builder = new vscode.SemanticTokensBuilder(semanticTokensLegend);
-        const text = document.getText();
-        
-        // Regex for directives: @directive
-        const directiveRegex = /@([a-zA-Z0-9_-]+)/g;
-        
-        // Regex for elements: <Element> or </Element>
-        const elementRegex = /<\/?([a-zA-Z0-9_-]+)/g;
-
-        let match:RegExpExecArray;
-
-        // Find Directives
-        while ((match = directiveRegex.exec(text))) {
-            const startPos = document.positionAt(match.index);
-            const value = match[0]; // Includes @
-            builder.push(
-                startPos.line,
-                startPos.character,
-                value.length,
-                0, // index of 'keyword' in tokenTypes
-                0
-            );
-        }
-
-        // Find Elements
-        while ((match = elementRegex.exec(text))) {
-            const fullMatch = match[0];
-            const tagName = match[1];
-            const startOffset = match.index + (fullMatch.startsWith('</') ? 2 : 1);
-            const startPos = document.positionAt(startOffset);
-            
-            if (kireStore.getState().elements.has(tagName)) {
-                builder.push(
-                    startPos.line,
-                    startPos.character,
-                    tagName.length,
-                    1, // index of 'class' in tokenTypes
-                    0
-                );
-            }
-        }
-
-        return builder.build();
-    }
-}
-
-// biome-ignore lint/complexity/noStaticOnlyClass: ignore not need
-export class KireLanguageFeatures {
-    static register(context: vscode.ExtensionContext): vscode.Disposable {
-        const disposables: vscode.Disposable[] = [];
-        const selector = [{ language: 'kire', scheme: 'file' }, { language: 'html', scheme: 'file', pattern: '**/*.kire' }];
-
-        // Register diagnostic provider
-        disposables.push(new KireDiagnosticProvider().register(context));
-        
-        // Register Providers
-        disposables.push(
-            vscode.languages.registerCompletionItemProvider(selector, new KireCompletionItemProvider(), '@', '<', '{'),
-            vscode.languages.registerHoverProvider(selector, new KireHoverProvider()),
-            vscode.languages.registerDocumentSymbolProvider(selector, new KireDocumentSymbolProvider()),
-            vscode.languages.registerDocumentSemanticTokensProvider(selector, new KireSemanticTokensProvider(), semanticTokensLegend)
-        );
-
-        return vscode.Disposable.from(...disposables);
-    }
-}
 

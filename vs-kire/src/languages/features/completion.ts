@@ -24,13 +24,6 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
             if (range) jsItem.range = range;
             items.push(jsItem);
 
-            // <?jsc
-            const jscItem = new vscode.CompletionItem('?jsc', vscode.CompletionItemKind.Snippet);
-            jscItem.detail = "Client-side JavaScript Block";
-            jscItem.insertText = new vscode.SnippetString('?jsc\n\t$0\n?>');
-            if (range) jscItem.range = range;
-            items.push(jscItem);
-
             kireStore.getState().elements.forEach((def) => {
                 const item = new vscode.CompletionItem(def.name, vscode.CompletionItemKind.Class);
                 item.detail = "Kire Element";

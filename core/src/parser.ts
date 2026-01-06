@@ -42,21 +42,6 @@ export class Parser {
 				continue;
 			}
 
-			// Check for clientjs <?jsc ... ?>
-			const clientJsMatch = remaining.match(/^<\?jsc([\s\S]*?)\?>/);
-			if (clientJsMatch) {
-				const content = clientJsMatch[0];
-				this.addNode({
-					type: "clientjs",
-					content: clientJsMatch[1]?.trim(),
-					start: this.cursor,
-					end: this.cursor + content.length,
-					loc: this.getLoc(content),
-				});
-				this.advance(content);
-				continue;
-			}
-
 			// Check for serverjs <?js ... ?>
 			const serverJsMatch = remaining.match(/^<\?js([\s\S]*?)\?>/);
 			if (serverJsMatch) {

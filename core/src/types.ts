@@ -396,8 +396,7 @@ export type NodeType =
 	| "text"
 	| "variable"
 	| "directive"
-	| "serverjs"
-	| "clientjs";
+	| "serverjs";
 
 export interface SourceLocation {
 	line: number;

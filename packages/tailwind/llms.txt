@@ -157,7 +157,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 
 					ctx.raw(`$ctx.res(${JSON.stringify(code)});`);
 					ctx.raw('$ctx.res("</tailwind>");');
-				} catch (error) {
+				} catch (_error) {
 					// Fallback behavior
 					const code = ctx.param("code") || "";
 					ctx.raw('$ctx.res("<tailwind>");');

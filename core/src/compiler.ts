@@ -56,12 +56,6 @@ export class Compiler {
 				if (node.content) {
 					this.resBuffer.push(node.content);
 				}
-			} else if (node.type === "clientjs") {
-				if (node.content) {
-					this.resBuffer.push(
-						`$ctx['~res'] += ${JSON.stringify(node.content)};`,
-					);
-				}
 			} else if (node.type === "directive") {
 				await this.processDirective(node);
 			}
