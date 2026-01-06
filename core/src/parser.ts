@@ -17,64 +17,69 @@ export class Parser {
 		this.cursor = 0;
 		this.stack = [];
 		this.rootChildren = [];
+		const len = this.template.length;
 
-		while (this.cursor < this.template.length) {
-			const remaining = this.template.slice(this.cursor);
-			//console.log('PARSER:', {
-			//  cursor: this.cursor,
-			//  remaining: remaining.slice(0, 30),
-			//  stack: this.stack.map(s => s.name)
-			//});
-
+		while (this.cursor < len) {
 			// Check for raw interpolation {{{ ... }}}
-			const rawInterpolationMatch = remaining.match(/^\{\{\{([\s\S]*?)\}\}\}/);
-			if (rawInterpolationMatch) {
-				const content = rawInterpolationMatch[0];
-				this.addNode({
-					type: "variable",
-					content: rawInterpolationMatch[1]?.trim(),
-					raw: true,
-					start: this.cursor,
-					end: this.cursor + content.length,
-					loc: this.getLoc(content),
-				});
-				this.advance(content);
-				continue;
+			if (
+				this.template.startsWith("{{{", this.cursor)
+			) {
+				const end = this.template.indexOf("}}}", this.cursor + 3);
+				if (end !== -1) {
+					const content = this.template.slice(this.cursor, end + 3);
+					const inner = this.template.slice(this.cursor + 3, end);
+					this.addNode({
+						type: "variable",
+						content: inner.trim(),
+						raw: true,
+						start: this.cursor,
+						end: end + 3,
+						loc: this.getLoc(content),
+					});
+					this.advance(content);
+					continue;
+				}
 			}
 
 			// Check for serverjs <?js ... ?>
-			const serverJsMatch = remaining.match(/^<\?js([\s\S]*?)\?>/);
-			if (serverJsMatch) {
-				const content = serverJsMatch[0];
-				this.addNode({
-					type: "serverjs",
-					content: serverJsMatch[1]?.trim(),
-					start: this.cursor,
-					end: this.cursor + content.length,
-					loc: this.getLoc(content),
-				});
-				this.advance(content);
-				continue;
+			if (this.template.startsWith("<?js", this.cursor)) {
+				const end = this.template.indexOf("?>", this.cursor + 4);
+				if (end !== -1) {
+					const content = this.template.slice(this.cursor, end + 2);
+					const inner = this.template.slice(this.cursor + 4, end);
+					this.addNode({
+						type: "serverjs",
+						content: inner.trim(),
+						start: this.cursor,
+						end: end + 2,
+						loc: this.getLoc(content),
+					});
+					this.advance(content);
+					continue;
+				}
 			}
 
 			// Check for interpolation {{ ... }}
-			const interpolationMatch = remaining.match(/^\{\{([\s\S]*?)\}\}/);
-			if (interpolationMatch) {
-				const content = interpolationMatch[0];
-				this.addNode({
-					type: "variable",
-					content: interpolationMatch[1]?.trim(),
-					raw: false,
-					start: this.cursor,
-					end: this.cursor + content.length,
-					loc: this.getLoc(content),
-				});
-				this.advance(content);
-				continue;
+			if (this.template.startsWith("{{", this.cursor)) {
+				const end = this.template.indexOf("}}", this.cursor + 2);
+				if (end !== -1) {
+					const content = this.template.slice(this.cursor, end + 2);
+					const inner = this.template.slice(this.cursor + 2, end);
+					this.addNode({
+						type: "variable",
+						content: inner.trim(),
+						raw: false,
+						start: this.cursor,
+						end: end + 2,
+						loc: this.getLoc(content),
+					});
+					this.advance(content);
+					continue;
+				}
 			}
 
 			// Check for escaped directive @@
-			if (remaining.startsWith("@@")) {
+			if (this.template.startsWith("@@", this.cursor)) {
 				this.addNode({
 					type: "text",
 					content: "@",
@@ -86,331 +91,283 @@ export class Parser {
 				continue;
 			}
 
-			// Check for directive @name(...) or @name without parentheses
-			// Use longest matching directive name first
-			const directiveStartMatch = remaining.match(/^@([a-zA-Z0-9_]+)/);
-			if (directiveStartMatch) {
-				let [fullMatch, name] = directiveStartMatch;
+			// Check for directive @name(...) or @name
+			if (this.template[this.cursor] === "@") {
+				// Use a sticky regex or slice just a small chunk to check the name
+				// Optimization: Slice enough to likely cover a directive name, or match properly
+				// Since we can't easily use sticky regex across environments reliably without 'y' flag support check,
+				// we will slice a small chunk, but much better than slicing the whole rest of file.
+				// However, match is usually fast enough if anchored. Let's try to grab the identifier.
+				
+				const identifierMatch = this.template.slice(this.cursor).match(/^@([a-zA-Z0-9_]+)/);
+				
+				if (identifierMatch) {
+					let [fullMatch, name] = identifierMatch;
+					
+					// 1. First, check if this is a sub-directive of any active parent in the stack.
+					// This takes precedence over global directives and prefix matching in global scope.
+					// We iterate backwards to find the nearest parent that accepts this as a sub-directive.
+					let isSubDirective = false;
+					let subDef: DirectiveDefinition | undefined;
+					let parentNode: Node | undefined;
+					let validName = name;
+					let foundDirective: DirectiveDefinition | undefined;
 
-				// 1. First, check if this is a sub-directive of any active parent in the stack.
-				// This takes precedence over global directives and prefix matching in global scope.
-				// We iterate backwards to find the nearest parent that accepts this as a sub-directive.
-				let isSubDirective = false;
-				let subDef: DirectiveDefinition | undefined;
-				let parentNode: Node | undefined;
-				let validName = name;
-				let foundDirective: DirectiveDefinition | undefined;
-
-				if (this.stack.length > 0) {
-					for (let i = this.stack.length - 1; i >= 0; i--) {
-						const currentParent = this.stack[i];
-						const parentDef = this.kire.getDirective(
-							currentParent?.name as string,
-						);
-
-						if (parentDef?.parents) {
-							// Try to match name against parents
-							// Sort by length to support longest prefix if needed?
-							// Usually sub-directives are exact matches or strict aliases.
-							// But if we support @elseA (unlikely for strict keywords), we might need prefix logic here too.
-							// Let's assume strict match for sub-directives for now, or prefix if needed.
-
-							const candidates = parentDef.parents.filter((p) =>
-								name!.startsWith(p.name),
+					if (this.stack.length > 0) {
+						for (let i = this.stack.length - 1; i >= 0; i--) {
+							const currentParent = this.stack[i];
+							const parentDef = this.kire.getDirective(
+								currentParent?.name as string,
 							);
-							candidates.sort((a, b) => b.name.length - a.name.length);
 
-							if (candidates.length > 0) {
-								const p = candidates[0];
-								// Check if we found a valid prefix match
-								// Update validName
-								validName = p!.name;
-								subDef = p;
-								parentNode = currentParent;
-								isSubDirective = true;
+							if (parentDef?.parents) {
+								const candidates = parentDef.parents.filter((p) =>
+									name!.startsWith(p.name),
+								);
+								candidates.sort((a, b) => b.name.length - a.name.length);
 
-								// Since we found a match at stack[i], we must close all blocks above it (siblings)
-								// e.g. [if, elseif]. Match at [if]. Close [elseif].
-								while (this.stack.length > i + 1) {
-									this.stack.pop();
+								if (candidates.length > 0) {
+									const p = candidates[0];
+									validName = p!.name;
+									subDef = p;
+									parentNode = currentParent;
+									isSubDirective = true;
+
+									while (this.stack.length > i + 1) {
+										this.stack.pop();
+									}
+									break;
 								}
-								break;
 							}
 						}
 					}
-				}
 
-				// 2. If not a sub-directive, check global directives with prefix matching
-				if (!isSubDirective) {
-					foundDirective = this.kire.getDirective(name!);
+					// 2. If not a sub-directive, check global directives with prefix matching
+					if (!isSubDirective) {
+						foundDirective = this.kire.getDirective(name!);
 
-					if (!foundDirective) {
-						const allDirectives = Array.from(
-							this.kire.$directives.values(),
-						).sort((a, b) => b.name.length - a.name.length);
-						for (const d of allDirectives) {
-							if (name!.startsWith(d.name)) {
-								validName = d.name;
-								foundDirective = d;
-								break;
+						if (!foundDirective) {
+							const allDirectives = Array.from(
+								this.kire.$directives.values(),
+							).sort((a, b) => b.name.length - a.name.length);
+							for (const d of allDirectives) {
+								if (name!.startsWith(d.name)) {
+									validName = d.name;
+									foundDirective = d;
+									break;
+								}
 							}
 						}
 					}
-				}
 
-				// Update fullMatch if we matched a shorter name (prefix)
-				if (validName !== name) {
-					name = validName;
-					fullMatch = `@${name}`;
-				} else if (!foundDirective && !isSubDirective && name === "end") {
-					// Keep "end"
-				} else if (!isSubDirective && !foundDirective) {
-					// Try exact fetch again just in case
-					foundDirective = this.kire.getDirective(name!);
-				}
+					// Update fullMatch if we matched a shorter name (prefix)
+					if (validName !== name) {
+						name = validName;
+						fullMatch = `@${name}`;
+					} else if (!foundDirective && !isSubDirective && name === "end") {
+						// Keep "end"
+					} else if (!isSubDirective && !foundDirective) {
+						// Try exact fetch again just in case
+						foundDirective = this.kire.getDirective(name!);
+					}
 
-				//console.log('FOUND DIRECTIVE:', { name, fullMatch, stack: this.stack.map(s => s.name) });
+					// Check if it has arguments
+					let argsStr: string | undefined;
+					let argsEndIndex = fullMatch.length;
 
-				// Check if it has arguments
-				let argsStr: string | undefined;
-				let argsEndIndex = fullMatch.length;
+					// Verifica se tem parênteses APENAS se o próximo caractere for '('
+					if (this.template[this.cursor + fullMatch.length] === "(") {
+						// Parse arguments with balanced parentheses
+						let depth = 1;
+						let i = this.cursor + fullMatch.length + 1;
+						let inQuote = false;
+						let quoteChar = "";
 
-				// Verifica se tem parênteses APENAS se o próximo caractere for '('
-				if (remaining[fullMatch.length] === "(") {
-					// Parse arguments with balanced parentheses
-					let depth = 1;
-					let i = fullMatch.length + 1;
-					let inQuote = false;
-					let quoteChar = "";
-
-					while (i < remaining.length && depth > 0) {
-						const char = remaining[i];
-						if (
-							(char === '"' || char === "'") &&
-							(i === 0 || remaining[i - 1] !== "\\")
-						) {
-							if (inQuote && char === quoteChar) {
-								inQuote = false;
-							} else if (!inQuote) {
-								inQuote = true;
-								quoteChar = char;
+						while (i < len && depth > 0) {
+							const char = this.template[i];
+							if (
+								(char === '"' || char === "'") &&
+								(i === 0 || this.template[i - 1] !== "\\")
+							) {
+								if (inQuote && char === quoteChar) {
+									inQuote = false;
+								} else if (!inQuote) {
+									inQuote = true;
+									quoteChar = char;
+								}
 							}
+
+							if (!inQuote) {
+								if (char === "(") depth++;
+								else if (char === ")") depth--;
+							}
+							i++;
 						}
 
-						if (!inQuote) {
-							if (char === "(") depth++;
-							else if (char === ")") depth--;
+						if (depth === 0) {
+							argsStr = this.template.slice(this.cursor + fullMatch.length + 1, i - 1);
+							argsEndIndex = i - this.cursor;
 						}
-						i++;
 					}
 
-					if (depth === 0) {
-						argsStr = remaining.slice(fullMatch.length + 1, i - 1);
-						argsEndIndex = i;
+					if (name === "end") {
+						this.handleEndDirective();
+						this.advance(this.template.slice(this.cursor, this.cursor + argsEndIndex));
+						continue;
 					}
-				}
 
-				if (name === "end") {
-					//console.log('HANDLING END DIRECTIVE');
-					this.handleEndDirective();
-					this.advance(remaining.slice(0, argsEndIndex));
-					continue;
-				}
+					// directiveDef is already found as foundDirective
+					const directiveDef = foundDirective;
 
-				// directiveDef is already found as foundDirective
-				const directiveDef = foundDirective;
-				//console.log('DIRECTIVE DEF:', { name, directiveDef });
+					if (isSubDirective && subDef && parentNode) {
+						const fullContent = this.template.slice(this.cursor, this.cursor + argsEndIndex);
+						this.handleSubDirective(
+							name!,
+							argsStr,
+							fullContent,
+							parentNode,
+							subDef,
+							this.getLoc(fullContent),
+						);
+						this.advance(fullContent);
+						continue;
+					}
 
-				if (isSubDirective && subDef && parentNode) {
-					//console.log('FOUND SUB DIRECTIVE! Processing:', name);
-					const fullContent = remaining.slice(0, argsEndIndex);
-					this.handleSubDirective(
-						name!,
-						argsStr,
-						fullContent,
-						parentNode,
-						subDef,
-						this.getLoc(fullContent),
-					);
+					// If not a registered directive and not a sub-directive, treat as text
+					if (!directiveDef && !isSubDirective) {
+						this.addNode({
+							type: "text",
+							content: fullMatch,
+							start: this.cursor,
+							end: this.cursor + fullMatch.length,
+							loc: this.getLoc(fullMatch),
+						});
+						this.advance(fullMatch);
+						continue;
+					}
+
+					const args = argsStr ? this.parseArgs(argsStr) : [];
+					const fullContent = this.template.slice(this.cursor, this.cursor + argsEndIndex);
+
+					const node: Node = {
+						type: "directive",
+						name: name,
+						args: args,
+						start: this.cursor,
+						end: this.cursor + argsEndIndex,
+						loc: this.getLoc(fullContent),
+						children: [],
+						related: [],
+					};
+
+					this.addNode(node);
+
+					if (directiveDef?.children) {
+						let shouldHaveChildren = true;
+						if (directiveDef.children === "auto") {
+							let balance = 1;
+							const lookaheadCursor = this.cursor + argsEndIndex;
+							let foundEnd = false;
+
+							// Optimized lookahead without slicing massive chunks
+							const tagRegex = /@([a-zA-Z0-9_]+)/g;
+							// Set lastIndex to start searching from lookaheadCursor
+							// Note: We need to search on the WHOLE template but ignore stuff before lookahead
+							tagRegex.lastIndex = lookaheadCursor;
+							
+							let match: RegExpExecArray | null;
+							while ((match = tagRegex.exec(this.template)) !== null) {
+								const tagName = match[1];
+								if (tagName === "end") {
+									balance--;
+									if (balance === 0) {
+										foundEnd = true;
+										break;
+									}
+								} else {
+									const d = this.kire.getDirective(tagName!);
+									if (d?.children) {
+										balance++;
+									}
+								}
+							}
+							shouldHaveChildren = foundEnd;
+						}
+
+						if (shouldHaveChildren) {
+							if (directiveDef.childrenRaw) {
+								this.stack.push(node);
+
+								const contentStart = this.cursor + argsEndIndex;
+								// Find closing @end
+								const endRegex = /@end(?![a-zA-Z0-9_])/g;
+								endRegex.lastIndex = contentStart;
+								const endMatch = endRegex.exec(this.template);
+
+								if (endMatch) {
+									const content = this.template.slice(contentStart, endMatch.index);
+									const directiveLoc = this.getLoc(fullContent);
+									const startLoc = directiveLoc.end;
+									
+									// Recalculate end loc manually to avoid slow lookups
+									// Or just use getLoc on the content string (easiest for now)
+									// Ideally we would increment from startLoc
+									
+									// We can reuse getLoc logic but we need to supply the text
+									// Using a temporary simpler loc calculation
+									const contentLines = content.split("\n");
+									let endLine = startLoc.line;
+									let endCol = startLoc.column;
+									if (contentLines.length > 1) {
+										endLine += contentLines.length - 1;
+										endCol = (contentLines[contentLines.length - 1]?.length || 0) + 1;
+									} else {
+										endCol += content.length;
+									}
+
+									this.addNode({
+										type: "text",
+										content: content,
+										start: contentStart,
+										end: contentStart + content.length,
+										loc: {
+											start: startLoc,
+											end: { line: endLine, column: endCol },
+										},
+									});
+
+									this.stack.pop(); // Close immediately
+									this.advance(
+										this.template.slice(this.cursor, contentStart) + content + endMatch[0],
+									);
+									continue;
+								} else {
+									// No end tag found, consume rest
+									const content = this.template.slice(contentStart);
+
+									this.addNode({
+										type: "text",
+										content: content,
+										start: contentStart,
+										end: this.template.length,
+									});
+									this.stack.pop();
+									this.advance(this.template.slice(this.cursor));
+									continue;
+								}
+							}
+							this.stack.push(node);
+						}
+					}
+
 					this.advance(fullContent);
 					continue;
 				}
-
-				// If not a registered directive and not a sub-directive, treat as text
-				if (!directiveDef && !isSubDirective) {
-					//console.log('TREATING AS TEXT:', name);
-					this.addNode({
-						type: "text",
-						content: fullMatch,
-						start: this.cursor,
-						end: this.cursor + fullMatch.length,
-						loc: this.getLoc(fullMatch),
-					});
-					this.advance(fullMatch);
-					continue;
-				}
-
-				const args = argsStr ? this.parseArgs(argsStr) : [];
-				const fullContent = remaining.slice(0, argsEndIndex);
-
-				const node: Node = {
-					type: "directive",
-					name: name,
-					args: args,
-					start: this.cursor,
-					end: this.cursor + argsEndIndex,
-					loc: this.getLoc(fullContent),
-					children: [],
-					related: [],
-				};
-
-				//console.log('ADDING DIRECTIVE NODE:', node);
-				this.addNode(node);
-
-				if (directiveDef?.children) {
-					let shouldHaveChildren = true;
-					if (directiveDef.children === "auto") {
-						// Check if there is a matching @end for this directive at this level
-						// Simple heuristic: search for @end, counting nested directives of same name?
-						// Actually, just checking if an @end exists before end of string might be enough for basic cases,
-						// but correct handling requires lookahead balancing.
-
-						// We need to look ahead to see if this directive is closed.
-						// If we find an @end that corresponds to this level, treat as block.
-						// If not, treat as void.
-
-						// BUT, if we just assume "auto" means "block if @end found",
-						// we need to be careful about nested blocks.
-
-						// Heuristic: Scan ahead.
-						// Count open same-name directives? No, generic @end closes any block.
-						// So we scan for @directive vs @end.
-
-						let balance = 1;
-						const lookaheadCursor = argsEndIndex; // Relative to remaining
-						let foundEnd = false;
-
-						const subRemaining = remaining.slice(lookaheadCursor);
-
-						// Regex to find directives
-						const tagRegex = /@([a-zA-Z0-9_]+)/g;
-						let match:RegExpExecArray | null | undefined;
-
-						while ((match = tagRegex.exec(subRemaining)) !== null) {
-							const tagName = match[1];
-							if (tagName === "end") {
-								balance--;
-								if (balance === 0) {
-									foundEnd = true;
-									break;
-								}
-							} else {
-								// Check if this tag is a block directive
-								const d = this.kire.getDirective(tagName!);
-								// If we don't know it, ignore? Or treat as text?
-								// If it IS a block directive, increment balance.
-								if (d?.children) {
-									balance++;
-								}
-							}
-						}
-
-						shouldHaveChildren = foundEnd;
-					}
-
-					if (shouldHaveChildren) {
-						if (directiveDef.childrenRaw) {
-							this.stack.push(node);
-
-							const contentStart = this.cursor + argsEndIndex;
-							const remainingTemplate = this.template.slice(contentStart);
-
-							// Update cursor temporarily to calculate correct loc for raw content
-							// We need to advance virtually to get correct start loc for content
-							const directiveLoc = this.getLoc(fullContent);
-							// Actually we can't easily use getLoc because it depends on this.line/column which haven't advanced yet.
-							// We must advance after adding directive node but BEFORE processing raw content.
-							// Wait, we addNode(directive) then advance(directive) then process content?
-							// The current logic: addNode -> stack push -> then advance? No.
-
-							// Current flow:
-							// 1. addNode(directive)
-							// 2. if childrenRaw:
-							//    stack.push
-							//    find end
-							//    addNode(text)
-							//    stack.pop
-							//    advance(directive + text + end)
-
-							// This makes `this.line` stale for the text node inside childrenRaw block.
-							// We need to calculate text node loc relative to where directive ends.
-
-							// Find closing @end with word boundary check
-							const endMatch = remainingTemplate.match(/@end(?![a-zA-Z0-9_])/);
-
-							if (endMatch) {
-								const content = remainingTemplate.slice(0, endMatch.index);
-
-								// Calculate loc for the inner content
-								// Start is end of directive
-								const startLoc = directiveLoc.end;
-								// End is calculated from content
-								const contentLines = content.split("\n");
-								let endLine = startLoc.line;
-								let endCol = startLoc.column;
-								if (contentLines.length > 1) {
-									endLine += contentLines.length - 1;
-									endCol =
-										(contentLines[contentLines.length - 1]?.length || 0) + 1;
-								} else {
-									endCol += content.length;
-								}
-
-								// Add text node
-								this.addNode({
-									type: "text",
-									content: content,
-									start: contentStart,
-									end: contentStart + content.length,
-									loc: {
-										start: startLoc,
-										end: { line: endLine, column: endCol },
-									},
-								});
-
-								this.stack.pop(); // Close immediately
-								this.advance(
-									remaining.slice(0, argsEndIndex) + content + endMatch[0],
-								);
-								continue;
-							} else {
-								// No end tag found, consume rest
-								const content = remainingTemplate;
-
-								this.addNode({
-									type: "text",
-									content: content,
-									start: contentStart,
-									end: this.template.length,
-									// loc: ... (omitted for simplicity in error case)
-								});
-								this.stack.pop();
-								this.advance(remaining.slice(0, argsEndIndex) + content);
-								continue;
-							}
-						}
-						//console.log('PUSHING TO STACK:', name);
-						this.stack.push(node);
-					}
-				}
-
-				this.advance(remaining.slice(0, argsEndIndex));
-				continue;
 			}
 
 			// Text
-			const nextInterpolation = remaining.indexOf("{{");
-			const nextDirective = remaining.indexOf("@");
+			const nextInterpolation = this.template.indexOf("{{", this.cursor);
+			const nextDirective = this.template.indexOf("@", this.cursor);
 
 			let nextIndex = -1;
 			if (nextInterpolation !== -1 && nextDirective !== -1) {
@@ -422,27 +379,30 @@ export class Parser {
 			}
 
 			if (nextIndex === -1) {
+				const text = this.template.slice(this.cursor);
 				this.addNode({
 					type: "text",
-					content: remaining,
+					content: text,
 					start: this.cursor,
 					end: this.template.length,
-					loc: this.getLoc(remaining),
+					loc: this.getLoc(text),
 				});
-				this.advance(remaining);
+				this.advance(text);
 			} else {
-				if (nextIndex === 0) {
-					const char = remaining[0]!;
+				if (nextIndex === this.cursor) {
+					// Should have been handled above, but if we are here it means
+					// it looked like a directive/interp but wasn't (e.g. "@ " or "{ ")
+					const char = this.template[this.cursor];
 					this.addNode({
 						type: "text",
 						content: char,
 						start: this.cursor,
 						end: this.cursor + 1,
-						loc: this.getLoc(char),
+						loc: this.getLoc(char!),
 					});
-					this.advance(char);
+					this.advance(char!);
 				} else {
-					const text = remaining.slice(0, nextIndex);
+					const text = this.template.slice(this.cursor, nextIndex);
 					this.addNode({
 						type: "text",
 						content: text,
@@ -455,7 +415,6 @@ export class Parser {
 			}
 		}
 
-		//console.log('FINAL RESULT:', JSON.stringify(this.rootChildren, null, 2));
 		return this.rootChildren;
 	}
 

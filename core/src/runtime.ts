@@ -1,5 +1,4 @@
 import type { Kire } from "./kire";
-import type { KireElementContext } from "./types";
 
 export async function kireRuntime(
 	kire: Kire,
@@ -7,42 +6,42 @@ export async function kireRuntime(
 	locals: Record<string, any>,
 	children = false,
 ) {
-	const runtimeContext: any = {};
+	const rctx: any = {};
 	for (const [k, v] of kire.$globals) {
-		runtimeContext[k] = v;
+		rctx[k] = v;
 	}
-	Object.assign(runtimeContext, locals);
+	Object.assign(rctx, locals);
 
 	if (kire.$expose_locals) {
-		runtimeContext[kire.$var_locals] = locals;
+		rctx[kire.$var_locals] = locals;
 	}
 
-	runtimeContext["~res"] = "";
-	runtimeContext["~$pre"] = [];
-	runtimeContext["~$pos"] = [];
+	rctx["~res"] = "";
+	rctx["~$pre"] = [];
+	rctx["~$pos"] = [];
 
-	runtimeContext.res = function (this: any, str: any) {
-		runtimeContext["~res"] += str;
+	rctx.res = function (this: any, str: any) {
+		rctx["~res"] += str;
 	};
 
-	runtimeContext.$res = () => runtimeContext["~res"];
+	rctx.$res = () => rctx["~res"];
 
-	runtimeContext.$resolve = (path: string) => {
+	rctx.$resolve = (path: string) => {
 		return kire.resolvePath(path);
 	};
 
-	runtimeContext.$merge = async (func: Function) => {
-		const parentRes = runtimeContext["~res"];
-		runtimeContext["~res"] = "";
-		await func(runtimeContext);
-		runtimeContext["~res"] = parentRes + runtimeContext["~res"];
+	rctx.$merge = async (func: Function) => {
+		const parentRes = rctx["~res"];
+		rctx["~res"] = "";
+		await func(rctx);
+		rctx["~res"] = parentRes + rctx["~res"];
 	};
 
 	// Execute onInit for all directives
 	if (kire.$directives.size > 0) {
 		for (const directive of kire.$directives.values()) {
 			if (directive.onInit) {
-				await directive.onInit(runtimeContext);
+				await directive.onInit(rctx);
 			}
 		}
 	}
@@ -50,7 +49,7 @@ export async function kireRuntime(
 	let finalCtx: any;
 	try {
 		//console.log(mainFn.toString())
-		finalCtx = await mainFn(runtimeContext);
+		finalCtx = await mainFn(rctx);
 	} catch (e: any) {
 		if ((mainFn as any)._code) {
 			e.kireGeneratedCode = (mainFn as any)._code;
@@ -98,7 +97,7 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 		const regex = isVoid
 			? new RegExp(`<(${tagName})([^>]*)>`, "gi")
 			: new RegExp(`<(${tagName})([^>]*)>([^]*?)<\\/\\1>`, "gi");
-		// console.log('Regex for', tagName, ':', regex.source);
+		
 		const matches = [];
 		let match: RegExpExecArray | null;
 		while ((match = regex.exec(resultHtml)) !== null) {
@@ -111,10 +110,10 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 			});
 		}
 
+		let offset = 0;
 		for (const m of matches) {
-			if (!resultHtml.includes(m.full)) {
-				continue;
-			}
+			const currentStart = m.index + offset;
+			const currentEnd = currentStart + m.full.length;
 
 			const attributes: Record<string, string> = {};
 			const attrRegex = /([a-zA-Z0-9_-]+)(?:="([^"]*)")?/g;
@@ -131,29 +130,36 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 				inner: m.inner,
 				outer: m.full,
 			};
+
+			let isModified = false;
 			elCtx.update = (newContent: string) => {
 				resultHtml = newContent;
 				elCtx.content = newContent;
 			};
+			
 			elCtx.replace = (replacement: string) => {
-				resultHtml = resultHtml.replace(m.full, replacement);
+				const pre = resultHtml.slice(0, currentStart);
+				const pos = resultHtml.slice(currentEnd);
+				resultHtml = pre + replacement + pos;
 				elCtx.content = resultHtml;
+				offset += replacement.length - m.full.length;
+				isModified = true;
 			};
+
 			elCtx.replaceElement = (replacement: string) => {
-				resultHtml = resultHtml.replace(m.full, replacement);
-				elCtx.content = resultHtml;
+				elCtx.replace(replacement);
 			};
+
 			elCtx.replaceContent = (replacement: string) => {
 				if (!isVoid) {
 					const newOuter = m.full.replace(m.inner!, replacement);
-					resultHtml = resultHtml.replace(m.full, newOuter);
-					elCtx.content = resultHtml;
+					elCtx.replace(newOuter);
 				}
 			};
 
 			await def.onCall(elCtx);
 
-			if (elCtx.content !== resultHtml) {
+			if (!isModified && elCtx.content !== resultHtml) {
 				resultHtml = elCtx.content;
 			}
 		}

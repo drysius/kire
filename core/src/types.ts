@@ -2,11 +2,6 @@ import type { Kire } from "./kire";
 
 export type KireCache<T = any> = Map<string, T>;
 
-export interface KireConfig {
-	globals?: Record<string, any>;
-	// Add other config options as needed
-}
-
 export interface IParser {
 	parse(): Node[];
 }
