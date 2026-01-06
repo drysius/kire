@@ -1,10 +1,10 @@
 @dynamicroutes($ctx.packages.map(p => p.package.replace('@kirejs/', '')))
 
-@code
-    const { package = "core" } = $ctx.$params;
-    const item = $ctx.packages.find(
-      p => p.package === package || p.package === '@kirejs/' + package
-    );
-@end
+<?js
+  const { package = "core" } = $ctx.$params;
+  const item = $ctx.packages.find(
+    p => p.package === package || p.package === '@kirejs/' + package
+  );
+?>
 
 @include('layouts/_package.kire', { packageName: item?.package || package })
