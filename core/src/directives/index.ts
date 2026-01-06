@@ -21,8 +21,9 @@ export const KireDirectives: KirePlugin = {
 				// Use absolute path for caching key to avoid conflicts
 				const resolvedPath = resolvePath(
 					path,
-					kire.root,
-					kire.alias,
+					kire.namespaces,
+					kire.mounts,
+					locals,
 					kire.extension,
 				);
 

@@ -64,9 +64,7 @@ export class Compiler {
 	 */
 	private compileText(node: Node) {
 		if (node.content) {
-			this.resBuffer.push(
-				`$ctx['~res'] += ${JSON.stringify(node.content)};`,
-			);
+			this.resBuffer.push(`$ctx['~res'] += ${JSON.stringify(node.content)};`);
 		}
 	}
 
@@ -79,9 +77,7 @@ export class Compiler {
 			if (node.raw) {
 				this.resBuffer.push(`$ctx['~res'] += (${node.content});`);
 			} else {
-				this.resBuffer.push(
-					`$ctx['~res'] += $ctx.$escape(${node.content});`,
-				);
+				this.resBuffer.push(`$ctx['~res'] += $ctx.$escape(${node.content});`);
 			}
 		}
 	}
@@ -121,7 +117,10 @@ export class Compiler {
 	 * @param directive The directive definition.
 	 * @returns The context object.
 	 */
-	private createCompilerContext(node: Node, directive: DirectiveDefinition): CompilerContext {
+	private createCompilerContext(
+		node: Node,
+		directive: DirectiveDefinition,
+	): CompilerContext {
 		const self = this;
 		return {
 			kire: this.kire,

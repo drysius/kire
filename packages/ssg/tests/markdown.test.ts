@@ -4,7 +4,7 @@ import { Kire } from "kire";
 import KireMarkdown from "../../markdown/src/index";
 import KireAssets from "../../assets/src/index";
 import KireNode from "../../node/src/index";
-import { join } from "path";
+import { join, resolve } from "path";
 import { mkdir, writeFile, readFile, rm, readdir } from "fs/promises";
 
 describe("KireSsg Build", () => {
@@ -77,54 +77,24 @@ describe("KireSsg Build", () => {
 
         // 3. Setup Kire
         const kire = new Kire({
-            root: srcDir,
+            // root: srcDir, // Removed
             plugins: [
-                [KireSsg, { assetsPrefix: 'static' }], 
+                [KireSsg, { assetsPrefix: 'static', routes: srcDir }], // Set routes to srcDir
                 KireMarkdown, 
                 [KireAssets, { prefix: 'static' }],
                 KireNode // Add resolver to provide $readdir
             ],
-            // resolver: async (path) => await readFile(path, 'utf-8') // KireResolver handles this now, but we can keep or remove. KireResolver overrides kire.$resolver.
         });
-        // Since we added KireResolver plugin, it overrides $resolver. We don't need to manually set it unless we want to.
-        // However, KireResolver reads from disk relative to CWD usually or absolute paths.
-        // In test, kire.root is `srcDir`.
-        // `docs/*.md` pattern is relative to `srcDir`?
-        // `$readdir` in resolver uses `recursiveReaddir` starting from `.` (process.cwd) if not specified?
-        // My `$readdir` impl uses hardcoded `root = "."`. 
-        // This might be an issue if the test runs in project root but files are in `./test-ssg-build/src`.
-        // The pattern passed to `$readdir` will be `docs/*.md`.
-        // The glob logic: `docs/*.md` in `.` (root).
-        // But files are in `test-ssg-build/src/docs/*.md`.
-        // So `$readdir` won't find them if searching from `.` using pattern `docs/*.md`.
         
-        // Hack: Change kire.$readdir to search in srcDir?
-        // OR update `$readdir` implementation to respect `kire.root`?
-        // But `$readdir` is attached by `resolver` plugin, which doesn't know about `kire.root` changes dynamically unless configured.
-        // The resolver `createReadDir` uses `.` as root.
+        // Setup namespaces to allow resolving paths relative to srcDir
+        // Use resolve to get absolute paths
+        kire.namespace('docs', resolve(srcDir, 'docs'));
+        kire.namespace('blog', resolve(srcDir, 'blog'));
         
-        // I should update the test to mock `$readdir` OR update the pattern to be relative to CWD.
-        // `test-ssg-build/src/docs/*.md`.
-        // But the template uses `docs/*.md`.
-        
-        // Better: Update the test to mock `$readdir` manually to ensure it works in test environment without relying on my potentially flawed `$readdir` implementation regarding root paths.
-        
+        // Mock $readdir for specific patterns used in templates
         kire.$readdir = async (pattern) => {
-             // pattern is 'docs/*.md' or 'blog/**/*.md'
-             // we need to return relative paths (as keys for slots)?
-             // AND we need to find the files in `srcDir`.
-             
-             // Using `glob` from `glob` package inside test is easiest.
-             // import { glob } from 'glob'; // wait, I don't have it imported in test file.
-             // I can use readdir recursively.
-             
-             // But wait, `KireMarkdown` calls `$readdir(pattern)`.
-             // And uses the result to call `renderMarkdown(file)`.
-             // `renderMarkdown` uses `resolvePath`.
-             // If `$readdir` returns `docs/intro.md`, `resolvePath` (with root=srcDir) will resolve to `srcDir/docs/intro.md`.
-             // So `$readdir` MUST return paths relative to `root`.
-             
-             // Let's implement a simple mock for this test.
+             // Return paths relative to srcDir, matching the keys expected by the template
+             // and resolvable via the namespaces we just added.
              if (pattern === 'docs/*.md') {
                  return ['docs/intro.md', 'docs/setup.md'];
              }

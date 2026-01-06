@@ -46,7 +46,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			let content = source;
 			if (source.endsWith(".md") || source.endsWith(".markdown")) {
 				try {
-					const path = kire.resolvePath(source);
+					const path = kire.resolvePath(source, {}, null);
 					const fs = await import("node:fs/promises");
 					content = await fs.readFile(path, "utf-8");
 				} catch (_e) {

@@ -1,80 +1,92 @@
-import { join } from "./path";
-
 /**
- * Resolves a file path based on a root directory, aliases, and optional current file context.
- * Handles Windows drive letters, absolute paths, and URL exclusions.
- *
- * @param filepath - The path to resolve (can be relative, absolute, or an alias).
- * @param root - The root directory to resolve relative paths against.
- * @param alias - A map of path aliases (e.g., { "@": "src/" }).
- * @param extension - Optional default extension to append if missing.
- * @param currentFile - Optional path of the current file to resolve relative imports against.
- * @returns The resolved, normalized absolute path (using forward slashes).
+ * Resolves a file path using namespaces and dot notation.
+ * @param filepath The path to resolve (e.g. "theme.index" or "~/index").
+ * @param namespaces The map of registered namespaces.
+ * @param mounts The map of mount data.
+ * @param locals Data to resolve path placeholders (e.g. {theme: 'dark'}).
+ * @param extension Default file extension.
+ * @returns The resolved absolute path.
  */
 export function resolvePath(
 	filepath: string,
-	root: string,
-	alias: Record<string, string>,
-	extension?: string,
-	currentFile?: string,
+	namespaces: Map<string, string>,
+	mounts: Map<string, Record<string, any>>,
+	locals: Record<string, any> = {},
+	extension = "kire",
 ): string {
 	if (!filepath) return filepath;
 
-	// Skip URL paths
-	if (filepath.startsWith("http://") || filepath.startsWith("https://")) {
-		return filepath;
-	}
+	let normalized = filepath.replace(/\\/g, "/");
 
-	// Normalize slashes: convert backslashes to forward slashes and remove duplicates
-	let resolved = filepath.replace(/\\/g, "/").replace(/(?<!:)\/+/g, "/");
-	const normalizedRoot = root.replace(/\\/g, "/").replace(/\/\/$/, "");
+	// Search for matching namespace
+	const sortedNamespaces = Array.from(namespaces.keys()).sort(
+		(a, b) => b.length - a.length,
+	);
 
-	// Check if path is already absolute (Unix or Windows)
-	const isWindowsAbsolute = /^[a-zA-Z]:\/$/.test(resolved);
-	
-	// Handle Aliases
-	// Optimization: Iterate directly. If strict ordering is required by the user,
-	// the alias object key order is usually respected in modern JS engines,
-	// or the user should pass sorted keys.
-	// We use startsWith for O(1) prefix check instead of RegExp overhead.
-	let matchedAlias = false;
-	const aliasKeys = Object.keys(alias);
-	
-	// Sort by length (descending) ensures longest prefix matches first (e.g., @app vs @)
-	// Note: Sorting every call is costly. In a hot path, this should be pre-computed.
-	// For now, we maintain behavior but optimized the loop body.
-	aliasKeys.sort((a, b) => b.length - a.length);
+	for (const ns of sortedNamespaces) {
+		if (normalized.startsWith(ns)) {
+			let template = namespaces.get(ns)!;
+			const mountData = mounts.get(ns) || {};
+			const data = { ...mountData, ...locals };
 
-	for (const aliasKey of aliasKeys) {
-		if (filepath.startsWith(aliasKey)) {
-			resolved = join(alias[aliasKey]!, filepath.slice(aliasKey.length));
-			matchedAlias = true;
-			break;
+			// Replace placeholders in template
+			template = template.replace(/\{(\w+)\}/g, (_, key) => {
+				return data[key] !== undefined ? String(data[key]) : `{${key}}`;
+			});
+
+			// Normalize template
+			template = template.replace(/\\/g, "/");
+
+			// Handle suffix
+			let suffix = normalized.slice(ns.length);
+
+			// Remove leading dot or slash from suffix if present to avoid double separator
+			if (suffix.startsWith(".") || suffix.startsWith("/")) {
+				suffix = suffix.slice(1);
+			}
+
+			// Convert dots to slashes in suffix ONLY if extension is provided (assuming template mode)
+			// If extension is empty, we assume exact path mode (e.g. assets/markdown)
+			if (extension) {
+				suffix = suffix.replace(/\./g, "/");
+			}
+
+			normalized = `${template}/${suffix}`;
+
+			// Remove double slashes
+			normalized = normalized.replace(/\/+/g, "/");
+
+			// Apply extension
+			if (
+				extension &&
+				!normalized.endsWith(`.${extension}`) &&
+				!normalized.startsWith("http")
+			) {
+				normalized += `.${extension}`;
+			}
+
+			return normalized;
 		}
 	}
 
-	if (!matchedAlias) {
-		const isResolvedAbsolute = /^(?:\/|[a-zA-Z]:\/)/.test(resolved);
-		
-		if (!isResolvedAbsolute && !isWindowsAbsolute) {
-			// Resolve relative to current file or root
-			const base = currentFile
-				? currentFile.replace(/\\/g, "/").replace(/\/[^/]*$/, "")
-				: normalizedRoot;
-			resolved = join(base, resolved);
+	// If no namespace match, fallback to standard resolution
+	// Handle simple dot notation for relative paths
+	if (!normalized.startsWith("http") && !normalized.startsWith("/")) {
+		// Only convert dots if it looks like a dot-path (e.g. "dir.file")
+		// Assumption: if it doesn't have an extension yet, we convert dots.
+		const hasExtension = /\.[a-zA-Z0-9]+$/.test(normalized);
+
+		if (!hasExtension) {
+			normalized = normalized.replace(/\./g, "/");
 		}
 	}
 
-	// Append extension if missing and not a URL (URL check repeated for safety after alias expansion)
 	if (
 		extension &&
-		!/\.[^/.]+$/.test(resolved) &&
-		!(resolved.startsWith("http://") || resolved.startsWith("https://"))
+		!normalized.endsWith(`.${extension}`) &&
+		!normalized.startsWith("http")
 	) {
-		const ext = extension.charAt(0) === "." ? extension : `.${extension}`;
-		resolved += ext;
+		normalized += `.${extension}`;
 	}
-
-	// Final normalization to ensure clean forward slashes
-	return resolved.replace(/\/+/g, "/");
+	return normalized;
 }

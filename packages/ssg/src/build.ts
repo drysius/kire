@@ -18,7 +18,8 @@ export async function build(opts: BuildOptions) {
 	const dynamicRoutesMap = state.dynamicRoutesMap;
 
 	const outDir = resolve(opts.out);
-	const rootDir = resolve(kireInstance.root);
+	// Fallback to process.cwd() since kire.root property was removed
+	const rootDir = process.cwd();
 	const routesDir = resolve(rootDir, pluginOptions.routes || ".");
 	const assetsPrefix = pluginOptions.assetsPrefix || "_kire";
 
@@ -65,6 +66,12 @@ export async function build(opts: BuildOptions) {
 		const relativePath = relative(routesDir, file);
 		if (relativePath.split("/").some((p) => p.startsWith("_"))) continue;
 
+		// Use relative path from root for view resolution if possible, or relative to routesDir?
+		// Since we want to use the kire.view which might expect a namespaced path or relative path.
+		// If we pass a relative path to view(), it might try to resolve it against CWD or namespaces.
+		// For SSG, we are iterating files on disk. We should probably construct a path that Kire can resolve.
+		// If we assume standard kire setup, maybe we should mount the routesDir?
+		// For now, let's try using the relative path from rootDir which effectively is CWD relative.
 		const kireResolvePath = relative(rootDir, file);
 		const hasParamInName =
 			relativePath.includes("[") && relativePath.includes("]");
@@ -134,7 +141,7 @@ export async function build(opts: BuildOptions) {
 				Logger.info(
 					`Detected Generator in ${relativePath} for '${globPattern}'`,
 				);
-				const mdFiles = await glob(globPattern!, { cwd: rootDir });
+				const mdFiles = await glob(globPattern!, { cwd: routesDir });
 
 				for (const mdFile of mdFiles) {
 					const mdRelative = String(mdFile);

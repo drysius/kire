@@ -1,20 +1,17 @@
 import { expect, test } from "bun:test";
-import { join } from "path";
 import { Kire } from "../src/index";
 
-test("Kire - Path Resolution and Aliases", async () => {
-	const kire = new Kire({
-		root: "/app/views",
-		alias: {
-			"@components": "/app/components",
-			"~": "/app/views",
-		},
-	});
+test("Kire - Path Resolution and Namespaces", async () => {
+	const kire = new Kire();
+    
+    // Simulate root behavior or base namespace
+    kire.namespace('~', '/app/views');
+    kire.namespace('@components', '/app/components');
 
-	// Test basic resolution relative to root
-	expect(kire.resolvePath("header")).toBe("/app/views/header.kire");
+	// Test namespace resolution
+	expect(kire.resolvePath("~/header")).toBe("/app/views/header.kire");
 
-	// Test alias resolution
+	// Test alias-like namespace resolution
 	expect(kire.resolvePath("@components/Button")).toBe(
 		"/app/components/Button.kire",
 	);
@@ -27,9 +24,10 @@ test("Kire - Path Resolution and Aliases", async () => {
 });
 
 test("Kire - Resolver in Directive", async () => {
-	const kire = new Kire({
-		root: "/", // Change root to '/' for consistent alias resolution
-	});
+	const kire = new Kire();
+    // Setup namespace
+    kire.namespace('~', '/home');
+
 	kire.directive({
 		name: "path",
 		params: ["p:string"],
@@ -39,28 +37,23 @@ test("Kire - Resolver in Directive", async () => {
 		},
 	});
 
-	const result = await kire.render("@path('~/home')");
-	expect(result).toBe("/home.kire");
+	const result = await kire.render("@path('~/index')");
+	expect(result).toBe("/home/index.kire");
 });
 
 test("Kire - File Resolver Integration (Mock)", async () => {
 	const kire = new Kire({
-		root: "/views",
 		resolver: async (filename) => {
 			if (filename === "/views/partial.kire") {
 				return "Partial Content";
 			}
-			throw new Error("File not found");
+			throw new Error("File not found: " + filename);
 		},
 	});
+    
+    kire.namespace('views', '/views');
 
-	// We can test render by passing a path instead of content
-	// Since we don't have FS access here, we rely on our mock resolver
-
-	// Note: render() expects template string OR path.
-	// Our mock assumes /views/partial.kire is the resolved path.
-
-	// render('partial') -> resolves to /views/partial.kire -> calls resolver -> returns content -> compiles content
-	const result = await kire.view("partial");
+	// render('views.partial') -> resolves to /views/partial.kire -> calls resolver
+	const result = await kire.view("views.partial");
 	expect(result).toBe("Partial Content");
 });

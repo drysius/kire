@@ -137,7 +137,9 @@ export default () => {
 				value = newValue;
 			}
 			// Copy to array to avoid infinite loops if effects modify signal
-			[...subscribers].forEach((eff) => {eff.execute()});
+			[...subscribers].forEach((eff) => {
+				eff.execute();
+			});
 			return value;
 		};
 
@@ -193,7 +195,9 @@ export default () => {
 		};
 
 		const cleanupDeps = () => {
-			effect.deps.forEach((sub) => {sub.delete(effect)});
+			effect.deps.forEach((sub) => {
+				sub.delete(effect);
+			});
 			effect.deps.clear();
 		};
 
@@ -222,7 +226,9 @@ export default () => {
 
 			// Cleanup previous bindings if any
 			if ((targetNode as any).__kire_cleanups) {
-				(targetNode as any).__kire_cleanups.forEach((fn: any) => {fn()});
+				(targetNode as any).__kire_cleanups.forEach((fn: any) => {
+					fn();
+				});
 				(targetNode as any).__kire_cleanups = [];
 			} else {
 				(targetNode as any).__kire_cleanups = [];

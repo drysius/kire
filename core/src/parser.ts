@@ -29,7 +29,7 @@ export class Parser {
 			if (this.checkInterpolation()) continue;
 			if (this.checkEscapedDirective()) continue;
 			if (this.checkDirective()) continue;
-			
+
 			this.parseText();
 		}
 
@@ -142,11 +142,13 @@ export class Parser {
 	private checkDirective(): boolean {
 		if (this.template[this.cursor] !== "@") return false;
 
-		const identifierMatch = this.template.slice(this.cursor).match(/^@([a-zA-Z0-9_]+)/);
+		const identifierMatch = this.template
+			.slice(this.cursor)
+			.match(/^@([a-zA-Z0-9_]+)/);
 		if (!identifierMatch) return false;
 
 		let [fullMatch, name] = identifierMatch;
-		
+
 		let isSubDirective = false;
 		let subDef: DirectiveDefinition | undefined;
 		let parentNode: Node | undefined;
@@ -159,7 +161,9 @@ export class Parser {
 				const parentDef = this.kire.getDirective(currentParent?.name as string);
 
 				if (parentDef?.parents) {
-					const candidates = parentDef.parents.filter((p) => name!.startsWith(p.name));
+					const candidates = parentDef.parents.filter((p) =>
+						name!.startsWith(p.name),
+					);
 					candidates.sort((a, b) => b.name.length - a.name.length);
 
 					if (candidates.length > 0) {
@@ -180,8 +184,9 @@ export class Parser {
 		if (!isSubDirective) {
 			foundDirective = this.kire.getDirective(name!);
 			if (!foundDirective) {
-				const allDirectives = Array.from(this.kire.$directives.values())
-					.sort((a, b) => b.name.length - a.name.length);
+				const allDirectives = Array.from(this.kire.$directives.values()).sort(
+					(a, b) => b.name.length - a.name.length,
+				);
 				for (const d of allDirectives) {
 					if (name!.startsWith(d.name)) {
 						validName = d.name;
@@ -214,14 +219,19 @@ export class Parser {
 
 		if (name === "end") {
 			this.handleEndDirective();
-			this.advance(this.template.slice(this.cursor, this.cursor + argsEndIndex));
+			this.advance(
+				this.template.slice(this.cursor, this.cursor + argsEndIndex),
+			);
 			return true;
 		}
 
 		const directiveDef = foundDirective;
 
 		if (isSubDirective && subDef && parentNode) {
-			const fullContent = this.template.slice(this.cursor, this.cursor + argsEndIndex);
+			const fullContent = this.template.slice(
+				this.cursor,
+				this.cursor + argsEndIndex,
+			);
 			this.handleSubDirective(
 				name!,
 				argsStr,
@@ -247,7 +257,10 @@ export class Parser {
 		}
 
 		const args = argsStr ? this.parseArgs(argsStr) : [];
-		const fullContent = this.template.slice(this.cursor, this.cursor + argsEndIndex);
+		const fullContent = this.template.slice(
+			this.cursor,
+			this.cursor + argsEndIndex,
+		);
 
 		const node: Node = {
 			type: "directive",
@@ -263,7 +276,14 @@ export class Parser {
 		this.addNode(node);
 
 		if (directiveDef?.children) {
-			if (this.handleDirectiveChildren(directiveDef, node, argsEndIndex, fullContent)) {
+			if (
+				this.handleDirectiveChildren(
+					directiveDef,
+					node,
+					argsEndIndex,
+					fullContent,
+				)
+			) {
 				return true;
 			}
 		}
@@ -286,7 +306,10 @@ export class Parser {
 
 		while (i < len && depth > 0) {
 			const char = this.template[i];
-			if ((char === '"' || char === "'") && (i === 0 || this.template[i - 1] !== "\\")) {
+			if (
+				(char === '"' || char === "'") &&
+				(i === 0 || this.template[i - 1] !== "\\")
+			) {
 				if (inQuote && char === quoteChar) {
 					inQuote = false;
 				} else if (!inQuote) {
@@ -304,7 +327,7 @@ export class Parser {
 		if (depth === 0) {
 			return {
 				argsStr: this.template.slice(this.cursor + offset + 1, i - 1),
-				endIndex: i - this.cursor
+				endIndex: i - this.cursor,
 			};
 		}
 		return null;
@@ -322,7 +345,7 @@ export class Parser {
 		directiveDef: DirectiveDefinition,
 		node: Node,
 		argsEndIndex: number,
-		fullContent: string
+		fullContent: string,
 	): boolean {
 		let shouldHaveChildren = true;
 		if (directiveDef.children === "auto") {
@@ -332,7 +355,7 @@ export class Parser {
 
 			const tagRegex = /@([a-zA-Z0-9_]+)/g;
 			tagRegex.lastIndex = lookaheadCursor;
-			
+
 			let match: RegExpExecArray | null;
 			while ((match = tagRegex.exec(this.template)) !== null) {
 				const tagName = match[1];
@@ -370,7 +393,11 @@ export class Parser {
 	 * @param fullContent The full string content of the directive.
 	 * @returns True indicating the content was processed.
 	 */
-	private handleRawChildren(node: Node, argsEndIndex: number, fullContent: string): boolean {
+	private handleRawChildren(
+		node: Node,
+		argsEndIndex: number,
+		fullContent: string,
+	): boolean {
 		this.stack.push(node);
 		const contentStart = this.cursor + argsEndIndex;
 		const endRegex = /@end(?![a-zA-Z0-9_])/g;
@@ -381,7 +408,7 @@ export class Parser {
 			const content = this.template.slice(contentStart, endMatch.index);
 			const directiveLoc = this.getLoc(fullContent);
 			const startLoc = directiveLoc.end;
-			
+
 			const contentLines = content.split("\n");
 			let endLine = startLoc.line;
 			let endCol = startLoc.column;
@@ -403,7 +430,7 @@ export class Parser {
 				},
 			});
 
-			this.stack.pop(); 
+			this.stack.pop();
 			this.advance(
 				this.template.slice(this.cursor, contentStart) + content + endMatch[0],
 			);
@@ -467,7 +494,7 @@ export class Parser {
 					start: this.cursor,
 					end: this.cursor + text.length,
 					loc: this.getLoc(text),
-					raw: false
+					raw: false,
 				});
 				this.advance(text);
 			}

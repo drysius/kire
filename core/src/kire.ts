@@ -34,9 +34,15 @@ export class Kire {
 	public $globals: Map<string, any> = new Map();
 
 	/**
-	 * The root directory for file resolution.
+	 * Registry of namespaces for path resolution.
+	 * Maps prefix (e.g. "~") to absolute path templates.
 	 */
-	public root: string;
+	public namespaces: Map<string, string> = new Map();
+
+	/**
+	 * Registry of default data for namespaces.
+	 */
+	public mounts: Map<string, Record<string, any>> = new Map();
 
 	/**
 	 * Whether the instance is running in production mode.
@@ -54,11 +60,6 @@ export class Kire {
 	 * Optional function to list files in a directory, used by glob features.
 	 */
 	public $readdir?: (pattern: string) => Promise<string[]>;
-
-	/**
-	 * Path aliases for imports (e.g., { "@": "./src" }).
-	 */
-	public alias: Record<string, string>;
 
 	/**
 	 * Default extension for template files (e.g., "kire").
@@ -118,9 +119,7 @@ export class Kire {
 	}
 
 	constructor(options: KireOptions = {}) {
-		this.root = options.root ?? "./";
 		this.production = options.production ?? true;
-		this.alias = options.alias ?? { "~/": this.root };
 		this.extension = options.extension ?? "kire";
 		this.$var_locals = options.varLocals ?? "it";
 		this.$expose_locals = options.exposeLocals ?? true;
@@ -161,6 +160,55 @@ export class Kire {
 		for (const item of pluginsToLoad) {
 			this.plugin(item.p, item.o);
 		}
+	}
+
+	/**
+	 * Registers a namespace with a path template.
+	 * @param name The namespace prefix (e.g. "~" or "plugin").
+	 * @param path The path template (e.g. "/abs/path/{theme}").
+	 * @returns The Kire instance.
+	 */
+	public namespace(name: string, path: string) {
+		// Normalize to unix path
+		const unixPath = path.replace(/\\/g, "/");
+		this.namespaces.set(name, unixPath);
+		return this;
+	}
+
+	/**
+	 * Mounts data to a namespace, used for resolving placeholders.
+	 * @param name The namespace prefix.
+	 * @param data The data object (e.g. { theme: 'dark' }).
+	 * @returns The Kire instance.
+	 */
+	public mount(name: string, data: Record<string, any>) {
+		this.mounts.set(name, data);
+		return this;
+	}
+
+	/**
+	 * Creates a shallow copy of the Kire instance.
+	 * Useful for creating isolated scopes with shared configuration.
+	 */
+	public clone(): Kire {
+		const clone = new Kire();
+		clone.production = this.production;
+		clone.extension = this.extension;
+		clone.$resolver = this.$resolver;
+		clone.$readdir = this.$readdir;
+		clone.$parser = this.$parser;
+		clone.$compiler = this.$compiler;
+		clone.$var_locals = this.$var_locals;
+		clone.$expose_locals = this.$expose_locals;
+
+		// Clone maps
+		this.$directives.forEach((v, k) => clone.$directives.set(k, v));
+		this.$elements.forEach((v) => clone.$elements.add(v));
+		this.$globals.forEach((v, k) => clone.$globals.set(k, v));
+		this.namespaces.forEach((v, k) => clone.namespaces.set(k, v));
+		this.mounts.forEach((v, k) => clone.mounts.set(k, v));
+
+		return clone;
 	}
 
 	/**
@@ -230,7 +278,7 @@ export class Kire {
 			if (!handler) throw new Error("Handler is required for legacy element()");
 			this.$elements.add({
 				name: nameOrDef as string | RegExp,
-				void: options?.void ?? false,
+				void: options?.void ?? false, // Default to false if not provided
 				onCall: handler,
 			});
 		}
@@ -339,12 +387,7 @@ export class Kire {
 		path: string,
 		locals: Record<string, any> = {},
 	): Promise<string> {
-		const resolvedPath = resolvePath(
-			path,
-			this.root,
-			this.alias,
-			this.extension,
-		);
+		const resolvedPath = this.resolvePath(path, locals);
 		let compiled: Function | undefined;
 
 		if (this.production && this.$files.has(resolvedPath)) {
@@ -362,18 +405,23 @@ export class Kire {
 	}
 
 	/**
-	 * Resolves a file path relative to the project root and aliases.
-	 * @param filepath The path to resolve.
-	 * @param currentFile Optional path of the current file for relative resolution.
+	 * Resolves a file path using namespaces and dot notation.
+	 * @param filepath The path to resolve (e.g. "theme.index" or "~/index").
+	 * @param locals Data to resolve path placeholders (e.g. {theme: 'dark'}).
+	 * @param extension Optional extension to use (defaults to instance extension). Pass null to avoid appending.
 	 * @returns The resolved absolute path.
 	 */
-	public resolvePath(filepath: string, currentFile?: string): string {
+	public resolvePath(
+		filepath: string,
+		locals: Record<string, any> = {},
+		extension: string | null = this.extension,
+	): string {
 		return resolvePath(
 			filepath,
-			this.root,
-			this.alias,
-			this.extension,
-			currentFile,
+			this.namespaces,
+			this.mounts,
+			locals,
+			extension === null ? "" : extension,
 		);
 	}
 

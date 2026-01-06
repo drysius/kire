@@ -122,7 +122,7 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 		const regex = isVoid
 			? new RegExp(`<(${tagName})([^>]*)>`, "gi")
 			: new RegExp(`<(${tagName})([^>]*)>([^]*?)<\\/\\1>`, "gi");
-		
+
 		const matches = [];
 		let match: RegExpExecArray | null;
 		while ((match = regex.exec(resultHtml)) !== null) {
@@ -161,7 +161,7 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 				resultHtml = newContent;
 				elCtx.content = newContent;
 			};
-			
+
 			elCtx.replace = (replacement: string) => {
 				const pre = resultHtml.slice(0, currentStart);
 				const pos = resultHtml.slice(currentEnd);
