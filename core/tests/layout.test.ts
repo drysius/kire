@@ -1,17 +1,27 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it, beforeAll, afterAll } from "bun:test";
 import { Kire } from "../src/kire";
+import { mkdir, writeFile, rm, readFile } from "node:fs/promises";
+import { join, resolve } from "node:path";
 
 describe("Layout Directives", () => {
+    const testDir = resolve("./test-layout-env");
+
+    beforeAll(async () => {
+        await mkdir(testDir, { recursive: true });
+    });
+
+    afterAll(async () => {
+        await rm(testDir, { recursive: true, force: true });
+    });
+
 	it("should render a layout with parameters", async () => {
 		const kire = new Kire();
+        kire.namespace('layouts', testDir);
+        kire.$resolver = async (p) => await readFile(p, 'utf-8');
 
-		// Mock resolver
-		kire.$resolver = async (path) => {
-			if (path.includes("layout")) return `<h1>{{ title }}</h1>`;
-			return "";
-		};
+        await writeFile(join(testDir, "main.kire"), `<h1>{{ it.title }}</h1>`);
 
-		const template = `@include('layout', { title: 'Hello Layout' })`;
+		const template = `@include('layouts.main', { title: 'Hello Layout' })`;
 		const result = await kire.render(template);
 
 		expect(result).toBe("<h1>Hello Layout</h1>");
@@ -19,16 +29,12 @@ describe("Layout Directives", () => {
 
 	it("should render a layout with implicit locals", async () => {
 		const kire = new Kire();
+        kire.namespace('layouts', testDir);
+        kire.$resolver = async (p) => await readFile(p, 'utf-8');
 
-		// Mock resolver
-		kire.$resolver = async (path) => {
-			// Accessing 'title' directly implies it's in the scope
-			// Kire render merges locals into the scope.
-			if (path.includes("layout")) return `<h1>{{ title }}</h1>`;
-			return "";
-		};
+        await writeFile(join(testDir, "implicit.kire"), `<h1>{{ it.title }}</h1>`);
 
-		const template = `@include('layout', { title: 'Implicit' })`;
+		const template = `@include('layouts.implicit', { title: 'Implicit' })`;
 		const result = await kire.render(template);
 
 		expect(result).toBe("<h1>Implicit</h1>");

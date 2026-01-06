@@ -1,0 +1,36 @@
+name: Build VS Code Extension
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build VS Code Extension
+        working-directory: vs-kire
+        run: |
+          bun install
+          bun run build
+
+      - name: Archive Extension Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vs-kire-build
+          path: vs-kire/dist

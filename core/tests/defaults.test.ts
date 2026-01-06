@@ -1,5 +1,7 @@
-import { expect, test } from "bun:test";
+import { expect, test, beforeAll, afterAll } from "bun:test";
 import { Kire } from "../src/index";
+import { mkdir, writeFile, rm } from "node:fs/promises";
+import { join, resolve } from "node:path";
 
 test("Kire - Default Directives: define/defined", async () => {
 	const kire = new Kire();
@@ -39,18 +41,23 @@ test("Kire - Default Directives: native if/for", async () => {
 });
 
 test("Kire - Include", async () => {
-	const kire = new Kire({
-		root: "/",
-		resolver: async (path) => {
-			if (path === "/header.kire") return "<h1>HEADER</h1>";
-			return null;
-		},
-	});
+    const testDir = resolve("./test-defaults-env");
+    await mkdir(testDir, { recursive: true });
+    
+	const kire = new Kire();
+    kire.namespace('views', testDir);
+    kire.$resolver = async (path) => {
+        const { readFile } = await import("node:fs/promises");
+        return await readFile(path, 'utf-8');
+    };
 
-	const tpl = `@include('/header.kire')`;
+    await writeFile(join(testDir, "header.kire"), "<h1>HEADER</h1>");
+
+	const tpl = `@include('views.header')`;
 	expect(await kire.render(tpl)).toBe("<h1>HEADER</h1>");
 
-	const tpl2 = `@include('/some/path.kire')`;
-	// Expect this to fail or return empty, not throw uncaught.
+	const tpl2 = `@include('views.nonexistent')`;
 	expect(await kire.render(tpl2)).toBe("");
+    
+    await rm(testDir, { recursive: true, force: true });
 });

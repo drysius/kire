@@ -40,6 +40,7 @@ export class Compiler {
 		let i = 0;
 		while (i < nodes.length) {
 			const node = nodes[i]!;
+			this.addSourceLine(node);
 			switch (node.type) {
 				case "text":
 					this.compileText(node);
@@ -55,6 +56,17 @@ export class Compiler {
 					break;
 			}
 			i++;
+		}
+	}
+
+	/**
+	 * Injects a comment indicating the source line number of the current node.
+	 * Used for error reporting mapping.
+	 * @param node The AST node.
+	 */
+	private addSourceLine(node: Node) {
+		if (node.loc) {
+			this.resBuffer.push(`// kire-line: ${node.loc.start.line}`);
 		}
 	}
 

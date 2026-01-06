@@ -187,31 +187,6 @@ export class Kire {
 	}
 
 	/**
-	 * Creates a shallow copy of the Kire instance.
-	 * Useful for creating isolated scopes with shared configuration.
-	 */
-	public clone(): Kire {
-		const clone = new Kire();
-		clone.production = this.production;
-		clone.extension = this.extension;
-		clone.$resolver = this.$resolver;
-		clone.$readdir = this.$readdir;
-		clone.$parser = this.$parser;
-		clone.$compiler = this.$compiler;
-		clone.$var_locals = this.$var_locals;
-		clone.$expose_locals = this.$expose_locals;
-
-		// Clone maps
-		this.$directives.forEach((v, k) => clone.$directives.set(k, v));
-		this.$elements.forEach((v) => clone.$elements.add(v));
-		this.$globals.forEach((v, k) => clone.$globals.set(k, v));
-		this.namespaces.forEach((v, k) => clone.namespaces.set(k, v));
-		this.mounts.forEach((v, k) => clone.mounts.set(k, v));
-
-		return clone;
-	}
-
-	/**
 	 * Registers a plugin with the Kire instance.
 	 * @param plugin The plugin object or function.
 	 * @param opts Optional configuration options for the plugin.
@@ -348,12 +323,13 @@ export class Kire {
 	 * @returns An async function that renders the template.
 	 */
 	public async compileFn(content: string): Promise<Function> {
-		const code = await this.compile(content);
+		const code = `${await this.compile(content)}\n//# sourceURL=kire-generated.js`;
 		try {
 			const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 
 			const mainFn = new AsyncFunction("$ctx", code);
 			(mainFn as any)._code = code;
+			(mainFn as any)._source = content;
 
 			return mainFn;
 		} catch (e) {
