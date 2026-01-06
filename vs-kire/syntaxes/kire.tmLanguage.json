@@ -5,10 +5,13 @@
             "include": "#comments"
         },
         {
-            "include": "#server-js-block"
+            "include": "#jsx-components"
         },
         {
             "include": "#client-js-block"
+        },
+        {
+            "include": "#server-js-block"
         },
         {
             "include": "#directives-with-js-args"
@@ -42,6 +45,58 @@
                         "0": { "name": "punctuation.definition.comment.end.html" }
                     },
                     "name": "comment.block.html"
+                }
+            ]
+        },
+        "jsx-components": {
+            "patterns": [
+                {
+                    "begin": "(<)([A-Z][A-Za-z0-9_]*)",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.tag.begin.html" },
+                        "2": { "name": "support.class.component.jsx" }
+                    },
+                    "end": "(/?>)",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.tag.end.html" }
+                    },
+                    "name": "meta.tag.html",
+                    "patterns": [
+                        {
+                            "include": "#jsx-attributes"
+                        }
+                    ]
+                },
+                {
+                    "begin": "(</)([A-Z][A-Za-z0-9_]*)",
+                    "beginCaptures": {
+                        "1": { "name": "punctuation.definition.tag.begin.html" },
+                        "2": { "name": "support.class.component.jsx" }
+                    },
+                    "end": "(>)",
+                    "endCaptures": {
+                        "1": { "name": "punctuation.definition.tag.end.html" }
+                    },
+                    "name": "meta.tag.html"
+                }
+            ]
+        },
+        "jsx-attributes": {
+            "patterns": [
+                {
+                    "begin": "\\{\\{",
+                    "end": "\\}\\}",
+                    "name": "meta.embedded.expression.kire",
+                    "contentName": "source.js",
+                    "patterns": [
+                        {
+                            "include": "source.js"
+                        }
+                    ]
+                },
+                {
+                    "match": "\\b([a-zA-Z][a-zA-Z0-9_-]*)(?=\\s*=)",
+                    "name": "entity.other.attribute-name.html"
                 }
             ]
         },
@@ -85,7 +140,7 @@
                     "name": "meta.tag.embedded.js.kire",
                     "patterns": [
                         {
-                            "match": "<\\?js",
+                            "match": "<\\?jsc",
                             "name": "storage.type.js"
                         }
                     ]
@@ -116,11 +171,15 @@
             "beginCaptures": {
                 "1": { "name": "punctuation.definition.directive.kire" },
                 "2": { 
-                    "name": "entity.name.import.directive.kire",
+                    "name": "entity.name.function.directive.kire",
                     "patterns": [
                         {
-                            "match": ".",
-                            "name": "support.import.js"
+                            "match": "^[A-Z].*",
+                            "name": "support.class.component.jsx"
+                        },
+                        {
+                            "match": "^[a-z].*",
+                            "name": "support.function.js"
                         }
                     ]
                 }
@@ -154,7 +213,11 @@
                     "name": "entity.name.function.directive.kire",
                     "patterns": [
                         {
-                            "match": ".",
+                            "match": "^[A-Z].*",
+                            "name": "support.class.component.jsx"
+                        },
+                        {
+                            "match": "^[a-z].*",
                             "name": "support.function.js"
                         }
                     ]
@@ -191,7 +254,11 @@
                             "name": "entity.name.function.directive.kire",
                             "patterns": [
                                 {
-                                    "match": ".",
+                                    "match": "^[A-Z].*",
+                                    "name": "support.class.component.jsx"
+                                },
+                                {
+                                    "match": "^[a-z].*",
                                     "name": "support.function.js"
                                 }
                             ]

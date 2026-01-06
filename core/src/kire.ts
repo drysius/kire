@@ -136,7 +136,7 @@ export class Kire {
 		) {
 			this.$elements.add(nameOrDef as ElementDefinition);
 		} else {
-			if (!handler) throw new Error("Handler is required for legacy element()")
+			if (!handler) throw new Error("Handler is required for legacy element()");
 			this.$elements.add({
 				name: nameOrDef as string | RegExp,
 				void: options?.void ?? false, // Default to false if not provided
@@ -181,7 +181,7 @@ export class Kire {
 		const code = await this.compile(content);
 		//console.log(code)
 		try {
-			const AsyncFunction = Object.getPrototypeOf(async () => { }).constructor;
+			const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 
 			const mainFn = new AsyncFunction("$ctx", code);
 			(mainFn as any)._code = code;
@@ -206,20 +206,21 @@ export class Kire {
 		path: string,
 		locals: Record<string, any> = {},
 	): Promise<string> {
-		const resolvedPath = resolvePath(path, this.root, this.alias, this.extension);
+		const resolvedPath = resolvePath(
+			path,
+			this.root,
+			this.alias,
+			this.extension,
+		);
 		let compiled: Function | undefined;
 
 		if (this.production && this.$files.has(resolvedPath)) {
 			compiled = this.$files.get(resolvedPath) as any;
 		} else {
-			try {
-				const content = await this.$resolver(resolvedPath);
-				compiled = await this.compileFn(content);
-				if (this.production) {
-					this.$files.set(resolvedPath, compiled as any);
-				}
-			} catch (e) {
-				throw e;
+			const content = await this.$resolver(resolvedPath);
+			compiled = await this.compileFn(content);
+			if (this.production) {
+				this.$files.set(resolvedPath, compiled as any);
 			}
 		}
 
@@ -227,14 +228,21 @@ export class Kire {
 		return this.run(compiled, locals);
 	}
 
-	public resolvePath(
-		filepath: string,
-		currentFile?: string,
-	): string {
-		return resolvePath(filepath, this.root, this.alias, this.extension, currentFile);
+	public resolvePath(filepath: string, currentFile?: string): string {
+		return resolvePath(
+			filepath,
+			this.root,
+			this.alias,
+			this.extension,
+			currentFile,
+		);
 	}
 
-	public async run(mainFn: Function, locals: Record<string, any>, children = false) {
+	public async run(
+		mainFn: Function,
+		locals: Record<string, any>,
+		children = false,
+	) {
 		const rctx: any = {};
 		for (const [k, v] of this.$globals) {
 			rctx[k] = v;
@@ -245,25 +253,25 @@ export class Kire {
 			rctx[this.$var_locals] = locals;
 		}
 
-		rctx['~res'] = "";
-		rctx['~$pre'] = [];
-		rctx['~$pos'] = [];
+		rctx["~res"] = "";
+		rctx["~$pre"] = [];
+		rctx["~$pos"] = [];
 
 		rctx.res = function (this: any, str: any) {
-			rctx['~res'] += str;
+			rctx["~res"] += str;
 		};
 
-		rctx.$res = () => rctx['~res'];
+		rctx.$res = () => rctx["~res"];
 
 		rctx.$resolve = (path: string) => {
 			return this.resolvePath(path);
 		};
 
 		rctx.$merge = async (func: Function) => {
-			const parentRes = rctx['~res'];
-			rctx['~res'] = "";
+			const parentRes = rctx["~res"];
+			rctx["~res"] = "";
 			await func(rctx);
-			rctx['~res'] = parentRes + rctx['~res'];
+			rctx["~res"] = parentRes + rctx["~res"];
 		};
 
 		// Execute onInit for all directives
@@ -285,29 +293,28 @@ export class Kire {
 			}
 			throw e;
 		}
-		finalCtx.$typed = (key:string) => finalCtx[key];
+		finalCtx.$typed = (key: string) => finalCtx[key];
 
 		// Execute ~$pre functions collected during execution
-		if (finalCtx['~$pre'] && finalCtx['~$pre'].length > 0) {
-			for (const preFn of finalCtx['~$pre']) {
+		if (finalCtx["~$pre"] && finalCtx["~$pre"].length > 0) {
+			for (const preFn of finalCtx["~$pre"]) {
 				await preFn(finalCtx);
 			}
 		}
 
-		let resultHtml = finalCtx['~res'];
+		let resultHtml = finalCtx["~res"];
 
 		// Execute ~$pos functions (deferred logic)
-		if (finalCtx['~$pos'] && finalCtx['~$pos'].length > 0) {
-			for (const posFn of finalCtx['~$pos']) {
+		if (finalCtx["~$pos"] && finalCtx["~$pos"].length > 0) {
+			for (const posFn of finalCtx["~$pos"]) {
 				await posFn(finalCtx);
 			}
-			resultHtml = finalCtx['~res'];
+			resultHtml = finalCtx["~res"];
 		}
 
 		if (!children && this.$elements.size > 0) {
 			for (const def of this.$elements) {
-				const tagName =
-					def.name instanceof RegExp ? def.name.source : def.name;
+				const tagName = def.name instanceof RegExp ? def.name.source : def.name;
 
 				const isVoid =
 					def.void ||
@@ -318,13 +325,10 @@ export class Kire {
 
 				const regex = isVoid
 					? new RegExp(`<(${tagName})([^>]*)>`, "gi")
-					: new RegExp(
-						`<(${tagName})([^>]*)>([\\s\\S]*?)<\\/\\1>`,
-						"gi",
-					);
+					: new RegExp(`<(${tagName})([^>]*)>([\\s\\S]*?)<\\/\\1>`, "gi");
 
 				const matches = [];
-				let match:RegExpExecArray | null;
+				let match: RegExpExecArray | null;
 				while ((match = regex.exec(resultHtml)) !== null) {
 					matches.push({
 						full: match[0],
@@ -342,7 +346,7 @@ export class Kire {
 
 					const attributes: Record<string, string> = {};
 					const attrRegex = /([a-zA-Z0-9_-]+)(?:="([^"]*)")?/g;
-					let attrMatch:RegExpExecArray | null;
+					let attrMatch: RegExpExecArray | null;
 					while ((attrMatch = attrRegex.exec(m.attrs!)) !== null) {
 						attributes[attrMatch[1]!] = attrMatch[2] ?? "";
 					}

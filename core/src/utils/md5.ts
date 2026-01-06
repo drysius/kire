@@ -1,4 +1,3 @@
-
 export function md5(string: string): string {
 	function rotateLeft(lValue: number, iShiftBits: number): number {
 		return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits));
@@ -90,7 +89,7 @@ export function md5(string: string): string {
 	}
 
 	function convertToWordArray(string: string): number[] {
-		let lWordCount:number;
+		let lWordCount: number;
 		const lMessageLength = string.length;
 		const lNumberOfWords_temp1 = lMessageLength + 8;
 		const lNumberOfWords_temp2 =
@@ -109,13 +108,14 @@ export function md5(string: string): string {
 		}
 		lWordCount = (lByteCount - (lByteCount % 4)) / 4;
 		lBytePosition = (lByteCount % 4) * 8;
-		lWordArray[lWordCount] = (lWordArray[lWordCount] || 0) | (0x80 << lBytePosition);
+		lWordArray[lWordCount] =
+			(lWordArray[lWordCount] || 0) | (0x80 << lBytePosition);
 		lWordArray[lNumberOfWords - 2] = lMessageLength << 3;
 		lWordArray[lNumberOfWords - 1] = lMessageLength >>> 29;
-		
+
 		// Ensure no undefined holes
-		for(let i=0; i<lWordArray.length; i++) {
-			if(lWordArray[i] === undefined) lWordArray[i] = 0;
+		for (let i = 0; i < lWordArray.length; i++) {
+			if (lWordArray[i] === undefined) lWordArray[i] = 0;
 		}
 		return lWordArray;
 	}
@@ -134,14 +134,14 @@ export function md5(string: string): string {
 	}
 
 	let x: number[] = [];
-	let k: number = 0, 
-		AA: number = 0, 
-		BB: number = 0, 
-		CC: number = 0, 
-		DD: number = 0, 
-		a: number = 0, 
-		b: number = 0, 
-		c: number = 0, 
+	let k: number = 0,
+		AA: number = 0,
+		BB: number = 0,
+		CC: number = 0,
+		DD: number = 0,
+		a: number = 0,
+		b: number = 0,
+		c: number = 0,
 		d: number = 0;
 	const S11 = 7,
 		S12 = 12,

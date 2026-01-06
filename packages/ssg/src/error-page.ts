@@ -2,38 +2,42 @@ import type { IncomingMessage } from "node:http";
 import type { Kire } from "kire";
 
 export interface ErrorPageParams {
-  error: any;
-  req: IncomingMessage;
-  files: string[];
-  kire: Kire;
+	error: any;
+	req: IncomingMessage;
+	files: string[];
+	kire: Kire;
 }
 
 function escapeHtml(input: string): string {
-  return input
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+	return input
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#039;");
 }
 
 export function renderErrorPage(params: ErrorPageParams): string {
-  const { error, req, files, kire } = params;
+	const { error, req, files, kire } = params;
 
-  const errorTitle = escapeHtml(String(error?.message || "Internal Server Error"));
-  const stack = escapeHtml(String(error?.stack || ""));
-  const generatedCode = escapeHtml(String(error?.kireGeneratedCode || ""));
-  const codeFrame = escapeHtml(String(error?.codeFrame || ""));
-  const url = escapeHtml(String(req?.url || "/"));
-  const method = escapeHtml(String((req as any)?.method || "GET"));
+	const errorTitle = escapeHtml(
+		String(error?.message || "Internal Server Error"),
+	);
+	const stack = escapeHtml(String(error?.stack || ""));
+	const generatedCode = escapeHtml(String(error?.kireGeneratedCode || ""));
+	const codeFrame = escapeHtml(String(error?.codeFrame || ""));
+	const url = escapeHtml(String(req?.url || "/"));
+	const method = escapeHtml(String((req as any)?.method || "GET"));
 
-  // Get compilation chain from Kire instance (if available)
-  const compilationChain: string[] = (kire as any).$compilationChain || [];
+	// Get compilation chain from Kire instance (if available)
+	const compilationChain: string[] = (kire as any).$compilationChain || [];
 
-  const hasCodeFrame = Boolean(codeFrame && codeFrame.trim().length > 0);
-  const hasGeneratedCode = Boolean(generatedCode && generatedCode.trim().length > 0);
+	const hasCodeFrame = Boolean(codeFrame && codeFrame.trim().length > 0);
+	const hasGeneratedCode = Boolean(
+		generatedCode && generatedCode.trim().length > 0,
+	);
 
-  return `
+	return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -118,21 +122,29 @@ export function renderErrorPage(params: ErrorPageParams): string {
         Compilation Chain
       </button>
 
-      ${hasCodeFrame ? `
+      ${
+				hasCodeFrame
+					? `
         <button data-tab="codeframe"
           class="tab-btn inline-flex items-center gap-2 rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-slate-100">
           <span class="iconify" data-icon="mdi:code-braces"></span>
           Code Frame
         </button>
-      ` : ""}
+      `
+					: ""
+			}
 
-      ${hasGeneratedCode ? `
+      ${
+				hasGeneratedCode
+					? `
         <button data-tab="generated"
           class="tab-btn inline-flex items-center gap-2 rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-slate-300 transition hover:bg-slate-700 hover:text-slate-100">
           <span class="iconify" data-icon="mdi:code-json"></span>
           Generated Code
         </button>
-      ` : ""}
+      `
+					: ""
+			}
     </nav>
 
     <!-- Layout -->
@@ -156,7 +168,9 @@ export function renderErrorPage(params: ErrorPageParams): string {
         </section>
 
         <!-- Code Frame -->
-        ${hasCodeFrame ? `
+        ${
+					hasCodeFrame
+						? `
         <section data-tab-panel="codeframe" class="tab-panel hidden space-y-3">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-xs font-semibold tracking-wider uppercase text-slate-400">Code Frame</h2>
@@ -171,10 +185,14 @@ export function renderErrorPage(params: ErrorPageParams): string {
           <pre id="codeframe-pre"
             class="max-h-[70vh] overflow-auto rounded-lg border border-red-500/30 bg-red-500/10 p-4 font-mono text-xs sm:text-sm leading-relaxed whitespace-pre-wrap break-words text-red-200">${codeFrame}</pre>
         </section>
-        ` : ""}
+        `
+						: ""
+				}
 
         <!-- Generated -->
-        ${hasGeneratedCode ? `
+        ${
+					hasGeneratedCode
+						? `
         <section data-tab-panel="generated" class="tab-panel hidden space-y-3">
           <div class="flex items-center justify-between gap-3">
             <h2 class="text-xs font-semibold tracking-wider uppercase text-slate-400">Generated Code</h2>
@@ -189,7 +207,9 @@ export function renderErrorPage(params: ErrorPageParams): string {
           <pre id="generated-pre"
             class="max-h-[70vh] overflow-auto rounded-lg border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-relaxed whitespace-pre text-emerald-200">${generatedCode}</pre>
         </section>
-        ` : ""}
+        `
+						: ""
+				}
 
         <!-- Chain -->
         <section data-tab-panel="chain" class="tab-panel hidden space-y-3">
@@ -205,26 +225,26 @@ export function renderErrorPage(params: ErrorPageParams): string {
 
           <div class="rounded-lg border border-slate-800 bg-slate-950 p-3">
             ${
-              compilationChain.length > 0
-                ? compilationChain
-                    .map((file: string, i: number) => {
-                      const safeFile = escapeHtml(String(file));
-                      const isFirst = i === 0;
-                      const isLast = i === compilationChain.length - 1;
+							compilationChain.length > 0
+								? compilationChain
+										.map((file: string, i: number) => {
+											const safeFile = escapeHtml(String(file));
+											const isFirst = i === 0;
+											const isLast = i === compilationChain.length - 1;
 
-                      const accent = isFirst
-                        ? "border-red-400/60 bg-red-500/5"
-                        : isLast
-                          ? "border-rose-300/60 bg-rose-500/5"
-                          : "border-sky-400/50 bg-sky-500/5";
+											const accent = isFirst
+												? "border-red-400/60 bg-red-500/5"
+												: isLast
+													? "border-rose-300/60 bg-rose-500/5"
+													: "border-sky-400/50 bg-sky-500/5";
 
-                      const badge = isFirst
-                        ? `<span class="ml-2 rounded bg-red-500/15 px-2 py-0.5 text-xs text-red-200">Entry</span>`
-                        : isLast
-                          ? `<span class="ml-2 rounded bg-rose-500/15 px-2 py-0.5 text-xs text-rose-200">Error</span>`
-                          : "";
+											const badge = isFirst
+												? `<span class="ml-2 rounded bg-red-500/15 px-2 py-0.5 text-xs text-red-200">Entry</span>`
+												: isLast
+													? `<span class="ml-2 rounded bg-rose-500/15 px-2 py-0.5 text-xs text-rose-200">Error</span>`
+													: "";
 
-                      return `
+											return `
                         <div class="mb-2 last:mb-0 rounded-md border-l-4 ${accent} px-3 py-2">
                           <div class="flex items-start gap-3">
                             <span class="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-xs text-slate-200">${i + 1}</span>
@@ -234,10 +254,10 @@ export function renderErrorPage(params: ErrorPageParams): string {
                           </div>
                         </div>
                       `;
-                    })
-                    .join("")
-                : `<div class="px-3 py-10 text-center text-slate-400">No compilation chain available.</div>`
-            }
+										})
+										.join("")
+								: `<div class="px-3 py-10 text-center text-slate-400">No compilation chain available.</div>`
+						}
           </div>
         </section>
 
@@ -258,18 +278,18 @@ export function renderErrorPage(params: ErrorPageParams): string {
           <div class="rounded-lg border border-slate-800 bg-slate-950">
             <div class="max-h-[70vh] overflow-auto p-2">
               ${
-                files.length
-                  ? files
-                      .map(
-                        (f) => `
+								files.length
+									? files
+											.map(
+												(f) => `
                           <div class="rounded-md px-3 py-2 font-mono text-xs sm:text-sm text-slate-200 hover:bg-slate-800 break-words">
                             ${escapeHtml(String(f))}
                           </div>
-                        `
-                      )
-                      .join("")
-                  : `<div class="px-3 py-10 text-center text-slate-500">No files in cache.</div>`
-              }
+                        `,
+											)
+											.join("")
+									: `<div class="px-3 py-10 text-center text-slate-500">No files in cache.</div>`
+							}
             </div>
             <div class="border-t border-slate-800 px-4 py-3 text-sm text-slate-400">
               ${files.length} files cached for hot reload.

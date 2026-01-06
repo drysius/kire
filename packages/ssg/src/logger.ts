@@ -70,7 +70,12 @@ export const Logger = {
 		console.log(`${getTimestamp()} ${kirePrefix} ${message}`);
 	},
 
-	request: (method: string, path: string, status: number, duration?: number) => {
+	request: (
+		method: string,
+		path: string,
+		status: number,
+		duration?: number,
+	) => {
 		const methodColor =
 			{
 				GET: colors.brightGreen,

@@ -145,7 +145,9 @@ export default (kire: Kire) => {
 			compiler.raw(`switch (${compiler.param("expr")}) {`);
 			if (compiler.children) {
 				// Filter only case/default nodes to avoid invalid JS (text nodes in switch block)
-				const cases = compiler.children.filter(n => n.name === 'case' || n.name === 'default');
+				const cases = compiler.children.filter(
+					(n) => n.name === "case" || n.name === "default",
+				);
 				await compiler.set(cases);
 			}
 			compiler.raw(`}`);

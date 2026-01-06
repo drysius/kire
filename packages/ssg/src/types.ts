@@ -19,21 +19,21 @@ export interface BuildOptions {
 }
 
 export interface SsgState {
-    options: SsgOptions;
-    dynamicRoutesMap: Map<string, any[]>;
-    fileAccessHistory: Array<{
-        file: string;
-        timestamp: Date;
-        type: 'read' | 'write' | 'compile' | 'cache';
-        duration?: number;
-    }>;
-    routeCompilationChain: Map<string, string[]>;
-    currentRoute: string | null;
+	options: SsgOptions;
+	dynamicRoutesMap: Map<string, any[]>;
+	fileAccessHistory: Array<{
+		file: string;
+		timestamp: Date;
+		type: "read" | "write" | "compile" | "cache";
+		duration?: number;
+	}>;
+	routeCompilationChain: Map<string, string[]>;
+	currentRoute: string | null;
 }
 
 // Global reference to the active Kire instance for static methods (build/dev)
 export let activeKire: Kire | null = null;
 
 export function setActiveKire(kire: Kire) {
-    activeKire = kire;
+	activeKire = kire;
 }

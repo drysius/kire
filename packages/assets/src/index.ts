@@ -89,7 +89,11 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			example: "<script>console.log('hello');</script>",
 			onCall(ctx) {
 				// Check if it's an inline script (no src attribute)
-				if (ctx.element.attributes.src || ctx.element.attributes.nocache !== undefined) return;
+				if (
+					ctx.element.attributes.src ||
+					ctx.element.attributes.nocache !== undefined
+				)
+					return;
 
 				const content = ctx.element.inner;
 				if (!content.trim()) return;

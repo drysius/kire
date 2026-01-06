@@ -5,9 +5,12 @@ import type { SsgState } from "./types";
 
 // Helper to get SSG state from Kire cache Map
 export function getSsgState(kire: Kire): SsgState {
-    const state = kire.cached<SsgState>("@kirejs/ssg").get("ROOT");
-    if (!state) throw new Error("SSG State not initialized in Kire cache. Make sure the plugin is loaded.");
-    return state;
+	const state = kire.cached<SsgState>("@kirejs/ssg").get("ROOT");
+	if (!state)
+		throw new Error(
+			"SSG State not initialized in Kire cache. Make sure the plugin is loaded.",
+		);
+	return state;
 }
 
 // Helper to crawl
@@ -25,7 +28,7 @@ export async function getFiles(dir: string): Promise<string[]> {
 			}),
 		);
 		return Array.prototype.concat(...files);
-	} catch (e) {
+	} catch (_e) {
 		return [];
 	}
 }
@@ -35,82 +38,91 @@ export function trackFileAccess(kire: Kire) {
 	const originalCacheGet = kire.$files.get;
 	const originalCacheSet = kire.$files.set;
 	const originalCacheClear = kire.$files.clear;
-	
-	kire.$files.get = function(key: string) {
+
+	kire.$files.get = function (key: string) {
 		const start = Date.now();
 		const result = originalCacheGet.call(this, key);
 		const duration = Date.now() - start;
-		
-        try {
-            const state = getSsgState(kire);
-            state.fileAccessHistory.push({
-                file: key,
-                timestamp: new Date(),
-                type: 'cache',
-                duration
-            });
-            
-            if (state.currentRoute && !state.routeCompilationChain.has(state.currentRoute)) {
-                state.routeCompilationChain.set(state.currentRoute, []);
-            }
-            if (state.currentRoute && !state.routeCompilationChain.get(state.currentRoute)?.includes(key)) {
-                state.routeCompilationChain.get(state.currentRoute)?.push(key);
-            }
-        } catch(e) {}
-		
+
+		try {
+			const state = getSsgState(kire);
+			state.fileAccessHistory.push({
+				file: key,
+				timestamp: new Date(),
+				type: "cache",
+				duration,
+			});
+
+			if (
+				state.currentRoute &&
+				!state.routeCompilationChain.has(state.currentRoute)
+			) {
+				state.routeCompilationChain.set(state.currentRoute, []);
+			}
+			if (
+				state.currentRoute &&
+				!state.routeCompilationChain.get(state.currentRoute)?.includes(key)
+			) {
+				state.routeCompilationChain.get(state.currentRoute)?.push(key);
+			}
+		} catch (_e) {}
+
 		return result;
 	};
-	
-	kire.$files.set = function(key: string, value: any) {
-        try {
-            const state = getSsgState(kire);
-            state.fileAccessHistory.push({
-                file: key,
-                timestamp: new Date(),
-                type: 'write'
-            });
-        } catch(e) {}
+
+	kire.$files.set = function (key: string, value: any) {
+		try {
+			const state = getSsgState(kire);
+			state.fileAccessHistory.push({
+				file: key,
+				timestamp: new Date(),
+				type: "write",
+			});
+		} catch (_e) {}
 		return originalCacheSet.call(this, key, value);
 	};
-	
-	kire.$files.clear = function() {
-        try {
-            const state = getSsgState(kire);
-            state.fileAccessHistory.length = 0;
-            state.routeCompilationChain.clear();
-        } catch(e) {}
+
+	kire.$files.clear = function () {
+		try {
+			const state = getSsgState(kire);
+			state.fileAccessHistory.length = 0;
+			state.routeCompilationChain.clear();
+		} catch (_e) {}
 		return originalCacheClear.call(this);
 	};
-	
+
 	// Track view compilation
 	const originalView = kire.view.bind(kire);
 	kire.view = async (template: string, data?: any) => {
-        let state: SsgState | null = null;
-        try { state = getSsgState(kire); } catch(e) {}
+		let state: SsgState | null = null;
+		try {
+			state = getSsgState(kire);
+		} catch (_e) {}
 
-        if (!state) return originalView(template, data);
+		if (!state) return originalView(template, data);
 
 		const prevRoute = state.currentRoute;
 		state.currentRoute = template;
 		const start = Date.now();
-		
+
 		try {
 			state.fileAccessHistory.push({
 				file: template,
 				timestamp: new Date(),
-				type: 'compile'
+				type: "compile",
 			});
-			
+
 			state.routeCompilationChain.set(template, [template]);
-			
+
 			const result = await originalView(template, data);
 			const duration = Date.now() - start;
-			
-			const lastEntry = state.fileAccessHistory[state.fileAccessHistory.length - 1];
+
+			const lastEntry =
+				state.fileAccessHistory[state.fileAccessHistory.length - 1];
 			if (lastEntry && lastEntry.file === template) {
 				lastEntry.duration = duration;
 			}
-			
+
 			return result;
 		} finally {
 			state.currentRoute = prevRoute;

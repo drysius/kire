@@ -39,7 +39,7 @@ export default (kire: Kire) => {
 			// Run children to populate slots
 			compiler.raw(`  await $ctx.$merge(async ($ctx) => {`);
 			compiler.raw(`    $ctx.slots = $slots;`); // Still expose slots to children if they need it
-			
+
 			if (compiler.children) await compiler.set(compiler.children);
 
 			compiler.raw(`    if (!$slots.default) $slots.default = $ctx['~res'];`);
@@ -49,9 +49,11 @@ export default (kire: Kire) => {
 			// Now load the component template and render it
 			compiler.raw(`  const path = ${JSON.stringify(pathExpr)};`);
 			compiler.raw(`  const componentLocals = ${varsExpr};`);
-			
+
 			compiler.raw(`  const finalLocals = { ...componentLocals };`);
-			compiler.raw(`  if (typeof finalLocals === 'object' && finalLocals !== null) finalLocals.slots = $slots;`); // Add slots to locals
+			compiler.raw(
+				`  if (typeof finalLocals === 'object' && finalLocals !== null) finalLocals.slots = $slots;`,
+			); // Add slots to locals
 
 			compiler.raw(`  const html = await $ctx.$require(path, finalLocals);`);
 			compiler.raw(`  if (html !== null) {`);

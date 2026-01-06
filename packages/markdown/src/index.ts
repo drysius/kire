@@ -13,7 +13,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 	name: "@kirejs/markdown",
 	options: {},
 	load(kire: Kire, _opts) {
-		const cache = kire.cached<string>("@kirejs/markdown");
+		const _cache = kire.cached<string>("@kirejs/markdown");
 		// Expose parser for other plugins (like SSG)
 		kire.parseMarkdown = async (content: string) => {
 			return marked.parse(content) as
@@ -26,7 +26,9 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			if (kire.$readdir) {
 				return kire.$readdir(pattern);
 			}
-			console.warn("kire.$readdir is not defined. Make sure @kirejs/node is loaded.");
+			console.warn(
+				"kire.$readdir is not defined. Make sure @kirejs/node is loaded.",
+			);
 			return [];
 		});
 
@@ -47,7 +49,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 					const path = kire.resolvePath(source);
 					const fs = await import("node:fs/promises");
 					content = await fs.readFile(path, "utf-8");
-				} catch (e) {
+				} catch (_e) {
 					// Fallback to treating as string if file fails
 					content = source;
 				}

@@ -1,7 +1,7 @@
-import { readFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import type { Kire, KirePlugin } from "kire";
+import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { Kire, KirePlugin } from "kire";
 import "./types";
 
 // These are global objects that may or may not exist depending on the runtime
@@ -45,9 +45,7 @@ function globToRegex(glob: string): RegExp {
 	// {a,b} -> (a|b)
 	regex = regex.replace(/\{([^}]+)\}/g, "($1)");
 	// Replace commas in groups with |
-	regex = regex.replace(/\(([^)]+)\)/g, (_, group) =>
-		group.replace(/,/g, "|"),
-	);
+	regex = regex.replace(/\(([^)]+)\)/g, (_, group) => group.replace(/,/g, "|"));
 
 	return new RegExp(`^${regex}$`);
 }

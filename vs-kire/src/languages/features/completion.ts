@@ -1,0 +1,82 @@
+import * as vscode from 'vscode';
+import { kireStore } from '../../store';
+
+export class KireCompletionItemProvider implements vscode.CompletionItemProvider {
+    provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
+        const items: vscode.CompletionItem[] = [];
+        const char = context.triggerCharacter;
+        const linePrefix = document.lineAt(position).text.substr(0, position.character);
+
+        // Check if next char is '>'
+        const lineText = document.lineAt(position).text;
+        const nextChar = position.character < lineText.length ? lineText[position.character] : '';
+        const hasClosingAngle = nextChar === '>';
+        
+        // Define replacement range to consume '>' if present
+        const range = hasClosingAngle ? new vscode.Range(position, position.translate(0, 1)) : undefined;
+
+        // 1. Triggered by '<' -> Elements
+        if (char === '<' || linePrefix.endsWith('<')) {
+            // <?js
+            const jsItem = new vscode.CompletionItem('?js', vscode.CompletionItemKind.Snippet);
+            jsItem.detail = "Server-side JavaScript Block";
+            jsItem.insertText = new vscode.SnippetString('?js\n\t$0\n?>');
+            if (range) jsItem.range = range;
+            items.push(jsItem);
+
+            // <?jsc
+            const jscItem = new vscode.CompletionItem('?jsc', vscode.CompletionItemKind.Snippet);
+            jscItem.detail = "Client-side JavaScript Block";
+            jscItem.insertText = new vscode.SnippetString('?jsc\n\t$0\n?>');
+            if (range) jscItem.range = range;
+            items.push(jscItem);
+
+            kireStore.getState().elements.forEach((def) => {
+                const item = new vscode.CompletionItem(def.name, vscode.CompletionItemKind.Class);
+                item.detail = "Kire Element";
+                item.documentation = new vscode.MarkdownString(def.description || '');
+                if (range) item.range = range;
+                
+                if (def.void) {
+                     item.insertText = new vscode.SnippetString(`${def.name} $0>`);
+                } else {
+                     item.insertText = new vscode.SnippetString(`${def.name}>$0</${def.name}>`);
+                }
+                items.push(item);
+            });
+        }
+
+        // 2. Triggered by '@' -> Directives
+        if (char === '@' || linePrefix.endsWith('@')) {
+            if (linePrefix.endsWith('@@')) return []; // Escaped
+
+            kireStore.getState().directives.forEach((def) => {
+                const item = new vscode.CompletionItem(def.name, vscode.CompletionItemKind.Keyword);
+                item.detail = `Kire Directive (${def.type || 'general'})`;
+                item.documentation = new vscode.MarkdownString(def.description || '');
+                
+                let snippet = def.name;
+                if (def.params && def.params.length > 0) {
+                     snippet += '(';
+                     snippet += def.params.map((p, i) => `\${${i+1}:${p.split(':')[0]}}`).join(', ');
+                     snippet += ')';
+                }
+                
+                if (def.children) {
+                    snippet += "\n\t$0\n@end";
+                }
+                
+                item.insertText = new vscode.SnippetString(snippet);
+                items.push(item);
+            });
+            
+            if (!kireStore.getState().directives.has('end')) {
+                const endItem = new vscode.CompletionItem('end', vscode.CompletionItemKind.Keyword);
+                endItem.documentation = "Closes the current directive block.";
+                items.push(endItem);
+            }
+        }
+
+        return items;
+    }
+}

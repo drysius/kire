@@ -73,17 +73,17 @@ export interface KireContext {
 	/**
 	 * The accumulated string buffer for the local scope's output.
 	 */
-	'~res': string;
-	
+	"~res": string;
+
 	/**
 	 * A global buffer for code or functions to be executed *before* the main entry point's rendering logic.
 	 */
-	'~$pre': Function[];
-	
+	"~$pre": Function[];
+
 	/**
 	 * A global buffer for code or functions to be executed *after* the main entry point's rendering logic.
 	 */
-	'~$pos': Function[];
+	"~$pos": Function[];
 
 	/**
 	 * Appends content to the current output buffer (~res).
@@ -136,13 +136,13 @@ export interface CompilerContext {
 	/**
 	 * Kire instance
 	 */
-	kire:Kire;
+	kire: Kire;
 	/**
 	 * Retrieves a parameter passed to the directive.
 	 * @param name The name or index of the parameter.
 	 */
 	param(name: string | number): any;
-	
+
 	/**
 	 * Compiles a string of Kire template content.
 	 * @param content The template string to compile.
@@ -155,7 +155,7 @@ export interface CompilerContext {
 	 * @param code The function body.
 	 */
 	func(code: string): string;
-	
+
 	// --- Local Function Scope ---
 
 	/**
@@ -181,7 +181,7 @@ export interface CompilerContext {
 	 * Useful for post-processing the result (replacements) or cleanup.
 	 */
 	pos(code: string): void;
-	
+
 	// --- Global Scope (Main File) ---
 
 	/**
@@ -212,27 +212,27 @@ export interface CompilerContext {
 	/**
 	 * The current content of the local result buffer code.
 	 */
-	'~res'?: string;
+	"~res"?: string;
 
 	/**
 	 * The current content of the local pre-processing buffer code.
 	 */
-	'~pre'?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
+	"~pre"?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
 
 	/**
 	 * The current content of the local post-processing buffer code.
 	 */
-	'~pos'?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
+	"~pos"?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
 
 	/**
 	 * The current content of the global pre-processing buffer code.
 	 */
-	'~$pre'?: string[];
+	"~$pre"?: string[];
 
 	/**
 	 * The current content of the global post-processing buffer code.
 	 */
-	'~$pos'?: string[];
+	"~$pos"?: string[];
 
 	// --- Nesting & Structure ---
 
@@ -244,7 +244,7 @@ export interface CompilerContext {
 	/**
 	 * Related nodes, such as chained directives (e.g., elseif, else).
 	 */
-	parents?: Node[]; 
+	parents?: Node[];
 
 	/**
 	 * Compiles and processes a set of nodes, appending their logic to the current flow.
@@ -260,12 +260,12 @@ export interface KireElementContext extends KireContext {
 	 * The current global HTML content string. This is mutable and represents the state of the document.
 	 */
 	content: string;
-	
+
 	/**
 	 * Typed $ctx context use key of $ctx context with you type
-	 * @param key 
+	 * @param key
 	 */
-	$typed<T>(key:string): T;
+	$typed<T>(key: string): T;
 
 	/**
 	 * Details about the specific HTML element being processed.
@@ -344,20 +344,20 @@ export interface DirectiveDefinition {
 	/**
 	 * Parameter definitions (e.g., ['filepath:string']).
 	 */
-	params?: string[]; 
+	params?: string[];
 	/**
 	 * Whether this directive accepts a block ending with @end.
 	 * If "auto", the parser checks for a matching @end tag to decide.
 	 */
-	children?: boolean | "auto"; 
+	children?: boolean | "auto";
 	/**
 	 * Should the children be treated as raw text instead of parsed nodes?
 	 */
-	childrenRaw?: boolean; 
+	childrenRaw?: boolean;
 	/**
 	 * Sub-directives associated with this one (e.g., elseif, else for @if).
 	 */
-	parents?: DirectiveDefinition[]; 
+	parents?: DirectiveDefinition[];
 	/**
 	 * Function called when the directive is encountered during compilation.
 	 */
@@ -366,7 +366,7 @@ export interface DirectiveDefinition {
 	 * Function called once per compilation when the directive is first used.
 	 */
 	onInit?: (ctx: KireContext) => void | Promise<void>;
-	
+
 	description?: string;
 	example?: string;
 	/**
@@ -392,7 +392,12 @@ export interface KirePlugin<Options extends object | undefined = {}> {
 }
 
 // AST Types
-export type NodeType = "text" | "variable" | "directive" | "serverjs";
+export type NodeType =
+	| "text"
+	| "variable"
+	| "directive"
+	| "serverjs"
+	| "clientjs";
 
 export interface SourceLocation {
 	line: number;

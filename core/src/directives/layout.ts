@@ -21,13 +21,13 @@ export default (kire: Kire) => {
 		},
 	});
 
-	kire.element('kire:defined', (ctx) => {
-		const defines = ctx.$typed<Record<string, string>>('~defines');
+	kire.element("kire:defined", (ctx) => {
+		const defines = ctx.$typed<Record<string, string>>("~defines");
 		const id = ctx.element.attributes.id!;
 		if (defines[id] !== undefined) {
 			ctx.replaceElement(defines[id]);
 		}
-	})
+	});
 
 	kire.directive({
 		name: "defined",
@@ -63,26 +63,26 @@ export default (kire: Kire) => {
 		onCall(compiler) {
 			const name = compiler.param("name");
 			compiler.raw(
-				`$ctx.res("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`
+				`$ctx.res("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`,
 			);
 		},
 		onInit(ctx) {
-			ctx['~stacks'] = ctx['~stacks'] || {};
-			
-			ctx['~$pos'].push(async (c: any) => {
+			ctx["~stacks"] = ctx["~stacks"] || {};
+
+			ctx["~$pos"].push(async (c: any) => {
 				const ctx = c as any;
-				if (ctx['~stacks']) {
-					for (const key in ctx['~stacks']) {
-						const placeholder = "<!-- KIRE:stack(" + key + ") -->";
-						if (ctx['~res'].includes(placeholder)) {
-							const content = ctx['~stacks'][key].join('\n');
-							ctx['~res'] = ctx['~res'].split(placeholder).join(content);
+				if (ctx["~stacks"]) {
+					for (const key in ctx["~stacks"]) {
+						const placeholder = `<!-- KIRE:stack(${key}) -->`;
+						if (ctx["~res"].includes(placeholder)) {
+							const content = ctx["~stacks"][key].join("\n");
+							ctx["~res"] = ctx["~res"].split(placeholder).join(content);
 						}
 					}
-					ctx['~res'] = ctx['~res'].replace(/<!-- KIRE:stack\(.*?\) -->/g, '');
+					ctx["~res"] = ctx["~res"].replace(/<!-- KIRE:stack\(.*?\) -->/g, "");
 				}
 			});
-		}
+		},
 	});
 
 	kire.directive({
@@ -96,15 +96,15 @@ export default (kire: Kire) => {
 			const name = compiler.param("name");
 			compiler.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = {};`);
 			compiler.raw(
-				`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`
+				`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`,
 			);
-			compiler.raw(
-				`await $ctx.$merge(async ($ctx) => {`
-			);
+			compiler.raw(`await $ctx.$merge(async ($ctx) => {`);
 
 			if (compiler.children) await compiler.set(compiler.children);
 
-			compiler.raw(`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx['~res']);`);
+			compiler.raw(
+				`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx['~res']);`,
+			);
 			compiler.raw(`  $ctx['~res'] = '';`);
 			compiler.raw(`});`);
 		},
