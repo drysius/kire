@@ -89,7 +89,7 @@ describe("Kire Native Directives", () => {
 	});
 
 	describe("Code execution", () => {
-		it("serverjs", async () => {
+		it("javascript", async () => {
 			const obj = { val: 0 };
 			await render(`<?js it.obj.val = 1; ?>`, { obj });
 			expect(obj.val).toBe(1);

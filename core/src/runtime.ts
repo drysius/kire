@@ -1,5 +1,22 @@
 import type { Kire } from "./kire";
 
+/**
+ * Executes the compiled template function within a prepared runtime context.
+ *
+ * Execution Flow:
+ * 1. Initialize context with globals and locals.
+ * 2. Run directive `onInit` hooks.
+ * 3. Execute `mainFn` (the compiled template). This populates `~res` and collects `~$pre`/`~$pos` hooks.
+ * 4. Execute `~$pre` hooks (deferred logic that runs immediately after main render).
+ * 5. Execute `~$pos` hooks (final post-processing).
+ * 6. Process custom elements (if not in a child block).
+ *
+ * @param kire The Kire instance.
+ * @param mainFn The compiled async function of the template.
+ * @param locals Local variables passed to the template.
+ * @param children Whether this runtime is executing a child block (nested).
+ * @returns The final rendered HTML string.
+ */
 export async function kireRuntime(
 	kire: Kire,
 	mainFn: Function,
@@ -48,7 +65,6 @@ export async function kireRuntime(
 
 	let finalCtx: any;
 	try {
-		//console.log(mainFn.toString())
 		finalCtx = await mainFn(rctx);
 	} catch (e: any) {
 		if ((mainFn as any)._code) {
@@ -82,6 +98,15 @@ export async function kireRuntime(
 	return resultHtml;
 }
 
+/**
+ * Processes custom elements (components/tags) in the rendered HTML.
+ * Uses an offset-based replacement strategy to safely handle multiple identical elements.
+ *
+ * @param kire The Kire instance.
+ * @param html The current HTML string.
+ * @param ctx The runtime context.
+ * @returns The HTML string with elements processed.
+ */
 async function processElements(kire: Kire, html: string, ctx: any) {
 	let resultHtml = html;
 	for (const def of kire.$elements) {

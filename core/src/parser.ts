@@ -25,7 +25,7 @@ export class Parser {
 
 		while (this.cursor < len) {
 			if (this.checkRawInterpolation()) continue;
-			if (this.checkServerJs()) continue;
+			if (this.checkJavascript()) continue;
 			if (this.checkInterpolation()) continue;
 			if (this.checkEscapedDirective()) continue;
 			if (this.checkDirective()) continue;
@@ -64,17 +64,17 @@ export class Parser {
 
 	/**
 	 * Checks for and parses server-side JavaScript blocks <?js ... ?>.
-	 * Example: <?js console.log('hi') ?> -> { type: 'serverjs', content: "console.log('hi')" }
+	 * Example: <?js console.log('hi') ?> -> { type: 'javascript', content: "console.log('hi')" }
 	 * @returns True if a match was found and processed, false otherwise.
 	 */
-	private checkServerJs(): boolean {
+	private checkJavascript(): boolean {
 		if (this.template.startsWith("<?js", this.cursor)) {
 			const end = this.template.indexOf("?>", this.cursor + 4);
 			if (end !== -1) {
 				const content = this.template.slice(this.cursor, end + 2);
 				const inner = this.template.slice(this.cursor + 4, end);
 				this.addNode({
-					type: "serverjs",
+					type: "javascript",
 					content: inner.trim(),
 					start: this.cursor,
 					end: end + 2,

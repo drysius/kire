@@ -1,27 +1,27 @@
 import type { Kire } from "./kire";
-import type { CompilerContext, Node } from "./types";
+import type { CompilerContext, DirectiveDefinition, Node } from "./types";
 
 export class Compiler {
 	private preBuffer: string[] = [];
 	private resBuffer: string[] = [];
 	private posBuffer: string[] = [];
-	// Removed gPreBuffer and gPosBuffer
-
 	private usedDirectives: Set<string> = new Set();
 
 	constructor(private kire: Kire) {}
 
+	/**
+	 * Compiles a list of AST nodes into a JavaScript function body string.
+	 * @param nodes The root nodes of the AST.
+	 * @returns The compiled JavaScript code as a string.
+	 */
 	public async compile(nodes: Node[]): Promise<string> {
 		this.preBuffer = [];
 		this.resBuffer = [];
 		this.posBuffer = [];
-		// Removed gPreBuffer and gPosBuffer init
 		this.usedDirectives.clear();
 
-		// Compile the root nodes
 		await this.compileNodes(nodes);
 
-		// gPre and gPos are now collected at runtime via generated code
 		const pre = this.preBuffer.join("\n");
 		const res = this.resBuffer.join("\n");
 		const pos = this.posBuffer.join("\n");
@@ -32,52 +32,98 @@ export class Compiler {
 		return code;
 	}
 
+	/**
+	 * Iterates over AST nodes and delegates compilation based on node type.
+	 * @param nodes List of nodes to compile.
+	 */
 	private async compileNodes(nodes: Node[]) {
 		let i = 0;
 		while (i < nodes.length) {
 			const node = nodes[i]!;
-			if (node.type === "text") {
-				if (node.content) {
-					this.resBuffer.push(
-						`$ctx['~res'] += ${JSON.stringify(node.content)};`,
-					);
-				}
-			} else if (node.type === "variable") {
-				if (node.content) {
-					if (node.raw) {
-						this.resBuffer.push(`$ctx['~res'] += (${node.content});`);
-					} else {
-						this.resBuffer.push(
-							`$ctx['~res'] += $ctx.$escape(${node.content});`,
-						);
-					}
-				}
-			} else if (node.type === "serverjs") {
-				if (node.content) {
-					this.resBuffer.push(node.content);
-				}
-			} else if (node.type === "directive") {
-				await this.processDirective(node);
+			switch (node.type) {
+				case "text":
+					this.compileText(node);
+					break;
+				case "variable":
+					this.compileVariable(node);
+					break;
+				case "javascript":
+					this.compileJavascript(node);
+					break;
+				case "directive":
+					await this.processDirective(node);
+					break;
 			}
 			i++;
 		}
 	}
 
+	/**
+	 * Compiles a text node, appending it to the result buffer.
+	 * @param node The text node.
+	 */
+	private compileText(node: Node) {
+		if (node.content) {
+			this.resBuffer.push(
+				`$ctx['~res'] += ${JSON.stringify(node.content)};`,
+			);
+		}
+	}
+
+	/**
+	 * Compiles a variable node, dealing with raw vs escaped output.
+	 * @param node The variable node.
+	 */
+	private compileVariable(node: Node) {
+		if (node.content) {
+			if (node.raw) {
+				this.resBuffer.push(`$ctx['~res'] += (${node.content});`);
+			} else {
+				this.resBuffer.push(
+					`$ctx['~res'] += $ctx.$escape(${node.content});`,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Compiles a server-side JS node, injecting code directly into the buffer.
+	 * @param node The javascript node.
+	 */
+	private compileJavascript(node: Node) {
+		if (node.content) {
+			this.resBuffer.push(node.content);
+		}
+	}
+
+	/**
+	 * Processes a directive node, executing its 'onCall' handler with a specific context.
+	 * @param node The directive node.
+	 */
 	private async processDirective(node: Node) {
 		const name = node.name;
 		if (!name) return;
 
-		// Check if directive exists in Kire instance
 		const directive = this.kire.getDirective(name);
 
 		if (!directive) {
-			// Handle unknown directive
 			console.warn(`Directive @${name} not found.`);
 			return;
 		}
 
+		const compiler = this.createCompilerContext(node, directive);
+		await directive.onCall(compiler);
+	}
+
+	/**
+	 * Creates the CompilerContext API that is exposed to directive handlers.
+	 * @param node The current directive node.
+	 * @param directive The directive definition.
+	 * @returns The context object.
+	 */
+	private createCompilerContext(node: Node, directive: DirectiveDefinition): CompilerContext {
 		const self = this;
-		const compiler: CompilerContext = {
+		return {
 			kire: this.kire,
 			param: (key: string | number) => {
 				if (typeof key === "number") {
@@ -92,14 +138,12 @@ export class Compiler {
 				return undefined;
 			},
 			children: node.children,
-			parents: node.related, // 'parents' in user logic map to 'related' nodes from parser
+			parents: node.related,
 			set: async (nodes: Node[]) => {
 				if (!nodes) return;
 				await this.compileNodes(nodes);
 			},
 			render: async (content: string) => {
-				// This needs to return the object {code, gPre, gPos}
-				// But compile expects string for now.
 				return await this.kire.compile(content);
 			},
 			resolve: (path: string) => {
@@ -135,7 +179,7 @@ export class Compiler {
 				);
 			},
 			error: (msg: string) => {
-				throw new Error(`Error in directive @${name}: ${msg}`);
+				throw new Error(`Error in directive @${node.name}: ${msg}`);
 			},
 			get "~res"() {
 				return self.resBuffer.join("\n");
@@ -147,7 +191,5 @@ export class Compiler {
 				return self.posBuffer;
 			},
 		};
-
-		await directive.onCall(compiler);
 	}
 }
