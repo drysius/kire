@@ -1,9 +1,9 @@
 
 import { describe, expect, it } from "bun:test";
 import { Kire } from "kire";
-import KireTailwind from "./src";
+import KireTailwind from "../src";
 // Import KireAssets from the sibling package source
-import KireAssets from "../assets/src/index";
+import KireAssets from "../../assets/src/index";
 
 describe("@Kirejs/Tailwind", () => {
 

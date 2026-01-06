@@ -1,13 +1,13 @@
 import { Kire } from "kire";
 import KireTailwind from "./src";
 
-const kire = new Kire({ cache:true });
+const kire = new Kire({ production:true });
 
 kire.plugin(KireTailwind);
 
 Bun.serve({
     port: 3000,
-    async fetch(req) {
+    async fetch() {
         console.log("Request received");
         try {
             const html = await kire.render(`
