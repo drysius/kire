@@ -182,6 +182,7 @@ export class Kire {
 	 * @returns The Kire instance.
 	 */
 	public mount(name: string, data: Record<string, any>) {
+		this.cacheClear();
 		this.mounts.set(name, data);
 		return this;
 	}

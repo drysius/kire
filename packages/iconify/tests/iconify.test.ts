@@ -18,7 +18,7 @@ describe("KireIconify", () => {
 				});
 			}
 			return new Response(null, { status: 404 });
-		});
+		}) as any;
 
 		const template = `<iconify i="mdi:home" class="text-red-500" />`;
 		const result = await kire.render(template);

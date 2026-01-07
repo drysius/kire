@@ -17,6 +17,7 @@ test("Kire Error Reporting - Should format runtime errors with context", async (
     try {
         await kire.render(template);
     } catch (e: any) {
+        console.log(e.toString());
         expect(e.message).toContain("Kire Error:");
         // Check if console.error was called with the formatted message
         expect(errorSpy).toHaveBeenCalled();

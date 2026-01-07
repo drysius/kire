@@ -8,6 +8,10 @@
     "engines": {
         "vscode": "^1.104.0"
     },
+    "repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
     "categories": [
         "Programming Languages"
     ],

@@ -25,7 +25,7 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 			// Sort keys to ensure stability
 			const queryKeys = Object.keys(queryParams).sort();
 			const queryString = queryKeys
-				.map((k) => `${k}=${encodeURIComponent(queryParams[k])}`)
+				.map((k) => `${k}=${encodeURIComponent(queryParams[k]!)}`)
 				.join("&");
 			const cacheKey = `${iconName}?${queryString}`;
 
