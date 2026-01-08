@@ -1,98 +1,84 @@
-import { parseParams, getCsrfToken } from "./utils";
+export const getClientScript = (config: { endpoint: string; csrf?: string }) => `
+<script>
+    window.__KIREWIRE_CONFIG__ = ${JSON.stringify(config)};
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        const config = window.__KIREWIRE_CONFIG__;
+        
+        window.KireWire = {
+            call: async (id, snapshot, name, method, params) => {
+                 try {
+                     const headers = {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                     };
+                     
+                     const res = await fetch(config.endpoint, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ component: name, snapshot, method, params })
+                     });
+                     
+                     if (!res.ok) throw new Error('Network response was not ok');
+                     
+                     const data = await res.json();
+                     
+                     if (data.redirect) {
+                         window.location.href = data.redirect;
+                         return;
+                     }
 
-export class KireWireClient {
-    constructor(
-        private endpoint: string,
-        private method: 'http' | 'socket' = 'http'
-    ) {
-        this.init();
-    }
-
-    private init() {
-        document.addEventListener('click', this.handleClick.bind(this));
-    }
-
-    private async handleClick(e: MouseEvent) {
-        const target = e.target as HTMLElement;
-        const el = target.closest('[wire\:click]');
-        if (!el) return;
-
-        const action = el.getAttribute('wire:click');
-        if (!action) return;
-
-        const root = el.closest('[wire\:id]');
-        if (!root) return;
-
-        const componentId = root.getAttribute('wire:id');
-        const snapshot = root.getAttribute('wire:snapshot');
-        const componentName = root.getAttribute('wire:component');
-
-        if (!componentId || !componentName) return;
-
-        const { method, params } = parseParams(action);
-
-        await this.call(componentId, snapshot || '', componentName, method, params);
-    }
-
-    public async call(componentId: string, snapshot: string, componentName: string, method: string, params: any[]) {
-        const payload = {
-            component: componentName,
-            snapshot,
-            method,
-            params
+                     if(data.html) {
+                         const el = document.querySelector(`[wire\:id="${id}"]`);
+                         if(el) { 
+                             // Basic DOM Diffing replacement could go here
+                             el.innerHTML = data.html; 
+                             el.setAttribute('wire:snapshot', data.snapshot); 
+                         }
+                     }
+                     
+                     if(data.events) {
+                         data.events.forEach(e => window.dispatchEvent(new CustomEvent(e.name, { detail: e.params })));
+                     }
+                 } catch (error) {
+                     console.error('KireWire Error:', error);
+                 }
+            }
         };
 
-        if (this.method === 'http') {
-            await this.sendHttp(componentId, payload);
-        } else {
-            // Socket impl would go here
-            console.warn('Socket not implemented in client');
-        }
-    }
-
-    private async sendHttp(componentId: string, payload: any) {
-        try {
-            const res = await fetch(this.endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': getCsrfToken() || ''
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) throw new Error('Network error');
-
-            const data = await res.json();
-            this.handleResponse(componentId, data);
-        } catch (e) {
-            console.error('Wire error:', e);
-        }
-    }
-
-    private handleResponse(componentId: string, data: any) {
-        if (data.error) {
-            console.error(data.error);
-            return;
-        }
-
-        if (data.html) {
-            const el = document.querySelector(`[wire\:id="${componentId}"]`);
-            if (el) {
-                // Naive replacement. 
-                // In a real build, we'd bundle morphdom
-                el.innerHTML = data.html;
-                if (data.snapshot) {
-                    el.setAttribute('wire:snapshot', data.snapshot);
+        document.addEventListener('click', e => {
+            const el = e.target.closest('[wire\:click]');
+            if(!el) return;
+            
+            const action = el.getAttribute('wire:click');
+            const root = el.closest('[wire\:id]');
+            
+            if(!root) return;
+            
+            const id = root.getAttribute('wire:id');
+            const snap = root.getAttribute('wire:snapshot');
+            const name = root.getAttribute('wire:component');
+            
+            let method = action; 
+            let params = [];
+            
+            // Simple parser for method(param1, param2)
+            if(action.includes('(') && action.endsWith(')')) {
+                const match = action.match(/^([^(]+)\\(.*)\\) $/);
+                if (match) {
+                    method = match[1];
+                    // Very naive param splitting, fails on commas inside strings
+                    params = match[2].split(',').map(s => {
+                        s = s.trim();
+                        if (s === 'true') return true;
+                        if (s === 'false') return false;
+                        if (!isNaN(Number(s))) return Number(s);
+                        return s.replace(/^['"]|['"]$/g, '');
+                    }).filter(s => s !== '');
                 }
             }
-        }
-        
-        // Handle events
-        if (data.events) {
-            data.events.forEach((event: any) => {
-                window.dispatchEvent(new CustomEvent(event.name, { detail: event.params }));
-            });
-        }
-    }
-}
+            
+            window.KireWire.call(id, snap, name, method, params);
+        });
+    });
+</script>
