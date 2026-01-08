@@ -1,0 +1,41 @@
+<div style="border: 1px solid #ddd; padding: 20px; max-width: 400px; margin: 20px auto;">
+    <h2>Register</h2>
+
+    @if(successMessage)
+        <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 10px;">
+            {{ successMessage }}
+        </div>
+    @end
+
+    <form wire:submit.prevent="register">
+        <div style="margin-bottom: 10px;">
+            <label>Name</label>
+            <input type="text" wire:model="name" style="width: 100%; padding: 5px;">
+            @if(errors.name) <span style="color: red; font-size: 0.8em;">{{ errors.name }}</span> @end
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label>Email</label>
+            <input type="email" wire:model.lazy="email" placeholder="Updates on change (lazy)" style="width: 100%; padding: 5px;">
+            @if(errors.email) <span style="color: red; font-size: 0.8em;">{{ errors.email }}</span> @end
+        </div>
+
+        <div style="margin-bottom: 10px;">
+            <label>Password</label>
+            <input type="password" wire:model="password" style="width: 100%; padding: 5px;">
+            @if(errors.password) <span style="color: red; font-size: 0.8em;">{{ errors.password }}</span> @end
+        </div>
+
+        <!-- wire:ignore example: Content here won't be updated by Wire -->
+        <div wire:ignore style="margin-bottom: 15px; border: 1px dashed #999; padding: 5px;">
+            <p><strong>Static Content (wire:ignore)</strong></p>
+            <input type="text" id="datepicker" placeholder="I am a JS plugin input">
+            <small>Type here and update the form. I won't reset.</small>
+        </div>
+
+        <button type="submit" wire:loading.attr="disabled" style="padding: 8px 15px; cursor: pointer;">
+            <span wire:loading.remove>Register</span>
+            <span wire:loading style="display: none;">Processing...</span>
+        </button>
+    </form>
+</div>

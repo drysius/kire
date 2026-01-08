@@ -18,6 +18,7 @@ class PackageRegistry {
             if (!existsSync(pkgJsonPath)) continue;
 
             const content = await readFile(pkgJsonPath, 'utf-8');
+            console.log(content)
             const pkg = JSON.parse(content);
 
             this.packages.set(pkg.name, {

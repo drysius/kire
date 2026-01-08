@@ -1,0 +1,10 @@
+<div style="text-align: center; font-family: sans-serif; border: 1px solid #ddd; padding: 20px; max-width: 400px; margin: 20px auto;">
+    <h3>Counter</h3>
+    
+    <div style="font-size: 3rem; margin: 20px;">
+        {{ count }}
+    </div>
+
+    <button wire:click="decrement" style="padding: 10px 20px; font-size: 1.2rem;">-</button>
+    <button wire:click="increment" style="padding: 10px 20px; font-size: 1.2rem;">+</button>
+</div>

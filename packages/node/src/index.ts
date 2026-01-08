@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Kire, KirePlugin } from "kire";
-import "./types";
 
 // These are global objects that may or may not exist depending on the runtime
 declare const Bun: any;

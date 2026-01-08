@@ -1,52 +1,81 @@
 {
-  "name": "@kirejs/wire",
-  "version": "0.1.0",
-  "main": "src/index.ts",
-  "types": "src/index.ts",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "require": "./src/index.ts"
-    },
-    "./express": {
-      "types": "./src/adapters/express.ts",
-      "import": "./src/adapters/express.ts",
-      "require": "./src/adapters/express.ts"
-    },
-    "./fastify": {
-      "types": "./src/adapters/fastify.ts",
-      "import": "./src/adapters/fastify.ts",
-      "require": "./src/adapters/fastify.ts"
-    },
-    "./hono": {
-      "types": "./src/adapters/hono.ts",
-      "import": "./src/adapters/hono.ts",
-      "require": "./src/adapters/hono.ts"
-    },
-    "./elysia": {
-      "types": "./src/adapters/elysia.ts",
-      "import": "./src/adapters/elysia.ts",
-      "require": "./src/adapters/elysia.ts"
-    },
-    "./ws": {
-      "types": "./src/adapters/ws.ts",
-      "import": "./src/adapters/ws.ts",
-      "require": "./src/adapters/ws.ts"
-    }
-  },
-  "dependencies": {
-    "jsonwebtoken": "^9.0.3",
-    "kire": "workspace:../../core"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/jsonwebtoken": "^9.0.10"
-  },
-  "optionalDependencies": {
-    "fastify": "^5.6.2",
-    "hono": "^4.11.3",
-    "elysia": "^1.4.21",
-    "ws": "^8.19.0"
-  }
+	"name": "@kirejs/wire",
+	"description": "Livewire-like reactive components for Kire.",
+	"version": "0.1.0",
+	"main": "dist/cjs/index.cjs",
+	"module": "dist/mjs/index.js",
+	"types": "dist/types/index.d.ts",
+	"typings": "dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/mjs/index.js",
+			"require": "./dist/cjs/index.cjs"
+		},
+		"./client": {
+			"import": "./dist/client/kirewire.js"
+		},
+		"./express": {
+			"types": "./dist/types/adapters/express.d.ts",
+			"import": "./dist/mjs/adapters/express.js",
+			"require": "./dist/cjs/adapters/express.cjs"
+		},
+		"./fastify": {
+			"types": "./dist/types/adapters/fastify.d.ts",
+			"import": "./dist/mjs/adapters/fastify.js",
+			"require": "./dist/cjs/adapters/fastify.cjs"
+		},
+		"./hono": {
+			"types": "./dist/types/adapters/hono.d.ts",
+			"import": "./dist/mjs/adapters/hono.js",
+			"require": "./dist/cjs/adapters/hono.cjs"
+		},
+		"./elysia": {
+			"types": "./dist/types/adapters/elysia.d.ts",
+			"import": "./dist/mjs/adapters/elysia.js",
+			"require": "./dist/cjs/adapters/elysia.cjs"
+		},
+		"./ws": {
+			"types": "./dist/types/adapters/ws.d.ts",
+			"import": "./dist/mjs/adapters/ws.js",
+			"require": "./dist/cjs/adapters/ws.cjs"
+		}
+	},
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"keywords": [
+		"reactive",
+		"livewire",
+		"kire",
+		"typescript"
+	],
+	"author": "drysius",
+	"license": "MIT",
+	"scripts": {
+		"build": "bun run build:client && bun run ../../build.ts",
+		"build:client": "bun build ./client/src/index.ts --outfile ./dist/client/kirewire.js --target browser && bun build ./client/src/index.ts --outfile ./dist/client/kirewire.min.js --minify --target browser",
+		"test": "bun test",
+		"check": "bunx biome check src/** client/src/** --write"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@types/bun": "latest",
+		"@types/express": "^5.0.0",
+		"@types/jsonwebtoken": "^9.0.8",
+		"happy-dom": "^16.3.0",
+		"typescript": "^5.9.2"
+	},
+	"dependencies": {
+		"jsonwebtoken": "^9.0.2",
+		"kire": "workspace:../../core"
+	},
+	"optionalDependencies": {
+		"fastify": "^5.0.0",
+		"hono": "^4.0.0",
+		"elysia": "^1.0.0",
+		"ws": "^8.0.0"
+	}
 }

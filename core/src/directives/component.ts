@@ -23,7 +23,7 @@ export default (kire: Kire) => {
 
 	kire.directive({
 		name: "component",
-		params: ["path:string", "variables:object"],
+		params: ["path:string", "variables:any"],
 		children: true,
 		type: "html",
 		description:

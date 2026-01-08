@@ -49,7 +49,7 @@
         {
             "name": "if",
             "params": [
-                "cond:string"
+                "cond:any"
             ],
             "children": true,
             "type": "html",
@@ -59,7 +59,7 @@
                 {
                     "name": "elseif",
                     "params": [
-                        "cond:string"
+                        "cond:any"
                     ],
                     "children": true,
                     "type": "html",
@@ -69,7 +69,7 @@
                 {
                     "name": "elif",
                     "params": [
-                        "cond:string"
+                        "cond:any"
                     ],
                     "children": true,
                     "type": "html",
@@ -88,7 +88,7 @@
         {
             "name": "elseif",
             "params": [
-                "cond:string"
+                "cond:any"
             ],
             "children": true,
             "type": "html",
@@ -98,7 +98,7 @@
         {
             "name": "elif",
             "params": [
-                "cond:string"
+                "cond:any"
             ],
             "children": true,
             "type": "html",
@@ -115,7 +115,7 @@
         {
             "name": "for",
             "params": [
-                "expr:string"
+                "loop:{lhs} {op:in/of} {rhs}|statement:string"
             ],
             "children": true,
             "type": "html",
@@ -141,16 +141,9 @@
             "example": "@let(counter = 0)"
         },
         {
-            "name": "code",
-            "children": true,
-            "type": "js",
-            "description": "Executes a block of raw JavaScript code on the server.",
-            "example": "@code\n  console.log('This runs during template compilation.');\n@end"
-        },
-        {
             "name": "case",
             "params": [
-                "val:string"
+                "val:any"
             ],
             "children": true,
             "type": "html",
@@ -178,7 +171,7 @@
             "name": "include",
             "params": [
                 "path:string",
-                "locals:object"
+                "locals:any"
             ],
             "children": false,
             "type": "html",
@@ -199,7 +192,7 @@
             "name": "component",
             "params": [
                 "path:string",
-                "variables:object"
+                "variables:any"
             ],
             "children": true,
             "type": "html",

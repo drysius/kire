@@ -17,10 +17,6 @@ export type ICompilerConstructor = new (kire: Kire) => ICompiler;
  */
 export interface KireOptions {
 	/**
-	 * The root directory for resolving file paths. Defaults to "./".
-	 */
-	root?: string;
-	/**
 	 * Whether to run in production mode (enables caching). Defaults to true.
 	 */
 	production?: boolean;

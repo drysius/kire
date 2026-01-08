@@ -24,6 +24,7 @@ export interface WireResponse {
   events?: Array<{ name: string; params: any[] }>;
   redirect?: string;
   error?: string;
+  errors?: Record<string, string>; // Validation errors
 }
 
 export interface WireContext {

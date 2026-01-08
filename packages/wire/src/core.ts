@@ -78,27 +78,52 @@ export class WireCore {
     instance.kire = this.getKire();
     instance.context = { kire: this.getKire(), ...contextOverrides };
 
-    instance.fill(state);
-    await instance.hydrated();
+    try {
+        instance.fill(state);
+        await instance.hydrated();
 
-    if (method && typeof (instance as any)[method] === 'function') {
-      const args = Array.isArray(params) ? params : [];
-      await (instance as any)[method](...args);
-      await instance.updated(method, args[0]); 
+        if (method) {
+          const args = Array.isArray(params) ? params : [];
+          
+          if (method === '$set' && args.length === 2) {
+            const [prop, value] = args;
+            if (prop && typeof prop === 'string' && !prop.startsWith('_')) {
+               (instance as any)[prop] = value;
+               instance.clearErrors(prop); // Clear error on update
+               await instance.updated(prop, value);
+            }
+          } else if (method === '$refresh') {
+            await instance.updated('$refresh', null);
+          } else if (typeof (instance as any)[method] === 'function') {
+            await (instance as any)[method](...args);
+            await instance.updated(method, args[0]); 
+          } else {
+             // Method not found or not a function
+             // We generally ignore this for security or return error
+             console.warn(`Method ${method} not found on component ${component}`);
+          }
+        }
+
+        const html = await instance.render();
+        await instance.rendered();
+
+        const newState = instance.getPublicProperties();
+        const newSnapshot = this.crypto.sign(newState, this.options.cookieexpire!);
+        const events = instance.__events;
+        const redirect = instance.__redirect;
+        const errors = instance.__errors;
+
+        return {
+          html,
+          snapshot: newSnapshot,
+          updates: newState,
+          events: events.length > 0 ? events : undefined,
+          redirect: redirect || undefined,
+          errors: Object.keys(errors).length > 0 ? errors : undefined
+        };
+    } catch (e: any) {
+        console.error(`Error processing component ${component}:`, e);
+        return { error: e.message || 'Internal Server Error' };
     }
-
-    const html = await instance.render();
-    await instance.rendered();
-
-    const newState = instance.getPublicProperties();
-    const newSnapshot = this.crypto.sign(newState, this.options.cookieexpire!);
-    const events = instance.__events;
-
-    return {
-      html,
-      snapshot: newSnapshot,
-      updates: newState,
-      events: events.length > 0 ? events : undefined
-    };
   }
 }

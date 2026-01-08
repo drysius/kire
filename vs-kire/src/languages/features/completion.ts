@@ -51,7 +51,17 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
                 let snippet = def.name;
                 if (def.params && def.params.length > 0) {
                      snippet += '(';
-                     snippet += def.params.map((p, i) => `\${${i+1}:${p.split(':')[0]}}`).join(', ');
+                     snippet += def.params.map((p, i) => {
+                         let label = p;
+                         if (p.includes('|')) {
+                             // Handle union types: take names of all options
+                             label = p.split('|').map(opt => opt.split(':')[0]).join(' or ');
+                         } else {
+                             // Standard name:type or name:pattern
+                             label = p.split(':')[0];
+                         }
+                         return `\${${i+1}:${label}}`;
+                     }).join(', ');
                      snippet += ')';
                 }
                 

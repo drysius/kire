@@ -1,5 +1,6 @@
 import type { Kire } from "./kire";
 import type { CompilerContext, DirectiveDefinition, Node } from "./types";
+import { parseParamDefinition } from "./utils/params";
 
 export class Compiler {
 	private preBuffer: string[] = [];
@@ -134,12 +135,45 @@ export class Compiler {
 		directive: DirectiveDefinition,
 	): CompilerContext {
 		const self = this;
+		const paramsMap: Record<string, any> = {};
+
+		// Process and validate parameters
+		if (directive.params && node.args) {
+			directive.params.forEach((paramDefStr, index) => {
+				const argValue = node.args![index];
+				// Skip if argument is missing (optional params handling could be improved here)
+				if (argValue === undefined) return;
+
+				const definition = parseParamDefinition(paramDefStr);
+				const validation = definition.validate(argValue);
+
+				if (!validation.valid) {
+					throw new Error(
+						`Invalid parameter for directive @${node.name}: ${validation.error}`,
+					);
+				}
+
+				// Store the main parameter value by its name (e.g., 'expr' in 'expr:string')
+				paramsMap[definition.name] = argValue;
+
+				// Store any extracted variables from patterns (e.g., 'item' and 'list' from '{item} in {list}')
+				if (validation.extracted) {
+					Object.assign(paramsMap, validation.extracted);
+				}
+			});
+		}
+
 		return {
 			kire: this.kire,
 			param: (key: string | number) => {
 				if (typeof key === "number") {
 					return node.args?.[key];
 				}
+				// Lookup in the processed params map first
+				if (paramsMap[key] !== undefined) {
+					return paramsMap[key];
+				}
+				// Fallback to legacy index-based lookup if not found in map (e.g. if definition didn't match perfectly or wasn't provided)
 				if (directive.params && node.args) {
 					const index = directive.params.findIndex(
 						(p) => p.split(":")[0] === key,

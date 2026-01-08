@@ -1,0 +1,72 @@
+{
+    "package": "@kirejs/wire",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "version": "0.1.0",
+    "directives": [
+        {
+            "name": "wire",
+            "params": [
+                "name:string",
+                "params:object"
+            ],
+            "children": false,
+            "type": "html"
+        },
+        {
+            "name": "kirewire",
+            "children": false,
+            "type": "html"
+        },
+        {
+            "name": "wireScripts",
+            "children": false,
+            "type": "html"
+        }
+    ],
+    "elements": [],
+    "globals": {
+        "$wire": {
+            "options": {
+                "method": "http",
+                "route": "/_kirewire",
+                "cookiename": ".kirewire",
+                "cookieexpire": "15m",
+                "cookiehttp": true,
+                "secret": "88c40612-3cd6-4b32-aea3-5590a84ba1ca"
+            },
+            "crypto": {
+                "secret": "88c40612-3cd6-4b32-aea3-5590a84ba1ca"
+            },
+            "components": {},
+            "kireInstance": {
+                "$directives": {},
+                "$elements": {},
+                "$globals": {},
+                "namespaces": {},
+                "mounts": {},
+                "production": true,
+                "extension": "kire",
+                "$files": {},
+                "$var_locals": "it",
+                "$expose_locals": true,
+                "$cache": {}
+            }
+        },
+        "kire": {
+            "$directives": {},
+            "$elements": {},
+            "$globals": {},
+            "namespaces": {},
+            "mounts": {},
+            "production": true,
+            "extension": "kire",
+            "$files": {},
+            "$var_locals": "it",
+            "$expose_locals": true,
+            "$cache": {}
+        }
+    }
+}

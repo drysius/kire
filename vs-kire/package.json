@@ -5,13 +5,14 @@
     "version": "0.0.1",
     "type": "module",
     "publisher": "drysius",
+    "icon": "image.png",
     "engines": {
         "vscode": "^1.104.0"
     },
     "repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
     "categories": [
         "Programming Languages"
     ],
@@ -42,7 +43,11 @@
                     ".kire",
                     ".kire.html"
                 ],
-                "configuration": "./language-configuration.json"
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "icon.svg",
+                    "dark": "icon.svg"
+                }
             }
         ],
         "grammars": [
