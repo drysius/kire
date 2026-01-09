@@ -26,7 +26,8 @@
     "baseUrl": ".",
     "paths": {
       "@kirejs/*": [
-        "./*/src/index.ts"
+        "./*/src/index.ts",
+        "./*/src/server/index.ts"
       ],
       "kire": [
         "../core/src/index.ts"
@@ -34,9 +35,7 @@
     }
   },
   "include": [
-    "src"
+    "../src"
   ],
-  "exclude": [
-    "**/tests/**"
-  ]
+  "exclude":[]
 }

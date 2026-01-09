@@ -2,7 +2,7 @@ import type { Kire, KirePlugin } from "kire";
 import { marked } from "marked";
 
 declare module "kire" {
-	interface Kire {
+	class Kire {
 		parseMarkdown(content: string): Promise<string>;
 	}
 }

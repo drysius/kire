@@ -35,10 +35,10 @@
                 "cookiename": ".kirewire",
                 "cookieexpire": "15m",
                 "cookiehttp": true,
-                "secret": "88c40612-3cd6-4b32-aea3-5590a84ba1ca"
+                "secret": "844d27cc-e4b3-407f-a810-1221195603a3"
             },
             "crypto": {
-                "secret": "88c40612-3cd6-4b32-aea3-5590a84ba1ca"
+                "secret": "844d27cc-e4b3-407f-a810-1221195603a3"
             },
             "components": {},
             "kireInstance": {

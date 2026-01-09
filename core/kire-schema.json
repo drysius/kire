@@ -80,8 +80,8 @@
                     "name": "else",
                     "children": true,
                     "type": "html",
-                    "description": "Renders a block of content if the preceding @if/@elseif expressions are all false.",
-                    "example": "@else\n  Please log in.\n@end"
+                    "description": "Renders a block of content if the preceding condition is false.",
+                    "example": "@else\n  Alternative content.\n@end"
                 }
             ]
         },
@@ -109,8 +109,8 @@
             "name": "else",
             "children": true,
             "type": "html",
-            "description": "Renders a block of content if the preceding @if/@elseif expressions are all false.",
-            "example": "@else\n  Please log in.\n@end"
+            "description": "Renders a block of content if the preceding condition is false.",
+            "example": "@else\n  Alternative content.\n@end"
         },
         {
             "name": "for",
@@ -119,8 +119,29 @@
             ],
             "children": true,
             "type": "html",
-            "description": "Iterates over an array or object, similar to a JavaScript for...of loop.",
-            "example": "@for(user of users)\n  <p>{{ user.name }}</p>\n@end"
+            "description": "Iterates over an array or object. Supports @empty block if no iterations occur.",
+            "example": "@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end",
+            "parents": [
+                {
+                    "name": "empty",
+                    "children": true,
+                    "type": "html",
+                    "description": "Renders if the loop had no iterations."
+                },
+                {
+                    "name": "else",
+                    "children": true,
+                    "type": "html",
+                    "description": "Renders a block of content if the preceding condition is false.",
+                    "example": "@else\n  Alternative content.\n@end"
+                }
+            ]
+        },
+        {
+            "name": "empty",
+            "children": true,
+            "type": "html",
+            "description": "Renders if the loop had no iterations."
         },
         {
             "name": "const",

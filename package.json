@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "bun test",
-    "build": "bun run build.ts",
+    "build": "bun run schema.ts && bun run build.ts",
     "publish": "bun run publish.ts",
     "llms": "bun run llms.ts",
     "check": "bunx biome check core/src/** packages/**/src/** --write"

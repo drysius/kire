@@ -4,7 +4,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
-async function generate() {
+export async function generate() {
     console.log("🔍 Discovering packages...");
     // We look for packages/ and core/
     const packages = await glob(["packages/*", "core"]);

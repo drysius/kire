@@ -22,6 +22,7 @@ interface PackageInfo {
 	version: string
 	path: string
 	publishPath: string
+	scripts?: Record<string, string>
 }
 
 class PackageRegistry {
@@ -44,7 +45,8 @@ class PackageRegistry {
 				name: pkg.name,
 				version: pkg.version,
 				path: packagePath,
-				publishPath
+				publishPath,
+				scripts: pkg.scripts
 			})
 
 			console.log(`📦 ${pkg.name}@${pkg.version} -> ${publishPath}`)
@@ -101,14 +103,34 @@ class TypeScriptBuilder {
 }
 
 class BundleBuilder {
+	private async runPrebuildScript(packageInfo: PackageInfo): Promise<void> {
+		const { name, path, scripts } = packageInfo
+
+		if (scripts && scripts.prebuild) {
+			console.log(`⚡ Running prebuild script for ${name}`)
+			try {
+				await execAsync(`cd ${path} && bun run prebuild`)
+				console.log(`✅ Prebuild script executed for ${name}`)
+			} catch (error) {
+				console.error(`❌ Prebuild script failed for ${name}:`, error)
+				throw error
+			}
+		} else {
+			console.log(`⏭️  No prebuild script found for ${name}`)
+		}
+	}
+
 	async buildPackage(packageInfo: PackageInfo): Promise<void> {
 		const { name, path, publishPath } = packageInfo
 
 		console.log(`🔨 Building ${name}`)
 
+		// Executar script prebuild se existir
+		await this.runPrebuildScript(packageInfo)
+
 		// Criar diretórios de saída
 		await mkdir(`${publishPath}/dist/cjs`, { recursive: true })
-		await mkdir(`${publishPath}/dist/mjs`, { recursive: true })
+		await mkdir(`${publishPath}/dist/esm`, { recursive: true })
 
 		// Build CJS
 		console.log(`📦 Building CJS for ${name}`)
@@ -121,16 +143,31 @@ class BundleBuilder {
 
 		// Build ESM
 		console.log(`📦 Building ESM for ${name}`)
-		await $`bun build ${path}/src/index.ts \
-      --outdir ${publishPath}/dist/mjs \
-      --format esm \
-      --target node \
-      --packages external \
-      --minify`
+		try {
+			await $`bun build ${path}/src/index.ts \
+        --outdir ${publishPath}/dist/esm \
+        --format esm \
+        --target node \
+        --packages external \
+        --minify`
+		} catch (error) {
+			console.error(`❌ Failed to build ESM for ${name}:`, error)
+			// Tentar abordagem alternativa se falhar
+			console.log(`🔄 Trying alternative ESM build for ${name}...`)
+			await execAsync(`bun build ${path}/src/index.ts \
+        --outdir ${publishPath}/dist/esm \
+        --format esm \
+        --target node \
+        --packages external \
+        --minify`)
+		}
 
 		// Criar package.json files para módulos
 		await writeFile(`${publishPath}/dist/cjs/package.json`, JSON.stringify({ type: "commonjs" }))
-		await writeFile(`${publishPath}/dist/mjs/package.json`, JSON.stringify({ type: "module" }))
+		await writeFile(`${publishPath}/dist/esm/package.json`, JSON.stringify({ type: "module" }))
+
+		// Atualizar package.json principal com exports
+		await this.updatePackageExports(packageInfo)
 
 		// Copiar assets
 		await this.copyAssets(path, publishPath)
@@ -138,8 +175,43 @@ class BundleBuilder {
 		console.log(`✅ Finished ${name}`)
 	}
 
+	private async updatePackageExports(packageInfo: PackageInfo): Promise<void> {
+		const { publishPath, name } = packageInfo
+
+		const manifestPath = `${publishPath}/package.json`
+		if (!existsSync(manifestPath)) return
+
+		try {
+			const content = await readFile(manifestPath, 'utf-8')
+			const pkg = JSON.parse(content)
+
+			// Atualizar exports
+			pkg.main = "./dist/cjs/index.js"
+			pkg.module = "./dist/esm/index.js"
+			pkg.types = "./dist/types/index.d.ts"
+
+			pkg.exports = {
+				".": {
+					"types": "./dist/types/index.d.ts",
+					"import": "./dist/esm/index.js",
+					"require": "./dist/cjs/index.js"
+				}
+			}
+
+			// Adicionar files se não existir
+			if (!pkg.files) {
+				pkg.files = ["dist", "README.md", "LICENSE"]
+			}
+
+			await writeFile(manifestPath, JSON.stringify(pkg, null, 2))
+			console.log(`📄 Updated package.json exports for ${name}`)
+		} catch (error) {
+			console.error(`❌ Failed to update package.json for ${name}:`, error)
+		}
+	}
+
 	private async copyAssets(sourcePath: string, publishPath: string): Promise<void> {
-		const assets = ['README.md', 'package.json']
+		const assets = ['README.md', 'LICENSE']
 
 		for (const asset of assets) {
 			const sourceFile = `${sourcePath}/${asset}`
@@ -158,6 +230,8 @@ class DependencyManager {
 		console.log(`🔗 Updating dependencies in ${name}`)
 
 		const manifestPath = `${publishPath}/package.json`
+		if (!existsSync(manifestPath)) return
+
 		const content = await readFile(manifestPath, 'utf-8')
 		const pkg = JSON.parse(content)
 
@@ -210,7 +284,12 @@ class Builder {
 		// Build todos os packages
 		for (const packageInfo of packages) {
 			console.log(`\n═══ Building ${packageInfo.name} ═══`)
-			await this.bundleBuilder.buildPackage(packageInfo)
+			try {
+				await this.bundleBuilder.buildPackage(packageInfo)
+			} catch (error) {
+				console.error(`❌ Failed to build ${packageInfo.name}:`, error)
+				process.exit(1)
+			}
 		}
 
 		// Copiar tipos após o build
@@ -219,7 +298,11 @@ class Builder {
 		// Atualizar dependências
 		console.log('\n🔗 Updating workspace dependencies...')
 		for (const packageInfo of packages) {
-			await this.dependencyManager.replaceWorkspaceDependencies(packageInfo)
+			try {
+				await this.dependencyManager.replaceWorkspaceDependencies(packageInfo)
+			} catch (error) {
+				console.error(`❌ Failed to update dependencies for ${packageInfo.name}:`, error)
+			}
 		}
 
 		// Resumo final

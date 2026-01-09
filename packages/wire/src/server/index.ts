@@ -18,7 +18,7 @@ export const Kirewire: KirePlugin<WireOptions> = {
     core.init(kire, options);
 
     kire.$ctx("$wire", core);
-    kire.$ctx("kire", kire); // Inject kire instance globally
+    kire.$ctx("kire", kire);
 
     kire.directive({
       name: "wire",

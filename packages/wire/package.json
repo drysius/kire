@@ -55,8 +55,7 @@
 	"author": "drysius",
 	"license": "MIT",
 	"scripts": {
-		"build": "bun run build:client && bun run ../../build.ts",
-		"build:client": "bun build ./client/src/index.ts --outfile ./dist/client/kirewire.js --target browser && bun build ./client/src/index.ts --outfile ./dist/client/kirewire.min.js --minify --target browser",
+		"prebuild": "bun build ./src/client/index.ts --outfile ./dist/client/kirewire.js --target browser && bun build ./src/client/index.ts --outfile ./dist/client/kirewire.min.js --minify --target browser",
 		"test": "bun test",
 		"check": "bunx biome check src/** client/src/** --write"
 	},

@@ -1,6 +1,20 @@
+import type { DirectiveDefinition } from "../types";
 import type { Kire } from "../kire";
 
 export default (kire: Kire) => {
+	const elseDirective: DirectiveDefinition = {
+		name: "else",
+		children: true,
+		type: "html",
+		description:
+			"Renders a block of content if the preceding condition is false.",
+		example: `@else\n  Alternative content.\n@end`,
+		async onCall(compiler) {
+			compiler.raw(`} else {`);
+			if (compiler.children) await compiler.set(compiler.children);
+		},
+	};
+
 	kire.directive({
 		name: "if",
 		params: ["cond:any"],
@@ -35,18 +49,7 @@ export default (kire: Kire) => {
 					if (compiler.children) await compiler.set(compiler.children);
 				},
 			},
-			{
-				name: "else",
-				children: true,
-				type: "html",
-				description:
-					"Renders a block of content if the preceding @if/@elseif expressions are all false.",
-				example: `@else\n  Please log in.\n@end`,
-				async onCall(compiler) {
-					compiler.raw(`} else {`);
-					if (compiler.children) await compiler.set(compiler.children);
-				},
-			},
+			elseDirective,
 		],
 		async onCall(compiler) {
 			compiler.raw(`if (${compiler.param("cond")}) {`);
@@ -76,16 +79,9 @@ export default (kire: Kire) => {
 					if (compiler.children) await compiler.set(compiler.children);
 				},
 			},
-			{
-				name: "else", // Alias for empty in the context of for
-				children: true,
-				type: "html",
-				description: "Alias for @empty in a @for loop.",
-				async onCall(compiler) {
-					compiler.raw(`} if ($__empty) {`);
-					if (compiler.children) await compiler.set(compiler.children);
-				},
-			},
+			// We include 'else' here so the parser accepts it as a child of @for.
+			// It points to the standard 'else' directive, but @for's onCall will hijack it.
+			elseDirective,
 		],
 		async onCall(compiler) {
 			const lhs = compiler.param("lhs");
@@ -111,7 +107,15 @@ export default (kire: Kire) => {
 			compiler.raw(`$__empty = false;`);
 
 			if (compiler.children) await compiler.set(compiler.children);
-			if (compiler.parents) await compiler.set(compiler.parents);
+			
+			if (compiler.parents) {
+				// Hijack 'else' nodes and treat them as 'empty'
+				// This avoids conflict with global @else directive used by @if
+				compiler.parents.forEach(p => {
+					if (p.name === 'else') p.name = 'empty';
+				});
+				await compiler.set(compiler.parents);
+			}
 			
 			// Close the block (matches either the for loop or the if($__empty))
 			compiler.raw(`}`);
