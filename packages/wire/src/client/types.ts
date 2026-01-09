@@ -19,6 +19,7 @@ export interface WireRequest {
     snapshot: string;
     method: string;
     params: any[];
+    updates?: Record<string, any>;
 }
 
 export interface WireResponse {

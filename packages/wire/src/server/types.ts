@@ -15,6 +15,7 @@ export interface WirePayload {
   snapshot: string;
   method?: string;
   params?: unknown[];
+  updates?: Record<string, unknown>;
 }
 
 export interface WireResponse {

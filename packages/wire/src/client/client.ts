@@ -110,6 +110,11 @@ export class KireWireClient {
             const modelName = target.getAttribute(modelAttr)!;
             const modifiers = modelAttr.split('.').slice(1);
             
+            // Ignore deferred updates completely (they are sent with actions)
+            if (modifiers.includes('defer')) {
+                return;
+            }
+
             if (modifiers.includes('lazy') && e.type === 'input') {
                 return;
             }
@@ -217,6 +222,28 @@ export class KireWireClient {
 
             setLoadingState(id, true);
 
+            // Collect deferred/current state from DOM
+            const updates: Record<string, any> = {};
+            const root = document.querySelector(safeSelector('wire:id', id));
+            if (root) {
+                // Find all elements with wire:model inside this component
+                // Note: This is a simplified selector, ideally we should scope to ignore nested components
+                const models = root.querySelectorAll('[wire\\:model], [wire\\:model\\.defer], [wire\\:model\\.lazy], [wire\\:model\\.debounce]');
+                
+                models.forEach(el => {
+                    // Ensure element belongs to this component (not a nested one)
+                    if (findComponentRoot(el as HTMLElement) !== root) return;
+
+                    const attrName = el.getAttributeNames().find(a => a.startsWith('wire:model'));
+                    if (attrName) {
+                        const modelName = el.getAttribute(attrName);
+                        if (modelName) {
+                            updates[modelName] = getValueFromElement(el as HTMLElement);
+                        }
+                    }
+                });
+            }
+
             const headers: Record<string, string> = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
@@ -227,7 +254,13 @@ export class KireWireClient {
                 headers['X-CSRF-TOKEN'] = csrfToken;
             }
 
-            const payload: WireRequest = { component: name, snapshot, method, params };
+            const payload: WireRequest = { 
+                component: name, 
+                snapshot, 
+                method, 
+                params,
+                updates: Object.keys(updates).length > 0 ? updates : undefined
+            };
 
             const res = await fetch(this.config.endpoint, {
                 method: 'POST',

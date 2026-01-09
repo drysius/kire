@@ -58,7 +58,7 @@ export class WireCore {
   }
 
   public async handleRequest(payload: WirePayload, contextOverrides: Partial<WireContext> = {}): Promise<WireResponse> {
-    const { component, snapshot, method, params } = payload;
+    const { component, snapshot, method, params, updates } = payload;
     
     let state: Record<string, unknown> = {};
     if (snapshot) {
@@ -81,6 +81,18 @@ export class WireCore {
     try {
         instance.fill(state);
         await instance.hydrated();
+
+        // Process deferred updates or multi-updates first
+        if (updates && typeof updates === 'object') {
+            for (const [prop, value] of Object.entries(updates)) {
+                 if (prop && typeof prop === 'string' && !prop.startsWith('_')) {
+                     (instance as any)[prop] = value;
+                     instance.clearErrors(prop);
+                     // We could optionally trigger updated hook for each, but maybe just once or per prop?
+                     // For now let's behave like they were set
+                 }
+            }
+        }
 
         if (method) {
           const args = Array.isArray(params) ? params : [];

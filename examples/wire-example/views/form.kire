@@ -10,19 +10,22 @@
     <form wire:submit.prevent="register">
         <div style="margin-bottom: 10px;">
             <label>Name</label>
-            <input type="text" wire:model="name" style="width: 100%; padding: 5px;">
+            <!-- Changed to .defer to prevent spam and partial updates -->
+            <input type="text" wire:model.defer="name" style="width: 100%; padding: 5px;">
             @if(errors.name) <span style="color: red; font-size: 0.8em;">{{ errors.name }}</span> @end
         </div>
 
         <div style="margin-bottom: 10px;">
             <label>Email</label>
-            <input type="email" wire:model.lazy="email" placeholder="Updates on change (lazy)" style="width: 100%; padding: 5px;">
+            <!-- Changed to .defer -->
+            <input type="email" wire:model.defer="email" placeholder="Updates on submit" style="width: 100%; padding: 5px;">
             @if(errors.email) <span style="color: red; font-size: 0.8em;">{{ errors.email }}</span> @end
         </div>
 
         <div style="margin-bottom: 10px;">
             <label>Password</label>
-            <input type="password" wire:model="password" style="width: 100%; padding: 5px;">
+            <!-- Changed to .defer -->
+            <input type="password" wire:model.defer="password" style="width: 100%; padding: 5px;">
             @if(errors.password) <span style="color: red; font-size: 0.8em;">{{ errors.password }}</span> @end
         </div>
 
