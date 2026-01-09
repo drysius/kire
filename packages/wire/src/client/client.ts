@@ -11,6 +11,15 @@ export class KireWireClient {
     constructor(config: ClientConfig) {
         this.config = config;
         
+        // Inject default styles
+        if (typeof document !== 'undefined') {
+            const style = document.createElement('style');
+            style.innerHTML = `
+                [wire\\:loading], [wire\\:loading\\.delay], [wire\\:offline] { display: none; }
+            `;
+            document.head.appendChild(style);
+        }
+
         this.observer = new MutationObserver(() => this.initPolls());
         
         if (document.body) {
@@ -41,7 +50,19 @@ export class KireWireClient {
             document.addEventListener(type, (e) => this.handleEvent(e), useCapture);
         });
 
+        // Offline support
+        window.addEventListener('offline', () => this.toggleOffline(true));
+        window.addEventListener('online', () => this.toggleOffline(false));
+
         this.initPolls();
+    }
+
+    private toggleOffline(isOffline: boolean) {
+        const elements = document.querySelectorAll(safeSelector('wire:offline'));
+        elements.forEach((el) => {
+            (el as HTMLElement).style.display = isOffline ? 'inline-block' : 'none'; // Or remove property to assume css default
+            if (!isOffline) (el as HTMLElement).style.removeProperty('display');
+        });
     }
 
     private initPolls() {
@@ -220,7 +241,7 @@ export class KireWireClient {
                 return;
             }
 
-            setLoadingState(id, true);
+            setLoadingState(id, true, method);
 
             // Collect deferred/current state from DOM
             const updates: Record<string, any> = {};
@@ -228,13 +249,17 @@ export class KireWireClient {
             if (root) {
                 // Find all elements with wire:model inside this component
                 // Note: This is a simplified selector, ideally we should scope to ignore nested components
-                const models = root.querySelectorAll('[wire\\:model], [wire\\:model\\.defer], [wire\\:model\\.lazy], [wire\\:model\\.debounce]');
+                const models = root.querySelectorAll('[wire\\:model], [wire\\:model\\.defer], [wire\\:model\\.lazy], [wire\\:model\\.debounce], [wire\\:defer]');
                 
                 models.forEach(el => {
                     // Ensure element belongs to this component (not a nested one)
                     if (findComponentRoot(el as HTMLElement) !== root) return;
 
-                    const attrName = el.getAttributeNames().find(a => a.startsWith('wire:model'));
+                    let attrName = el.getAttributeNames().find(a => a.startsWith('wire:model'));
+                    if (!attrName) {
+                        attrName = el.getAttributeNames().find(a => a === 'wire:defer');
+                    }
+
                     if (attrName) {
                         const modelName = el.getAttribute(attrName);
                         if (modelName) {
@@ -283,7 +308,7 @@ export class KireWireClient {
             console.error('KireWire Error:', error);
             window.dispatchEvent(new CustomEvent('kirewire:error', { detail: { error, componentId: id } }));
         } finally {
-            setLoadingState(id, false);
+            setLoadingState(id, false, method);
         }
     }
 

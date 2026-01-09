@@ -24,5 +24,7 @@
             "void": true
         }
     ],
-    "globals": {}
+    "globals": {
+        "fetchIcon": "function"
+    }
 }

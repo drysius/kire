@@ -3,13 +3,13 @@
 	"description": "Livewire-like reactive components for Kire.",
 	"version": "0.1.0",
 	"main": "dist/cjs/index.cjs",
-	"module": "dist/mjs/index.js",
+	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",
 	"typings": "dist/types/index.d.ts",
 	"exports": {
 		".": {
 			"types": "./dist/types/index.d.ts",
-			"import": "./dist/mjs/index.js",
+			"import": "./dist/esm/index.js",
 			"require": "./dist/cjs/index.cjs"
 		},
 		"./client": {
@@ -17,27 +17,27 @@
 		},
 		"./express": {
 			"types": "./dist/types/adapters/express.d.ts",
-			"import": "./dist/mjs/adapters/express.js",
+			"import": "./dist/esm/adapters/express.js",
 			"require": "./dist/cjs/adapters/express.cjs"
 		},
 		"./fastify": {
 			"types": "./dist/types/adapters/fastify.d.ts",
-			"import": "./dist/mjs/adapters/fastify.js",
+			"import": "./dist/esm/adapters/fastify.js",
 			"require": "./dist/cjs/adapters/fastify.cjs"
 		},
 		"./hono": {
 			"types": "./dist/types/adapters/hono.d.ts",
-			"import": "./dist/mjs/adapters/hono.js",
+			"import": "./dist/esm/adapters/hono.js",
 			"require": "./dist/cjs/adapters/hono.cjs"
 		},
 		"./elysia": {
 			"types": "./dist/types/adapters/elysia.d.ts",
-			"import": "./dist/mjs/adapters/elysia.js",
+			"import": "./dist/esm/adapters/elysia.js",
 			"require": "./dist/cjs/adapters/elysia.cjs"
 		},
 		"./ws": {
 			"types": "./dist/types/adapters/ws.d.ts",
-			"import": "./dist/mjs/adapters/ws.js",
+			"import": "./dist/esm/adapters/ws.js",
 			"require": "./dist/cjs/adapters/ws.cjs"
 		}
 	},
@@ -55,7 +55,7 @@
 	"author": "drysius",
 	"license": "MIT",
 	"scripts": {
-		"prebuild": "bun build ./src/client/index.ts --outfile ./dist/client/kirewire.js --target browser && bun build ./src/client/index.ts --outfile ./dist/client/kirewire.min.js --minify --target browser",
+		"prebuild": "bun run build.ts",
 		"test": "bun test",
 		"check": "bunx biome check src/** client/src/** --write"
 	},

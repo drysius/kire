@@ -30,15 +30,15 @@
     "globals": {
         "$wire": {
             "options": {
-                "method": "http",
-                "route": "/_kirewire",
-                "cookiename": ".kirewire",
-                "cookieexpire": "15m",
-                "cookiehttp": true,
-                "secret": "844d27cc-e4b3-407f-a810-1221195603a3"
+                "method": "string",
+                "route": "string",
+                "cookiename": "string",
+                "cookieexpire": "string",
+                "cookiehttp": "boolean",
+                "secret": "string"
             },
             "crypto": {
-                "secret": "844d27cc-e4b3-407f-a810-1221195603a3"
+                "secret": "string"
             },
             "components": {},
             "kireInstance": {
@@ -47,11 +47,15 @@
                 "$globals": {},
                 "namespaces": {},
                 "mounts": {},
-                "production": true,
-                "extension": "kire",
+                "production": "boolean",
+                "$resolver": "function",
+                "$readdir": "undefined",
+                "extension": "string",
                 "$files": {},
-                "$var_locals": "it",
-                "$expose_locals": true,
+                "$parser": "function",
+                "$compiler": "function",
+                "$var_locals": "string",
+                "$expose_locals": "boolean",
                 "$cache": {}
             }
         },
@@ -61,11 +65,15 @@
             "$globals": {},
             "namespaces": {},
             "mounts": {},
-            "production": true,
-            "extension": "kire",
+            "production": "boolean",
+            "$resolver": "function",
+            "$readdir": "undefined",
+            "extension": "string",
             "$files": {},
-            "$var_locals": "it",
-            "$expose_locals": true,
+            "$parser": "function",
+            "$compiler": "function",
+            "$var_locals": "string",
+            "$expose_locals": "boolean",
             "$cache": {}
         }
     }

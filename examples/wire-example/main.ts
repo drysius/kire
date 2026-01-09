@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { Kirewire } from "@kirejs/wire";
 import { KireNode } from "@kirejs/node";
-import { Elysiawire } from "../../packages/wire/src/adapters/elysia";
+import { Elysiawire } from "../../packages/wire/src/server/adapters/elysia";
 import path from "path";
 import { Kire } from "kire";
 import { readdirSync } from "fs";

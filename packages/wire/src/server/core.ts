@@ -95,6 +95,18 @@ export class WireCore {
         }
 
         if (method) {
+          // Security: Prevent calling lifecycle methods or private methods
+          const FORBIDDEN_METHODS = [
+              'mount', 'render', 'hydrated', 'updated', 'rendered',
+              'view', 'emit', 'redirect', 'addError', 'clearErrors', 
+              'fill', 'getPublicProperties', 'constructor'
+          ];
+
+          if (FORBIDDEN_METHODS.includes(method) || method.startsWith('_')) {
+              console.warn(`Attempt to call forbidden method ${method} on component ${component}`);
+              return { error: 'Method not allowed' };
+          }
+
           const args = Array.isArray(params) ? params : [];
           
           if (method === '$set' && args.length === 2) {

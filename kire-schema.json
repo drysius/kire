@@ -227,5 +227,9 @@
          "void": false
       }
    ],
-   "globals": {}
+   "globals": {
+      "$md5": "function",
+      "$escape": "function",
+      "$require": "function"
+   }
 }

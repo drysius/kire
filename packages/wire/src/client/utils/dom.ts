@@ -56,6 +56,8 @@ export function updateDom(id: string, html: string, newSnapshot?: string) {
         if (activeElement && el.contains(activeElement)) {
             if (activeElement.hasAttribute('wire:model')) {
                 activeId = 'wire:model=' + activeElement.getAttribute('wire:model');
+            } else if (activeElement.hasAttribute('wire:defer')) {
+                activeId = 'wire:defer=' + activeElement.getAttribute('wire:defer');
             } else if (activeElement.id) {
                 activeId = 'id=' + activeElement.id;
             } else if (activeElement.getAttribute('name')) {
@@ -77,6 +79,8 @@ export function updateDom(id: string, html: string, newSnapshot?: string) {
             let newActive: HTMLElement | null = null;
             if (activeId.startsWith('wire:model=')) {
                 newActive = el.querySelector(safeSelector('wire:model', activeId.substring(11)));
+            } else if (activeId.startsWith('wire:defer=')) {
+                newActive = el.querySelector(safeSelector('wire:defer', activeId.substring(11)));
             } else if (activeId.startsWith('id=')) {
                 newActive = el.querySelector(`#${activeId.substring(3)}`);
             } else if (activeId.startsWith('name=')) {
@@ -95,7 +99,7 @@ export function updateDom(id: string, html: string, newSnapshot?: string) {
     }
 }
 
-export function setLoadingState(componentId: string, loading: boolean) {
+export function setLoadingState(componentId: string, loading: boolean, targetName?: string) {
     let root: HTMLElement | null = null;
     try {
         root = document.querySelector(safeSelector('wire:id', componentId));
@@ -137,6 +141,14 @@ export function setLoadingState(componentId: string, loading: boolean) {
     
     loadingEls.forEach((el) => {
         const element = el as HTMLElement;
+
+        // Check wire:target
+        const targetAttr = element.getAttribute('wire:target');
+        if (targetAttr && targetName) {
+            const targets = targetAttr.split(',').map(t => t.trim());
+            // If target is present but doesn't match the current action, skip
+            if (!targets.includes(targetName)) return;
+        }
         
         const classAttr = element.getAttribute('wire:loading.class');
         if (classAttr) {
@@ -153,10 +165,22 @@ export function setLoadingState(componentId: string, loading: boolean) {
 
         if (element.hasAttribute('wire:loading')) {
              if (loading) {
+                 element.style.removeProperty('display');
+                 // If removing 'display' doesn't show it (due to our injected CSS), we force it.
+                 // But wait, our injected CSS is [wire:loading] { display: none }.
+                 // So we MUST override it with inline style.
                  element.style.display = element.dataset.wireDisplay || 'inline-block';
              } else {
                  element.dataset.wireDisplay = element.style.display === 'none' ? '' : element.style.display;
-                 element.style.display = 'none';
+                 // Revert to CSS default (which is none) by clearing inline style, 
+                 // OR force none if we want to be sure.
+                 element.style.display = 'none'; 
+                 // Actually, clearing it is safer if we want to respect "loading" state end.
+                 // But since we want it hidden, and our CSS hides it, removing inline style should hide it.
+                 element.style.removeProperty('display'); 
+                 // Wait, if I explicitly set 'none', it stays none.
+                 // If I remove property, the CSS rule [wire:loading] { display: none } applies.
+                 // So removing property is correct for 'hiding'.
              }
         }
         
@@ -165,7 +189,10 @@ export function setLoadingState(componentId: string, loading: boolean) {
                  element.dataset.wireDisplay = element.style.display === 'none' ? '' : element.style.display;
                  element.style.display = 'none';
              } else {
-                 element.style.display = element.dataset.wireDisplay || 'inline-block';
+                 element.style.removeProperty('display');
+                 if (element.dataset.wireDisplay) {
+                     element.style.display = element.dataset.wireDisplay;
+                 }
              }
         }
     });

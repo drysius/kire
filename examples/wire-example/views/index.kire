@@ -1,18 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KireWire Example</title>
-    @kirewire
-    <style>body { font-family: sans-serif; }</style>
-</head>
-<body>
-    
+@include('views.layout', {})
+
+@define('content')
     <h1 style="text-align: center;">KireWire Examples</h1>
 
     <!-- Render Components -->
-    @wire('counter')
-    @wire('form')
-</body>
-</html>
+    @wire('counter',{})
+    @wire('form', {})
+@end

@@ -1,25 +1,20 @@
-### 4. Using Markdown with SSG
+# @kirejs/assets
 
-To use markdown, you can use the `@kirejs/markdown` plugin (install it separately).
+Asset management utilities for Kire applications. Helps with injecting scripts, styles, and managing static resources.
 
-```typescript
-import KireMarkdown from '@kirejs/markdown';
-kire.plugin(KireMarkdown);
+## Features
+
+- **Asset Injection**: Helpers to include CSS and JS files.
+- **Versioning**: Support for cache-busting strategies.
+
+## Installation
+
+```bash
+npm install @kirejs/assets
+# or
+bun add @kirejs/assets
 ```
 
-In your template:
+## License
 
-```html
-<!-- docs.kire -->
-@layout('layouts/docs')
-    @markdown('docs/*.md')
-@end
-```
-
-If you use `@markdown('glob/*.md')`, the SSG plugin will treat this `docs.kire` as a **layout generator**.
-It will find all markdown files matching the glob, and for each one:
-1. Render the markdown content.
-2. Inject it into the `docs.kire` template (where `@markdown` is called).
-3. Generate an HTML file for each markdown file (e.g., `docs/intro.md` -> `dist/docs/intro`).
-
-This allows you to have a single layout file drive the generation of your entire documentation site.
+MIT

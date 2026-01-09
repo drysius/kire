@@ -25,5 +25,8 @@
         }
     ],
     "elements": [],
-    "globals": {}
+    "globals": {
+        "readDir": "function",
+        "renderMarkdown": "function"
+    }
 }

@@ -37,12 +37,5 @@
 	"bugs": {
 		"url": "https://github.com/drysius/kire/issues"
 	},
-	"homepage": "https://github.com/drysius/kire#readme",
-	"scripts": {
-		"build": "bun run build.ts",
-		"test": "bun test"
-	},
-	"dependencies": {
-		"marked": "^17.0.1"
-	}
+	"homepage": "https://github.com/drysius/kire/tree/main/core#readme"
 }

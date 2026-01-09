@@ -3,6 +3,9 @@ import { WireComponent } from "@kirejs/wire";
 export default class Counter extends WireComponent {
     public count = 0;
 
+    async register() {
+        console.log(this.count);
+    }
     async increment() {
         this.count++;
     }
@@ -16,6 +19,12 @@ export default class Counter extends WireComponent {
     }
 
     async render() {
-        return this.view('views.counter');
+        return this.view('views.counter', {
+            users:[
+                "a",
+                'b',
+                'c'
+            ]
+        });
     }
 }
