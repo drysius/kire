@@ -48,92 +48,82 @@ describe("Wire Scenarios", () => {
 	test("should handle form validation flow", async () => {
 		// 1. Initial State
 		const comp = new RegistrationForm();
-		let snapshot = core.getCrypto().sign(comp.getPublicProperties());
+		const data = comp.getPublicProperties();
+		const memo = {
+			id: "test-id",
+			name: "register",
+			path: "/",
+			method: "GET",
+			children: [],
+			scripts: [],
+			assets: [],
+			errors: [],
+			locale: "en",
+		};
+		const checksum = core.getChecksum().generate(data, memo);
+		let snapshot = JSON.stringify({ data, memo, checksum });
 
 		// 2. Submit Empty (Should Fail)
-		let res = await core.handleRequest({
+		let res = (await core.handleRequest({
 			component: "register",
 			snapshot,
 			method: "save",
 			params: [],
-		});
+		})) as any;
 
-		expect(res.errors).toEqual({
+		let compRes = res.components[0];
+		expect(compRes.effects.errors).toEqual({
 			email: "Email required",
 			password: "Password required",
 			terms: "Terms required",
 		});
-		expect(res.html).toContain("Email required");
-		snapshot = res.snapshot!;
+		expect(compRes.effects.html).toContain("Email required");
+		snapshot = compRes.snapshot;
 
 		// 3. Update Email (Should Clear Error and Update State)
-		res = await core.handleRequest({
+		res = (await core.handleRequest({
 			component: "register",
 			snapshot,
 			method: "$set",
 			params: ["email", "test@example.com"],
-		});
+		})) as any;
 
-		expect(res.updates?.email).toBe("test@example.com");
-		// Errors are usually cleared on re-render in full implementation or manually.
-		// My implementation of clearErrors() in update clears specific field error.
-		// Check core.ts logic: instance.clearErrors(prop) is called.
-		// However, we need to check if the error is gone from response.
-
-		// Wait, handleRequest re-instantiates.
-		// If errors are part of public properties (__errors), they persist?
-		// In my component.ts implementation: public __errors: Record<string, string> = {};
-		// AND getPublicProperties ignores keys starting with _.
-		// So __errors IS NOT PERSISTED in snapshot automatically.
-		// This is standard stateless behavior. Errors are ephemeral to the request unless we persist them.
-		// Livewire persists errors bag.
-
-		// Let's check my implementation of getPublicProperties in component.ts
-		// It ignores '_'. So __errors is lost.
-
-		// FIX: I need to ensure errors persist if I want them to stick around,
-		// OR the client handles them. Usually server re-validates or state carries them.
-		// If I want standard behavior, I should probably persist errors or not clear them?
-
-		// Actually, if I call $set, I don't run save(), so I don't generate errors.
-		// But the previous errors are gone because they weren't in snapshot.
-		// This is actually correct for "live" validation if we re-validate.
-		// But if we want errors to stick until fixed...
-
-		// Let's assume errors are ephemeral for this test cycle.
-
-		snapshot = res.snapshot!;
+		compRes = res.components[0];
+		const snapObj = JSON.parse(compRes.snapshot);
+		expect(snapObj.data.email).toBe("test@example.com");
+		snapshot = compRes.snapshot;
 
 		// 4. Fill remaining and submit
 
 		// Set password
-		res = await core.handleRequest({
+		res = (await core.handleRequest({
 			component: "register",
 			snapshot,
 			method: "$set",
 			params: ["password", "123"],
-		});
-		snapshot = res.snapshot!;
+		})) as any;
+		snapshot = res.components[0].snapshot;
 
 		// Set terms
-		res = await core.handleRequest({
+		res = (await core.handleRequest({
 			component: "register",
 			snapshot,
 			method: "$set",
 			params: ["terms", true],
-		});
-		snapshot = res.snapshot!;
+		})) as any;
+		snapshot = res.components[0].snapshot;
 
 		// Save
-		res = await core.handleRequest({
+		res = (await core.handleRequest({
 			component: "register",
 			snapshot,
 			method: "save",
 			params: [],
-		});
+		})) as any;
 
-		expect(res.errors).toBeUndefined();
-		expect(res.redirect).toBe("/dashboard");
-		expect(res.events).toEqual([{ name: "saved", params: [] }]);
+		compRes = res.components[0];
+		expect(compRes.effects.errors).toBeUndefined();
+		expect(compRes.effects.redirect).toBe("/dashboard");
+		expect(compRes.effects.emits).toEqual([{ event: "saved", params: [] }]);
 	});
 });

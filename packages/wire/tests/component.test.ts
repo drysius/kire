@@ -40,8 +40,7 @@ describe("WireComponent", () => {
 		comp._privateProp = "secret";
 
 		const props = comp.getPublicProperties();
-		expect(props).toEqual({ title: "Changed", log: [] });
-		expect(props._privateProp).toBeUndefined();
+		expect(props).toEqual({ title: "Changed", log: [], listeners: {} });
 	});
 
 	test("should handle redirect", () => {

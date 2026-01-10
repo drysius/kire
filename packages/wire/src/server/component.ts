@@ -8,6 +8,7 @@ export abstract class WireComponent {
 	public __events: Array<{ name: string; params: any[] }> = [];
 	public __redirect: string | null = null;
 	public __errors: Record<string, string> = {};
+    public listeners: Record<string, string> = {}; // event -> method
 
 	public kire!: Kire;
 	public context: WireContext = { kire: undefined as any };

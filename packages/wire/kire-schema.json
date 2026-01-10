@@ -13,17 +13,23 @@
                 "params?:object"
             ],
             "children": false,
-            "type": "html"
+            "type": "html",
+            "description": "Renders a Kirewire component.",
+            "example": "@wire('counter', { count: 10 })"
         },
         {
             "name": "kirewire",
             "children": false,
-            "type": "html"
+            "type": "html",
+            "description": "Injects the necessary client-side scripts for Kirewire.",
+            "example": "@kirewire"
         },
         {
             "name": "wireScripts",
             "children": false,
-            "type": "html"
+            "type": "html",
+            "description": "Alias for @kirewire. Injects client-side scripts.",
+            "example": "@wireScripts"
         }
     ],
     "elements": [],
@@ -37,7 +43,7 @@
                 "cookiehttp": "boolean",
                 "secret": "string"
             },
-            "crypto": {
+            "checksum": {
                 "secret": "string"
             },
             "components": {},

@@ -21,8 +21,6 @@ describe("WireCore", () => {
 
 	beforeEach(() => {
 		kire = new Kire();
-		// Re-initialize core singleton for each test if possible,
-		// but since it's a singleton, we just re-init it with kire.
 		core = WireCore.get();
 		core.init(kire, { secret: "test-secret" });
 	});
@@ -36,53 +34,63 @@ describe("WireCore", () => {
 	test("should handle initial request (render)", async () => {
 		core.registerComponent("counter", Counter);
 
-		// Simulate a request without snapshot (initial load is usually done via @wire directive,
-		// but handleRequest can also be used for subsequent updates)
-		// Actually, handleRequest expects a payload which comes from the client update.
-		// If we want to test initial render logic, we usually go through the directive.
-		// But let's test a "refresh" or method call.
+		const data = { count: 5 };
+		const memo = {
+			id: "test-id",
+			name: "counter",
+			path: "/",
+			method: "GET",
+			children: [],
+			scripts: [],
+			assets: [],
+			errors: [],
+			locale: "en",
+		};
+		const checksum = core.getChecksum().generate(data, memo);
+		const snapshot = JSON.stringify({ data, memo, checksum });
 
-		// Create an instance manually to get a valid snapshot first
-		const instance = new Counter();
-		instance.count = 5;
-		const snapshot = core.getCrypto().sign(instance.getPublicProperties());
-
-		const response = await core.handleRequest({
+		const response = (await core.handleRequest({
 			component: "counter",
 			snapshot: snapshot,
 			method: "increment",
 			params: [],
-		});
+		})) as any;
 
 		expect(response.error).toBeUndefined();
-		expect(response.html).toBe("Count: 6");
-		expect(response.updates).toEqual({ count: 6 });
-		expect(response.snapshot).toBeDefined();
+		expect(response.components).toBeDefined();
+		expect(response.components[0].effects.html).toBe("Count: 6");
 
-		// Verify the new snapshot
-		const newState = core.getCrypto().verify(response.snapshot!);
-		expect(newState.count).toBe(6);
+		const newSnap = JSON.parse(response.components[0].snapshot);
+		expect(newSnap.data.count).toBe(6);
 	});
 
-	test("should fail with invalid snapshot", async () => {
-		const response = await core.handleRequest({
+	test("should fail with invalid snapshot format", async () => {
+		const response = (await core.handleRequest({
 			component: "counter",
-			snapshot: "invalid.token.here",
+			snapshot: "invalid.json",
 			method: "increment",
-		});
+		})) as any;
 
-		expect(response.error).toBe("Invalid snapshot signature");
+		expect(response.error).toBe("Invalid snapshot format");
+	});
+
+    test("should fail with invalid snapshot checksum", async () => {
+        const snapshot = JSON.stringify({ data: {}, memo: {}, checksum: "wrong" });
+		const response = (await core.handleRequest({
+			component: "counter",
+			snapshot: snapshot,
+			method: "increment",
+		})) as any;
+
+		expect(response.error).toBe("Invalid snapshot checksum");
 	});
 
 	test("should fail with unknown component", async () => {
-		const response = await core.handleRequest({
+		const response = (await core.handleRequest({
 			component: "unknown-component",
-			snapshot: "", // Empty snapshot might fail verify first if logic isn't careful, but let's see logic
-			// Logic: if snapshot is provided, it verifies. If empty string, it might skip or fail?
-			// Looking at core.ts: if (snapshot) try verify. So empty string skips verify.
-		});
+			snapshot: "",
+		})) as any;
 
-		// However, without snapshot, state is empty.
 		expect(response.error).toBe("Component not found");
 	});
 });

@@ -12,6 +12,8 @@ import { getValueFromElement } from "./utils/value";
 export class KireWireClient {
 	private config: ClientConfig;
 	private observer: MutationObserver;
+    private componentListeners: Map<string, Record<string, string>> = new Map();
+    private activeGlobalListeners: Set<string> = new Set();
 
 	constructor(config: ClientConfig) {
 		this.config = config;
@@ -25,7 +27,10 @@ export class KireWireClient {
 			document.head.appendChild(style);
 		}
 
-		this.observer = new MutationObserver(() => this.initPolls());
+		this.observer = new MutationObserver(() => {
+            this.initPolls();
+            this.initComponents();
+        });
 
 		if (document.body) {
 			this.init();
@@ -69,12 +74,63 @@ export class KireWireClient {
 			document.addEventListener(type, (e) => this.handleEvent(e), useCapture);
 		});
 
+        // wire:navigate interceptor
+        document.addEventListener("click", (e) => this.handleNavigate(e));
+
 		// Offline support
 		window.addEventListener("offline", () => this.toggleOffline(true));
 		window.addEventListener("online", () => this.toggleOffline(false));
 
 		this.initPolls();
+        this.initComponents();
 	}
+
+    private handleNavigate(e: MouseEvent) {
+        const target = e.target as HTMLElement;
+        const anchor = target.closest("a");
+        if (!anchor || !anchor.hasAttribute("wire:navigate")) return;
+
+        e.preventDefault();
+        const url = anchor.getAttribute("href");
+        if (url) {
+            // Emits an event so the app can handle SPA navigation
+            window.dispatchEvent(new CustomEvent("kirewire:navigate", { detail: { url } }));
+            // Fallback/Default: Just go there
+            window.location.href = url;
+        }
+    }
+
+    private initComponents() {
+        const roots = document.querySelectorAll(safeSelector("wire:id"));
+        roots.forEach((root) => {
+            if ((root as any).__wire_inited) return;
+            (root as any).__wire_inited = true;
+
+            const initAction = root.getAttribute("wire:init");
+            if (initAction) {
+                const { method, params } = parseAction(initAction);
+                const id = root.getAttribute("wire:id")!;
+                const snap = root.getAttribute("wire:snapshot")!;
+                const name = root.getAttribute("wire:component")!;
+                this.call(id, snap, name, method, params);
+            }
+
+            // Register Listeners from Snapshot
+            const snapAttr = root.getAttribute("wire:snapshot");
+            if (snapAttr) {
+                try {
+                    const snap = JSON.parse(snapAttr);
+                    if (snap.memo && snap.memo.listeners) {
+                        const compId = root.getAttribute("wire:id")!;
+                        this.componentListeners.set(compId, snap.memo.listeners);
+                        Object.keys(snap.memo.listeners).forEach((event) =>
+                            this.registerGlobalListener(event),
+                        );
+                    }
+                } catch (_e) {}
+            }
+        });
+    }
 
 	private toggleOffline(isOffline: boolean) {
 		const elements = document.querySelectorAll(safeSelector("wire:offline"));
@@ -335,6 +391,7 @@ export class KireWireClient {
 				method,
 				params,
 				updates: Object.keys(updates).length > 0 ? updates : undefined,
+                _token: csrfToken || undefined,
 			};
 
 			const res = await fetch(this.config.endpoint, {
@@ -365,21 +422,68 @@ export class KireWireClient {
 		}
 	}
 
-	private handleResponse(id: string, data: WireResponse) {
-		if (data.redirect) {
-			window.location.href = data.redirect;
-			return;
-		}
+	private handleResponse(originalId: string, data: WireResponse) {
+        if (data.components) {
+            data.components.forEach((comp) => {
+                try {
+                    const snapObj = JSON.parse(comp.snapshot);
+                    const compId = snapObj.memo.id || originalId;
+                    const effects = comp.effects;
 
-		if (data.html) {
-			updateDom(id, data.html, data.snapshot);
-			this.initPolls();
-		}
+                    if (effects.redirect) {
+                        window.location.href = effects.redirect;
+                        return;
+                    }
 
-		if (data.events && Array.isArray(data.events)) {
-			data.events.forEach((e) => {
-				window.dispatchEvent(new CustomEvent(e.name, { detail: e.params }));
-			});
-		}
+                    if (effects.html) {
+                        updateDom(compId, effects.html, comp.snapshot);
+                        this.initPolls();
+                    }
+
+                    if (effects.emits && Array.isArray(effects.emits)) {
+                        effects.emits.forEach((e) => {
+                            window.dispatchEvent(
+                                new CustomEvent(e.event, { detail: e.params }),
+                            );
+                        });
+                    }
+
+                    if (effects.listeners) {
+                        this.componentListeners.set(compId, effects.listeners);
+                        Object.keys(effects.listeners).forEach((event) =>
+                            this.registerGlobalListener(event),
+                        );
+                    }
+                } catch (e) {
+                    console.error("Error processing component response", e);
+                }
+            });
+        } else if (data.error) {
+             console.error("KireWire Server Error:", data.error);
+        }
 	}
+
+    private registerGlobalListener(event: string) {
+        if (this.activeGlobalListeners.has(event)) return;
+        this.activeGlobalListeners.add(event);
+
+        window.addEventListener(event, (e: any) => {
+            this.componentListeners.forEach((listeners, compId) => {
+                if (listeners[event]) {
+                    const method = listeners[event];
+                    const params = e.detail ?? [];
+
+                    const root = document.querySelector(
+                        safeSelector("wire:id", compId),
+                    );
+                    if (root) {
+                        const snapshot = root.getAttribute("wire:snapshot")!;
+                        const name = root.getAttribute("wire:component")!;
+                        const args = Array.isArray(params) ? params : [params];
+                        this.call(compId, snapshot, name, method, args);
+                    }
+                }
+            });
+        });
+    }
 }

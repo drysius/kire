@@ -6,13 +6,14 @@ import type {
 	WireOptions,
 	WirePayload,
 	WireResponse,
+    WireSnapshot,
 } from "./types";
-import { WireCrypto } from "./utils/crypto";
+import { WireChecksum } from "./utils/checksum";
 
 export class WireCore {
 	private static instance: WireCore;
 	private options: WireOptions;
-	private crypto: WireCrypto;
+	private checksum: WireChecksum;
 	private components: Map<string, new () => WireComponent> = new Map();
 	private kireInstance?: Kire;
 
@@ -25,7 +26,7 @@ export class WireCore {
 			cookiehttp: true,
 			secret: randomUUID(),
 		};
-		this.crypto = new WireCrypto(this.options.secret!);
+		this.checksum = new WireChecksum(this.options.secret!);
 	}
 
 	public static get(): WireCore {
@@ -38,7 +39,7 @@ export class WireCore {
 	public init(kire: Kire, options: WireOptions) {
 		this.kireInstance = kire;
 		this.options = { ...this.options, ...options };
-		this.crypto = new WireCrypto(this.options.secret || randomUUID());
+		this.checksum = new WireChecksum(this.options.secret || randomUUID());
 	}
 
 	public getKire(): Kire {
@@ -57,8 +58,8 @@ export class WireCore {
 		return this.components.get(name);
 	}
 
-	public getCrypto() {
-		return this.crypto;
+	public getChecksum() {
+		return this.checksum;
 	}
 
 	public getOptions() {
@@ -68,19 +69,43 @@ export class WireCore {
 	public async handleRequest(
 		payload: WirePayload,
 		contextOverrides: Partial<WireContext> = {},
-	): Promise<WireResponse> {
-		const { component, snapshot, method, params, updates } = payload;
+	): Promise<WireResponse | { error: string }> {
+		const { component, snapshot: snapshotStr, method, params, updates, _token } = payload;
 
-		let state: Record<string, unknown> = {};
-		if (snapshot) {
+        // Optional: Token validation logic here if _token is strictly required
+        // if (!_token) return { error: "Missing validation token" };
+
+        let snapshot: WireSnapshot;
+		let state: Record<string, any> = {};
+        let memo: WireSnapshot['memo'] = {
+            id: randomUUID(),
+            name: component,
+            path: "/",
+            method: "GET",
+            children: [],
+            scripts: [],
+            assets: [],
+            errors: [],
+            locale: "en",
+        };
+
+		if (snapshotStr) {
 			try {
-				state = this.crypto.verify(snapshot);
+                snapshot = JSON.parse(snapshotStr);
+                
+                if (!this.checksum.verify(snapshot.checksum, snapshot.data, snapshot.memo)) {
+                     return { error: "Invalid snapshot checksum" };
+                }
+
+				state = snapshot.data;
+                memo = snapshot.memo;
+
 			} catch (_e) {
-				return { error: "Invalid snapshot signature" };
+				return { error: "Invalid snapshot format" };
 			}
 		}
 
-		const ComponentClass = this.components.get(component);
+		const ComponentClass = this.components.get(component || memo.name);
 		if (!ComponentClass) {
 			return { error: "Component not found" };
 		}
@@ -88,6 +113,9 @@ export class WireCore {
 		const instance = new ComponentClass();
 		instance.kire = this.getKire();
 		instance.context = { kire: this.getKire(), ...contextOverrides };
+
+        // Restore ID if available
+        if(memo.id) instance.__id = memo.id;
 
 		try {
 			instance.fill(state);
@@ -99,14 +127,11 @@ export class WireCore {
 					if (prop && typeof prop === "string" && !prop.startsWith("_")) {
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop);
-						// We could optionally trigger updated hook for each, but maybe just once or per prop?
-						// For now let's behave like they were set
 					}
 				}
 			}
 
 			if (method) {
-				// Security: Prevent calling lifecycle methods or private methods
 				const FORBIDDEN_METHODS = [
 					"mount",
 					"render",
@@ -145,31 +170,55 @@ export class WireCore {
 					await (instance as any)[method](...args);
 					await instance.updated(method, args[0]);
 				} else {
-					// Method not found or not a function
-					// We generally ignore this for security or return error
 					console.warn(`Method ${method} not found on component ${component}`);
 				}
 			}
 
-			const html = await instance.render();
+			let html = await instance.render();
 			await instance.rendered();
 
-			const newState = instance.getPublicProperties();
-			const newSnapshot = this.crypto.sign(
-				newState,
-				this.options.cookieexpire!,
-			);
-			const events = instance.__events;
+            if (!html || !html.trim()) {
+                html = `<div wire:id="${instance.__id}" style="display: none;"></div>`;
+            }
+
+			const newData = instance.getPublicProperties();
+            const events = instance.__events;
 			const redirect = instance.__redirect;
 			const errors = instance.__errors;
 
+            // Update Memo
+            memo.errors = Object.keys(errors).length > 0 ? errors : [];
+            memo.listeners = instance.listeners;
+
+            // Generate new checksum
+            const newChecksum = this.checksum.generate(newData, memo);
+            
+            const finalSnapshot = {
+                data: newData,
+                memo: memo,
+                checksum: newChecksum
+            };
+
+            const effects: WireResponse['components'][0]['effects'] = {
+                html,
+                dirty: updates ? Object.keys(updates) : [],
+            };
+
+            if (events.length > 0) effects.emits = events.map(e => ({ event: e.name, params: e.params }));
+            if (redirect) effects.redirect = redirect;
+            if (Object.keys(errors).length > 0) effects.errors = errors as any;
+            
+            if (Object.keys(instance.listeners).length > 0) {
+                effects.listeners = instance.listeners;
+            }
+
 			return {
-				html,
-				snapshot: newSnapshot,
-				updates: newState,
-				events: events.length > 0 ? events : undefined,
-				redirect: redirect || undefined,
-				errors: Object.keys(errors).length > 0 ? errors : undefined,
+                components: [
+                    {
+                        snapshot: JSON.stringify(finalSnapshot),
+                        effects
+                    }
+                ]
 			};
 		} catch (e: any) {
 			console.error(`Error processing component ${component}:`, e);

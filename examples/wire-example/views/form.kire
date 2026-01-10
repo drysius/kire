@@ -1,6 +1,5 @@
 <div style="border: 1px solid #ddd; padding: 20px; max-width: 400px; margin: 20px auto;">
     <h2>Register</h2>
-
     @if(successMessage)
         <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 10px;">
             {{ successMessage }}

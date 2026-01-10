@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 import { Kirewire, WireComponent, WireCore } from "../src";
@@ -18,65 +18,67 @@ class Counter extends WireComponent {
 }
 
 describe("Elysia Wire Integration", () => {
-	// Setup Kire & Wire
-	const kire = new Kire();
-	kire.plugin(Kirewire);
+	let app: Elysia;
+	let server: any;
+	let wireUrl: string;
 
-	// Register Component
-	WireCore.get().registerComponent("counter", Counter);
+	beforeAll(() => {
+		const kire = new Kire();
+		// Use specific secret to avoid conflicts if WireCore is shared/reset
+		kire.plugin(Kirewire, { secret: "elysia-secret" });
+		WireCore.get().registerComponent("counter", Counter);
 
-	// Setup Elysia App
-	const app = new Elysia();
-
-	// Mount Wire Adapter
-	Elysiawire(app);
-
-	// Start Server
-	const server = app.listen(0); // Port 0 = random available port
-	const port = server.server?.port;
-	const baseUrl = `http://localhost:${port}`;
-	const wireUrl = `${baseUrl}/_kirewire`;
+		app = new Elysia();
+		Elysiawire(app);
+		server = app.listen(0);
+		wireUrl = `http://localhost:${server.server?.port}/_kirewire`;
+	});
 
 	afterAll(() => {
 		server.stop();
 	});
 
 	test("should handle wire request via Elysia adapter", async () => {
-		// 1. Get Initial Snapshot (simulating initial SSR)
-		// Since we can't easily SSR the directive without a full view setup in this test,
-		// we'll manually create a valid snapshot using the core.
-		const comp = new Counter();
-		comp.count = 5;
-		const initialSnapshot = WireCore.get()
-			.getCrypto()
-			.sign(comp.getPublicProperties());
+		const core = WireCore.get();
+		const data = { count: 5 };
+		const memo = {
+			id: "test-id",
+			name: "counter",
+			path: "/",
+			method: "GET",
+			children: [],
+			scripts: [],
+			assets: [],
+			errors: [],
+			locale: "en",
+		};
+		const checksum = core.getChecksum().generate(data, memo);
+		const snapshot = JSON.stringify({ data, memo, checksum });
 
 		// 2. Client sends 'increment' action
 		const payload = {
 			component: "counter",
-			snapshot: initialSnapshot,
+			snapshot: snapshot,
 			method: "increment",
 			params: [],
 		};
 
-		const res = await fetch(wireUrl, {
+		const req = new Request(wireUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
+        const res = await app.handle(req);
 
 		expect(res.status).toBe(200);
 
-		const data = (await res.json()) as any;
-		console.log(data);
-		// 3. Verify Response
-		expect(data.html).toBe("<div>Count: 6</div>");
-		expect(data.updates).toEqual({ count: 6 });
-		expect(data.snapshot).toBeDefined();
+		const dataRes = (await res.json()) as any;
+		const comp = dataRes.components[0];
+		expect(comp.effects.html).toBe("<div>Count: 6</div>");
 
 		// 4. Verify snapshot integrity
-		const newState = WireCore.get().getCrypto().verify(data.snapshot);
-		expect(newState.count).toBe(6);
+		const newSnap = JSON.parse(comp.snapshot);
+		expect(newSnap.data.count).toBe(6);
 	});
 
 	test("should return 400 for invalid snapshot", async () => {
@@ -86,15 +88,16 @@ describe("Elysia Wire Integration", () => {
 			method: "increment",
 		};
 
-		const res = await fetch(wireUrl, {
+		const req = new Request(wireUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
+        const res = await app.handle(req);
 
 		expect(res.status).toBe(400);
 		const data = (await res.json()) as any;
-		expect(data.error).toBe("Invalid snapshot signature");
+		expect(data.error).toBe("Invalid snapshot format");
 	});
 
 	test("should return 400 for unknown component", async () => {
@@ -104,12 +107,13 @@ describe("Elysia Wire Integration", () => {
 			method: "increment",
 		};
 
-		const res = await fetch(wireUrl, {
+		const req = new Request(wireUrl, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
-		console.log(await res.json());
+        const res = await app.handle(req);
+		
 		expect(res.status).toBe(400);
 		const data = (await res.json()) as any;
 		expect(data.error).toBe("Component not found");

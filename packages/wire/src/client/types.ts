@@ -20,13 +20,20 @@ export interface WireRequest {
 	method: string;
 	params: any[];
 	updates?: Record<string, any>;
+    _token?: string;
 }
 
 export interface WireResponse {
-	html?: string;
-	snapshot?: string;
-	updates?: Record<string, any>;
-	events?: Array<{ name: string; params: any[] }>;
-	redirect?: string;
-	error?: string;
+    components: Array<{
+        snapshot: string;
+        effects: {
+            html: string;
+            returns?: unknown[];
+            dirty?: string[];
+            emits?: Array<{ event: string; params: any[] }>;
+            redirect?: string;
+            errors?: Record<string, string>;
+        };
+    }>;
+    error?: string;
 }

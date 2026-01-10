@@ -29,6 +29,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			name: "auth",
 			children: true,
 			type: "html",
+			description: "Renders the block if the user is authenticated.",
+			example: "@auth\n  <p>Welcome back!</p>\n@end",
 			parents: [
 				{
 					name: "else",
@@ -51,6 +53,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		const guestDirective = {
 			children: true,
 			type: "html",
+			description: "Renders the block if the user is NOT authenticated.",
+			example: "@guest\n  <a href='/login'>Login</a>\n@end",
 			async onCall(c: CompilerContext) {
 				c.raw("if (!(await $ctx.$auth_getUser($ctx))) {");
 				if (c.children) await c.set(c.children);
@@ -65,6 +69,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		const loggedDirective = {
 			children: true,
 			type: "html",
+			description: "Alias for @auth. Renders the block if the user is authenticated.",
+			example: "@logged\n  <p>You are logged in.</p>\n@end",
 			async onCall(c: CompilerContext) {
 				c.raw("if (await $ctx.$auth_getUser($ctx)) {");
 				if (c.children) await c.set(c.children);
@@ -78,6 +84,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		kire.directive({
 			name: "user",
 			type: "js",
+			description: "Injects the current user object into a variable named 'user'.",
+			example: "@user\n<p>Hello, {{ user.name }}</p>",
 			onCall(c) {
 				c.raw("const user = await $ctx.$auth_getUser($ctx);");
 			},
@@ -89,6 +97,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			params: ["perm:any"],
 			children: true,
 			type: "html",
+			description: "Checks if the user has a specific permission.",
+			example: "@can('edit_posts')\n  <button>Edit</button>\n@end",
 			parents: [
 				{
 					name: "else",
@@ -117,6 +127,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			params: ["perm:any"],
 			children: true,
 			type: "html",
+			description: "Checks if the user DOES NOT have a specific permission.",
+			example: "@notcan('view_admin')\n  <p>Access Denied</p>\n@end",
 			async onCall(c) {
 				const perm = c.param("perm");
 				c.raw(
@@ -133,6 +145,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			params: ["perms:any"],
 			children: true,
 			type: "html",
+			description: "Checks if the user has ANY of the provided permissions.",
+			example: "@canany(['edit', 'delete'])\n  <button>Manage</button>\n@end",
 			async onCall(c) {
 				const perms = c.param("perms");
 				c.raw(`
@@ -158,6 +172,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			name: "noauth",
 			children: true,
 			type: "html",
+			description: "Renders the block if the user is NOT authenticated. Alias for @guest.",
+			example: "@noauth\n  <p>Please log in.</p>\n@end",
 			parents: [
 				{
 					name: "else",

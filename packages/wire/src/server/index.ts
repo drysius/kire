@@ -25,6 +25,8 @@ export const Kirewire: KirePlugin<WireOptions> = {
 			params: ["name:string", "params?:object"],
 			children: false,
 			type: "html",
+			description: "Renders a Kirewire component.",
+			example: "@wire('counter', { count: 10 })",
 			async onCall(compiler) {
 				const name = compiler.param("name");
 				const params = compiler.param("params") || "{}";
@@ -45,12 +47,39 @@ export const Kirewire: KirePlugin<WireOptions> = {
                    
                    if(instance.mount) await instance.mount(initParams);
                    
-                   const html = await instance.render();
+                   let html = await instance.render();
                    const state = instance.getPublicProperties();
-                   const snapshot = core.getCrypto().sign(state);
                    
-                   // Using interpolated strings carefully
-                   $ctx.res(\`<div wire:id="\${instance.__id}" wire:snapshot="\${snapshot}" wire:component="\${compName}">\`);
+                   let style = "";
+                   if (!html || !html.trim()) {
+                        style = ' style="display: none;"';
+                   }
+                   
+                   const memo = {
+                        id: instance.__id,
+                        name: compName,
+                        path: "/", 
+                        method: "GET",
+                        children: [],
+                        scripts: [],
+                        assets: [],
+                        errors: [],
+                        locale: "en",
+                        listeners: instance.listeners,
+                   };
+
+                   const checksum = core.getChecksum().generate(state, memo);
+                   
+                   const snapshot = JSON.stringify({
+                        data: state,
+                        memo: memo,
+                        checksum: checksum
+                   });
+
+                   // Basic HTML escaping for attribute
+                   const escapedSnapshot = snapshot.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+                   
+                   $ctx.res(\`<div wire:id="\${instance.__id}" wire:snapshot="\${escapedSnapshot}" wire:component="\${compName}"\${style}>\`);
                    $ctx.res(html);
                    $ctx.res(\`</div>\`);
                } else {
@@ -73,6 +102,8 @@ export const Kirewire: KirePlugin<WireOptions> = {
 			name: "kirewire",
 			children: false,
 			type: "html",
+			description: "Injects the necessary client-side scripts for Kirewire.",
+			example: "@kirewire",
 			onCall: injectScripts,
 		});
 
@@ -81,6 +112,8 @@ export const Kirewire: KirePlugin<WireOptions> = {
 			name: "wireScripts",
 			children: false,
 			type: "html",
+			description: "Alias for @kirewire. Injects client-side scripts.",
+			example: "@wireScripts",
 			onCall: injectScripts,
 		});
 
