@@ -1,235 +1,199 @@
 {
-   "package": "kire",
-   "repository": {
-      "type": "git",
-      "url": "git+https://github.com/drysius/kire.git"
-   },
-   "version": "0.1.0",
-   "directives": [
-      {
-         "name": "define",
-         "params": [
-            "name:string"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Defines a named, reusable section of content.",
-         "example": "@define('header')\n  <h1>My Website</h1>\n@end"
-      },
-      {
-         "name": "defined",
-         "params": [
-            "name:string"
-         ],
-         "children": "auto",
-         "type": "html",
-         "description": "Renders defined content or fallback.",
-         "example": "@defined('header')\n  Conteúdo não encontrado\n@end"
-      },
-      {
-         "name": "stack",
-         "params": [
-            "name:string"
-         ],
-         "type": "html",
-         "description": "Creates a placeholder where content pushed to a named stack will be rendered.",
-         "example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>",
-         "children": false
-      },
-      {
-         "name": "push",
-         "params": [
-            "name:string"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Pushes a block of content onto a named stack.",
-         "example": "@push('scripts')\n  <script src=\"app.js\"></script>\n@end"
-      },
-      {
-         "name": "if",
-         "params": [
-            "cond:any"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Conditionally renders a block of content if the expression is true.",
-         "example": "@if(user.isLoggedIn)\n  Welcome, {{ user.name }}!\n@end",
-         "parents": [
-            {
-               "name": "elseif",
-               "params": [
-                  "cond:any"
-               ],
-               "children": true,
-               "type": "html",
-               "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
-               "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
-            },
-            {
-               "name": "elif",
-               "params": [
-                  "cond:any"
-               ],
-               "children": true,
-               "type": "html",
-               "description": "Alias for @elseif.",
-               "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
-            },
-            {
-               "name": "else",
-               "children": true,
-               "type": "html",
-               "description": "Renders a block of content if the preceding condition is false.",
-               "example": "@else\n  Alternative content.\n@end"
-            }
-         ]
-      },
-      {
-         "name": "elseif",
-         "params": [
-            "cond:any"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
-         "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
-      },
-      {
-         "name": "elif",
-         "params": [
-            "cond:any"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Alias for @elseif.",
-         "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
-      },
-      {
-         "name": "else",
-         "children": true,
-         "type": "html",
-         "description": "Renders a block of content if the preceding condition is false.",
-         "example": "@else\n  Alternative content.\n@end"
-      },
-      {
-         "name": "for",
-         "params": [
-            "loop:$lhs {op:in/of} $rhs|statement:string"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Iterates over an array or object. Supports @empty block if no iterations occur.",
-         "example": "@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end",
-         "parents": [
-            {
-               "name": "empty",
-               "children": true,
-               "type": "html",
-               "description": "Renders if the loop had no iterations."
-            },
-            {
-               "name": "else",
-               "children": true,
-               "type": "html",
-               "description": "Renders a block of content if the preceding condition is false.",
-               "example": "@else\n  Alternative content.\n@end"
-            }
-         ]
-      },
-      {
-         "name": "empty",
-         "children": true,
-         "type": "html",
-         "description": "Renders if the loop had no iterations."
-      },
-      {
-         "name": "const",
-         "params": [
-            "expr:string"
-         ],
-         "type": "html",
-         "description": "Declares a block-scoped constant, similar to JavaScript `const`.",
-         "example": "@const(myVar = 'hello world')"
-      },
-      {
-         "name": "let",
-         "params": [
-            "expr:string"
-         ],
-         "type": "html",
-         "description": "Declares a block-scoped local variable, similar to JavaScript `let`.",
-         "example": "@let(counter = 0)"
-      },
-      {
-         "name": "case",
-         "params": [
-            "val:any"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "A case clause for a @switch statement.",
-         "example": "@case('A')\n  <p>Value is A</p>\n@end"
-      },
-      {
-         "name": "default",
-         "children": true,
-         "type": "html",
-         "description": "The default clause for a @switch statement.",
-         "example": "@default\n  <p>Value is something else</p>\n@end"
-      },
-      {
-         "name": "switch",
-         "params": [
-            "expr:string"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Provides a control flow statement similar to a JavaScript switch block.",
-         "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end"
-      },
-      {
-         "name": "include",
-         "params": [
-            "path:string",
-            "locals:any"
-         ],
-         "children": false,
-         "type": "html",
-         "description": "Includes and renders a template from a given path, optionally passing local variables.",
-         "example": "@include('partials/card')"
-      },
-      {
-         "name": "slot",
-         "params": [
-            "name:string"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Defines a named content slot within a component.",
-         "example": "@slot('header')\n  <h1>This is the header</h1>\n@end"
-      },
-      {
-         "name": "component",
-         "params": [
-            "path:string",
-            "variables:any"
-         ],
-         "children": true,
-         "type": "html",
-         "description": "Loads a template as a reusable component, allowing content to be passed into named slots.",
-         "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
-      }
-   ],
-   "elements": [
-      {
-         "name": "kire:defined",
-         "void": false
-      }
-   ],
-   "globals": {
-      "$md5": "function",
-      "$escape": "function",
-      "$require": "function"
-   }
+	"package": "kire",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"version": "0.1.0",
+	"directives": [
+		{
+			"name": "define",
+			"params": ["name:string"],
+			"children": true,
+			"type": "html",
+			"description": "Defines a named, reusable section of content.",
+			"example": "@define('header')\n  <h1>My Website</h1>\n@end"
+		},
+		{
+			"name": "defined",
+			"params": ["name:string"],
+			"children": "auto",
+			"type": "html",
+			"description": "Renders defined content or fallback.",
+			"example": "@defined('header')\n  Conteúdo não encontrado\n@end"
+		},
+		{
+			"name": "stack",
+			"params": ["name:string"],
+			"type": "html",
+			"description": "Creates a placeholder where content pushed to a named stack will be rendered.",
+			"example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>",
+			"children": false
+		},
+		{
+			"name": "push",
+			"params": ["name:string"],
+			"children": true,
+			"type": "html",
+			"description": "Pushes a block of content onto a named stack.",
+			"example": "@push('scripts')\n  <script src=\"app.js\"></script>\n@end"
+		},
+		{
+			"name": "if",
+			"params": ["cond:any"],
+			"children": true,
+			"type": "html",
+			"description": "Conditionally renders a block of content if the expression is true.",
+			"example": "@if(user.isLoggedIn)\n  Welcome, {{ user.name }}!\n@end",
+			"parents": [
+				{
+					"name": "elseif",
+					"params": ["cond:any"],
+					"children": true,
+					"type": "html",
+					"description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
+					"example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
+				},
+				{
+					"name": "elif",
+					"params": ["cond:any"],
+					"children": true,
+					"type": "html",
+					"description": "Alias for @elseif.",
+					"example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
+				},
+				{
+					"name": "else",
+					"children": true,
+					"type": "html",
+					"description": "Renders a block of content if the preceding condition is false.",
+					"example": "@else\n  Alternative content.\n@end"
+				}
+			]
+		},
+		{
+			"name": "elseif",
+			"params": ["cond:any"],
+			"children": true,
+			"type": "html",
+			"description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
+			"example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
+		},
+		{
+			"name": "elif",
+			"params": ["cond:any"],
+			"children": true,
+			"type": "html",
+			"description": "Alias for @elseif.",
+			"example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
+		},
+		{
+			"name": "else",
+			"children": true,
+			"type": "html",
+			"description": "Renders a block of content if the preceding condition is false.",
+			"example": "@else\n  Alternative content.\n@end"
+		},
+		{
+			"name": "for",
+			"params": ["loop:$lhs {op:in/of} $rhs|statement:string"],
+			"children": true,
+			"type": "html",
+			"description": "Iterates over an array or object. Supports @empty block if no iterations occur.",
+			"example": "@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end",
+			"parents": [
+				{
+					"name": "empty",
+					"children": true,
+					"type": "html",
+					"description": "Renders if the loop had no iterations."
+				},
+				{
+					"name": "else",
+					"children": true,
+					"type": "html",
+					"description": "Renders a block of content if the preceding condition is false.",
+					"example": "@else\n  Alternative content.\n@end"
+				}
+			]
+		},
+		{
+			"name": "empty",
+			"children": true,
+			"type": "html",
+			"description": "Renders if the loop had no iterations."
+		},
+		{
+			"name": "const",
+			"params": ["expr:string"],
+			"type": "html",
+			"description": "Declares a block-scoped constant, similar to JavaScript `const`.",
+			"example": "@const(myVar = 'hello world')"
+		},
+		{
+			"name": "let",
+			"params": ["expr:string"],
+			"type": "html",
+			"description": "Declares a block-scoped local variable, similar to JavaScript `let`.",
+			"example": "@let(counter = 0)"
+		},
+		{
+			"name": "case",
+			"params": ["val:any"],
+			"children": true,
+			"type": "html",
+			"description": "A case clause for a @switch statement.",
+			"example": "@case('A')\n  <p>Value is A</p>\n@end"
+		},
+		{
+			"name": "default",
+			"children": true,
+			"type": "html",
+			"description": "The default clause for a @switch statement.",
+			"example": "@default\n  <p>Value is something else</p>\n@end"
+		},
+		{
+			"name": "switch",
+			"params": ["expr:string"],
+			"children": true,
+			"type": "html",
+			"description": "Provides a control flow statement similar to a JavaScript switch block.",
+			"example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end"
+		},
+		{
+			"name": "include",
+			"params": ["path:string", "locals:any"],
+			"children": false,
+			"type": "html",
+			"description": "Includes and renders a template from a given path, optionally passing local variables.",
+			"example": "@include('partials/card')"
+		},
+		{
+			"name": "slot",
+			"params": ["name:string"],
+			"children": true,
+			"type": "html",
+			"description": "Defines a named content slot within a component.",
+			"example": "@slot('header')\n  <h1>This is the header</h1>\n@end"
+		},
+		{
+			"name": "component",
+			"params": ["path:string", "variables:any"],
+			"children": true,
+			"type": "html",
+			"description": "Loads a template as a reusable component, allowing content to be passed into named slots.",
+			"example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+		}
+	],
+	"elements": [
+		{
+			"name": "kire:defined",
+			"void": false
+		}
+	],
+	"globals": {
+		"$md5": "function",
+		"$escape": "function",
+		"$require": "function"
+	}
 }

@@ -15,19 +15,19 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"complexity":{
-				"noBannedTypes":"off"
+			"complexity": {
+				"noBannedTypes": "off"
 			},
 			"performance": {
-				"noAccumulatingSpread":"off"
+				"noAccumulatingSpread": "off"
 			},
 			"suspicious": {
-				"noAssignInExpressions":"off",
-				"noExplicitAny":"off",
-				"useIterableCallbackReturn":"off"
+				"noAssignInExpressions": "off",
+				"noExplicitAny": "off",
+				"useIterableCallbackReturn": "off"
 			},
-			"style":{
-				"noNonNullAssertion":"off"
+			"style": {
+				"noNonNullAssertion": "off"
 			},
 			"recommended": true
 		}

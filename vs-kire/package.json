@@ -1,88 +1,96 @@
 {
-    "name": "vs-kire",
-    "displayName": "Kire Language Support",
-    "description": "Language support for the Kire templating engine.",
-    "version": "0.0.1",
-    "type": "module",
-    "publisher": "drysius",
-    "icon": "image.png",
-    "engines": {
-        "vscode": "^1.104.0"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "categories": [
-        "Programming Languages"
-    ],
-    "main": "./dist/extension.js",
-    "activationEvents": [
-        "onLanguage:kire",
-        "onLanguage:html"
-    ],
-    "dependencies": {
-        "vscode-html-languageservice": "^5.5.1",
-        "vscode-languageserver-textdocument": "^1.0.12",
-        "zustand": "^5.0.8"
-    },
-    "devDependencies": {
-        "@types/vscode": "^1.104.0",
-        "@types/node": "^24.10.1",
-        "typescript": "^5.9.2"
-    },
-    "contributes": {
-        "languages": [
-            {
-                "id": "kire",
-                "aliases": [
-                    "Kire",
-                    "kire"
-                ],
-                "extensions": [
-                    ".kire",
-                    ".kire.html"
-                ],
-                "configuration": "./language-configuration.json",
-                "icon": {
-                    "light": "icon.svg",
-                    "dark": "icon.svg"
-                }
-            }
-        ],
-        "grammars": [
-            {
-                "language": "kire",
-                "scopeName": "text.html.kire",
-                "path": "./syntaxes/kire.tmLanguage.json",
-                "embeddedLanguages": {
-                    "source.js": "javascript",
-                    "source.css": "css"
-                }
-            }
-        ],
-        "jsonValidation": [
-            {
-                "fileMatch": "kire.json",
-                "url": "./schema.json"
-            }
-        ],
-        "semanticTokenScopes": [
-            {
-                "language": "kire",
-                "scopes": {
-                    "keyword": ["keyword.control.kire"],
-                    "property": ["support.type.property-name.css"],
-                    "class": ["entity.name.tag.css"],
-                    "string": ["string.quoted.double.js"]
-                }
-            }
-        ]
-    },
-    "scripts": {
-        "build": "vsce package",
-        "vscode:prepublish": "bun build.ts",
-        "watch": "bun build.ts --watch",
-        "check": "tsc --noEmit --project tsconfig.json"
-    }
+	"name": "vs-kire",
+	"displayName": "Kire Language Support",
+	"description": "Language support for the Kire templating engine.",
+	"version": "0.0.1",
+	"type": "module",
+	"publisher": "drysius",
+	"icon": "image.png",
+	"engines": {
+		"vscode": "^1.104.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"main": "./dist/extension.js",
+	"activationEvents": [
+		"onLanguage:kire",
+		"onLanguage:html"
+	],
+	"dependencies": {
+		"vscode-html-languageservice": "^5.5.1",
+		"vscode-languageserver-textdocument": "^1.0.12",
+		"zustand": "^5.0.8"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.104.0",
+		"@types/node": "^24.10.1",
+		"typescript": "^5.9.2"
+	},
+	"contributes": {
+		"languages": [
+			{
+				"id": "kire",
+				"aliases": [
+					"Kire",
+					"kire"
+				],
+				"extensions": [
+					".kire",
+					".kire.html"
+				],
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"light": "icon.svg",
+					"dark": "icon.svg"
+				}
+			}
+		],
+		"grammars": [
+			{
+				"language": "kire",
+				"scopeName": "text.html.kire",
+				"path": "./syntaxes/kire.tmLanguage.json",
+				"embeddedLanguages": {
+					"source.js": "javascript",
+					"source.css": "css"
+				}
+			}
+		],
+		"jsonValidation": [
+			{
+				"fileMatch": "kire.json",
+				"url": "./schema.json"
+			}
+		],
+		"semanticTokenScopes": [
+			{
+				"language": "kire",
+				"scopes": {
+					"keyword": [
+						"keyword.control.kire"
+					],
+					"property": [
+						"support.type.property-name.css"
+					],
+					"class": [
+						"entity.name.tag.css"
+					],
+					"string": [
+						"string.quoted.double.js"
+					]
+				}
+			}
+		]
+	},
+	"scripts": {
+		"build": "vsce package",
+		"vscode:prepublish": "bun build.ts",
+		"watch": "bun build.ts --watch",
+		"check": "tsc --noEmit --project tsconfig.json"
+	}
 }

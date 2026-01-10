@@ -1,6 +1,6 @@
-import { describe, expect, it, mock, beforeEach } from "bun:test";
-import { KireIconify } from "../src/index";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { Kire } from "kire";
+import { KireIconify } from "../src/index";
 
 describe("KireIconify", () => {
 	// Reset mocks before each test
@@ -54,7 +54,7 @@ describe("KireIconify", () => {
 	it("should cache fetched icons to avoid redundant requests", async () => {
 		const kire = new Kire({ plugins: [KireIconify] });
 
-		global.fetch = mock(async (url: string) => {
+		global.fetch = mock(async (_url: string) => {
 			return new Response("<svg>cached</svg>", { status: 200 });
 		});
 
@@ -76,7 +76,9 @@ describe("KireIconify", () => {
 		const tpl = `@icon("mdi:check", "'text-green-500'")`;
 		const result = await kire.render(tpl);
 
-		expect(result).toContain('<svg class="text-green-500" viewBox="0 0 10 10">');
+		expect(result).toContain(
+			'<svg class="text-green-500" viewBox="0 0 10 10">',
+		);
 	});
 
 	it("should parse hyphenated icon names (prefix-name)", async () => {

@@ -1,5 +1,5 @@
-import type { DirectiveDefinition } from "../types";
 import type { Kire } from "../kire";
+import type { DirectiveDefinition } from "../types";
 
 export default (kire: Kire) => {
 	const elseDirective: DirectiveDefinition = {
@@ -107,16 +107,16 @@ export default (kire: Kire) => {
 			compiler.raw(`$__empty = false;`);
 
 			if (compiler.children) await compiler.set(compiler.children);
-			
+
 			if (compiler.parents) {
 				// Hijack 'else' nodes and treat them as 'empty'
 				// This avoids conflict with global @else directive used by @if
-				compiler.parents.forEach(p => {
-					if (p.name === 'else') p.name = 'empty';
+				compiler.parents.forEach((p) => {
+					if (p.name === "else") p.name = "empty";
 				});
 				await compiler.set(compiler.parents);
 			}
-			
+
 			// Close the block (matches either the for loop or the if($__empty))
 			compiler.raw(`}`);
 		},

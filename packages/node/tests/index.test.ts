@@ -1,115 +1,115 @@
-import { expect, test, describe, mock, afterEach } from "bun:test";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import { Kire } from "kire";
 import KireNode from "../src/index";
-import { join } from "path";
 
 // --- Mocks ---
 
 // Mock fs/promises for Node.js adapter
-mock.module('fs/promises', () => ({
-    readFile: mock(async (path: string) => {
-        if (path.includes('node-template.kire')) return 'Hello from Node!';
-        throw new Error('File not found (Node mock)');
-    }),
-    writeFile: mock(async () => {}),
-    rm: mock(async () => {}),
+mock.module("fs/promises", () => ({
+	readFile: mock(async (path: string) => {
+		if (path.includes("node-template.kire")) return "Hello from Node!";
+		throw new Error("File not found (Node mock)");
+	}),
+	writeFile: mock(async () => {}),
+	rm: mock(async () => {}),
 }));
 
 // Mock fetch for 'fetch' adapter
-const originalFetch = global.fetch;
-// @ts-ignore
+const _originalFetch = global.fetch;
+// @ts-expect-error
 global.fetch = mock(async (url: string) => {
-    if (url === 'http://example.com/template') {
-        return { 
-            ok: true,
-            statusText: 'OK',
-            text: async () => 'Hello from Fetch!',
-        };
-    }
-    return { ok: false, statusText: 'Not Found' };
+	if (url === "http://example.com/template") {
+		return {
+			ok: true,
+			statusText: "OK",
+			text: async () => "Hello from Fetch!",
+		};
+	}
+	return { ok: false, statusText: "Not Found" };
 });
 
 describe("@kirejs/node", () => {
-    
-    afterEach(() => {
-        mock.restore();
-    });
+	afterEach(() => {
+		mock.restore();
+	});
 
-    test("should use 'node' adapter by default", async () => {
-        const kire = new Kire();
-        kire.plugin(KireNode);
-        // Use view() for file resolution
-        const content = await kire.view('node-template.kire');
-        expect(content).toBe('Hello from Node!');
-    });
+	test("should use 'node' adapter by default", async () => {
+		const kire = new Kire();
+		kire.plugin(KireNode);
+		// Use view() for file resolution
+		const content = await kire.view("node-template.kire");
+		expect(content).toBe("Hello from Node!");
+	});
 
-    test("should use 'bun' adapter when specified and Bun is available", async () => {
-        if (typeof Bun === 'undefined') {
-            console.warn("Skipping Bun adapter test: Bun runtime not available.");
-            return;
-        }
-        
-        // Mock Bun.file for this test
-        const originalFile = Bun.file;
-        Bun.file = (path: string) => {
-            if (path.includes('template.kire')) {
-                return {
-                    text: async () => '<div> Hello </div>',
-                    exists: async () => true,
-                } as any;
-            }
-             return {
-                text: async () => '',
-                exists: async () => false,
-            } as any;
-        };
+	test("should use 'bun' adapter when specified and Bun is available", async () => {
+		if (typeof Bun === "undefined") {
+			console.warn("Skipping Bun adapter test: Bun runtime not available.");
+			return;
+		}
 
-        const kire = new Kire();
-        kire.plugin(KireNode, { adapter: 'bun' });
-        
-        // Pass the filename without the extension; Kire will resolve it
-        const content = await kire.view('template');
-        expect(content).toBe('<div> Hello </div>');
-        
-        // Restore Bun.file
-        Bun.file = originalFile;
-    });
+		// Mock Bun.file for this test
+		const originalFile = Bun.file;
+		Bun.file = (path: string) => {
+			if (path.includes("template.kire")) {
+				return {
+					text: async () => "<div> Hello </div>",
+					exists: async () => true,
+				} as any;
+			}
+			return {
+				text: async () => "",
+				exists: async () => false,
+			} as any;
+		};
 
-    test("should throw error for 'deno' adapter when Deno is not available", async () => {
-        const kire = new Kire();
-        kire.plugin(KireNode, { adapter: 'deno' });
-        // Use view() to trigger resolver
-        await expect(kire.view('template.kire')).rejects.toThrow('Deno runtime is not available.');
-    });
+		const kire = new Kire();
+		kire.plugin(KireNode, { adapter: "bun" });
 
-    test("should use 'fetch' adapter for URLs", async () => {
-        const kire = new Kire();
-        kire.plugin(KireNode, { adapter: 'fetch' });
-        // Use view() for URL resolution
-        const content = await kire.view('http://example.com/template');
-        expect(content).toBe('Hello from Fetch!');
-        expect(global.fetch).toHaveBeenCalledTimes(1);
-        expect(global.fetch).toHaveBeenCalledWith('http://example.com/template');
-    });
+		// Pass the filename without the extension; Kire will resolve it
+		const content = await kire.view("template");
+		expect(content).toBe("<div> Hello </div>");
 
-    test("kire.view() should be able to resolve paths via resolver plugin", async () => {
-        const kire = new Kire();
-        kire.plugin(KireNode);
+		// Restore Bun.file
+		Bun.file = originalFile;
+	});
 
-        const content = await kire.view('node-template.kire', { name: 'World' });
-        expect(content).toBe('Hello from Node!');
-    });
+	test("should throw error for 'deno' adapter when Deno is not available", async () => {
+		const kire = new Kire();
+		kire.plugin(KireNode, { adapter: "deno" });
+		// Use view() to trigger resolver
+		await expect(kire.view("template.kire")).rejects.toThrow(
+			"Deno runtime is not available.",
+		);
+	});
 
-    test("should register $md5 helper using node crypto", async () => {
-        const kire = new Kire();
-        kire.plugin(KireNode);
-        
-        // "hello" md5 is 5d41402abc4b2a76b9719d911017c592
-        const result = await kire.run(async ($ctx: any) => {
-            const hash = $ctx.$md5("hello");
-            $ctx.res(hash);
-            return $ctx;
-        }, {});
-        expect(result).toBe("5d41402abc4b2a76b9719d911017c592");
-    });
+	test("should use 'fetch' adapter for URLs", async () => {
+		const kire = new Kire();
+		kire.plugin(KireNode, { adapter: "fetch" });
+		// Use view() for URL resolution
+		const content = await kire.view("http://example.com/template");
+		expect(content).toBe("Hello from Fetch!");
+		expect(global.fetch).toHaveBeenCalledTimes(1);
+		expect(global.fetch).toHaveBeenCalledWith("http://example.com/template");
+	});
+
+	test("kire.view() should be able to resolve paths via resolver plugin", async () => {
+		const kire = new Kire();
+		kire.plugin(KireNode);
+
+		const content = await kire.view("node-template.kire", { name: "World" });
+		expect(content).toBe("Hello from Node!");
+	});
+
+	test("should register $md5 helper using node crypto", async () => {
+		const kire = new Kire();
+		kire.plugin(KireNode);
+
+		// "hello" md5 is 5d41402abc4b2a76b9719d911017c592
+		const result = await kire.run(async ($ctx: any) => {
+			const hash = $ctx.$md5("hello");
+			$ctx.res(hash);
+			return $ctx;
+		}, {});
+		expect(result).toBe("5d41402abc4b2a76b9719d911017c592");
+	});
 });

@@ -1,7 +1,7 @@
-import { expect, test, beforeAll, afterAll } from "bun:test";
-import { Kire } from "../src/index";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { expect, test } from "bun:test";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { Kire } from "../src/index";
 
 test("Kire - Default Directives: define/defined", async () => {
 	const kire = new Kire();
@@ -41,23 +41,23 @@ test("Kire - Default Directives: native if/for", async () => {
 });
 
 test("Kire - Include", async () => {
-    const testDir = resolve("./test-defaults-env");
-    await mkdir(testDir, { recursive: true });
-    
-	const kire = new Kire();
-    kire.namespace('views', testDir);
-    kire.$resolver = async (path) => {
-        const { readFile } = await import("node:fs/promises");
-        return await readFile(path, 'utf-8');
-    };
+	const testDir = resolve("./test-defaults-env");
+	await mkdir(testDir, { recursive: true });
 
-    await writeFile(join(testDir, "header.kire"), "<h1>HEADER</h1>");
+	const kire = new Kire();
+	kire.namespace("views", testDir);
+	kire.$resolver = async (path) => {
+		const { readFile } = await import("node:fs/promises");
+		return await readFile(path, "utf-8");
+	};
+
+	await writeFile(join(testDir, "header.kire"), "<h1>HEADER</h1>");
 
 	const tpl = `@include('views.header')`;
 	expect(await kire.render(tpl)).toBe("<h1>HEADER</h1>");
 
 	const tpl2 = `@include('views.nonexistent')`;
 	expect(await kire.render(tpl2)).toBe("");
-    
-    await rm(testDir, { recursive: true, force: true });
+
+	await rm(testDir, { recursive: true, force: true });
 });

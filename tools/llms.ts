@@ -1,117 +1,118 @@
-import { existsSync } from 'fs';
-import { readFile, writeFile, rm } from 'fs/promises';
-import { glob } from 'glob';
-import { join, sep, normalize } from 'path';
-import { getPackages, type PackageInfo } from './utils';
+import { existsSync } from "node:fs";
+import { readFile, rm, writeFile } from "node:fs/promises";
+import { join, normalize, sep } from "node:path";
+import { glob } from "glob";
+import { getPackages, type PackageInfo } from "./utils";
 
 class LLMSBuilder {
-    async buildProject(packageInfo: PackageInfo): Promise<void> {
-        const { name, path } = packageInfo;
-        console.log(`🔨 Building llms.ts for ${name} in ${path}`);
-        
-        const normalizedPath = normalize(path);
-        
-        const possiblePatterns = [
-            join(normalizedPath, 'src', '**', '*.ts'),
-            join(normalizedPath, 'src', '**', '*.tsx'),
-            join(normalizedPath, 'lib', '**', '*.ts'),
-            // Avoid greedy patterns that might catch too much if structure is standard
-            // join(normalizedPath, '**', '*.ts'), 
-        ];
+	async buildProject(packageInfo: PackageInfo): Promise<void> {
+		const { name, path } = packageInfo;
+		console.log(`🔨 Building llms.ts for ${name} in ${path}`);
 
-        console.log(`   🔍 Searching in: ${normalizedPath}`);
+		const normalizedPath = normalize(path);
 
-        let sourceFiles: string[] = [];
-        
-        for (const pattern of possiblePatterns) {
-            try {
-                const files = await glob(pattern, {
-                    ignore: [
-                        '**/*.test.ts',
-                        '**/*.spec.ts',
-                        '**/tests/**',
-                        '**/node_modules/**',
-                        '**/dist/**',
-                        '**/.git/**',
-                        '**/llms.txt'
-                    ],
-                    windowsPathsNoEscape: true
-                });
-                
-                sourceFiles.push(...files);
-            } catch (error) {
-                console.warn(`   ⚠️  Error with pattern: ${error}`);
-            }
-        }
+		const possiblePatterns = [
+			join(normalizedPath, "src", "**", "*.ts"),
+			join(normalizedPath, "src", "**", "*.tsx"),
+			join(normalizedPath, "lib", "**", "*.ts"),
+			// Avoid greedy patterns that might catch too much if structure is standard
+			// join(normalizedPath, '**', '*.ts'),
+		];
 
-        sourceFiles = [...new Set(sourceFiles)];
+		console.log(`   🔍 Searching in: ${normalizedPath}`);
 
-        if (sourceFiles.length === 0) {
-            console.warn(`⚠️  No TypeScript files found for ${name}`);
-            return;
-        }
+		let sourceFiles: string[] = [];
 
-        console.log(`📄 Found ${sourceFiles.length} TypeScript files for ${name}`);
+		for (const pattern of possiblePatterns) {
+			try {
+				const files = await glob(pattern, {
+					ignore: [
+						"**/*.test.ts",
+						"**/*.spec.ts",
+						"**/tests/**",
+						"**/node_modules/**",
+						"**/dist/**",
+						"**/.git/**",
+						"**/llms.txt",
+					],
+					windowsPathsNoEscape: true,
+				});
 
-        let combinedContent = `// Combined source for ${name}\n`;
-        combinedContent += `// Generated at: ${new Date().toISOString()}\n`;
-        combinedContent += `// Total files: ${sourceFiles.length}\n\n`;
+				sourceFiles.push(...files);
+			} catch (error) {
+				console.warn(`   ⚠️  Error with pattern: ${error}`);
+			}
+		}
 
-        let totalFilesProcessed = 0;
-        let totalSize = 0;
+		sourceFiles = [...new Set(sourceFiles)];
 
-        for (const filePath of sourceFiles) {
-            const fileName = filePath.split(sep).pop() || '';
-            if (fileName.startsWith('.')) continue;
+		if (sourceFiles.length === 0) {
+			console.warn(`⚠️  No TypeScript files found for ${name}`);
+			return;
+		}
 
-            try {
-                const fileContent = await readFile(filePath, 'utf-8');
-                
-                if (fileContent.trim().length === 0) continue;
-                
-                combinedContent += `\n// ========================================\n`;
-                combinedContent += `// File: ${filePath}\n`;
-                combinedContent += `// ========================================\n\n`;
-                combinedContent += `${fileContent}\n`;
-                
-                totalFilesProcessed++;
-                totalSize += fileContent.length;
-                
-            } catch (error) {
-                console.warn(`⚠️  Could not read file ${filePath}: ${error}`);
-            }
-        }
+		console.log(`📄 Found ${sourceFiles.length} TypeScript files for ${name}`);
 
-        const outputPath = join(normalizedPath, 'llms.txt');
-        
-        if (existsSync(outputPath)) {
-            await rm(outputPath);
-        }
-        
-        await writeFile(outputPath, combinedContent, 'utf-8');
-        console.log(`✅ llms.txt created for ${name} (${totalFilesProcessed} files, ${Math.round(totalSize / 1024)} KB)`);
-    }
+		let combinedContent = `// Combined source for ${name}\n`;
+		combinedContent += `// Generated at: ${new Date().toISOString()}\n`;
+		combinedContent += `// Total files: ${sourceFiles.length}\n\n`;
+
+		let totalFilesProcessed = 0;
+		let totalSize = 0;
+
+		for (const filePath of sourceFiles) {
+			const fileName = filePath.split(sep).pop() || "";
+			if (fileName.startsWith(".")) continue;
+
+			try {
+				const fileContent = await readFile(filePath, "utf-8");
+
+				if (fileContent.trim().length === 0) continue;
+
+				combinedContent += `\n// ========================================\n`;
+				combinedContent += `// File: ${filePath}\n`;
+				combinedContent += `// ========================================\n\n`;
+				combinedContent += `${fileContent}\n`;
+
+				totalFilesProcessed++;
+				totalSize += fileContent.length;
+			} catch (error) {
+				console.warn(`⚠️  Could not read file ${filePath}: ${error}`);
+			}
+		}
+
+		const outputPath = join(normalizedPath, "llms.txt");
+
+		if (existsSync(outputPath)) {
+			await rm(outputPath);
+		}
+
+		await writeFile(outputPath, combinedContent, "utf-8");
+		console.log(
+			`✅ llms.txt created for ${name} (${totalFilesProcessed} files, ${Math.round(totalSize / 1024)} KB)`,
+		);
+	}
 }
 
 class Builder {
-    private llmsBuilder = new LLMSBuilder();
+	private llmsBuilder = new LLMSBuilder();
 
-    public async build(): Promise<void> {
-        console.log('🚀 Starting llms-build process...\n');
-        
-        const packages = await getPackages();
+	public async build(): Promise<void> {
+		console.log("🚀 Starting llms-build process...\n");
 
-        if (packages.length === 0) {
-            console.error('❌ No packages found!');
-            return;
-        }
+		const packages = await getPackages();
 
-        for (const packageInfo of packages) {
-            await this.llmsBuilder.buildProject(packageInfo);
-        }
+		if (packages.length === 0) {
+			console.error("❌ No packages found!");
+			return;
+		}
 
-        console.log('\n✅ llms-build completed!');
-    }
+		for (const packageInfo of packages) {
+			await this.llmsBuilder.buildProject(packageInfo);
+		}
+
+		console.log("\n✅ llms-build completed!");
+	}
 }
 
 new Builder().build().catch(console.error);

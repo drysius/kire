@@ -1,8 +1,7 @@
-import { describe, expect, it, afterAll, beforeAll } from "bun:test";
-import { KireMarkdown } from "../src/index";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { unlink, writeFile } from "node:fs/promises";
 import { Kire } from "kire";
-import { writeFile, unlink } from "fs/promises";
-import { join } from "path";
+import { KireMarkdown } from "../src/index";
 
 const TEMP_MD = "temp_test.md";
 const TEMP_MD_CONTENT = "# Hello File\n\nThis is a file test.";
@@ -31,7 +30,7 @@ describe("KireMarkdown", () => {
 			root: process.cwd(),
 		});
 		// Mock $readdir just in case, though not used here
-		kire.$readdir = async () => []; 
+		kire.$readdir = async () => [];
 
 		const tpl = `@markdown('${TEMP_MD}')`;
 		const result = await kire.render(tpl);
@@ -41,13 +40,13 @@ describe("KireMarkdown", () => {
 
 	it("should render wildcard content (glob pattern)", async () => {
 		const kire = new Kire({ plugins: [KireMarkdown] });
-		
+
 		// Mock $readdir
 		kire.$readdir = async (pattern) => {
 			if (pattern === "content/*.md") return ["file1.md", "file2.md"];
 			return [];
 		};
-		
+
 		// Mock renderMarkdown to avoid file reading
 		kire.$ctx("renderMarkdown", async (src: string) => {
 			if (src === "file1.md") return "<h1>File 1</h1>";
@@ -57,7 +56,7 @@ describe("KireMarkdown", () => {
 
 		const tpl = `@markdown('content/*.md')`;
 		const result = await kire.render(tpl);
-		
+
 		expect(result).toContain("<h1>File 1</h1>");
 		expect(result).toContain("<h1>File 2</h1>");
 	});

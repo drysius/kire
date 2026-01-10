@@ -1,16 +1,16 @@
 import { Kire } from "kire";
 import KireTailwind from "./src";
 
-const kire = new Kire({ production:true });
+const kire = new Kire({ production: true });
 
 kire.plugin(KireTailwind);
 
 Bun.serve({
-    port: 3000,
-    async fetch() {
-        console.log("Request received");
-        try {
-            const html = await kire.render(`
+	port: 3000,
+	async fetch() {
+		console.log("Request received");
+		try {
+			const html = await kire.render(`
                 <!DOCTYPE html>
                 <html lang="en">
                 <head>
@@ -67,14 +67,14 @@ Bun.serve({
                 </html>
             `);
 
-            return new Response(html, {
-                headers: {
-                    "Content-Type": 'text/html'
-                }
-            });
-        } catch (e) {
-            console.error("Render error:", e);
-            return new Response("Internal Server Error\n" + e, { status: 500 });
-        }
-    }
-})
+			return new Response(html, {
+				headers: {
+					"Content-Type": "text/html",
+				},
+			});
+		} catch (e) {
+			console.error("Render error:", e);
+			return new Response(`Internal Server Error\n${e}`, { status: 500 });
+		}
+	},
+});

@@ -1,6 +1,6 @@
 import type { KirePlugin } from "kire";
 import { Kire } from "kire";
-import { WireComponent } from "./component";
+import type { WireComponent } from "./component";
 import { WireCore } from "./core";
 import type { WireOptions } from "./types";
 import { getClientScript } from "./web/client";
@@ -11,25 +11,25 @@ export { WireCore } from "./core";
 export * from "./types";
 
 export const Kirewire: KirePlugin<WireOptions> = {
-  name: "@kirejs/wire",
-  options: {},
-  load(kire: Kire, options: WireOptions = {}) {
-    const core = WireCore.get();
-    core.init(kire, options);
+	name: "@kirejs/wire",
+	options: {},
+	load(kire: Kire, options: WireOptions = {}) {
+		const core = WireCore.get();
+		core.init(kire, options);
 
-    kire.$ctx("$wire", core);
-    kire.$ctx("kire", kire);
+		kire.$ctx("$wire", core);
+		kire.$ctx("kire", kire);
 
-    kire.directive({
-      name: "wire",
-      params: ["name:string", "params?:object"],
-      children: false,
-      type: "html",
-      async onCall(compiler) {
-        const name = compiler.param("name");
-        const params = compiler.param("params") || "{}";
+		kire.directive({
+			name: "wire",
+			params: ["name:string", "params?:object"],
+			children: false,
+			type: "html",
+			async onCall(compiler) {
+				const name = compiler.param("name");
+				const params = compiler.param("params") || "{}";
 
-        compiler.raw(`await (async () => {
+				compiler.raw(`await (async () => {
                const compName = ${JSON.stringify(name)};
                const initParams = ${params};
                const core = $ctx.$wire; 
@@ -57,44 +57,44 @@ export const Kirewire: KirePlugin<WireOptions> = {
                    $ctx.res(\`<!-- Wire component "\${compName}" not found -->\`);
                }
            })();`);
-      }
-    });
+			},
+		});
 
-    const injectScripts = (compiler: any) => {
-      const opts = WireCore.get().getOptions();
-      const script = getClientScript({
-        endpoint: opts.route || '/_kirewire',
-        method: opts.method || 'http'
-      });
-      compiler.res(script);
-    };
+		const injectScripts = (compiler: any) => {
+			const opts = WireCore.get().getOptions();
+			const script = getClientScript({
+				endpoint: opts.route || "/_kirewire",
+				method: opts.method || "http",
+			});
+			compiler.res(script);
+		};
 
-    kire.directive({
-      name: "kirewire",
-      children: false,
-      type: "html",
-      onCall: injectScripts
-    });
+		kire.directive({
+			name: "kirewire",
+			children: false,
+			type: "html",
+			onCall: injectScripts,
+		});
 
-    // Alias for backward compatibility or alternative name
-    kire.directive({
-      name: "wireScripts",
-      children: false,
-      type: "html",
-      onCall: injectScripts
-    });
-  }
+		// Alias for backward compatibility or alternative name
+		kire.directive({
+			name: "wireScripts",
+			children: false,
+			type: "html",
+			onCall: injectScripts,
+		});
+	},
 };
 
 // Module Augmentation
 declare module "kire" {
-  interface Kire {
-    wire(name: string, component: new () => WireComponent): void;
-  }
+	interface Kire {
+		wire(name: string, component: new () => WireComponent): void;
+	}
 }
 
-Kire.prototype.wire = function (name: string, component: new () => WireComponent) {
-  WireCore.get().registerComponent(name, component);
+Kire.prototype.wire = (name: string, component: new () => WireComponent) => {
+	WireCore.get().registerComponent(name, component);
 };
 
 export default Kirewire;

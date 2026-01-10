@@ -3,10 +3,10 @@ import { Kire } from "../src/index";
 
 test("Kire - Path Resolution and Namespaces", async () => {
 	const kire = new Kire();
-    
-    // Simulate root behavior or base namespace
-    kire.namespace('~', '/app/views');
-    kire.namespace('@components', '/app/components');
+
+	// Simulate root behavior or base namespace
+	kire.namespace("~", "/app/views");
+	kire.namespace("@components", "/app/components");
 
 	// Test namespace resolution
 	expect(kire.resolvePath("~/header")).toBe("/app/views/header.kire");
@@ -25,8 +25,8 @@ test("Kire - Path Resolution and Namespaces", async () => {
 
 test("Kire - Resolver in Directive", async () => {
 	const kire = new Kire();
-    // Setup namespace
-    kire.namespace('~', '/home');
+	// Setup namespace
+	kire.namespace("~", "/home");
 
 	kire.directive({
 		name: "path",
@@ -47,11 +47,11 @@ test("Kire - File Resolver Integration (Mock)", async () => {
 			if (filename === "/views/partial.kire") {
 				return "Partial Content";
 			}
-			throw new Error("File not found: " + filename);
+			throw new Error(`File not found: ${filename}`);
 		},
 	});
-    
-    kire.namespace('views', '/views');
+
+	kire.namespace("views", "/views");
 
 	// render('views.partial') -> resolves to /views/partial.kire -> calls resolver
 	const result = await kire.view("views.partial");

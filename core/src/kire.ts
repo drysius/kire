@@ -213,30 +213,32 @@ export class Kire {
 	 * @returns A KireSchematic object representing the current configuration.
 	 */
 	public pkgSchema(
-    	name: string,
+		name: string,
 		repository?: string | { type: string; url: string },
 		version?: string,
 	): KireSchematic {
 		const globals: Record<string, any> = {};
-		
+
 		const processValue = (value: any): any => {
-			if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+			if (
+				typeof value === "object" &&
+				value !== null &&
+				!Array.isArray(value)
+			) {
 				const result: Record<string, any> = {};
-				
+
 				Object.entries(value).forEach(([key, propValue]) => {
 					result[key] = processValue(propValue);
 				});
-				
+
 				return result;
-			}
-			else if (Array.isArray(value)) {
-				return value.map(item => processValue(item));
-			}
-			else {
+			} else if (Array.isArray(value)) {
+				return value.map((item) => processValue(item));
+			} else {
 				return typeof value;
 			}
 		};
-		
+
 		this.$globals.forEach((value, key) => {
 			globals[key] = processValue(value);
 		});

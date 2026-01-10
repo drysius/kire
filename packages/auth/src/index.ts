@@ -1,4 +1,4 @@
-import type { Kire, KirePlugin, KireContext, CompilerContext } from 'kire';
+import type { CompilerContext, KireContext, KirePlugin } from "kire";
 
 export interface AuthOptions {
 	/**
@@ -12,122 +12,126 @@ export interface AuthOptions {
 }
 
 export const KireAuth: KirePlugin<AuthOptions> = {
-	name: '@kirejs/auth',
+	name: "@kirejs/auth",
 	options: {} as AuthOptions,
 	load(kire, options) {
-		if (!options) throw new Error('KireAuth requires options');
+		if (!options) throw new Error("KireAuth requires options");
 
 		// Register global helpers
-		kire.$ctx('$auth_getUser', options.getUser);
-		kire.$ctx('$auth_can', options.canPerm);
+		kire.$ctx("$auth_getUser", options.getUser);
+		kire.$ctx("$auth_can", options.canPerm);
 
 		// @auth
 		kire.directive({
-			name: 'auth',
+			name: "auth",
 			children: true,
-			type: 'html',
+			type: "html",
 			parents: [
 				{
-					name: 'else',
+					name: "else",
 					children: true,
 					async onCall(c) {
-						c.raw('} else {');
+						c.raw("} else {");
 						if (c.children) await c.set(c.children);
-					}
-				}
+					},
+				},
 			],
 			async onCall(c) {
-				c.raw('if (await $ctx.$auth_getUser($ctx)) {');
+				c.raw("if (await $ctx.$auth_getUser($ctx)) {");
 				if (c.children) await c.set(c.children);
 				if (c.parents) await c.set(c.parents);
-				c.raw('}');
-			}
+				c.raw("}");
+			},
 		});
 
 		// @guest / @notlogged
 		const guestDirective = {
 			children: true,
-			type: 'html',
+			type: "html",
 			async onCall(c: CompilerContext) {
-				c.raw('if (!(await $ctx.$auth_getUser($ctx))) {');
+				c.raw("if (!(await $ctx.$auth_getUser($ctx))) {");
 				if (c.children) await c.set(c.children);
-				c.raw('}');
-			}
+				c.raw("}");
+			},
 		} as const;
 
-		kire.directive({ name: 'guest', ...guestDirective });
-		kire.directive({ name: 'notlogged', ...guestDirective });
+		kire.directive({ name: "guest", ...guestDirective });
+		kire.directive({ name: "notlogged", ...guestDirective });
 
 		// @logged / @authenticated
 		const loggedDirective = {
 			children: true,
-			type: 'html',
+			type: "html",
 			async onCall(c: CompilerContext) {
-				c.raw('if (await $ctx.$auth_getUser($ctx)) {');
+				c.raw("if (await $ctx.$auth_getUser($ctx)) {");
 				if (c.children) await c.set(c.children);
-				c.raw('}');
-			}
+				c.raw("}");
+			},
 		} as const;
-		kire.directive({ name: 'logged', ...loggedDirective });
-		kire.directive({ name: 'authenticated', ...loggedDirective });
+		kire.directive({ name: "logged", ...loggedDirective });
+		kire.directive({ name: "authenticated", ...loggedDirective });
 
 		// @user
 		kire.directive({
-			name: 'user',
-			type: 'js',
+			name: "user",
+			type: "js",
 			onCall(c) {
-				c.raw('const user = await $ctx.$auth_getUser($ctx);');
-			}
+				c.raw("const user = await $ctx.$auth_getUser($ctx);");
+			},
 		});
 
 		// @can(perm)
 		kire.directive({
-			name: 'can',
-			params: ['perm:any'],
+			name: "can",
+			params: ["perm:any"],
 			children: true,
-			type: 'html',
+			type: "html",
 			parents: [
 				{
-					name: 'else',
+					name: "else",
 					children: true,
 					async onCall(c) {
-						c.raw('} else {');
+						c.raw("} else {");
 						if (c.children) await c.set(c.children);
-					}
-				}
+					},
+				},
 			],
 			async onCall(c) {
-				const perm = c.param('perm');
+				const perm = c.param("perm");
 				// We resolve user first, then pass to canPerm
-				c.raw(`if (await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx))) {`);
+				c.raw(
+					`if (await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx))) {`,
+				);
 				if (c.children) await c.set(c.children);
 				if (c.parents) await c.set(c.parents);
-				c.raw('}');
-			}
+				c.raw("}");
+			},
 		});
 
 		// @notcan(perm)
 		kire.directive({
-			name: 'notcan',
-			params: ['perm:any'],
+			name: "notcan",
+			params: ["perm:any"],
 			children: true,
-			type: 'html',
+			type: "html",
 			async onCall(c) {
-				const perm = c.param('perm');
-				c.raw(`if (!(await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx)))) {`);
+				const perm = c.param("perm");
+				c.raw(
+					`if (!(await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx)))) {`,
+				);
 				if (c.children) await c.set(c.children);
-				c.raw('}');
-			}
+				c.raw("}");
+			},
 		});
 
 		// @canany(perms)
 		kire.directive({
-			name: 'canany',
-			params: ['perms:any'],
+			name: "canany",
+			params: ["perms:any"],
 			children: true,
-			type: 'html',
+			type: "html",
 			async onCall(c) {
-				const perms = c.param('perms');
+				const perms = c.param("perms");
 				c.raw(`
 					await (async () => {
 						const perms = ${perms};
@@ -142,31 +146,31 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 						if (hasAny) {
 				`);
 				if (c.children) await c.set(c.children);
-				c.raw('   }\n})();');
-			}
+				c.raw("   }\n})();");
+			},
 		});
 
-        // @noauth
-        kire.directive({
-            name: 'noauth',
-            children: true,
-            type: 'html',
-            parents: [
+		// @noauth
+		kire.directive({
+			name: "noauth",
+			children: true,
+			type: "html",
+			parents: [
 				{
-					name: 'else',
+					name: "else",
 					children: true,
 					async onCall(c) {
-						c.raw('} else {');
+						c.raw("} else {");
 						if (c.children) await c.set(c.children);
-					}
-				}
+					},
+				},
 			],
-            async onCall(c) {
-                c.raw('if (!(await $ctx.$auth_getUser($ctx))) {');
-                if (c.children) await c.set(c.children);
-                if (c.parents) await c.set(c.parents);
-                c.raw('}');
-            }
-        });
-	}
+			async onCall(c) {
+				c.raw("if (!(await $ctx.$auth_getUser($ctx))) {");
+				if (c.children) await c.set(c.children);
+				if (c.parents) await c.set(c.parents);
+				c.raw("}");
+			},
+		});
+	},
 };

@@ -1,269 +1,269 @@
 {
-    "scopeName": "text.html.kire",
-    "patterns": [
-        {
-            "include": "#comments"
-        },
-        {
-            "include": "#jsx-components"
-        },
-        {
-            "include": "#server-js-block"
-        },
-        {
-            "include": "#directives-with-js-args"
-        },
-        {
-            "include": "#directives-with-string-args"
-        },
-        {
-            "include": "#directives"
-        },
-        {
-            "include": "#interpolations-raw"
-        },
-        {
-            "include": "#interpolations"
-        },
-        {
-            "include": "text.html.basic"
-        }
-    ],
-    "repository": {
-        "comments": {
-            "patterns": [
-                {
-                    "begin": "<!--",
-                    "beginCaptures": {
-                        "0": { "name": "punctuation.definition.comment.begin.html" }
-                    },
-                    "end": "-->",
-                    "endCaptures": {
-                        "0": { "name": "punctuation.definition.comment.end.html" }
-                    },
-                    "name": "comment.block.html"
-                }
-            ]
-        },
-        "jsx-components": {
-            "patterns": [
-                {
-                    "begin": "(<)([A-Z][A-Za-z0-9_]*)",
-                    "beginCaptures": {
-                        "1": { "name": "punctuation.definition.tag.begin.html" },
-                        "2": { "name": "support.class.component.jsx" }
-                    },
-                    "end": "(/?>)",
-                    "endCaptures": {
-                        "1": { "name": "punctuation.definition.tag.end.html" }
-                    },
-                    "name": "meta.tag.html",
-                    "patterns": [
-                        {
-                            "include": "#jsx-attributes"
-                        }
-                    ]
-                },
-                {
-                    "begin": "(</)([A-Z][A-Za-z0-9_]*)",
-                    "beginCaptures": {
-                        "1": { "name": "punctuation.definition.tag.begin.html" },
-                        "2": { "name": "support.class.component.jsx" }
-                    },
-                    "end": "(>)",
-                    "endCaptures": {
-                        "1": { "name": "punctuation.definition.tag.end.html" }
-                    },
-                    "name": "meta.tag.html"
-                }
-            ]
-        },
-        "jsx-attributes": {
-            "patterns": [
-                {
-                    "begin": "\\{\\{",
-                    "end": "\\}\\}",
-                    "name": "meta.embedded.expression.kire",
-                    "contentName": "source.js",
-                    "patterns": [
-                        {
-                            "include": "source.js"
-                        }
-                    ]
-                },
-                {
-                    "match": "\\b([a-zA-Z][a-zA-Z0-9_-]*)(?=\\s*=)",
-                    "name": "entity.other.attribute-name.html"
-                }
-            ]
-        },
-        "server-js-block": {
-            "begin": "<\\?js\\b",
-            "beginCaptures": {
-                "0": { 
-                    "name": "meta.tag.embedded.js.kire",
-                    "patterns": [
-                        {
-                            "match": "<\\?js",
-                            "name": "storage.type.js"
-                        }
-                    ]
-                }
-            },
-            "end": "\\?>",
-            "endCaptures": {
-                "0": { 
-                    "name": "meta.tag.embedded.js.kire",
-                    "patterns": [
-                        {
-                            "match": "\\?>",
-                            "name": "storage.type.js"
-                        }
-                    ]
-                }
-            },
-            "name": "meta.embedded.block.js.kire",
-            "contentName": "source.js",
-            "patterns": [
-                {
-                    "include": "source.js"
-                }
-            ]
-        },
-        "directives-with-js-args": {
-            "begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()",
-            "beginCaptures": {
-                "1": { "name": "punctuation.definition.directive.kire" },
-                "2": { 
-                    "name": "entity.name.function.directive.kire",
-                    "patterns": [
-                        {
-                            "match": "^[A-Z].*",
-                            "name": "support.class.component.jsx"
-                        },
-                        {
-                            "match": "^[a-z].*",
-                            "name": "support.function.js"
-                        }
-                    ]
-                }
-            },
-            "end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
-            "name": "meta.directive.kire",
-            "patterns": [
-                {
-                    "begin": "\\(",
-                    "beginCaptures": {
-                        "0": { "name": "punctuation.parenthesis.begin.js" }
-                    },
-                    "end": "\\)",
-                    "endCaptures": {
-                        "0": { "name": "punctuation.parenthesis.end.js" }
-                    },
-                    "contentName": "source.js",
-                    "patterns": [
-                        {
-                            "include": "source.js"
-                        }
-                    ]
-                }
-            ]
-        },
-        "directives-with-string-args": {
-            "begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\")",
-            "beginCaptures": {
-                "1": { "name": "punctuation.definition.directive.kire" },
-                "2": { 
-                    "name": "entity.name.function.directive.kire",
-                    "patterns": [
-                        {
-                            "match": "^[A-Z].*",
-                            "name": "support.class.component.jsx"
-                        },
-                        {
-                            "match": "^[a-z].*",
-                            "name": "support.function.js"
-                        }
-                    ]
-                }
-            },
-            "end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
-            "name": "meta.directive.kire",
-            "patterns": [
-                {
-                    "begin": "\"",
-                    "beginCaptures": {
-                        "0": { "name": "punctuation.definition.string.begin.js" }
-                    },
-                    "end": "\"",
-                    "endCaptures": {
-                        "0": { "name": "punctuation.definition.string.end.js" }
-                    },
-                    "contentName": "source.js",
-                    "patterns": [
-                        {
-                            "include": "source.js"
-                        }
-                    ]
-                }
-            ]
-        },
-        "directives": {
-            "patterns": [
-                {
-                    "match": "(@)([a-zA-Z_][a-zA-Z0-9_]*)",
-                    "captures": {
-                        "1": { "name": "punctuation.definition.directive.kire" },
-                        "2": { 
-                            "name": "entity.name.function.directive.kire",
-                            "patterns": [
-                                {
-                                    "match": "^[A-Z].*",
-                                    "name": "support.class.component.jsx"
-                                },
-                                {
-                                    "match": "^[a-z].*",
-                                    "name": "support.function.js"
-                                }
-                            ]
-                        }
-                    }
-                }
-            ]
-        },
-        "interpolations-raw": {
-            "begin": "\\{\\{\\{",
-            "beginCaptures": {
-                "0": { "name": "punctuation.section.embedded.begin.kire" }
-            },
-            "end": "\\}\\}\\}",
-            "endCaptures": {
-                "0": { "name": "punctuation.section.embedded.end.kire" }
-            },
-            "name": "meta.embedded.expression.raw.kire",
-            "contentName": "source.js",
-            "patterns": [
-                {
-                    "include": "source.js"
-                }
-            ]
-        },
-        "interpolations": {
-            "begin": "\\{\\{",
-            "beginCaptures": {
-                "0": { "name": "punctuation.section.embedded.begin.kire" }
-            },
-            "end": "\\}\\}",
-            "endCaptures": {
-                "0": { "name": "punctuation.section.embedded.end.kire" }
-            },
-            "name": "meta.embedded.expression.kire",
-            "contentName": "source.js",
-            "patterns": [
-                {
-                    "include": "source.js"
-                }
-            ]
-        }
-    }
+	"scopeName": "text.html.kire",
+	"patterns": [
+		{
+			"include": "#comments"
+		},
+		{
+			"include": "#jsx-components"
+		},
+		{
+			"include": "#server-js-block"
+		},
+		{
+			"include": "#directives-with-js-args"
+		},
+		{
+			"include": "#directives-with-string-args"
+		},
+		{
+			"include": "#directives"
+		},
+		{
+			"include": "#interpolations-raw"
+		},
+		{
+			"include": "#interpolations"
+		},
+		{
+			"include": "text.html.basic"
+		}
+	],
+	"repository": {
+		"comments": {
+			"patterns": [
+				{
+					"begin": "<!--",
+					"beginCaptures": {
+						"0": { "name": "punctuation.definition.comment.begin.html" }
+					},
+					"end": "-->",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.comment.end.html" }
+					},
+					"name": "comment.block.html"
+				}
+			]
+		},
+		"jsx-components": {
+			"patterns": [
+				{
+					"begin": "(<)([A-Z][A-Za-z0-9_]*)",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "support.class.component.jsx" }
+					},
+					"end": "(/?>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"name": "meta.tag.html",
+					"patterns": [
+						{
+							"include": "#jsx-attributes"
+						}
+					]
+				},
+				{
+					"begin": "(</)([A-Z][A-Za-z0-9_]*)",
+					"beginCaptures": {
+						"1": { "name": "punctuation.definition.tag.begin.html" },
+						"2": { "name": "support.class.component.jsx" }
+					},
+					"end": "(>)",
+					"endCaptures": {
+						"1": { "name": "punctuation.definition.tag.end.html" }
+					},
+					"name": "meta.tag.html"
+				}
+			]
+		},
+		"jsx-attributes": {
+			"patterns": [
+				{
+					"begin": "\\{\\{",
+					"end": "\\}\\}",
+					"name": "meta.embedded.expression.kire",
+					"contentName": "source.js",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					]
+				},
+				{
+					"match": "\\b([a-zA-Z][a-zA-Z0-9_-]*)(?=\\s*=)",
+					"name": "entity.other.attribute-name.html"
+				}
+			]
+		},
+		"server-js-block": {
+			"begin": "<\\?js\\b",
+			"beginCaptures": {
+				"0": {
+					"name": "meta.tag.embedded.js.kire",
+					"patterns": [
+						{
+							"match": "<\\?js",
+							"name": "storage.type.js"
+						}
+					]
+				}
+			},
+			"end": "\\?>",
+			"endCaptures": {
+				"0": {
+					"name": "meta.tag.embedded.js.kire",
+					"patterns": [
+						{
+							"match": "\\?>",
+							"name": "storage.type.js"
+						}
+					]
+				}
+			},
+			"name": "meta.embedded.block.js.kire",
+			"contentName": "source.js",
+			"patterns": [
+				{
+					"include": "source.js"
+				}
+			]
+		},
+		"directives-with-js-args": {
+			"begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()",
+			"beginCaptures": {
+				"1": { "name": "punctuation.definition.directive.kire" },
+				"2": {
+					"name": "entity.name.function.directive.kire",
+					"patterns": [
+						{
+							"match": "^[A-Z].*",
+							"name": "support.class.component.jsx"
+						},
+						{
+							"match": "^[a-z].*",
+							"name": "support.function.js"
+						}
+					]
+				}
+			},
+			"end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
+			"name": "meta.directive.kire",
+			"patterns": [
+				{
+					"begin": "\\(",
+					"beginCaptures": {
+						"0": { "name": "punctuation.parenthesis.begin.js" }
+					},
+					"end": "\\)",
+					"endCaptures": {
+						"0": { "name": "punctuation.parenthesis.end.js" }
+					},
+					"contentName": "source.js",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					]
+				}
+			]
+		},
+		"directives-with-string-args": {
+			"begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\")",
+			"beginCaptures": {
+				"1": { "name": "punctuation.definition.directive.kire" },
+				"2": {
+					"name": "entity.name.function.directive.kire",
+					"patterns": [
+						{
+							"match": "^[A-Z].*",
+							"name": "support.class.component.jsx"
+						},
+						{
+							"match": "^[a-z].*",
+							"name": "support.function.js"
+						}
+					]
+				}
+			},
+			"end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
+			"name": "meta.directive.kire",
+			"patterns": [
+				{
+					"begin": "\"",
+					"beginCaptures": {
+						"0": { "name": "punctuation.definition.string.begin.js" }
+					},
+					"end": "\"",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end.js" }
+					},
+					"contentName": "source.js",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					]
+				}
+			]
+		},
+		"directives": {
+			"patterns": [
+				{
+					"match": "(@)([a-zA-Z_][a-zA-Z0-9_]*)",
+					"captures": {
+						"1": { "name": "punctuation.definition.directive.kire" },
+						"2": {
+							"name": "entity.name.function.directive.kire",
+							"patterns": [
+								{
+									"match": "^[A-Z].*",
+									"name": "support.class.component.jsx"
+								},
+								{
+									"match": "^[a-z].*",
+									"name": "support.function.js"
+								}
+							]
+						}
+					}
+				}
+			]
+		},
+		"interpolations-raw": {
+			"begin": "\\{\\{\\{",
+			"beginCaptures": {
+				"0": { "name": "punctuation.section.embedded.begin.kire" }
+			},
+			"end": "\\}\\}\\}",
+			"endCaptures": {
+				"0": { "name": "punctuation.section.embedded.end.kire" }
+			},
+			"name": "meta.embedded.expression.raw.kire",
+			"contentName": "source.js",
+			"patterns": [
+				{
+					"include": "source.js"
+				}
+			]
+		},
+		"interpolations": {
+			"begin": "\\{\\{",
+			"beginCaptures": {
+				"0": { "name": "punctuation.section.embedded.begin.kire" }
+			},
+			"end": "\\}\\}",
+			"endCaptures": {
+				"0": { "name": "punctuation.section.embedded.end.kire" }
+			},
+			"name": "meta.embedded.expression.kire",
+			"contentName": "source.js",
+			"patterns": [
+				{
+					"include": "source.js"
+				}
+			]
+		}
+	}
 }

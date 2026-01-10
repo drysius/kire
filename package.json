@@ -1,41 +1,44 @@
 {
-  "name": "kire-workspace",
-  "type": "module",
-  "private": true,
-  "workspaces": ["core", "packages/*"],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drysius/kire.git"
-  },
-  "scripts": {
-    "test": "bun test",
-    "schema": "bun run tools/schema.ts",
-    "build": "bun run tools/build.ts",
-    "publish": "bun run tools/publish.ts",
-    "llms": "bun run tools/llms.ts",
-    "i": "bun run tools/install.ts",
-    "check": "bunx biome check core/src/** packages/**/src/** --write"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.2",
-    "@types/bun": "latest",
-    "@types/semver": "^7.7.1",
-    "esbuild": "^0.25.12",
-    "eslint": "^9.39.2",
-    "glob": "^13.0.0",
-    "globals": "^16.5.0",
-    "json5": "^2.2.3",
-    "semver": "^7.7.3",
-    "tsup": "^8.5.1",
-    "typescript-eslint": "^8.52.0"
-  },
-  "peerDependencies": {
-    "typescript": "^5.9.3"
-  },
-  "trustedDependencies": [
-    "esbuild"
-  ],
-  "dependencies": {
-    "@biomejs/biome": "^2.3.11"
-  }
+	"name": "kire-workspace",
+	"type": "module",
+	"private": true,
+	"workspaces": [
+		"core",
+		"packages/*"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"scripts": {
+		"test": "bun test",
+		"schema": "bun run tools/schema.ts",
+		"build": "bun run tools/build.ts",
+		"publish": "bun run tools/publish.ts",
+		"llms": "bun run tools/llms.ts",
+		"i": "bun run tools/install.ts",
+		"check": "bunx biome check --write **/src/**"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.2",
+		"@types/bun": "latest",
+		"@types/semver": "^7.7.1",
+		"esbuild": "^0.25.12",
+		"eslint": "^9.39.2",
+		"glob": "^13.0.0",
+		"globals": "^16.5.0",
+		"json5": "^2.2.3",
+		"semver": "^7.7.3",
+		"tsup": "^8.5.1",
+		"typescript-eslint": "^8.52.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"trustedDependencies": [
+		"esbuild"
+	],
+	"dependencies": {
+		"@biomejs/biome": "^2.3.11"
+	}
 }

@@ -1,7 +1,7 @@
-import { describe, expect, it, beforeAll, afterAll } from "bun:test";
-import { Kire } from "../src/index";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
+import { Kire } from "../src/index";
 
 describe("Kire Native Directives", () => {
 	const kire = new Kire();
@@ -100,98 +100,110 @@ describe("Kire Native Directives", () => {
 });
 
 describe("Kire Real-world Scenarios", () => {
-    const testDir = resolve("./test-directives-env");
-    const viewsDir = join(testDir, "views");
-    const compsDir = join(testDir, "components");
-    
-    const kire = new Kire();
-    
-    beforeAll(async () => {
-        await mkdir(viewsDir, { recursive: true });
-        await mkdir(compsDir, { recursive: true });
-        
-        // Setup Namespaces
-        kire.namespace('views', viewsDir);
-        kire.namespace('comps', compsDir);
-        kire.namespace('theme', join(testDir, 'themes/{name}'));
-        
-        // Mount default data for theme namespace
-        kire.mount('theme', { name: 'default' });
-        
-        // Setup Resolver (Realistic Node-like)
-        const { readFile } = await import("node:fs/promises");
-        kire.$resolver = async (path) => await readFile(path, 'utf-8');
+	const testDir = resolve("./test-directives-env");
+	const viewsDir = join(testDir, "views");
+	const compsDir = join(testDir, "components");
 
-        // Create component file
-        await writeFile(join(compsDir, "alert.kire"), 
-            `<div class="alert {{ it.type }}">{{ it.slots.default }} @if(it.slots.footer)<footer>{{ it.slots.footer }}</footer>@end</div>`
-        );
-        
-        // Create view files
-        await writeFile(join(viewsDir, "child.kire"), `Child: {{ it.name }}`);
-        await writeFile(join(viewsDir, "nested.kire"), `@include('views.grandchild', { item: it.n_item })`);
-        await writeFile(join(viewsDir, "grandchild.kire"), `Grandchild: {{ it.item.name }} and {{ it.item.value }}`);
-        
-        // Create theme file
-        const themePath = join(testDir, 'themes/default');
-        await mkdir(themePath, { recursive: true });
-        await writeFile(join(themePath, "header.kire"), `<header>Default Header</header>`);
-    });
+	const kire = new Kire();
 
-    afterAll(async () => {
-        await rm(testDir, { recursive: true, force: true });
-    });
+	beforeAll(async () => {
+		await mkdir(viewsDir, { recursive: true });
+		await mkdir(compsDir, { recursive: true });
 
-    const render = (tpl: string, locals = {}) => kire.render(tpl, locals);
+		// Setup Namespaces
+		kire.namespace("views", viewsDir);
+		kire.namespace("comps", compsDir);
+		kire.namespace("theme", join(testDir, "themes/{name}"));
 
-    describe("Layout & State Directives", () => {
-        it("@define / @defined", async () => {
-            const tpl = `@define('header')<h1>Head</h1>@end Body @defined('header')`;
-            const html = await render(tpl);
-            expect(html).toContain("<h1>Head</h1>");
-            expect(html).toContain("Body");
-        });
+		// Mount default data for theme namespace
+		kire.mount("theme", { name: "default" });
 
-        it("@stack / @push", async () => {
-            const tpl = `@push('js')1@end @push('js')2@end @stack('js')`;
-            const html = await render(tpl);
-            expect(html).toBe("  1\n2");
-        });
-    });
+		// Setup Resolver (Realistic Node-like)
+		const { readFile } = await import("node:fs/promises");
+		kire.$resolver = async (path) => await readFile(path, "utf-8");
 
-    describe("Component Directives", () => {
-        it("@component with slots and namespaces", async () => {
-            const tpl = `@component('comps.alert', { type: 'info' })Message @slot('footer')End@end@end`;
-            const html = await render(tpl);
-            expect(html).toContain('class="alert info"');
-            expect(html).toContain("Message");
-            expect(html).toContain("<footer>End</footer>");
-        });
+		// Create component file
+		await writeFile(
+			join(compsDir, "alert.kire"),
+			`<div class="alert {{ it.type }}">{{ it.slots.default }} @if(it.slots.footer)<footer>{{ it.slots.footer }}</footer>@end</div>`,
+		);
 
-        it("@component with complex variables", async () => {
-            const tpl = `@component('comps.alert', { type: it.user.status })Hello {{ it.user.name }}@end`;
-            const html = await render(tpl, {
-                user: { name: "World", status: "success" },
-            });
-            expect(html).toContain('class="alert success"');
-            expect(html).toContain("Hello World");
-        });
-    });
+		// Create view files
+		await writeFile(join(viewsDir, "child.kire"), `Child: {{ it.name }}`);
+		await writeFile(
+			join(viewsDir, "nested.kire"),
+			`@include('views.grandchild', { item: it.n_item })`,
+		);
+		await writeFile(
+			join(viewsDir, "grandchild.kire"),
+			`Grandchild: {{ it.item.name }} and {{ it.item.value }}`,
+		);
 
-    describe("Include & Namespace Directives", () => {
-        it("@include with namespaced dot notation", async () => {
-            const tpl = `@include('views.child', { name: 'Test' })`;
-            expect(await render(tpl)).toBe("Child: Test");
-        });
+		// Create theme file
+		const themePath = join(testDir, "themes/default");
+		await mkdir(themePath, { recursive: true });
+		await writeFile(
+			join(themePath, "header.kire"),
+			`<header>Default Header</header>`,
+		);
+	});
 
-        it("@include with nested namespaced includes", async () => {
-            const tpl = `@include('views.nested', { n_item: { name: 'A', value: 1 } })`;
-            expect(await render(tpl)).toBe("Grandchild: A and 1");
-        });
+	afterAll(async () => {
+		await rm(testDir, { recursive: true, force: true });
+	});
 
-        it("@include with placeholder namespace (theme)", async () => {
-            const tpl = `@include('theme.header')`;
-            expect(await render(tpl, { name: 'default' })).toBe("<header>Default Header</header>");
-        });
-    });
+	const render = (tpl: string, locals = {}) => kire.render(tpl, locals);
+
+	describe("Layout & State Directives", () => {
+		it("@define / @defined", async () => {
+			const tpl = `@define('header')<h1>Head</h1>@end Body @defined('header')`;
+			const html = await render(tpl);
+			expect(html).toContain("<h1>Head</h1>");
+			expect(html).toContain("Body");
+		});
+
+		it("@stack / @push", async () => {
+			const tpl = `@push('js')1@end @push('js')2@end @stack('js')`;
+			const html = await render(tpl);
+			expect(html).toBe("  1\n2");
+		});
+	});
+
+	describe("Component Directives", () => {
+		it("@component with slots and namespaces", async () => {
+			const tpl = `@component('comps.alert', { type: 'info' })Message @slot('footer')End@end@end`;
+			const html = await render(tpl);
+			expect(html).toContain('class="alert info"');
+			expect(html).toContain("Message");
+			expect(html).toContain("<footer>End</footer>");
+		});
+
+		it("@component with complex variables", async () => {
+			const tpl = `@component('comps.alert', { type: it.user.status })Hello {{ it.user.name }}@end`;
+			const html = await render(tpl, {
+				user: { name: "World", status: "success" },
+			});
+			expect(html).toContain('class="alert success"');
+			expect(html).toContain("Hello World");
+		});
+	});
+
+	describe("Include & Namespace Directives", () => {
+		it("@include with namespaced dot notation", async () => {
+			const tpl = `@include('views.child', { name: 'Test' })`;
+			expect(await render(tpl)).toBe("Child: Test");
+		});
+
+		it("@include with nested namespaced includes", async () => {
+			const tpl = `@include('views.nested', { n_item: { name: 'A', value: 1 } })`;
+			expect(await render(tpl)).toBe("Grandchild: A and 1");
+		});
+
+		it("@include with placeholder namespace (theme)", async () => {
+			const tpl = `@include('theme.header')`;
+			expect(await render(tpl, { name: "default" })).toBe(
+				"<header>Default Header</header>",
+			);
+		});
+	});
 });

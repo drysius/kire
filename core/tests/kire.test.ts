@@ -56,7 +56,6 @@ test("Kire - Pre/Pos Buffers", async () => {
 });
 
 test("Kire - Nested Directives (If/ElseIf/Else)", async () => {
-
 	const kire = new Kire();
 
 	const tpl1 = "@if(true)A@elseB@end";

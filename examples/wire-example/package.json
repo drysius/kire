@@ -1,7 +1,7 @@
 {
-  "name": "example-wire-counter",
-  "private": true,
-  "dependencies": {
-    "elysia": "^1.0.0"
-  }
+	"name": "example-wire-counter",
+	"private": true,
+	"dependencies": {
+		"elysia": "^1.0.0"
+	}
 }

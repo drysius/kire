@@ -1,14 +1,14 @@
 {
-    "package": "@kirejs/node",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "version": "0.1.0",
-    "directives": [],
-    "elements": [],
-    "globals": {
-        "$readdir": "function",
-        "$md5": "function"
-    }
+	"package": "@kirejs/node",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"version": "0.1.0",
+	"directives": [],
+	"elements": [],
+	"globals": {
+		"$readdir": "function",
+		"$md5": "function"
+	}
 }

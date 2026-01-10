@@ -1,332 +1,385 @@
 import type { ClientConfig, WireRequest, WireResponse } from "./types";
+import {
+	findComponentRoot,
+	findWireAttribute,
+	setLoadingState,
+	updateDom,
+} from "./utils/dom";
 import { parseAction } from "./utils/parser";
-import { findWireAttribute, updateDom, setLoadingState, findComponentRoot } from "./utils/dom";
-import { getValueFromElement } from "./utils/value";
 import { safeSelector } from "./utils/selector";
+import { getValueFromElement } from "./utils/value";
 
 export class KireWireClient {
-    private config: ClientConfig;
-    private observer: MutationObserver;
+	private config: ClientConfig;
+	private observer: MutationObserver;
 
-    constructor(config: ClientConfig) {
-        this.config = config;
-        
-        // Inject default styles
-        if (typeof document !== 'undefined') {
-            const style = document.createElement('style');
-            style.innerHTML = `
+	constructor(config: ClientConfig) {
+		this.config = config;
+
+		// Inject default styles
+		if (typeof document !== "undefined") {
+			const style = document.createElement("style");
+			style.innerHTML = `
                 [wire\\:loading], [wire\\:loading\\.delay], [wire\\:offline] { display: none; }
             `;
-            document.head.appendChild(style);
-        }
+			document.head.appendChild(style);
+		}
 
-        this.observer = new MutationObserver(() => this.initPolls());
-        
-        if (document.body) {
-            this.init();
-            this.observer.observe(document.body, { childList: true, subtree: true });
-        } else {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.init();
-                if (document.body) {
-                    this.observer.observe(document.body, { childList: true, subtree: true });
-                }
-            });
-        }
-    }
+		this.observer = new MutationObserver(() => this.initPolls());
 
-    private init() {
-        const events = [
-            'click', 'dblclick', 
-            'submit', 
-            'change', 'input', 
-            'mouseenter', 'mouseleave', 
-            'keydown', 'keyup', 'keypress',
-            'focusin', 'focusout'
-        ];
+		if (document.body) {
+			this.init();
+			this.observer.observe(document.body, { childList: true, subtree: true });
+		} else {
+			document.addEventListener("DOMContentLoaded", () => {
+				this.init();
+				if (document.body) {
+					this.observer.observe(document.body, {
+						childList: true,
+						subtree: true,
+					});
+				}
+			});
+		}
+	}
 
-        events.forEach(type => {
-            const useCapture = ['mouseenter', 'mouseleave', 'focusin', 'focusout'].includes(type);
-            document.addEventListener(type, (e) => this.handleEvent(e), useCapture);
-        });
+	private init() {
+		const events = [
+			"click",
+			"dblclick",
+			"submit",
+			"change",
+			"input",
+			"mouseenter",
+			"mouseleave",
+			"keydown",
+			"keyup",
+			"keypress",
+			"focusin",
+			"focusout",
+		];
 
-        // Offline support
-        window.addEventListener('offline', () => this.toggleOffline(true));
-        window.addEventListener('online', () => this.toggleOffline(false));
+		events.forEach((type) => {
+			const useCapture = [
+				"mouseenter",
+				"mouseleave",
+				"focusin",
+				"focusout",
+			].includes(type);
+			document.addEventListener(type, (e) => this.handleEvent(e), useCapture);
+		});
 
-        this.initPolls();
-    }
+		// Offline support
+		window.addEventListener("offline", () => this.toggleOffline(true));
+		window.addEventListener("online", () => this.toggleOffline(false));
 
-    private toggleOffline(isOffline: boolean) {
-        const elements = document.querySelectorAll(safeSelector('wire:offline'));
-        elements.forEach((el) => {
-            (el as HTMLElement).style.display = isOffline ? 'inline-block' : 'none'; // Or remove property to assume css default
-            if (!isOffline) (el as HTMLElement).style.removeProperty('display');
-        });
-    }
+		this.initPolls();
+	}
 
-    private initPolls() {
-        let polls: NodeListOf<Element> | HTMLElement[] = [];
-        try {
-            polls = document.querySelectorAll(safeSelector('wire:poll'));
-        } catch (e) {
-            const all = document.querySelectorAll('*');
-            const manualPolls: HTMLElement[] = [];
-            for (let i = 0; i < all.length; i++) {
-                if (all[i].hasAttribute('wire:poll')) {
-                    manualPolls.push(all[i] as HTMLElement);
-                }
-            }
-            polls = manualPolls;
-        }
+	private toggleOffline(isOffline: boolean) {
+		const elements = document.querySelectorAll(safeSelector("wire:offline"));
+		elements.forEach((el) => {
+			(el as HTMLElement).style.display = isOffline ? "inline-block" : "none"; // Or remove property to assume css default
+			if (!isOffline) (el as HTMLElement).style.removeProperty("display");
+		});
+	}
 
-        polls.forEach(el => {
-            if ((el as any).__wire_poll) return;
+	private initPolls() {
+		let polls: NodeListOf<Element> | HTMLElement[] = [];
+		try {
+			polls = document.querySelectorAll(safeSelector("wire:poll"));
+		} catch (_e) {
+			const all = document.querySelectorAll("*");
+			const manualPolls: HTMLElement[] = [];
+			for (let i = 0; i < all.length; i++) {
+				if (all[i].hasAttribute("wire:poll")) {
+					manualPolls.push(all[i] as HTMLElement);
+				}
+			}
+			polls = manualPolls;
+		}
 
-            const durationAttr = el.getAttribute('wire:poll');
-            let duration = 2000;
-            
-            if (durationAttr && durationAttr.endsWith('ms')) {
-                duration = parseInt(durationAttr);
-            } else if (durationAttr && !isNaN(parseInt(durationAttr))) {
-                 duration = parseInt(durationAttr);
-            }
+		polls.forEach((el) => {
+			if ((el as any).__wire_poll) return;
 
-            const root = findComponentRoot(el as HTMLElement);
-            if (!root) return;
-            
-            const componentId = root.getAttribute('wire:id');
-            const componentName = root.getAttribute('wire:component');
+			const durationAttr = el.getAttribute("wire:poll");
+			let duration = 2000;
 
-            if (!componentId || !componentName) return;
+			if (durationAttr?.endsWith("ms")) {
+				duration = parseInt(durationAttr, 10);
+			} else if (durationAttr && !Number.isNaN(parseInt(durationAttr, 10))) {
+				duration = parseInt(durationAttr, 10);
+			}
 
-            (el as any).__wire_poll = setInterval(() => {
-                let currentRoot: HTMLElement | null = null;
-                try {
-                    currentRoot = document.querySelector(safeSelector('wire:id', componentId!));
-                } catch(e) {}
-                
-                if (!currentRoot) {
-                    clearInterval((el as any).__wire_poll);
-                    delete (el as any).__wire_poll;
-                    return;
-                }
-                const currentSnapshot = currentRoot.getAttribute('wire:snapshot');
-                if (currentSnapshot) {
-                    this.call(componentId!, currentSnapshot, componentName!, '$refresh', []);
-                }
-            }, duration);
-        });
-    }
+			const root = findComponentRoot(el as HTMLElement);
+			if (!root) return;
 
-    private async handleEvent(e: Event) {
-        const target = e.target as HTMLElement;
-        if (!target || !target.getAttributeNames) return;
+			const componentId = root.getAttribute("wire:id");
+			const componentName = root.getAttribute("wire:component");
 
-        // --- 1. Handle wire:model ---
-        const allAttrs = target.getAttributeNames();
-        const modelAttr = allAttrs.find(a => a === 'wire:model' || a.startsWith('wire:model.'));
-        
-        if ((e.type === 'input' || e.type === 'change') && modelAttr) {
-            const modelName = target.getAttribute(modelAttr)!;
-            const modifiers = modelAttr.split('.').slice(1);
-            
-            // Ignore deferred updates completely (they are sent with actions)
-            if (modifiers.includes('defer')) {
-                return;
-            }
+			if (!componentId || !componentName) return;
 
-            if (modifiers.includes('lazy') && e.type === 'input') {
-                return;
-            }
+			(el as any).__wire_poll = setInterval(() => {
+				let currentRoot: HTMLElement | null = null;
+				try {
+					currentRoot = document.querySelector(
+						safeSelector("wire:id", componentId!),
+					);
+				} catch (_e) {}
 
-            let debounce = (e.type === 'input') ? 150 : 0;
-            if (modifiers.includes('debounce')) {
-                const durationIndex = modifiers.indexOf('debounce') + 1;
-                if (modifiers[durationIndex] && modifiers[durationIndex].endsWith('ms')) {
-                    debounce = parseInt(modifiers[durationIndex]);
-                }
-            }
+				if (!currentRoot) {
+					clearInterval((el as any).__wire_poll);
+					delete (el as any).__wire_poll;
+					return;
+				}
+				const currentSnapshot = currentRoot.getAttribute("wire:snapshot");
+				if (currentSnapshot) {
+					this.call(
+						componentId!,
+						currentSnapshot,
+						componentName!,
+						"$refresh",
+						[],
+					);
+				}
+			}, duration);
+		});
+	}
 
-            const value = getValueFromElement(target);
+	private async handleEvent(e: Event) {
+		const target = e.target as HTMLElement;
+		if (!target || !target.getAttributeNames) return;
 
-            this.callDebounced(target, debounce, async (root, id, snap, name) => {
-                await this.call(id, snap, name, '$set', [modelName, value]);
-            });
-            return;
-        }
+		// --- 1. Handle wire:model ---
+		const allAttrs = target.getAttributeNames();
+		const modelAttr = allAttrs.find(
+			(a) => a === "wire:model" || a.startsWith("wire:model."),
+		);
 
-        // --- 2. Handle wire:events ---
-        const result = findWireAttribute(target, e.type);
-        if (!result) return;
-        
-        const { el, attribute, modifiers } = result;
+		if ((e.type === "input" || e.type === "change") && modelAttr) {
+			const modelName = target.getAttribute(modelAttr)!;
+			const modifiers = modelAttr.split(".").slice(1);
 
-        if (modifiers.includes('prevent') || e.type === 'submit') {
-            e.preventDefault();
-        }
-        
-        if (modifiers.includes('stop')) {
-            e.stopPropagation();
-        }
+			// Ignore deferred updates completely (they are sent with actions)
+			if (modifiers.includes("defer")) {
+				return;
+			}
 
-        const confirmMsg = el.getAttribute('wire:confirm');
-        if (confirmMsg) {
-            if (!confirm(confirmMsg)) {
-                e.stopImmediatePropagation();
-                e.preventDefault();
-                return;
-            }
-        }
+			if (modifiers.includes("lazy") && e.type === "input") {
+				return;
+			}
 
-        const root = findComponentRoot(el);
-        if (!root) {
-            console.warn(`KireWire: ${attribute} used outside of a wire component.`);
-            return;
-        }
+			let debounce = e.type === "input" ? 150 : 0;
+			if (modifiers.includes("debounce")) {
+				const durationIndex = modifiers.indexOf("debounce") + 1;
+				if (modifiers[durationIndex]?.endsWith("ms")) {
+					debounce = parseInt(modifiers[durationIndex], 10);
+				}
+			}
 
-        const action = el.getAttribute(attribute);
-        if (!action) return;
+			const value = getValueFromElement(target);
 
-        const { method, params } = parseAction(action, e);
-        
-        const componentId = root.getAttribute('wire:id');
-        const snapshot = root.getAttribute('wire:snapshot');
-        const componentName = root.getAttribute('wire:component');
+			this.callDebounced(target, debounce, async (_root, id, snap, name) => {
+				await this.call(id, snap, name, "$set", [modelName, value]);
+			});
+			return;
+		}
 
-        if (!componentId || !snapshot || !componentName) return;
+		// --- 2. Handle wire:events ---
+		const result = findWireAttribute(target, e.type);
+		if (!result) return;
 
-        const debounceMod = modifiers.find(m => m.startsWith('debounce'));
-        if (debounceMod) {
-            const durationIndex = modifiers.indexOf(debounceMod) + 1;
-            let duration = 150;
-            if (modifiers[durationIndex] && modifiers[durationIndex].endsWith('ms')) {
-                duration = parseInt(modifiers[durationIndex]);
-            }
-            this.callDebounced(el, duration, async () => {
-                await this.call(componentId, snapshot, componentName, method, params);
-            });
-            return;
-        }
+		const { el, attribute, modifiers } = result;
 
-        await this.call(componentId, snapshot, componentName, method, params);
-    }
+		if (modifiers.includes("prevent") || e.type === "submit") {
+			e.preventDefault();
+		}
 
-    private callDebounced(el: HTMLElement, duration: number, callback: (root: HTMLElement, id: string, snap: string, name: string) => Promise<void>) {
-        const root = findComponentRoot(el);
-        if (!root) return;
-        const id = root.getAttribute('wire:id')!;
-        const snap = root.getAttribute('wire:snapshot')!;
-        const name = root.getAttribute('wire:component')!;
+		if (modifiers.includes("stop")) {
+			e.stopPropagation();
+		}
 
-        const timerKey = `__wire_debounce_${name}`;
-        const existingTimer = (el as any)[timerKey];
-        if (existingTimer) clearTimeout(existingTimer);
-        
-        if (duration === 0) {
-            callback(root, id, snap, name);
-            return;
-        }
+		const confirmMsg = el.getAttribute("wire:confirm");
+		if (confirmMsg) {
+			if (!confirm(confirmMsg)) {
+				e.stopImmediatePropagation();
+				e.preventDefault();
+				return;
+			}
+		}
 
-        (el as any)[timerKey] = setTimeout(() => {
-            callback(root, id, snap, name);
-            delete (el as any)[timerKey];
-        }, duration);
-    }
+		const root = findComponentRoot(el);
+		if (!root) {
+			console.warn(`KireWire: ${attribute} used outside of a wire component.`);
+			return;
+		}
 
-    public async call(id: string, snapshot: string, name: string, method: string, params: any[]) {
-        try {
-            if (this.config.method === 'socket') {
-                console.warn('KireWire: Socket method not yet implemented in client.');
-                return;
-            }
+		const action = el.getAttribute(attribute);
+		if (!action) return;
 
-            setLoadingState(id, true, method);
+		const { method, params } = parseAction(action, e);
 
-            // Collect deferred/current state from DOM
-            const updates: Record<string, any> = {};
-            const root = document.querySelector(safeSelector('wire:id', id));
-            if (root) {
-                // Find all elements with wire:model inside this component
-                // Note: This is a simplified selector, ideally we should scope to ignore nested components
-                const models = root.querySelectorAll('[wire\\:model], [wire\\:model\\.defer], [wire\\:model\\.lazy], [wire\\:model\\.debounce], [wire\\:defer]');
-                
-                models.forEach(el => {
-                    // Ensure element belongs to this component (not a nested one)
-                    if (findComponentRoot(el as HTMLElement) !== root) return;
+		const componentId = root.getAttribute("wire:id");
+		const snapshot = root.getAttribute("wire:snapshot");
+		const componentName = root.getAttribute("wire:component");
 
-                    let attrName = el.getAttributeNames().find(a => a.startsWith('wire:model'));
-                    if (!attrName) {
-                        attrName = el.getAttributeNames().find(a => a === 'wire:defer');
-                    }
+		if (!componentId || !snapshot || !componentName) return;
 
-                    if (attrName) {
-                        const modelName = el.getAttribute(attrName);
-                        if (modelName) {
-                            updates[modelName] = getValueFromElement(el as HTMLElement);
-                        }
-                    }
-                });
-            }
+		const debounceMod = modifiers.find((m) => m.startsWith("debounce"));
+		if (debounceMod) {
+			const durationIndex = modifiers.indexOf(debounceMod) + 1;
+			let duration = 150;
+			if (modifiers[durationIndex]?.endsWith("ms")) {
+				duration = parseInt(modifiers[durationIndex], 10);
+			}
+			this.callDebounced(el, duration, async () => {
+				await this.call(componentId, snapshot, componentName, method, params);
+			});
+			return;
+		}
 
-            const headers: Record<string, string> = {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            };
+		await this.call(componentId, snapshot, componentName, method, params);
+	}
 
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (csrfToken) {
-                headers['X-CSRF-TOKEN'] = csrfToken;
-            }
+	private callDebounced(
+		el: HTMLElement,
+		duration: number,
+		callback: (
+			root: HTMLElement,
+			id: string,
+			snap: string,
+			name: string,
+		) => Promise<void>,
+	) {
+		const root = findComponentRoot(el);
+		if (!root) return;
+		const id = root.getAttribute("wire:id")!;
+		const snap = root.getAttribute("wire:snapshot")!;
+		const name = root.getAttribute("wire:component")!;
 
-            const payload: WireRequest = { 
-                component: name, 
-                snapshot, 
-                method, 
-                params,
-                updates: Object.keys(updates).length > 0 ? updates : undefined
-            };
+		const timerKey = `__wire_debounce_${name}`;
+		const existingTimer = (el as any)[timerKey];
+		if (existingTimer) clearTimeout(existingTimer);
 
-            const res = await fetch(this.config.endpoint, {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(payload)
-            });
+		if (duration === 0) {
+			callback(root, id, snap, name);
+			return;
+		}
 
-            if (!res.ok) throw new Error('Network error: ' + res.status);
+		(el as any)[timerKey] = setTimeout(() => {
+			callback(root, id, snap, name);
+			delete (el as any)[timerKey];
+		}, duration);
+	}
 
-            const data: WireResponse = await res.json();
-            
-            if (data.error) {
-                console.error('KireWire Server Error:', data.error);
-                // Future: Flash message or trigger error event specific to business logic
-            }
+	public async call(
+		id: string,
+		snapshot: string,
+		name: string,
+		method: string,
+		params: any[],
+	) {
+		try {
+			if (this.config.method === "socket") {
+				console.warn("KireWire: Socket method not yet implemented in client.");
+				return;
+			}
 
-            this.handleResponse(id, data);
+			setLoadingState(id, true, method);
 
-        } catch (error) {
-            console.error('KireWire Error:', error);
-            window.dispatchEvent(new CustomEvent('kirewire:error', { detail: { error, componentId: id } }));
-        } finally {
-            setLoadingState(id, false, method);
-        }
-    }
+			// Collect deferred/current state from DOM
+			const updates: Record<string, any> = {};
+			const root = document.querySelector(safeSelector("wire:id", id));
+			if (root) {
+				// Find all elements with wire:model inside this component
+				// Note: This is a simplified selector, ideally we should scope to ignore nested components
+				const models = root.querySelectorAll(
+					"[wire\\:model], [wire\\:model\\.defer], [wire\\:model\\.lazy], [wire\\:model\\.debounce], [wire\\:defer]",
+				);
 
-    private handleResponse(id: string, data: WireResponse) {
-        if (data.redirect) {
-            window.location.href = data.redirect;
-            return;
-        }
+				models.forEach((el) => {
+					// Ensure element belongs to this component (not a nested one)
+					if (findComponentRoot(el as HTMLElement) !== root) return;
 
-        if (data.html) {
-            updateDom(id, data.html, data.snapshot);
-            this.initPolls();
-        }
+					let attrName = el
+						.getAttributeNames()
+						.find((a) => a.startsWith("wire:model"));
+					if (!attrName) {
+						attrName = el.getAttributeNames().find((a) => a === "wire:defer");
+					}
 
-        if (data.events && Array.isArray(data.events)) {
-            data.events.forEach(e => {
-                window.dispatchEvent(new CustomEvent(e.name, { detail: e.params }));
-            });
-        }
-    }
+					if (attrName) {
+						const modelName = el.getAttribute(attrName);
+						if (modelName) {
+							updates[modelName] = getValueFromElement(el as HTMLElement);
+						}
+					}
+				});
+			}
+
+			const headers: Record<string, string> = {
+				"Content-Type": "application/json",
+				Accept: "application/json",
+			};
+
+			const csrfToken = document
+				.querySelector('meta[name="csrf-token"]')
+				?.getAttribute("content");
+			if (csrfToken) {
+				headers["X-CSRF-TOKEN"] = csrfToken;
+			}
+
+			const payload: WireRequest = {
+				component: name,
+				snapshot,
+				method,
+				params,
+				updates: Object.keys(updates).length > 0 ? updates : undefined,
+			};
+
+			const res = await fetch(this.config.endpoint, {
+				method: "POST",
+				headers,
+				body: JSON.stringify(payload),
+			});
+
+			if (!res.ok) throw new Error(`Network error: ${res.status}`);
+
+			const data: WireResponse = await res.json();
+
+			if (data.error) {
+				console.error("KireWire Server Error:", data.error);
+				// Future: Flash message or trigger error event specific to business logic
+			}
+
+			this.handleResponse(id, data);
+		} catch (error) {
+			console.error("KireWire Error:", error);
+			window.dispatchEvent(
+				new CustomEvent("kirewire:error", {
+					detail: { error, componentId: id },
+				}),
+			);
+		} finally {
+			setLoadingState(id, false, method);
+		}
+	}
+
+	private handleResponse(id: string, data: WireResponse) {
+		if (data.redirect) {
+			window.location.href = data.redirect;
+			return;
+		}
+
+		if (data.html) {
+			updateDom(id, data.html, data.snapshot);
+			this.initPolls();
+		}
+
+		if (data.events && Array.isArray(data.events)) {
+			data.events.forEach((e) => {
+				window.dispatchEvent(new CustomEvent(e.name, { detail: e.params }));
+			});
+		}
+	}
 }
