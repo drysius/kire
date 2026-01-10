@@ -9,6 +9,7 @@
   },
   "scripts": {
     "test": "bun test",
+    "schema": "bun run tools/schema.ts",
     "build": "bun run tools/build.ts",
     "publish": "bun run tools/publish.ts",
     "llms": "bun run tools/llms.ts",

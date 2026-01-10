@@ -10,7 +10,7 @@
             "name": "wire",
             "params": [
                 "name:string",
-                "params:object"
+                "params?:object"
             ],
             "children": false,
             "type": "html"

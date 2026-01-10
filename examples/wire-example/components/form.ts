@@ -9,6 +9,7 @@ export default class RegisterForm extends WireComponent {
     async register() {
         this.clearErrors();
         await new Promise(i => setTimeout(i, 5000))
+
         this.successMessage = "";
         
         if (!this.name) this.addError('name', 'Name is required');

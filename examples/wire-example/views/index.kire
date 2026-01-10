@@ -1,9 +1,9 @@
-@include('views.layout', {})
+@include('views.layout')
 
 @define('content')
     <h1 style="text-align: center;">KireWire Examples</h1>
 
     <!-- Render Components -->
-    @wire('counter',{})
-    @wire('form', {})
+    @wire('counter')
+    @wire('form')
 @end

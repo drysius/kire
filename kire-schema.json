@@ -115,7 +115,7 @@
       {
          "name": "for",
          "params": [
-            "loop:{lhs} {op:in/of} {rhs}|statement:string"
+            "loop:$lhs {op:in/of} $rhs|statement:string"
          ],
          "children": true,
          "type": "html",

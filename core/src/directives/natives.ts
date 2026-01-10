@@ -61,7 +61,7 @@ export default (kire: Kire) => {
 
 	kire.directive({
 		name: "for",
-		params: ["loop:{lhs} {op:in/of} {rhs}|statement:string"],
+		params: ["loop:$lhs {op:in/of} $rhs|statement:string"],
 		children: true,
 		type: "html",
 		description:

@@ -166,25 +166,28 @@ export class KireDiagnosticProvider {
         // Basic parameter count validation (might need adjustment for optional params logic later)
         // If args are fewer than required params, check if the last param might be a catch-all or pattern
         if (args.length < requiredParams.length) {
-             // For now, strict count check on positional params
-             // However, patterns usually consume 1 slot in definitions but might consume "whole string" in args?
-             // Kire parser treats "user of users" as 1 arg if no commas.
-             // Our parseDirectiveArgs also splits by comma.
-             // So count check is valid.
+             // Identify truly missing required parameters
+             const missingParams: string[] = [];
              
-             // BUT, if the param definition is a pattern like "{item} in {list}", it's a single param definition.
-             // And the user types "user in users". This is 1 arg. Matches 1 param definition. OK.
+             for (let i = args.length; i < requiredParams.length; i++) {
+                 const p = requiredParams[i]!;
+                 // Check if optional (ends with ?) or is a pattern (might cover optionality differently?)
+                 // We use simple split checking for now.
+                 const namePart = p.includes('|') ? p.split('|')[0]!.split(':')[0]! : p.split(':')[0]!;
+                 
+                 // If name part doesn't end with '?', it's required.
+                 if (!namePart.endsWith('?')) {
+                     missingParams.push(namePart);
+                 }
+             }
              
-             const missingParams = requiredParams.slice(args.length).map(p => {
-                 if (p.includes('|')) return p.split('|')[0].split(':')[0]; // Simplistic name extraction
-                 return p.split(':')[0];
-             });
-             
-             diagnostics.push(new vscode.Diagnostic(
-                new vscode.Range(position, position.translate(0, `@${name}(${argsStr})`.length)),
-                `Missing parameters for @${name}: ${missingParams.join(', ')}`,
-                vscode.DiagnosticSeverity.Error
-            ));
+             if (missingParams.length > 0) {
+                diagnostics.push(new vscode.Diagnostic(
+                    new vscode.Range(position, position.translate(0, `@${name}(${argsStr})`.length)),
+                    `Missing parameters for @${name}: ${missingParams.join(', ')}`,
+                    vscode.DiagnosticSeverity.Error
+                ));
+             }
         }
         
         // Validate types using robust parser

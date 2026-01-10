@@ -1,5 +1,6 @@
 import type { Kire } from "./kire";
 import type { DirectiveDefinition, Node } from "./types";
+import { isPatternDefinition } from "./utils/params";
 
 export class Parser {
 	public cursor = 0;
@@ -256,7 +257,20 @@ export class Parser {
 			return true;
 		}
 
-		const args = argsStr ? this.parseArgs(argsStr) : [];
+		let args: any[] = [];
+		if (argsStr) {
+			// Check if we should use pattern parsing instead of splitting args
+			const targetDef = isSubDirective ? subDef : directiveDef;
+			if (
+				targetDef?.params?.length === 1 &&
+				isPatternDefinition(targetDef.params[0]!)
+			) {
+				args = [argsStr.trim()];
+			} else {
+				args = this.parseArgs(argsStr);
+			}
+		}
+
 		const fullContent = this.template.slice(
 			this.cursor,
 			this.cursor + argsEndIndex,

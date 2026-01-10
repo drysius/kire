@@ -3,7 +3,7 @@ import type { Kire } from "../kire";
 export default (kire: Kire) => {
 	kire.directive({
 		name: "include",
-		params: ["path:string", "locals:any"],
+		params: ["path:string", "locals?:object"],
 		children: false,
 		type: "html",
 		description:

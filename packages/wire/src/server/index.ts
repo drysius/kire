@@ -22,7 +22,7 @@ export const Kirewire: KirePlugin<WireOptions> = {
 
     kire.directive({
       name: "wire",
-      params: ["name:string", "params:object"],
+      params: ["name:string", "params?:object"],
       children: false,
       type: "html",
       async onCall(compiler) {

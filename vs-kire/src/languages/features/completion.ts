@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { kireStore } from '../../store';
+import { parseParamDefinition } from '../../utils/params';
 
 export class KireCompletionItemProvider implements vscode.CompletionItemProvider {
     provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, _token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
@@ -53,14 +54,23 @@ export class KireCompletionItemProvider implements vscode.CompletionItemProvider
                      snippet += '(';
                      snippet += def.params.map((p, i) => {
                          let label = p;
-                         if (p.includes('|')) {
-                             // Handle union types: take names of all options
-                             label = p.split('|').map(opt => opt.split(':')[0]).join(' or ');
-                         } else {
-                             // Standard name:type or name:pattern
-                             label = p.split(':')[0];
+                         try {
+                             const parsed = parseParamDefinition(p);
+                             label = parsed.name;
+                             // If pattern match, maybe use the pattern as placeholder if name is generic?
+                             if (label === 'pattern_match' || label === 'regex_match') {
+                                 // Try to use a cleaner version of the raw definition if possible
+                                 label = parsed.rawDefinition;
+                             }
+                         } catch (e) {
+                             // Fallback
+                             if (p.includes('|')) {
+                                 label = p.split('|').map(opt => opt.split(':')[0]).join(' or ');
+                             } else {
+                                 label = p.split(':')[0];
+                             }
                          }
-                         return `\${${i+1}:${label}}`;
+                         return `\${{${i+1}:${label}}}`;
                      }).join(', ');
                      snippet += ')';
                 }
