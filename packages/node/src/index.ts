@@ -20,13 +20,13 @@ async function recursiveReaddir(
 
 	for (const entry of entries) {
 		const fullPath = join(dir, entry.name);
+		const normalizedPath = fullPath.replace(/\\/g, "/");
 		if (entry.isDirectory()) {
 			files.push(...(await recursiveReaddir(fullPath, pattern)));
 		} else {
-			// Check pattern
-			// Simple check: match extension
-			if (pattern.test(entry.name) || pattern.test(fullPath)) {
-				files.push(fullPath);
+			// Check pattern against normalized path
+			if (pattern.test(entry.name) || pattern.test(normalizedPath)) {
+				files.push(normalizedPath);
 			}
 		}
 	}

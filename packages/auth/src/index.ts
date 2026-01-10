@@ -13,9 +13,12 @@ export interface AuthOptions {
 
 export const KireAuth: KirePlugin<AuthOptions> = {
 	name: "@kirejs/auth",
-	options: {} as AuthOptions,
-	load(kire, options) {
-		if (!options) throw new Error("KireAuth requires options");
+	options: {
+		canPerm: async () => false,
+		getUser: async () => null,
+	} as AuthOptions,
+	load(kire, opts) {
+		const options = {...KireAuth.options, ...opts } as AuthOptions;
 
 		// Register global helpers
 		kire.$ctx("$auth_getUser", options.getUser);
@@ -174,3 +177,4 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		});
 	},
 };
+export default KireAuth;

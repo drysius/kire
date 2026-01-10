@@ -1,27 +1,29 @@
 {
-	"package": "@kirejs/tailwind",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"version": "0.1.0",
-	"directives": [
-		{
-			"name": "tailwind",
-			"params": ["code:string"],
-			"children": true,
-			"childrenRaw": true,
-			"description": "Processes CSS content within the block using Tailwind CSS.",
-			"example": "@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end"
-		}
-	],
-	"elements": [
-		{
-			"name": "tailwind",
-			"description": "Processes CSS content within the block using Tailwind CSS.",
-			"example": "<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>"
-		}
-	],
-	"globals": {},
-	"attributes": {}
+    "package": "@kirejs/tailwind",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "version": "0.1.0",
+    "directives": [
+        {
+            "name": "tailwind",
+            "params": [
+                "code:string"
+            ],
+            "children": true,
+            "childrenRaw": true,
+            "description": "Processes CSS content within the block using Tailwind CSS.",
+            "example": "@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end"
+        }
+    ],
+    "elements": [
+        {
+            "name": "tailwind",
+            "description": "Processes CSS content within the block using Tailwind CSS.",
+            "example": "<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>"
+        }
+    ],
+    "globals": {},
+    "attributes": {}
 }

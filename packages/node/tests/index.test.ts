@@ -1,18 +1,7 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, describe, expect, mock, test } from "bun:test";
+import { rm, writeFile } from "node:fs/promises";
 import { Kire } from "kire";
 import KireNode from "../src/index";
-
-// --- Mocks ---
-
-// Mock fs/promises for Node.js adapter
-mock.module("fs/promises", () => ({
-	readFile: mock(async (path: string) => {
-		if (path.includes("node-template.kire")) return "Hello from Node!";
-		throw new Error("File not found (Node mock)");
-	}),
-	writeFile: mock(async () => {}),
-	rm: mock(async () => {}),
-}));
 
 // Mock fetch for 'fetch' adapter
 const _originalFetch = global.fetch;
@@ -29,8 +18,16 @@ global.fetch = mock(async (url: string) => {
 });
 
 describe("@kirejs/node", () => {
-	afterEach(() => {
-		mock.restore();
+	beforeAll(async () => {
+		await writeFile("node-template.kire", "Hello from Node!");
+		await writeFile("template.kire", "<div> Hello </div>");
+	});
+
+	afterAll(async () => {
+		// Clean up files
+		await rm("node-template.kire").catch(() => {});
+		await rm("template.kire").catch(() => {});
+		global.fetch = _originalFetch;
 	});
 
 	test("should use 'node' adapter by default", async () => {
@@ -47,30 +44,13 @@ describe("@kirejs/node", () => {
 			return;
 		}
 
-		// Mock Bun.file for this test
-		const originalFile = Bun.file;
-		Bun.file = (path: string) => {
-			if (path.includes("template.kire")) {
-				return {
-					text: async () => "<div> Hello </div>",
-					exists: async () => true,
-				} as any;
-			}
-			return {
-				text: async () => "",
-				exists: async () => false,
-			} as any;
-		};
-
+		// Use the real file we created
 		const kire = new Kire();
 		kire.plugin(KireNode, { adapter: "bun" });
 
 		// Pass the filename without the extension; Kire will resolve it
 		const content = await kire.view("template");
 		expect(content).toBe("<div> Hello </div>");
-
-		// Restore Bun.file
-		Bun.file = originalFile;
 	});
 
 	test("should throw error for 'deno' adapter when Deno is not available", async () => {

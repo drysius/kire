@@ -6,7 +6,7 @@ export function findWireAttribute(
 ): { el: HTMLElement; attribute: string; modifiers: string[] } | null {
 	const attributePrefix = `wire:${eventType}`;
 	let el: HTMLElement | null = target;
-	let matchedAttribute: string | null = null;
+	let matchedAttribute: string | null | undefined = null;
 
 	while (el && el !== document.body) {
 		const attrs = el.getAttributeNames();

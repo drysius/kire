@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 import { Kirewire, WireComponent, WireCore } from "../src";
-import { Elysiawire } from "../src/adapters/elysia";
+import { Elysiawire } from "../src/server/adapters/elysia";
 
 // --- Mock Component ---
 class Counter extends WireComponent {
@@ -20,7 +20,7 @@ class Counter extends WireComponent {
 describe("Elysia Wire Integration", () => {
 	// Setup Kire & Wire
 	const kire = new Kire();
-	kire.plugin(Kirewire.plugin);
+	kire.plugin(Kirewire);
 
 	// Register Component
 	WireCore.get().registerComponent("counter", Counter);
@@ -109,7 +109,7 @@ describe("Elysia Wire Integration", () => {
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(payload),
 		});
-
+		console.log(await res.json());
 		expect(res.status).toBe(400);
 		const data = (await res.json()) as any;
 		expect(data.error).toBe("Component not found");

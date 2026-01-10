@@ -1,11 +1,96 @@
 {
-	"package": "@kirejs/node",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"version": "0.1.0",
-	"directives": [],
-	"elements": [],
-	"globals": {}
+    "package": "@kirejs/auth",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "version": "0.1.0",
+    "directives": [
+        {
+            "name": "auth",
+            "children": true,
+            "type": "html",
+            "parents": [
+                {
+                    "name": "else",
+                    "children": true
+                }
+            ]
+        },
+        {
+            "name": "else",
+            "children": true
+        },
+        {
+            "name": "guest",
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "notlogged",
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "logged",
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "authenticated",
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "user",
+            "type": "js"
+        },
+        {
+            "name": "can",
+            "params": [
+                "perm:any"
+            ],
+            "children": true,
+            "type": "html",
+            "parents": [
+                {
+                    "name": "else",
+                    "children": true
+                }
+            ]
+        },
+        {
+            "name": "notcan",
+            "params": [
+                "perm:any"
+            ],
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "canany",
+            "params": [
+                "perms:any"
+            ],
+            "children": true,
+            "type": "html"
+        },
+        {
+            "name": "noauth",
+            "children": true,
+            "type": "html",
+            "parents": [
+                {
+                    "name": "else",
+                    "children": true
+                }
+            ]
+        }
+    ],
+    "elements": [],
+    "globals": {
+        "$auth_getUser": "function",
+        "$auth_can": "function"
+    },
+    "attributes": {}
 }

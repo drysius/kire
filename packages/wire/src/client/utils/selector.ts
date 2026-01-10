@@ -7,8 +7,12 @@
  * safeSelector('wire:id', '123') -> '[wire\\:id="123"]'
  */
 export function safeSelector(attribute: string, value?: string): string {
-	// Escape colons with quadruple backslash
-	const escapedAttr = attribute.replace(/:/g, "\\:");
+	// HappyDOM (used in tests) requires unescaped colons for attribute selectors
+	// while standard browsers require escaped colons.
+	// @ts-ignore
+	const isHappyDOM = typeof window !== "undefined" && window.happyDOM;
+
+	const escapedAttr = isHappyDOM ? attribute : attribute.replace(/:/g, "\\:");
 
 	if (value !== undefined) {
 		return `[${escapedAttr}="${value}"]`;
