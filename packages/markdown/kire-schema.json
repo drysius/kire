@@ -23,5 +23,6 @@
 	"globals": {
 		"readDir": "function",
 		"renderMarkdown": "function"
-	}
+	},
+	"attributes": {}
 }

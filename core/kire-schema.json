@@ -195,5 +195,6 @@
 		"$md5": "function",
 		"$escape": "function",
 		"$require": "function"
-	}
+	},
+	"attributes": {}
 }

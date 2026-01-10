@@ -29,5 +29,6 @@
 			"example": "<!-- Internal Use -->"
 		}
 	],
-	"globals": {}
+	"globals": {},
+	"attributes": {}
 }

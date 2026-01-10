@@ -22,5 +22,6 @@
 	],
 	"globals": {
 		"fetchIcon": "function"
-	}
+	},
+	"attributes": {}
 }

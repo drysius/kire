@@ -90,6 +90,7 @@ export class KireDiagnosticProvider {
 		// Find JS blocks to ignore directives inside them
 		const jsBlocks: [number, number][] = [];
 		// Match both <?js and <?jsc
+		//biome-ignore lint:suspicious/noControlCharactersInRegex not need
 		const jsBlockRegex = /<\?js[c]?[\u0000-\uFFFF]*?\?>/g;
 		let jsMatch: RegExpExecArray | null;
 		while ((jsMatch = jsBlockRegex.exec(text)) !== null) {

@@ -60,6 +60,10 @@ async function loadSchemaFile(uri: vscode.Uri): Promise<void> {
 		if (json.elements?.length) {
 			state.addElements(json.elements as ElementDefinition[]);
 		}
+
+		if (json.attributes) {
+			state.addAttributes(json.attributes);
+		}
 	} catch (error) {
 		console.warn(
 			`Failed to load schema from ${uri.fsPath}:`,

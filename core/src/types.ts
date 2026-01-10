@@ -373,6 +373,7 @@ export interface KireSchematic {
 	directives?: DirectiveDefinition[];
 	elements?: ElementDefinition[];
 	globals?: Record<string, any>;
+	attributes?: Record<string, Record<string, any>>;
 }
 
 export interface KirePlugin<Options extends object | undefined = {}> {

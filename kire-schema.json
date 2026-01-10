@@ -162,7 +162,7 @@
 		},
 		{
 			"name": "include",
-			"params": ["path:string", "locals:any"],
+			"params": ["path:string", "locals?:object"],
 			"children": false,
 			"type": "html",
 			"description": "Includes and renders a template from a given path, optionally passing local variables.",
@@ -195,5 +195,6 @@
 		"$md5": "function",
 		"$escape": "function",
 		"$require": "function"
-	}
+	},
+	"attributes": {}
 }

@@ -206,6 +206,33 @@ export class Kire {
 	}
 
 	/**
+	 * Registry of schematics (e.g., custom attributes for IDE support).
+	 */
+	public $schematics: Map<string, any> = new Map();
+
+	/**
+	 * Registers a schematic definition.
+	 * @param type The type of schematic (e.g., 'attributes').
+	 * @param data The schematic data.
+	 * @returns The Kire instance.
+	 */
+	public schematic(type: string, data: any) {
+		if (type === "attributes") {
+			if (!this.$schematics.has(type)) {
+				this.$schematics.set(type, {});
+			}
+			const current = this.$schematics.get(type);
+			for (const key in data) {
+				if (!current[key]) current[key] = {};
+				Object.assign(current[key], data[key]);
+			}
+		} else {
+			this.$schematics.set(type, data);
+		}
+		return this;
+	}
+
+	/**
 	 * Generates a schema definition for a package using this Kire instance configuration.
 	 * @param name Package name.
 	 * @param repository Repository URL or object.
@@ -250,6 +277,7 @@ export class Kire {
 			directives: Array.from(this.$directives.values()),
 			elements: Array.from(this.$elements.values()),
 			globals: globals,
+			attributes: this.$schematics.get("attributes") || {},
 		};
 	}
 

@@ -8,8 +8,8 @@ import {
 	KireSemanticTokensProvider,
 	semanticTokensLegend,
 } from "./features/semanticTokens";
+import { TagAutoCloseProvider } from "./features/tagAutoClose";
 
-// biome-ignore lint/complexity/noStaticOnlyClass: ignore not need
 export class KireLanguageFeatures {
 	static register(context: vscode.ExtensionContext): vscode.Disposable {
 		const disposables: vscode.Disposable[] = [];
@@ -20,6 +20,9 @@ export class KireLanguageFeatures {
 
 		// Register diagnostic provider
 		disposables.push(new KireDiagnosticProvider().register(context));
+
+		// Register auto-close tag provider
+		disposables.push(new TagAutoCloseProvider());
 
 		// Register Providers
 		disposables.push(

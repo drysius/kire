@@ -278,12 +278,12 @@ export class HtmlDocumentHighlightProvider
 
 export class HtmlDefinitionProvider implements vscode.DefinitionProvider {
 	provideDefinition(
-		document: vscode.TextDocument,
+		_document: vscode.TextDocument,
 		_position: vscode.Position,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.Definition | vscode.LocationLink[]> {
-		const lspDoc = toLspDocument(document);
-		const _htmlDoc = htmlLanguageService.parseHTMLDocument(lspDoc);
+		//const lspDoc = toLspDocument(document);
+		//const _htmlDoc = htmlLanguageService.parseHTMLDocument(lspDoc);
 
 		// Para HTML, a definição geralmente é o próprio elemento
 		// Se quiser suporte a definições mais avançadas, pode implementar
@@ -731,7 +731,6 @@ export class HtmlLinkedEditingProvider {
 }
 
 // Classe principal para registrar todos os providers
-// biome-ignore lint/complexity/noStaticOnlyClass: ignore
 export class HtmlLanguageFeatures {
 	static register(_context: vscode.ExtensionContext): vscode.Disposable {
 		const disposables: vscode.Disposable[] = [];

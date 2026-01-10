@@ -10,5 +10,6 @@
 	"globals": {
 		"$readdir": "function",
 		"$md5": "function"
-	}
+	},
+	"attributes": {}
 }

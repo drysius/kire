@@ -17,19 +17,28 @@ export interface ElementDefinition {
 	void?: boolean;
 }
 
+export interface AttributeDefinition {
+	type: string;
+	comment?: string;
+	example?: string;
+}
+
 export interface KireState {
 	directives: Map<string, DirectiveDefinition>;
 	elements: Map<string, ElementDefinition>;
+	attributes: Map<string, AttributeDefinition>;
 	// Helpers to quickly find parent directives for sub-directives
 	parentDirectives: Map<string, string[]>; // subDirective -> [parentName1, parentName2]
 	addDirectives: (directives: DirectiveDefinition[]) => void;
 	addElements: (elements: ElementDefinition[]) => void;
+	addAttributes: (attributes: Record<string, Record<string, any>>) => void;
 	clear: () => void;
 }
 
 export const kireStore = createStore<KireState>((set) => ({
 	directives: new Map(),
 	elements: new Map(),
+	attributes: new Map(),
 	parentDirectives: new Map(),
 	addDirectives: (directives) =>
 		set((state) => {
@@ -63,10 +72,27 @@ export const kireStore = createStore<KireState>((set) => ({
 			elements.forEach((e) => newMap.set(e.name, e));
 			return { elements: newMap };
 		}),
+	addAttributes: (schemas) =>
+		set((state) => {
+			const newMap = new Map(state.attributes);
+			// Process 'global' attributes
+			if (schemas.global) {
+				Object.entries(schemas.global).forEach(([key, def]) => {
+					if (typeof def === "string") {
+						newMap.set(key, { type: def });
+					} else {
+						newMap.set(key, def as AttributeDefinition);
+					}
+				});
+			}
+			// Future: process tag-specific attributes if needed
+			return { attributes: newMap };
+		}),
 	clear: () =>
 		set({
 			directives: new Map(),
 			elements: new Map(),
+			attributes: new Map(),
 			parentDirectives: new Map(),
 		}),
 }));

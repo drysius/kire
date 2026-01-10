@@ -22,5 +22,6 @@
 			"example": "<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>"
 		}
 	],
-	"globals": {}
+	"globals": {},
+	"attributes": {}
 }

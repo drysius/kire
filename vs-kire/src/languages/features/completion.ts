@@ -30,7 +30,7 @@ export class KireCompletionItemProvider
 
 		// 1. Triggered by '<' -> Elements
 		if (char === "<" || linePrefix.endsWith("<")) {
-			// <?js
+			// <?js (triggered by ?)
 			const jsItem = new vscode.CompletionItem(
 				"?js",
 				vscode.CompletionItemKind.Snippet,
@@ -39,6 +39,17 @@ export class KireCompletionItemProvider
 			jsItem.insertText = new vscode.SnippetString("?js\n\t$0\n?>");
 			if (range) jsItem.range = range;
 			items.push(jsItem);
+
+			// js (triggered by typing js after <)
+			const jsItem2 = new vscode.CompletionItem(
+				"js",
+				vscode.CompletionItemKind.Snippet,
+			);
+			jsItem2.detail = "Server-side JavaScript Block (<?js ... ?>)";
+			jsItem2.filterText = "js";
+			jsItem2.insertText = new vscode.SnippetString("?js\n\t$0\n?>");
+			if (range) jsItem2.range = range;
+			items.push(jsItem2);
 
 			kireStore.getState().elements.forEach((def) => {
 				const item = new vscode.CompletionItem(
@@ -118,6 +129,34 @@ export class KireCompletionItemProvider
 				);
 				endItem.documentation = "Closes the current directive block.";
 				items.push(endItem);
+			}
+		}
+
+		// 3. Attributes (Inside element tag)
+		// Heuristic: line has <tagName, and we are not inside quotes (simplified)
+		const tagMatch = linePrefix.match(/<[a-zA-Z0-9_-]+/);
+		if (tagMatch && !linePrefix.includes(">")) {
+			// Check if we are inside a directive param or something else
+			// If last char is space, or we are typing an attribute name
+			const isAttributeContext = /\s[a-zA-Z0-9_\-:]*$/.test(linePrefix);
+
+			if (isAttributeContext) {
+				kireStore.getState().attributes.forEach((def, name) => {
+					const item = new vscode.CompletionItem(
+						name,
+						vscode.CompletionItemKind.Property,
+					);
+					item.detail = `Attribute (${def.type})`;
+
+					const doc = new vscode.MarkdownString(def.comment || "");
+					if (def.example) {
+						doc.appendCodeblock(def.example, "html");
+					}
+					item.documentation = doc;
+
+					item.insertText = new vscode.SnippetString(`${name}="$0"`);
+					items.push(item);
+				});
 			}
 		}
 
