@@ -7,30 +7,50 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
+    name: Build & Package
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./vs-kire
+
     steps:
-      - name: Checkout code
+      - name: Checkout Repo
         uses: actions/checkout@v4
 
+      # Setup Bun para instalação de deps e compilação do código
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      # Setup Node 18 explicitamente para o VSCE e compatibilidade geral
+      - name: Setup Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install Dependencies
         run: bun install
 
-      - name: Build VS Code Extension
-        working-directory: vs-kire
-        run: |
-          bun install
-          bun run build
+      # Compila o extension.js usando Bun (conforme solicitado)
+      - name: Build Extension (Bun)
+        run: bun run build
 
-      - name: Archive Extension Artifacts
+      # Empacota usando Node (npx vsce)
+      - name: Package Extension (Node/VSCE)
+        id: package_step
+        run: |
+          npx @vscode/vsce package --no-yarn
+          echo "Generated: $(ls *.vsix)"
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: vs-kire-build
-          path: vs-kire/dist
+          name: kire-extension
+          path: ./vs-kire/*.vsix
+          retention-days: 5
