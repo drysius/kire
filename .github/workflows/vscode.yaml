@@ -22,13 +22,11 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # Setup Bun para instalação de deps e compilação do código
       - name: Setup Bun
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
 
-      # Setup Node 18 explicitamente para o VSCE e compatibilidade geral
       - name: Setup Node.js 18
         uses: actions/setup-node@v4
         with:
@@ -37,15 +35,13 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
-      # Compila o extension.js usando Bun (conforme solicitado)
-      - name: Build Extension (Bun)
-        run: bun run build
+      - name: Compile Extension (Bun)
+        run: bun run vscode:prepublish
 
-      # Empacota usando Node (npx vsce)
       - name: Package Extension (Node/VSCE)
         id: package_step
         run: |
-          npx @vscode/vsce package --no-yarn
+          npx @vscode/vsce package --no-yarn --no-prepublish
           echo "Generated: $(ls *.vsix)"
 
       - name: Upload Artifact
