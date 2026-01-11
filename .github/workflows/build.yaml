@@ -23,6 +23,6 @@ jobs:
 
     - name: Build Kire Packages
       run: bun run build
-      
+
     - name: Run Tests
       run: bun test

@@ -19,10 +19,10 @@ jobs:
         bun-version: latest
 
     - name: Install Dependencies
-      run: bun install
+      run: bun run install:all
 
-    - name: Build Wire Package
-      run: cd packages/wire && bun run build.ts
+    - name: Build Kire Packages
+      run: bun run build
 
     - name: Run Tests
       run: bun test
