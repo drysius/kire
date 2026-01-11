@@ -16,7 +16,7 @@
 		"build": "bun run tools/build.ts",
 		"publish": "bun run tools/publish.ts",
 		"llms": "bun run tools/llms.ts",
-		"i": "bun run tools/install.ts",
+		"install:all": "bun run tools/install.ts",
 		"check": "bunx biome check --write **/src/**"
 	},
 	"devDependencies": {

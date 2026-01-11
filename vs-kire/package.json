@@ -63,8 +63,8 @@
 		],
 		"jsonValidation": [
 			{
-				"fileMatch": "kire.json",
-				"url": "./schema.json"
+				"fileMatch": "kire-schema.json",
+				"url": "../schema.json"
 			}
 		],
 		"semanticTokenScopes": [
