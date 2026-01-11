@@ -127,7 +127,9 @@ export class KireWireClient {
                             this.registerGlobalListener(event),
                         );
                     }
-                } catch (_e) {}
+                } catch (e) {
+                    console.error("[KireWire] Snapshot parse error:", e);
+                }
             }
         });
     }

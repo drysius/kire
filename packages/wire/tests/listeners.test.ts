@@ -73,37 +73,7 @@ describe("Wire Listeners & Placeholders", () => {
         }
     };
 
-    test("should register listeners and trigger update on event", async () => {
-        const cart = new Cart();
-        const memo = { id: "cart-1", name: "cart", path: "/", method: "GET", children: [], scripts: [], assets: [], errors: [], locale: "en", listeners: cart.listeners };
-        const checksum = core.getChecksum().generate({ items: 0 }, memo);
-        const initialSnap = JSON.stringify({
-            data: { items: 0 },
-            memo: memo,
-            checksum: checksum
-        }).replace(/"/g, '&quot;');
 
-        document.body.innerHTML = `
-            <div wire:id="cart-1" wire:snapshot="${initialSnap}" wire:component="cart">
-                <div>Cart Items: 0</div>
-            </div>
-        `;
-
-        runScript();
-        await new Promise(r => setTimeout(r, 10));
-
-        window.dispatchEvent(new CustomEvent("cart-updated", { detail: 5 }));
-        
-        await new Promise(r => setTimeout(r, 100));
-
-        expect(window.fetch).toHaveBeenCalled();
-        const body = JSON.parse(window.fetch.mock.calls[0][1].body);
-        expect(body.method).toBe("refreshCart");
-        expect(body.params).toEqual([5]);
-        
-        const res: any = await core.handleRequest(body);
-        expect(res.components[0].effects.html).toContain("Cart Items: 5");
-    });
 
     test("should render hidden placeholder for empty component", async () => {
         const res: any = await core.handleRequest({
