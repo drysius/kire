@@ -8,5 +8,8 @@
 </head>
 <body>
     <h1 style="text-align: center;">Kire Example Page</h1>
+    <script>
+        console.log("Hello from Kire!");
+    </script>
 </body>
 </html>
