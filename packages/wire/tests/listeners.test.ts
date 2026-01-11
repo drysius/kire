@@ -42,8 +42,8 @@ describe("Wire Listeners & Placeholders", () => {
 
         window = new Window();
         document = window.document;
-        global.window = window;
-        global.document = document;
+        global.window = new Window();
+        global.document = window.document;
         global.CustomEvent = window.CustomEvent;
         global.Event = window.Event;
         
