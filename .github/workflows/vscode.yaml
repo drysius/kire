@@ -35,13 +35,10 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
-      - name: Compile Extension (Bun)
-        run: bun run vscode:prepublish
-
       - name: Package Extension (Node/VSCE)
         id: package_step
         run: |
-          npx @vscode/vsce package --no-yarn --no-prepublish
+          npx @vscode/vsce package
           echo "Generated: $(ls *.vsix)"
 
       - name: Upload Artifact
