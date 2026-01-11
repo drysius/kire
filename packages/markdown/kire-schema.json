@@ -20,14 +20,14 @@
                 "pattern:string",
                 "name:string"
             ],
-            "description": "Loads Markdown files matching a glob pattern into a context variable and marks them for SSG generation.",
+            "description": "Loads Markdown files matching a glob pattern into a context variable.",
             "example": "@mdslots('posts/*.md', 'posts')"
         }
     ],
     "elements": [],
     "globals": {
-        "readDir": "function",
-        "renderMarkdown": "function"
+        "$readdir": "function",
+        "$mdrender": "function"
     },
     "attributes": {}
 }

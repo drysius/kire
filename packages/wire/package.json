@@ -55,17 +55,13 @@
 	"author": "drysius",
 	"license": "MIT",
 	"scripts": {
-		"prebuild": "bun run build.ts",
-		"test": "bun test",
-		"check": "bunx biome check src/** client/src/** --write"
+		"prebuild": "bun run build.ts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.2.4",
 		"@types/bun": "latest",
 		"@types/express": "^5.0.0",
 		"@types/jsonwebtoken": "^9.0.8",
-		"happy-dom": "^16.3.0",
-		"typescript": "^5.9.2"
+		"happy-dom": "^16.3.0"
 	},
 	"dependencies": {
 		"jsonwebtoken": "^9.0.2",

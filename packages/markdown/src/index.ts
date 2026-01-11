@@ -2,8 +2,9 @@ import type { Kire, KirePlugin } from "kire";
 import { marked } from "marked";
 
 declare module "kire" {
-	class Kire {
-		parseMarkdown(content: string): Promise<string>;
+	interface Kire {
+		mdrender(content: string, locals?: Record<string, any>): Promise<string>;
+		mdview(path: string, locals?: Record<string, any>): Promise<string>;
 	}
 }
 
@@ -13,51 +14,59 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 	name: "@kirejs/markdown",
 	options: {},
 	load(kire: Kire, _opts) {
-		const _cache = kire.cached<string>("@kirejs/markdown");
-		// Expose parser for other plugins (like SSG)
-		kire.parseMarkdown = async (content: string) => {
-			return marked.parse(content) as
-				| Promise<string>
-				| string as Promise<string>;
+		const _fnCache = kire.cached<Function>("@kirejs/markdown-fn");
+
+		// 1. mdrender: Render string content
+		kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {
+			const html = (await marked.parse(content)) as string;
+			return await kire.render(html, locals);
 		};
 
-		// Expose readDir proxy for runtime
-		kire.$ctx("readDir", async (pattern: string) => {
+		// 2. mdview: Render file content
+		kire.mdview = async (path: string, locals: Record<string, any> = {}) => {
+			const cacheKey = `file:${path}`;
+
+			// Check if we have a compiled function cached
+			if (kire.production && _fnCache.has(cacheKey)) {
+				return kire.run(_fnCache.get(cacheKey)!, locals);
+			}
+
+			try {
+				const resolved = kire.resolvePath(path, locals, "md");
+				const content = await kire.$resolver(resolved);
+				
+				// Convert MD to HTML
+				const htmlTemplate = (await marked.parse(content)) as string;
+
+				// Compile HTML as Kire template
+				const fn = await kire.compileFn(htmlTemplate);
+
+				if (kire.production) _fnCache.set(cacheKey, fn);
+
+				return kire.run(fn, locals);
+			} catch (e) {
+				console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
+				return "";
+			}
+		};
+
+		// Expose helpers
+		kire.$ctx("$readdir", async (pattern: string) => {
 			if (kire.$readdir) {
 				return kire.$readdir(pattern);
 			}
-			console.warn(
-				"kire.$readdir is not defined. Make sure @kirejs/node is loaded.",
-			);
 			return [];
 		});
 
-		// Runtime helper for processing markdown (file or string) with cache
-		kire.$ctx("renderMarkdown", async (source: string) => {
+		kire.$ctx("$mdrender", async (source: string) => {
 			if (!source) return "";
 
-			const cache = kire.cached<string>("@kirejs/markdown");
-
-			// Check cache first (key is the source string/path)
-			if (cache.has(source)) {
-				return cache.get(source)!;
-			}
-
-			let content = source;
 			if (source.endsWith(".md") || source.endsWith(".markdown")) {
-				try {
-					const path = kire.resolvePath(source, {}, null);
-					const fs = await import("node:fs/promises");
-					content = await fs.readFile(path, "utf-8");
-				} catch (_e) {
-					// Fallback to treating as string if file fails
-					content = source;
-				}
+				const html = await kire.mdview(source);
+				if (html) return html;
 			}
 
-			const html = (await marked.parse(content)) as string;
-			cache.set(source, html);
-			return html;
+			return await kire.mdrender(source);
 		});
 
 		kire.directive({
@@ -68,21 +77,19 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			async onCall(ctx) {
 				const source = ctx.param(0) ?? "";
 
-				// 1. Check if it is a glob pattern
 				if (source.includes("*")) {
 					ctx.raw(`await (async () => {
-						const files = await $ctx.readDir(${JSON.stringify(source)});
+						const files = await $ctx.$readdir(${JSON.stringify(source)});
 						for (const file of files) {
-							const html = await $ctx.renderMarkdown(file);
+							const html = await $ctx.$mdrender(file);
 							$ctx.res(html);
 						}
 					})();`);
 					return;
 				}
 
-				// 2. Normal Mode
 				ctx.raw(`await (async () => {
-                    const html = await $ctx.renderMarkdown(${JSON.stringify(source)});
+                    const html = await $ctx.$mdrender(${JSON.stringify(source)});
                     $ctx.res(html);
                 })();`);
 			},
@@ -92,17 +99,17 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			name: "mdslots",
 			params: ["pattern:string", "name:string"],
 			description:
-				"Loads Markdown files matching a glob pattern into a context variable and marks them for SSG generation.",
+				"Loads Markdown files matching a glob pattern into a context variable.",
 			example: "@mdslots('posts/*.md', 'posts')",
 			async onCall(ctx) {
 				const pattern = ctx.param("pattern");
 				const name = ctx.param("name") || "$mdslot";
 
 				ctx.raw(`await (async () => {
-					const files = await $ctx.readDir(${JSON.stringify(pattern)});
+					const files = await $ctx.$readdir(${JSON.stringify(pattern)});
 					const slots = {};
 					for (const file of files) {
-						slots[file] = await $ctx.renderMarkdown(file);
+						slots[file] = await $ctx.$mdrender(file);
 					}
 					$ctx[${JSON.stringify(name)}] = slots;
 					$ctx.res("<!-- KIRE_GEN:" + ${JSON.stringify(pattern)} + " -->");

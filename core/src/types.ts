@@ -5,6 +5,12 @@ export type KireCache<T = any> = Map<string, T>;
 export interface IParser {
 	parse(): Node[];
 }
+
+/**
+ * Only used for add types in class of kire
+ */
+export interface KireClass {};
+
 export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 
 export interface ICompiler {

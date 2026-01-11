@@ -23,7 +23,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"baseUrl": ".",
 		"paths": {
-			"@kirejs/*": ["./*/src/index.ts", "./*/src/server/index.ts"],
+			"@kirejs/*": ["./*/src/index.ts"],
 			"kire": ["../core/src/index.ts"]
 		}
 	},

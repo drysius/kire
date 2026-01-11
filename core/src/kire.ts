@@ -8,6 +8,7 @@ import type {
 	ICompilerConstructor,
 	IParserConstructor,
 	KireCache,
+	KireClass,
 	KireElementHandler,
 	KireElementOptions,
 	KireOptions,
@@ -16,7 +17,7 @@ import type {
 } from "./types";
 import { resolvePath } from "./utils/resolve";
 
-export class Kire {
+export class Kire implements KireClass {
 	/**
 	 * Registry of available directives (e.g., @if, @for).
 	 * Maps directive names to their definitions.
@@ -413,7 +414,19 @@ export class Kire {
 		path: string,
 		locals: Record<string, any> = {},
 	): Promise<string> {
-		const resolvedPath = this.resolvePath(path, locals);
+		let ext: string | null = this.extension;
+		if (path.endsWith(".md") || path.endsWith(".markdown")) {
+			ext = null;
+		}
+		const resolvedPath = this.resolvePath(path, locals, ext);
+
+		if (
+			(resolvedPath.endsWith(".md") || resolvedPath.endsWith(".markdown")) &&
+			typeof (this as any).mdview === "function"
+		) {
+			return (this as any).mdview(resolvedPath, locals);
+		}
+
 		let compiled: Function | undefined;
 
 		if (this.production && this.$files.has(resolvedPath)) {
