@@ -66,6 +66,11 @@ export class WireCore {
 	): Promise<WireResponse | { error: string }> {
 		const { component, snapshot: snapshotStr, method, params, updates, _token } = payload;
 
+		// Security: Prevent executing methods or updates without a signed snapshot
+		if ((method || (updates && Object.keys(updates).length > 0)) && !snapshotStr) {
+			return { error: "Snapshot required for performing actions" };
+		}
+
 		let snapshot: WireSnapshot;
 		let state: Record<string, any> = {};
 		let memo: WireSnapshot['memo'] = {
@@ -96,6 +101,7 @@ export class WireCore {
 			}
 		}
 
+		// Use safe lookup
 		const ComponentClass = this.components.get(component || memo.name);
 		if (!ComponentClass) {
 			return { error: "Component not found" };
@@ -105,17 +111,21 @@ export class WireCore {
 		instance.kire = this.getKire();
 		instance.context = { kire: this.getKire(), ...contextOverrides };
 
-		// Restore ID if available
 		if(memo.id) instance.__id = memo.id;
 
 		try {
 			instance.fill(state);
 			await instance.hydrated();
 
-			// Process deferred updates or multi-updates first
+			// Security: Prevent Prototype Pollution helper
+			const isSafeKey = (key: string) => 
+				key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+
+			// Process deferred updates
 			if (updates && typeof updates === "object") {
 				for (const [prop, value] of Object.entries(updates)) {
-					if (prop && typeof prop === "string" && !prop.startsWith("_")) {
+					if (prop && typeof prop === "string" && !prop.startsWith("_") && isSafeKey(prop)) {
+						// Only allow updating existing properties or defined public properties logic if strict
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop);
 					}
@@ -139,10 +149,10 @@ export class WireCore {
 					"constructor",
 				];
 
-				if (FORBIDDEN_METHODS.includes(method) || method.startsWith("_")) {
-					console.warn(
-						`Attempt to call forbidden method ${method} on component ${component}`,
-					);
+				// Security: Check for forbidden methods and private methods
+				if (FORBIDDEN_METHODS.includes(method) || method.startsWith("_") || !isSafeKey(method)) {
+					// Log injection prevention: use comma
+					console.warn("Attempt to call forbidden method:", method, "on component:", component);
 					return { error: "Method not allowed" };
 				}
 
@@ -150,9 +160,9 @@ export class WireCore {
 
 				if (method === "$set" && args.length === 2) {
 					const [prop, value] = args;
-					if (prop && typeof prop === "string" && !prop.startsWith("_")) {
+					if (prop && typeof prop === "string" && !prop.startsWith("_") && isSafeKey(prop)) {
 						(instance as any)[prop] = value;
-						instance.clearErrors(prop); // Clear error on update
+						instance.clearErrors(prop);
 						await instance.updated(prop, value);
 					}
 				} else if (method === "$refresh") {
@@ -161,7 +171,7 @@ export class WireCore {
 					await (instance as any)[method](...args);
 					await instance.updated(method, args[0]);
 				} else {
-					console.warn(`Method ${method} not found on component ${component}`);
+					console.warn("Method not found on component:", component, "Method:", method);
 				}
 			}
 
@@ -177,11 +187,9 @@ export class WireCore {
 			const redirect = instance.__redirect;
 			const errors = instance.__errors;
 
-			// Update Memo
 			memo.errors = Object.keys(errors).length > 0 ? errors : [];
 			memo.listeners = instance.listeners;
 
-			// Generate new checksum
 			const newChecksum = this.checksum.generate(newData, memo);
 			
 			const finalSnapshot = {
@@ -212,7 +220,8 @@ export class WireCore {
 				]
 			};
 		} catch (e: any) {
-			console.error(`Error processing component ${component}:`, e);
+			// Log injection prevention
+			console.error("Error processing component:", component, e);
 			return { error: e.message || "Internal Server Error" };
 		}
 	}
