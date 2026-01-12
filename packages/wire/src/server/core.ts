@@ -1,13 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { Kire } from "kire";
+import type { WireContext, WireOptions, WirePayload, WireResponse, WireSnapshot } from "../types";
 import type { WireComponent } from "./component";
-import type {
-	WireContext,
-	WireOptions,
-	WirePayload,
-	WireResponse,
-    WireSnapshot,
-} from "./types";
 import { WireChecksum } from "./utils/checksum";
 
 export class WireCore {
@@ -72,33 +66,30 @@ export class WireCore {
 	): Promise<WireResponse | { error: string }> {
 		const { component, snapshot: snapshotStr, method, params, updates, _token } = payload;
 
-        // Optional: Token validation logic here if _token is strictly required
-        // if (!_token) return { error: "Missing validation token" };
-
-        let snapshot: WireSnapshot;
+		let snapshot: WireSnapshot;
 		let state: Record<string, any> = {};
-        let memo: WireSnapshot['memo'] = {
-            id: randomUUID(),
-            name: component,
-            path: "/",
-            method: "GET",
-            children: [],
-            scripts: [],
-            assets: [],
-            errors: [],
-            locale: "en",
-        };
+		let memo: WireSnapshot['memo'] = {
+			id: randomUUID(),
+			name: component,
+			path: "/",
+			method: "GET",
+			children: [],
+			scripts: [],
+			assets: [],
+			errors: [],
+			locale: "en",
+		};
 
 		if (snapshotStr) {
 			try {
-                snapshot = JSON.parse(snapshotStr);
-                
-                if (!this.checksum.verify(snapshot.checksum, snapshot.data, snapshot.memo)) {
-                     return { error: "Invalid snapshot checksum" };
-                }
+				snapshot = JSON.parse(snapshotStr);
+				
+				if (!this.checksum.verify(snapshot.checksum, snapshot.data, snapshot.memo)) {
+					return { error: "Invalid snapshot checksum" };
+				}
 
 				state = snapshot.data;
-                memo = snapshot.memo;
+				memo = snapshot.memo;
 
 			} catch (_e) {
 				return { error: "Invalid snapshot format" };
@@ -114,8 +105,8 @@ export class WireCore {
 		instance.kire = this.getKire();
 		instance.context = { kire: this.getKire(), ...contextOverrides };
 
-        // Restore ID if available
-        if(memo.id) instance.__id = memo.id;
+		// Restore ID if available
+		if(memo.id) instance.__id = memo.id;
 
 		try {
 			instance.fill(state);
@@ -177,48 +168,48 @@ export class WireCore {
 			let html = await instance.render();
 			await instance.rendered();
 
-            if (!html || !html.trim()) {
-                html = `<div wire:id="${instance.__id}" style="display: none;"></div>`;
-            }
+			if (!html || !html.trim()) {
+				html = `<div wire:id="${instance.__id}" style="display: none;"></div>`;
+			}
 
 			const newData = instance.getPublicProperties();
-            const events = instance.__events;
+			const events = instance.__events;
 			const redirect = instance.__redirect;
 			const errors = instance.__errors;
 
-            // Update Memo
-            memo.errors = Object.keys(errors).length > 0 ? errors : [];
-            memo.listeners = instance.listeners;
+			// Update Memo
+			memo.errors = Object.keys(errors).length > 0 ? errors : [];
+			memo.listeners = instance.listeners;
 
-            // Generate new checksum
-            const newChecksum = this.checksum.generate(newData, memo);
-            
-            const finalSnapshot = {
-                data: newData,
-                memo: memo,
-                checksum: newChecksum
-            };
+			// Generate new checksum
+			const newChecksum = this.checksum.generate(newData, memo);
+			
+			const finalSnapshot = {
+				data: newData,
+				memo: memo,
+				checksum: newChecksum
+			};
 
-            const effects: WireResponse['components'][0]['effects'] = {
-                html,
-                dirty: updates ? Object.keys(updates) : [],
-            };
+			const effects: WireResponse['components'][0]['effects'] = {
+				html,
+				dirty: updates ? Object.keys(updates) : [],
+			};
 
-            if (events.length > 0) effects.emits = events.map(e => ({ event: e.name, params: e.params }));
-            if (redirect) effects.redirect = redirect;
-            if (Object.keys(errors).length > 0) effects.errors = errors as any;
-            
-            if (Object.keys(instance.listeners).length > 0) {
-                effects.listeners = instance.listeners;
-            }
+			if (events.length > 0) effects.emits = events.map(e => ({ event: e.name, params: e.params }));
+			if (redirect) effects.redirect = redirect;
+			if (Object.keys(errors).length > 0) effects.errors = errors as any;
+			
+			if (Object.keys(instance.listeners).length > 0) {
+				effects.listeners = instance.listeners;
+			}
 
 			return {
-                components: [
-                    {
-                        snapshot: JSON.stringify(finalSnapshot),
-                        effects
-                    }
-                ]
+				components: [
+					{
+						snapshot: JSON.stringify(finalSnapshot),
+						effects
+					}
+				]
 			};
 		} catch (e: any) {
 			console.error(`Error processing component ${component}:`, e);

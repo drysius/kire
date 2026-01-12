@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Kire } from "kire";
-import type { WireContext } from "./types";
+import type { WireContext } from "../types";
 
 export abstract class WireComponent {
 	public __id: string = randomUUID();
@@ -8,7 +8,7 @@ export abstract class WireComponent {
 	public __events: Array<{ name: string; params: any[] }> = [];
 	public __redirect: string | null = null;
 	public __errors: Record<string, string> = {};
-    public listeners: Record<string, string> = {}; // event -> method
+	public listeners: Record<string, string> = {}; // event -> method
 
 	public kire!: Kire;
 	public context: WireContext = { kire: undefined as any };
@@ -34,28 +34,28 @@ export abstract class WireComponent {
 	}
 
 	/**
-	 * Emite um evento para o navegador.
+	 * Emits an event to the browser.
 	 */
 	public emit(event: string, ...params: any[]) {
 		this.__events.push({ name: event, params });
 	}
 
 	/**
-	 * Redireciona o usuário para uma nova URL.
+	 * Redirects the user to a new URL.
 	 */
 	public redirect(url: string) {
 		this.__redirect = url;
 	}
 
 	/**
-	 * Adiciona um erro de validação.
+	 * Adds a validation error.
 	 */
 	public addError(field: string, message: string) {
 		this.__errors[field] = message;
 	}
 
 	/**
-	 * Limpa os erros.
+	 * Clears errors.
 	 */
 	public clearErrors(field?: string) {
 		if (field) {
@@ -66,7 +66,7 @@ export abstract class WireComponent {
 	}
 
 	/**
-	 * Retorna as propriedades públicas que devem ser persistidas no snapshot.
+	 * Returns public properties to be persisted in the snapshot.
 	 */
 	public getPublicProperties(): Record<string, unknown> {
 		const props: Record<string, unknown> = {};
@@ -83,7 +83,7 @@ export abstract class WireComponent {
 	}
 
 	/**
-	 * Preenche as propriedades do componente com o estado vindo do snapshot.
+	 * Fills component properties from the state.
 	 */
 	public fill(state: Record<string, unknown>) {
 		for (const [key, value] of Object.entries(state)) {

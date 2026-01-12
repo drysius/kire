@@ -62,7 +62,7 @@ describe("KireWire Advanced Client Features", () => {
 	test("wire:poll should trigger periodic refreshes", async () => {
 		runScript();
 		document.body.innerHTML = `
-            <div wire:id="c1" wire:snapshot="s1" wire:component="comp">
+            <div wire:id="c1" wire:snapshot="{}" wire:component="comp">
                 <div wire:poll="50ms">Polling content</div>
             </div>
         `;
@@ -81,7 +81,7 @@ describe("KireWire Advanced Client Features", () => {
 	test("wire:model.lazy should only sync on change", async () => {
 		runScript();
 		document.body.innerHTML = `
-            <div wire:id="c1" wire:snapshot="s1" wire:component="comp">
+            <div wire:id="c1" wire:snapshot="{}" wire:component="comp">
                 <input wire:model.lazy="name">
             </div>
         `;
@@ -112,7 +112,7 @@ describe("KireWire Advanced Client Features", () => {
 	test("should handle nested parameters in events", async () => {
 		runScript();
 		document.body.innerHTML = `
-            <div wire:id="c1" wire:snapshot="s1" wire:component="comp">
+            <div wire:id="c1" wire:snapshot="{}" wire:component="comp">
                 <button wire:click="remove(1, 'tags', true, null)">Delete</button>
             </div>
         `;
