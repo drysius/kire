@@ -53,7 +53,7 @@ class Builder {
 			"tsconfig.build.tmp.json",
 		);
 
-		const normalizedPath = pkg.path.replace(/\//g, "/");
+		const normalizedPath = pkg.path;
 		const depth = normalizedPath.split("/").length;
 		const relativeRoot = Array(depth).fill("..").join("/");
 		const extendsPath = `${relativeRoot}/tsconfig.base.build.json`;

@@ -67,9 +67,16 @@ describe("Wire Listeners & Placeholders", () => {
 
     const runScript = () => {
         const scriptContent = getClientScript({ endpoint: "/_wire" }, false);
-        const matches = scriptContent.matchAll(/<script>([\s\S]*?)<\/script>/g);
-        for (const match of matches) {
-            new Function(match[1])();
+        // Use happy-dom document provided in test context if possible, or create a temporary element
+        // Since global.document is mocked with happy-dom, we can use it.
+        const div = document.createElement("div");
+        div.innerHTML = scriptContent;
+        const scripts = div.querySelectorAll("script");
+        
+        for (const script of scripts) {
+             if (script.textContent) {
+                 new Function(script.textContent)();
+             }
         }
     };
 
