@@ -1,22 +1,24 @@
-name: Biome Check
+name: Biome CI
 
 on:
   push:
-    branches: ["main"]
+    branches: [ "main" ]
   pull_request:
-    branches: ["main"]
+    branches: [ "main" ]
 
 jobs:
   biome:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
-      
-      - name: Install dependencies
-        run: bun install
 
-      - name: Run Biome
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Installing dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run Biome Check
         run: bunx biome check --write **/src/**

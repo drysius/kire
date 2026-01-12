@@ -83,6 +83,10 @@ class LLMSBuilder {
 
 		const outputPath = join(normalizedPath, "llms.txt");
 
+		if (existsSync(outputPath)) {
+			await rm(outputPath);
+		}
+
 		await writeFile(outputPath, combinedContent, "utf-8");
 		console.log(
 			`✅ llms.txt created for ${name} (${totalFilesProcessed} files, ${Math.round(totalSize / 1024)} KB)`,

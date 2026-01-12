@@ -44,32 +44,12 @@ export async function recursiveReaddir(
  * Converts a simplified glob string to a RegExp.
  */
 export function globToRegex(glob: string): RegExp {
-	// Escape special regex characters except for glob wildcards (*, {, }, comma)
-    // We treat everything else as literal
-	let regex = glob.replace(/[.+^${}()|[\\]/g, "\\$& ");
-    
-	// Convert glob patterns to regex
-    // ** -> .*
-	regex = regex.replace(/\\*\\*/g, ".*");
-    // * -> [^/]* (single path segment)
-	regex = regex.replace(/(?<!\\.)\\*/g, "[^/]*");
-    
-    // Restore braces logic if needed, but simple glob usually just needs escaping dots and converting stars.
-    // If we support {a,b}, we need to unescape the braces we just escaped.
-    
-    // Handle {a,b} group matching
-    // First, verify if the user intended matching groups.
-    // The previous implementation was:
-    // regex = regex.replace(/\{([^}]+)\}/g, "($1)");
-    // regex = regex.replace(/\(([^)]+)\)/g, (_, group) => group.replace(/,/g, "|"));
-    
-    // Since we escaped { and }, we look for \\{ ... \\
-    regex = regex.replace(/\\\{([^}]+)\\\}/g, (_, content) => {
-        // content inside braces might contain commas which are currently literal ','
-        // we want to convert them to OR pipes '|'
-        const group = content.replace(/,/g, "|");
-        return `(${group})`;
-    });
+	let regex = glob
+		.replace(/\./g, "\\.") // Escape dots
+		.replace(/\*\*/g, ".*") // ** -> match anything
+		.replace(/\*/g, "[^/]*") // * -> match anything except separator
+		.replace(/\{([^}]+)\}/g, "($1)") // {a,b} -> (a,b) (temp)
+		.replace(/\(([^)]+)\)/g, (_, group) => group.replace(/,/g, "|")); // (a,b) -> (a|b)
 
 	return new RegExp(`^${regex}$`);
 }
