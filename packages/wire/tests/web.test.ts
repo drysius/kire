@@ -50,11 +50,14 @@ describe("KireWire Advanced Client Features", () => {
 
 	const runScript = () => {
 		const scriptContent = getClientScript({ endpoint: "/_wire" }, false);
-		const matches = scriptContent.matchAll(/<script>([\s\S]*?)<\/script>/g);
+		const container = document.createElement("div");
+		container.innerHTML = scriptContent;
+		const scripts = container.querySelectorAll("script");
+
 		let rawJs = "";
-		for (const match of matches) {
-			rawJs += `${match[1]};\n`;
-		}
+		scripts.forEach((script: any) => {
+			rawJs += `${script.textContent};\n`;
+		});
 		const fn = new Function(rawJs);
 		fn();
 	};

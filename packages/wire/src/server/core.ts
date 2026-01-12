@@ -4,6 +4,13 @@ import type { WireContext, WireOptions, WirePayload, WireResponse, WireSnapshot 
 import type { WireComponent } from "./component";
 import { WireChecksum } from "./utils/checksum";
 
+// Helper to sanitize logs against CRLF injection
+function sanitizeLog(input: any): string {
+    if (typeof input !== 'string') return String(input);
+    return input.replace(/[
+]/g, '[newline]');
+}
+
 export class WireCore {
 	private static instance: WireCore;
 	private options: WireOptions;
@@ -66,7 +73,6 @@ export class WireCore {
 	): Promise<WireResponse | { error: string }> {
 		const { component, snapshot: snapshotStr, method, params, updates, _token } = payload;
 
-		// Security: Prevent executing methods or updates without a signed snapshot
 		if ((method || (updates && Object.keys(updates).length > 0)) && !snapshotStr) {
 			return { error: "Snapshot required for performing actions" };
 		}
@@ -101,7 +107,6 @@ export class WireCore {
 			}
 		}
 
-		// Use safe lookup
 		const ComponentClass = this.components.get(component || memo.name);
 		if (!ComponentClass) {
 			return { error: "Component not found" };
@@ -117,15 +122,24 @@ export class WireCore {
 			instance.fill(state);
 			await instance.hydrated();
 
-			// Security: Prevent Prototype Pollution helper
-			const isSafeKey = (key: string) => 
-				key !== '__proto__' && key !== 'constructor' && key !== 'prototype';
+            // Security: Whitelist allowed properties based on instance
+            // Only allow updating properties that are already present in the instance
+            // or explicitly public.
+            const allowedProperties = new Set(Object.keys(instance));
 
 			// Process deferred updates
 			if (updates && typeof updates === "object") {
 				for (const [prop, value] of Object.entries(updates)) {
-					if (prop && typeof prop === "string" && !prop.startsWith("_") && isSafeKey(prop)) {
-						// Only allow updating existing properties or defined public properties logic if strict
+                    // Strict property injection check
+					if (
+                        prop && 
+                        typeof prop === "string" && 
+                        !prop.startsWith("_") && 
+                        allowedProperties.has(prop) &&
+                        prop !== 'constructor' && 
+                        prop !== '__proto__' && 
+                        prop !== 'prototype'
+                    ) {
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop);
 					}
@@ -149,10 +163,21 @@ export class WireCore {
 					"constructor",
 				];
 
-				// Security: Check for forbidden methods and private methods
-				if (FORBIDDEN_METHODS.includes(method) || method.startsWith("_") || !isSafeKey(method)) {
-					// Log injection prevention: use comma
-					console.warn("Attempt to call forbidden method:", method, "on component:", component);
+                // Strict method check: must exist on prototype chain (but not Object prototype)
+                // and not be forbidden.
+                const isMethodSafe = (m: string) => {
+                    if (FORBIDDEN_METHODS.includes(m)) return false;
+                    if (m.startsWith("_")) return false;
+                    if (m === 'constructor' || m === '__proto__' || m === 'prototype') return false;
+                    
+                    const fn = (instance as any)[m];
+                    if (typeof fn !== 'function') return false;
+                    
+                    return true;
+                };
+
+				if (!isMethodSafe(method)) {
+					console.warn(`Attempt to call forbidden method: ${sanitizeLog(method)} on component: ${sanitizeLog(component)}`);
 					return { error: "Method not allowed" };
 				}
 
@@ -160,18 +185,24 @@ export class WireCore {
 
 				if (method === "$set" && args.length === 2) {
 					const [prop, value] = args;
-					if (prop && typeof prop === "string" && !prop.startsWith("_") && isSafeKey(prop)) {
+                    // Re-use strict property check
+					if (
+                        prop && 
+                        typeof prop === "string" && 
+                        !prop.startsWith("_") && 
+                        allowedProperties.has(prop) &&
+                        prop !== 'constructor'
+                    ) {
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop);
 						await instance.updated(prop, value);
 					}
 				} else if (method === "$refresh") {
 					await instance.updated("$refresh", null);
-				} else if (typeof (instance as any)[method] === "function") {
+				} else {
+                    // Call the method safely
 					await (instance as any)[method](...args);
 					await instance.updated(method, args[0]);
-				} else {
-					console.warn("Method not found on component:", component, "Method:", method);
 				}
 			}
 
@@ -220,8 +251,7 @@ export class WireCore {
 				]
 			};
 		} catch (e: any) {
-			// Log injection prevention
-			console.error("Error processing component:", component, e);
+			console.error(`Error processing component: ${sanitizeLog(component)}`, e);
 			return { error: e.message || "Internal Server Error" };
 		}
 	}
