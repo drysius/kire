@@ -7,6 +7,15 @@
     "version": "0.1.0",
     "directives": [
         {
+            "name": "svg",
+            "params": [
+                "path:string",
+                "attrs:object"
+            ],
+            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
+            "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })"
+        },
+        {
             "name": "assets",
             "description": "Injects the assets placeholder where scripts and styles will be output.",
             "example": "@assets()"
@@ -29,6 +38,9 @@
             "example": "<!-- Internal Use -->"
         }
     ],
-    "globals": {},
+    "globals": {
+        "$addAsset": "function",
+        "$loadSVGAsset": "function"
+    },
     "attributes": {}
 }

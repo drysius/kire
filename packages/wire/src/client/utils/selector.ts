@@ -15,7 +15,8 @@ export function safeSelector(attribute: string, value?: string): string {
 	const escapedAttr = isHappyDOM ? attribute : attribute.replace(/:/g, "\\:");
 
 	if (value !== undefined) {
-		return `[${escapedAttr}="${value}"]`;
+		const escapedValue = value.replace(/["\\]/g, "\\$&");
+		return `[${escapedAttr}="${escapedValue}"]`;
 	}
 
 	return `[${escapedAttr}]`;

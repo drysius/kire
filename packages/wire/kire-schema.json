@@ -63,6 +63,7 @@
                 "$var_locals": "string",
                 "$expose_locals": "boolean",
                 "$cache": {},
+                "$executor": "function",
                 "$schematics": {}
             }
         },
@@ -82,6 +83,7 @@
             "$var_locals": "string",
             "$expose_locals": "boolean",
             "$cache": {},
+            "$executor": "function",
             "$schematics": {}
         }
     },

@@ -44,12 +44,15 @@ export async function recursiveReaddir(
  * Converts a simplified glob string to a RegExp.
  */
 export function globToRegex(glob: string): RegExp {
-	let regex = glob
-		.replace(/\./g, "\\.") // Escape dots
+	// Escape all regex special characters except * and { } which are part of our simple glob syntax
+	// We handle * and ** separately after escaping others
+	let regex = glob.replace(/[-/\\^$+?.()|[\]]/g, "\\$&");
+
+	regex = regex
 		.replace(/\*\*/g, ".*") // ** -> match anything
 		.replace(/\*/g, "[^/]*") // * -> match anything except separator
 		.replace(/\{([^}]+)\}/g, "($1)") // {a,b} -> (a,b) (temp)
-		.replace(/\(([^)]+)\)/g, (_, group) => group.replace(/,/g, "|")); // (a,b) -> (a|b)
+		.replace(/,/g, "|"); // Comma inside braces becomes OR
 
 	return new RegExp(`^${regex}$`);
 }

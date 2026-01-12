@@ -116,6 +116,11 @@ export class WireCore {
 			if (updates && typeof updates === "object") {
 				for (const [prop, value] of Object.entries(updates)) {
 					if (prop && typeof prop === "string" && !prop.startsWith("_")) {
+						const FORBIDDEN_PROPS = ["constructor", "__proto__", "prototype", "kire", "context"];
+						if (FORBIDDEN_PROPS.includes(prop)) {
+							console.warn("Attempt to modify forbidden property", prop);
+							continue;
+						}
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop);
 					}
@@ -141,7 +146,7 @@ export class WireCore {
 
 				if (FORBIDDEN_METHODS.includes(method) || method.startsWith("_")) {
 					console.warn(
-						`Attempt to call forbidden method ${method} on component ${component}`,
+						"Attempt to call forbidden method", method, "on component", component
 					);
 					return { error: "Method not allowed" };
 				}
@@ -151,6 +156,11 @@ export class WireCore {
 				if (method === "$set" && args.length === 2) {
 					const [prop, value] = args;
 					if (prop && typeof prop === "string" && !prop.startsWith("_")) {
+						const FORBIDDEN_PROPS = ["constructor", "__proto__", "prototype", "kire", "context"];
+						if (FORBIDDEN_PROPS.includes(prop)) {
+							console.warn("Attempt to modify forbidden property", prop);
+							return { error: "Forbidden property" };
+						}
 						(instance as any)[prop] = value;
 						instance.clearErrors(prop); // Clear error on update
 						await instance.updated(prop, value);
@@ -161,7 +171,7 @@ export class WireCore {
 					await (instance as any)[method](...args);
 					await instance.updated(method, args[0]);
 				} else {
-					console.warn(`Method ${method} not found on component ${component}`);
+					console.warn("Method", method, "not found on component", component);
 				}
 			}
 
@@ -212,7 +222,7 @@ export class WireCore {
 				]
 			};
 		} catch (e: any) {
-			console.error(`Error processing component ${component}:`, e);
+			console.error("Error processing component", component, ":", e);
 			return { error: e.message || "Internal Server Error" };
 		}
 	}
