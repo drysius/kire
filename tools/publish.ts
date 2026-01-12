@@ -9,14 +9,18 @@ class Publisher {
 	private readonly VERSION = "\x1b[32mVERSION\x1b[0m";
 	private readonly PUBLISH = "\x1b[35mPUBLISH\x1b[0m";
 
-	private async updateVersion(pkg: PackageInfo): Promise<void> {
+	private async updateVersion(pkg: PackageInfo, targetVersion?: string): Promise<void> {
 		const pkgPath = join(pkg.path, "package.json");
 		const content = await readFile(pkgPath, "utf-8");
 		const pkgJson = JSON.parse(content);
 
-		const newVersion = inc(pkgJson.version, "patch");
+		let newVersion: string | null = targetVersion || null;
 		if (!newVersion) {
-			throw new Error(`Failed to increment version for ${pkg.name}`);
+			newVersion = inc(pkgJson.version, "patch");
+		}
+
+		if (!newVersion) {
+			throw new Error(`Failed to determine new version for ${pkg.name}`);
 		}
 
 		console.log(
@@ -47,13 +51,13 @@ class Publisher {
 		}
 	}
 
-	public async publish(): Promise<void> {
+	public async publish(targetVersion?: string): Promise<void> {
 		try {
 			const packages = await getPackages();
 			console.log(`${this.CLI} Found ${packages.length} packages`);
 
 			for (const pkg of packages) {
-				await this.updateVersion(pkg);
+				await this.updateVersion(pkg, targetVersion);
 			}
 
 			console.log(`${this.CLI} Running build...`);
@@ -72,5 +76,7 @@ class Publisher {
 	}
 }
 
+const args = process.argv.slice(2);
+const version = args[0]; // Optional version argument
 const publisher = new Publisher();
-publisher.publish().catch(console.error);
+publisher.publish(version).catch(console.error);
