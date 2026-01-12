@@ -58,7 +58,7 @@ describe("@kirejs/node", () => {
 		kire.plugin(KireNode, { adapter: "deno" });
 		// Use view() to trigger resolver
 		await expect(kire.view("template.kire")).rejects.toThrow(
-			"Deno runtime is not available.",
+			"Deno is not available",
 		);
 	});
 

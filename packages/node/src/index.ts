@@ -1,138 +1,33 @@
 import { createHash } from "node:crypto";
-import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
 import type { Kire, KirePlugin } from "kire";
+import { createExecutor } from "./executor";
+import { createReadDir, createResolver } from "./resolver";
+import type { NodePluginOptions } from "./types";
 
-// These are global objects that may or may not exist depending on the runtime
-declare const Bun: any;
-declare const Deno: any;
+export * from "./types";
+export * from "./resolver";
+export * from "./executor";
+export * from "./utils";
+export * from "./adapters";
 
-export interface ResolverOptions {
-	adapter?: "node" | "bun" | "deno" | "fetch";
-}
-
-async function recursiveReaddir(
-	dir: string,
-	pattern: RegExp,
-): Promise<string[]> {
-	const entries = await readdir(dir, { withFileTypes: true });
-	const files: string[] = [];
-
-	for (const entry of entries) {
-		const fullPath = join(dir, entry.name);
-		const normalizedPath = fullPath.replace(/\\/g, "/");
-		if (entry.isDirectory()) {
-			files.push(...(await recursiveReaddir(fullPath, pattern)));
-		} else {
-			// Check pattern against normalized path
-			if (pattern.test(entry.name) || pattern.test(normalizedPath)) {
-				files.push(normalizedPath);
-			}
-		}
-	}
-	return files;
-}
-
-function globToRegex(glob: string): RegExp {
-	// Basic glob to regex for **/*.ext
-	// escape dots
-	let regex = glob.replace(/\./g, "\\.");
-	// ** -> .*
-	regex = regex.replace(/\*\*/g, ".*");
-	// * -> [^/]*
-	regex = regex.replace(/\*/g, "[^/]*");
-	// {a,b} -> (a|b)
-	regex = regex.replace(/\{([^}]+)\}/g, "($1)");
-	// Replace commas in groups with |
-	regex = regex.replace(/\(([^)]+)\)/g, (_, group) => group.replace(/,/g, "|"));
-
-	return new RegExp(`^${regex}$`);
-}
-
-function createResolver(options: ResolverOptions = {}) {
-	const adapter = options.adapter ?? "node";
-
-	return async (path: string): Promise<string> => {
-		// Handle URLs for fetch adapter or if path is a URL
-		if (
-			adapter === "fetch" ||
-			path.startsWith("http://") ||
-			path.startsWith("https://")
-		) {
-			try {
-				const response = await fetch(path);
-				if (!response.ok) {
-					throw new Error(`Failed to fetch '${path}': ${response.statusText}`);
-				}
-				return await response.text();
-			} catch (e: any) {
-				throw new Error(`Fetch adapter failed for '${path}': ${e.message}`);
-			}
-		}
-
-		// Handle file paths for runtime-specific adapters
-		try {
-			switch (adapter) {
-				case "bun":
-					if (typeof Bun === "undefined")
-						throw new Error("Bun runtime is not available.");
-					return await Bun.file(path).text();
-				case "deno":
-					if (typeof Deno === "undefined")
-						throw new Error("Deno runtime is not available.");
-					return await Deno.readTextFile(path);
-				default:
-					return await readFile(path, "utf-8");
-			}
-		} catch (e: any) {
-			throw new Error(
-				`Failed to read file '${path}' with ${adapter} adapter: ${e.message}`,
-			);
-		}
-	};
-}
-
-function createReadDir(options: ResolverOptions = {}) {
-	const adapter = options.adapter ?? "node";
-
-	return async (pattern: string): Promise<string[]> => {
-		// This is a simplified implementation focusing on Node/Bun/Deno file systems
-		// Pattern example: **/*.{md,markdown}
-		// We assume the pattern starts relative to CWD or is absolute
-
-		// Extract directory base if possible, currently scanning CWD or root if not specified
-		const root = "."; // Default to current dir
-		const regex = globToRegex(pattern);
-
-		// Using Node fs for now as a baseline, Bun/Deno have their own globs usually
-		// but for consistency we use a recursive walk if native glob isn't easy to normalize here
-		try {
-			if (adapter === "bun" && typeof Bun !== "undefined") {
-				const glob = new Bun.Glob(pattern);
-				const files = [];
-				for await (const file of glob.scan(".")) {
-					files.push(file);
-				}
-				return files;
-			}
-			// Fallback to node recursive readdir
-			return await recursiveReaddir(root, regex);
-		} catch (e) {
-			console.error("ReadDir Error:", e);
-			return [];
-		}
-	};
-}
-
-export const KireNode: KirePlugin<ResolverOptions> = {
+export const KireNode: KirePlugin<NodePluginOptions> = {
 	name: "@kirejs/node",
 	options: {},
 	load(kire: Kire, opts) {
+		const options = opts || {};
+
 		// Assign the new resolver
-		kire.$resolver = createResolver(opts);
-		kire.$readdir = createReadDir(opts);
+		kire.$resolver = createResolver(options);
+		kire.$readdir = createReadDir(options);
+
+		// Set the executor if isolation is requested
+		const executor = createExecutor(options);
+		if (executor) {
+			kire.$executor = executor;
+		}
+
+		// Register helpers
 		kire.$ctx("$readdir", kire.$readdir);
-		// Register Node.js specific helpers
 		kire.$ctx("$md5", (str: string) =>
 			createHash("md5").update(str).digest("hex"),
 		);
@@ -140,4 +35,3 @@ export const KireNode: KirePlugin<ResolverOptions> = {
 };
 
 export default KireNode;
-export { createResolver };

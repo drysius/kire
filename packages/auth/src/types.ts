@@ -1,3 +1,16 @@
+import type { KireContext } from "kire";
+
+export interface AuthOptions {
+	/**
+	 * Callback to check if a user has a specific permission.
+	 */
+	canPerm: (perm: string, user: any) => Promise<boolean> | boolean;
+	/**
+	 * Callback to retrieve the current user from the Kire context.
+	 */
+	getUser: (ctx: KireContext) => Promise<any> | any;
+}
+
 declare module "kire" {
 	interface Kire {
 		/**

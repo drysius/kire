@@ -9,7 +9,9 @@ export interface IParser {
 /**
  * Only used for add types in class of kire
  */
-export interface KireClass {};
+export interface KireClass {
+	$executor?: KireExecutor;
+};
 
 export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 
@@ -18,10 +20,16 @@ export interface ICompiler {
 }
 export type ICompilerConstructor = new (kire: Kire) => ICompiler;
 
+export type KireExecutor = (code: string, params: string[]) => Function;
+
 /**
  * Options for configuring the Kire instance.
  */
 export interface KireOptions {
+	/**
+	 * Custom code executor (e.g., for VM isolation).
+	 */
+	executor?: KireExecutor;
 	/**
 	 * Whether to run in production mode (enables caching). Defaults to true.
 	 */

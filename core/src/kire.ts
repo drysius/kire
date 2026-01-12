@@ -99,6 +99,11 @@ export class Kire implements KireClass {
 	public $cache: Map<string, Map<string, any>> = new Map();
 
 	/**
+	 * The function used to execute compiled code.
+	 */
+	public $executor: (code: string, params: string[]) => Function;
+
+	/**
 	 * Clears the internal file and data cache.
 	 */
 	public cacheClear() {
@@ -124,6 +129,14 @@ export class Kire implements KireClass {
 		this.extension = options.extension ?? "kire";
 		this.$var_locals = options.varLocals ?? "it";
 		this.$expose_locals = options.exposeLocals ?? true;
+
+		// Default executor using AsyncFunction
+		this.$executor =
+			options.executor ??
+			((code, params) => {
+				const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
+				return new AsyncFunction(...params, code);
+			});
 
 		this.$resolver =
 			options.resolver ??
@@ -376,9 +389,7 @@ export class Kire implements KireClass {
 	public async compileFn(content: string): Promise<Function> {
 		const code = `${await this.compile(content)}\n//# sourceURL=kire-generated.js`;
 		try {
-			const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
-
-			const mainFn = new AsyncFunction("$ctx", code);
+			const mainFn = this.$executor(code, ["$ctx"]);
 			(mainFn as any)._code = code;
 			(mainFn as any)._source = content;
 
