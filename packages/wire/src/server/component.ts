@@ -34,6 +34,24 @@ export abstract class WireComponent {
 	}
 
 	/**
+	 * Renders an inline Kire template string.
+	 * @param template The Kire template string.
+	 * @param locals Additional local variables.
+	 */
+	protected async html(
+		template: string,
+		locals: Record<string, unknown> = {},
+	): Promise<string> {
+		if (!this.kire) throw new Error("Kire instance not injected");
+		const data = {
+			...this.getPublicProperties(),
+			errors: this.__errors,
+			...locals,
+		};
+		return this.kire.render(template, data);
+	}
+
+	/**
 	 * Emits an event to the browser.
 	 */
 	public emit(event: string, ...params: any[]) {

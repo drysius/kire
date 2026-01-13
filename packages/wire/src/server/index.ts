@@ -1,7 +1,6 @@
 // Export types and core classes
-export { WireComponent } from "./component";
-export { WireCore } from "./core";
-export { Kirewire } from "./plugin";
+export * from "./plugin";
+export * from "./component";
 export * from "../types";
 
 import { Kirewire } from "./plugin";

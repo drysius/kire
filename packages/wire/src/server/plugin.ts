@@ -1,226 +1,165 @@
-import type { KirePlugin } from "kire";
-import { Kire } from "kire";
-import type { WireComponent } from "./component";
-import { WireCore } from "./core";
-import type { WireOptions } from "../types";
-import { getClientScript } from "./web/client";
+import { randomUUID } from "node:crypto";
+import type { Kire } from "kire";
+import type {
+	WireContext,
+	WireOptions,
+	WirePayload,
+	WireResponse,
+	WireSnapshot,
+} from "../types";
+import { WireComponent } from "./component";
+import { ChecksumManager } from "./core/checksum";
+import { attachContext } from "./core/context";
+import { registerDirectives } from "./core/directives";
+import { WireErrors } from "./core/errors";
+import { processRequest } from "./core/process";
+import { registry } from "./core/registry";
 
-export const Kirewire: KirePlugin<WireOptions> = {
-	name: "@kirejs/wire",
-	options: {},
-	load(kire: Kire, options: WireOptions = {}) {
-		const core = WireCore.get();
-		core.init(kire, options);
+/**
+ * Registers the Kirewire plugin with the Kire instance.
+ * @param kire The Kire instance.
+ * @param options Kirewire configuration options.
+ */
+export function Kirewire(kire: Kire, options = {} as WireOptions) {
+	Kirewire.load(kire, options);
+}
 
-		kire.$ctx("$wire", core);
+export namespace Kirewire {
+	/** Package name constant */
+	export const packageName = "@kirejs/wire";
+
+	/** Standardized error responses */
+	export const errors = WireErrors;
+
+	/** Global configuration options */
+	export let options: WireOptions = {
+		method: "http",
+		route: "/_kirewire",
+		secret: randomUUID(),
+		csrf: "csrf-token",
+	};
+
+	/** Checksum manager instance */
+	export const checksum = new ChecksumManager(() => options.secret || "");
+
+	/** Reference to the Kire instance */
+	export let kireInstance: Kire | undefined;
+
+	/** Compatibility helper for older tests */
+	export function get() {
+		return Kirewire;
+	}
+
+	/** Compatibility helper for older tests */
+	export function init(kire: Kire, opts: Partial<WireOptions> = {}) {
+		return load(kire, opts as never);
+	}
+
+	/**
+	 * Registers a component with Kirewire.
+	 * @param name The name of the component.
+	 * @param component The component class.
+	 */
+	export function register(name: string, component: new () => WireComponent) {
+		registry.register(name, component);
+	}
+
+	/** Compatibility helper for older tests */
+	export function registerComponent(name: string, component: new () => WireComponent) {
+		return register(name, component);
+	}
+
+	/** Compatibility helper for older tests */
+	export function getChecksum() {
+		return checksum;
+	}
+
+	/** Compatibility helper for older tests */
+	export async function handleRequest(payload: WirePayload, contextOverrides: Partial<WireContext> = {}) {
+		return (await process({ body: payload }, contextOverrides)).data;
+	}
+
+	/**
+	 * Retrieves a registered component class by name.
+	 * @param name The component name.
+	 */
+	export function getComponentClass(name: string) {
+		return registry.get(name);
+	}
+
+	/**
+	 * Loads the plugin and initializes directives.
+	 * @param kire The Kire instance.
+	 * @param opts Configuration options.
+	 */
+	export function load(kire: Kire, opts = {} as WireOptions) {
+		kireInstance = kire;
+		options = { ...options, ...opts };
+		if (!options.secret) options.secret = randomUUID();
+
+		const cache = kire.cached("@kirejs/wire");
+		cache.set("options", options);
+		// Update registry reference
+		registry.setKire(kire);
+
+		kire.$ctx("$wire", Kirewire);
 		kire.$ctx("kire", kire);
 
-		kire.directive({
-			name: "wire",
-			params: ["name:string", "params?:object"],
-			children: false,
-			type: "html",
-			description: "Renders a Kirewire component.",
-			example: "@wire('counter', { count: 10 })",
-			async onCall(compiler) {
-				const name = compiler.param("name");
-				const params = compiler.param("params") || "{}";
-
-				compiler.raw(`await (async () => {
-               const compName = ${JSON.stringify(name)};
-               const initParams = ${params};
-               const core = $ctx.$wire; 
-               if (!core) throw new Error("Kirewire core not found.");
-
-               const ComponentClass = core.getComponentClass(compName);
-               
-               if(ComponentClass) {
-                   const instance = new ComponentClass();
-                   instance.kire = $ctx.kire; 
-                   // Inject kire into context but also keep existing context
-                   instance.context = { ...$ctx, kire: $ctx.kire };
-                   
-                   if(instance.mount) await instance.mount(initParams);
-                   
-                   let html = await instance.render();
-                   const state = instance.getPublicProperties();
-                   
-                   let style = "";
-                   if (!html || !html.trim()) {
-                        style = ' style="display: none;"';
-                   }
-                   
-                   const memo = {
-                        id: instance.__id,
-                        name: compName,
-                        path: "/", 
-                        method: "GET",
-                        children: [],
-                        scripts: [],
-                        assets: [],
-                        errors: [],
-                        locale: "en",
-                        listeners: instance.listeners,
-                   };
-
-                   const checksum = core.getChecksum().generate(state, memo);
-                   
-                   const snapshot = JSON.stringify({
-                        data: state,
-                        memo: memo,
-                        checksum: checksum
-                   });
-
-                   // HTML Attribute Escaping
-                   // Escape & " ' < >
-                   const escapedSnapshot = snapshot
-                        .replace(/&/g, '&amp;')
-                        .replace(/"/g, '&quot;')
-                        .replace(/'/g, '&#39;')
-                        .replace(/</g, '&lt;')
-                        .replace(/>/g, '&gt;');
-                   
-                   $ctx.res('<div wire:id="' + instance.__id + '" wire:snapshot="' + escapedSnapshot + '" wire:component="' + compName + '"' + style + '>');
-                   $ctx.res(html);
-                   $ctx.res('</div>');
-               } else {
-                   $ctx.res(\`<!-- Wire component "\${compName}" not found -->\`);
-               }
-           })();`);
-			},
-		});
-
-		const injectScripts = (compiler: any) => {
-			const opts = WireCore.get().getOptions();
-			const script = getClientScript({
-				endpoint: opts.route || "/_kirewire",
-				method: opts.method || "http",
-			});
-			compiler.res(script);
+		// Helper: kire.wire('name', Component)
+		(kire as any).wire = (name: string, component: new () => WireComponent) => {
+			register(name, component);
+			return kire;
 		};
 
-		kire.directive({
-			name: "kirewire",
-			children: false,
-			type: "html",
-			description: "Injects the necessary client-side scripts for Kirewire.",
-			example: "@kirewire",
-			onCall: injectScripts,
-		});
+		registerDirectives(kire, options);
+	}
 
-		// Alias for backward compatibility or alternative name
-		kire.directive({
-			name: "wireScripts",
-			children: false,
-			type: "html",
-			description: "Alias for @kirewire. Injects client-side scripts.",
-			example: "@wireScripts",
-			onCall: injectScripts,
-		});
+	/**
+	 * Middleware-like function to attach the identifier to the request.
+	 * Usage: app.use((req, res, next) => Kirewire.context(req, req.session.id, next));
+	 *
+	 * @param req The request object.
+	 * @param identifier The session ID or user identifier (used for security).
+	 * @param next Optional callback for middleware chains.
+	 */
+	export function context(req: any, identifier: string, next?: () => any) {
+		return attachContext(req, identifier, next);
+	}
 
-		// Register wire attributes for IDE support
-		kire.schematic("attributes", {
-			global: {
-				"wire:click": {
-					type: "string",
-					comment: "Handles click events and calls a component method.",
-					example: 'wire:click="increment"',
-				},
-				"wire:model": {
-					type: "string",
-					comment: "Two-way data binding for component properties.",
-					example: 'wire:model="search"',
-				},
-				"wire:submit": {
-					type: "string",
-					comment: "Handles form submission.",
-					example: 'wire:submit="save"',
-				},
-				"wire:submit.prevent": {
-					type: "string",
-					comment: "Handles form submission and prevents default behavior.",
-					example: 'wire:submit.prevent="save"',
-				},
-				"wire:keydown": {
-					type: "string",
-					comment: "Listens for keydown events.",
-					example: 'wire:keydown="search"',
-				},
-				"wire:keydown.enter": {
-					type: "string",
-					comment: "Listens for the Enter key.",
-					example: 'wire:keydown.enter="search"',
-				},
-				"wire:init": {
-					type: "string",
-					comment:
-						"Runs an action immediately after the component initializes.",
-					example: 'wire:init="loadData"',
-				},
-				"wire:loading": {
-					type: "string",
-					comment:
-						"Toggles visibility or classes while a network request is pending.",
-					example: "wire:loading",
-				},
-				"wire:loading.class": {
-					type: "string",
-					comment: "Adds a class while a network request is pending.",
-					example: 'wire:loading.class="opacity-50"',
-				},
-				"wire:loading.attr": {
-					type: "string",
-					comment: "Adds an attribute while a network request is pending.",
-					example: 'wire:loading.attr="disabled"',
-				},
-				"wire:target": {
-					type: "string",
-					comment: "Scopes loading indicators to a specific method or model.",
-					example: 'wire:target="save"',
-				},
-				"wire:ignore": {
-					type: "boolean",
-					comment:
-						"Tells Kirewire to ignore this element and its children during DOM updates.",
-					example: "wire:ignore",
-				},
-				"wire:key": {
-					type: "string",
-					comment: "Assigns a unique key to an element for diffing.",
-					example: 'wire:key="item-{{ id }}"',
-				},
-				"wire:id": {
-					type: "string",
-					comment: "Internal ID of the component instance (auto-generated).",
-					example: 'wire:id="..."',
-				},
-				"wire:poll": {
-					type: "string",
-					comment: "Polls the server at a specified interval.",
-					example: 'wire:poll.2s="refresh"',
-				},
-				"wire:navigate": {
-					type: "boolean",
-					comment: "Enables SPA-like navigation for links.",
-					example: "wire:navigate",
-				},
-				"wire:confirm": {
-					type: "string",
-					comment: "Prompts the user for confirmation before an action.",
-					example: 'wire:confirm="Are you sure?"',
-				},
-			},
-		});
-	},
-};
+	/**
+	 * Validates if the payload structure is trustable.
+	 * @param payload The request body.
+	 */
+	export function trust(payload: any): boolean {
+		if (!payload || typeof payload !== "object") return false;
+		// Allow empty snapshot as it might be an initial initialization request in some tests/scenarios
+		return 'snapshot' in payload || 'component' in payload;
+	}
 
-// Module Augmentation
-declare module "kire" {
-	interface KireClass {
-		wire(name: string, component: new () => WireComponent): void;
+	/**
+	 * Processes the Kirewire request and returns the response.
+	 * @param req The request object (must have been passed through `context`).
+	 * @param contextOverrides Additional context to inject into the component (e.g. user).
+	 */
+	export async function process(
+		req: any,
+		contextOverrides: Partial<WireContext> = {},
+	): Promise<{ code: number; data: WireResponse | { error: string } }> {
+		if (!kireInstance) {
+			return {
+				code: 500,
+				data: { error: "Kire instance not initialized" },
+			};
+		}
+		return processRequest(
+			req,
+			kireInstance,
+			registry,
+			checksum,
+			contextOverrides,
+		);
 	}
 }
 
-(Kire.prototype as any).wire = (name: string, component: new () => WireComponent) => {
-	WireCore.get().registerComponent(name, component);
-};
+// Alias for tests
+export const WireCore = Kirewire;

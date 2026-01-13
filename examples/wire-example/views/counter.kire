@@ -4,7 +4,6 @@
     <div style="font-size: 3rem; margin: 20px;">
         {{ count }}
     </div>
-    
     <button wire:click="decrement" style="padding: 10px 20px; font-size: 1.2rem;">-</button>
     <button wire:click="increment" style="padding: 10px 20px; font-size: 1.2rem;">+</button>
 </div>

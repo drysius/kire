@@ -20,8 +20,6 @@ export default class Counter extends WireComponent {
 	}
 
 	async render() {
-		return this.view("views.counter", {
-			users: ["a", "b", "c"],
-		});
+		return this.view("views.counter");
 	}
 }

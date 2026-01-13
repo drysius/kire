@@ -3,7 +3,17 @@
 @define('content')
     <h1 style="text-align: center;">KireWire Examples</h1>
 
-    <!-- Render Components -->
-    @wire('counter')
-    @wire('form')
+    <div style="display: grid; gap: 20px; max-width: 800px; margin: 0 auto;">
+        <!-- Standard Counter -->
+        @wire('counter')
+        
+        <!-- Form Example -->
+        @wire('form')
+
+        <!-- Event Communication Example -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            @wire('sender')
+            @wire('receiver')
+        </div>
+    </div>
 @end

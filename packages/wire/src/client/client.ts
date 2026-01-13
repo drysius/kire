@@ -21,9 +21,9 @@ export class KireWireClient {
 		// Inject default styles
 		if (typeof document !== "undefined") {
 			const style = document.createElement("style");
-			style.innerHTML = `
-                [wire\\:loading], [wire\\:loading\\.delay], [wire\\:offline] { display: none; }
-            `;
+			style.innerHTML = "\
+                [wire\\:loading], [wire\\:loading\\.delay], [wire\\:offline] { display: none; }\
+            ";
 			document.head.appendChild(style);
 		}
 
@@ -211,7 +211,7 @@ export class KireWireClient {
 		// --- 1. Handle wire:model ---
 		const allAttrs = target.getAttributeNames();
 		const modelAttr = allAttrs.find(
-			(a) => a === "wire:model" || a.startsWith("wire:model."),
+			(a) => a === "wire:model" || a.startsWith("wire:model.")
 		);
 
 		if ((e.type === "input" || e.type === "change") && modelAttr) {
@@ -248,6 +248,21 @@ export class KireWireClient {
 		if (!result) return;
 
 		const { el, attribute, modifiers } = result;
+
+        // Check for key modifiers (e.g. wire:keydown.enter)
+        if (e.type.startsWith("key")) {
+            const keyModifiers = modifiers.filter(m => !['prevent', 'stop', 'debounce', 'self'].includes(m));
+            if (keyModifiers.length > 0) {
+                const key = (e as KeyboardEvent).key.toLowerCase();
+                const hasMatch = keyModifiers.some(m => {
+                    if (m === 'enter') return key === 'enter';
+                    if (m === 'escape') return key === 'escape';
+                    if (m === 'space') return key === ' ';
+                    return key === m;
+                });
+                if (!hasMatch) return;
+            }
+        }
 
 		if (modifiers.includes("prevent") || e.type === "submit") {
 			e.preventDefault();
@@ -377,11 +392,12 @@ export class KireWireClient {
 
 			const headers: Record<string, string> = {
 				"Content-Type": "application/json",
-				Accept: "application/json",
+				"Accept": "application/json",
 			};
 
+			const csrfMetaName = this.config.csrf || "csrf-token";
 			const csrfToken = document
-				.querySelector('meta[name="csrf-token"]')
+				.querySelector(`meta[name="${csrfMetaName}"]`)
 				?.getAttribute("content");
 			if (csrfToken) {
 				headers["X-CSRF-TOKEN"] = csrfToken;

@@ -3,11 +3,9 @@ import type { Kire } from "kire";
 export interface WireOptions {
 	components?: string;
 	method?: "http" | "socket";
+	route: string;
 	secret?: string;
-	cookiename?: string;
-	cookieexpire?: string;
-	cookiehttp?: boolean;
-	route?: string;
+	csrf?: string;
 }
 
 export interface WirePayload {
