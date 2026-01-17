@@ -29,7 +29,16 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 
                 if ($i.mount) await $i.mount(${paramsExpr});
                 
-                const $html = await $i.render();
+                let $html = $i.render();
+                if (typeof $html === "string") {
+                    $html = await $i.kire.render($html, {
+                        ...$i.getDataForRender(),
+                        errors: $i.__errors,
+                    });
+                } else {
+                    $html = await $html;
+                }
+                
                 const $state = $i.getPublicProperties();
                 
                 const $memo = {
@@ -57,7 +66,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 const $esc = $snap.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const $style = (!$html || !$html.trim()) ? ' style="display: none;"' : '';
 
-                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="${nameExpr}"' + $style + '>');
+                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="${nameExpr}" x-data="kirewire"' + $style + '>');
                 $ctx.res($html || '');
                 $ctx.res('</div>');
             })();`);

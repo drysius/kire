@@ -78,7 +78,7 @@ function createPatternMatcher(
 		if (pattern[i] === "$") {
 			const varStart = i + 1;
 			let varEnd = varStart;
-			while (varEnd < pattern.length && /\w/.test(pattern[varEnd])) {
+			while (varEnd < pattern.length && /\w/.test(pattern[varEnd]!)) {
 				varEnd++;
 			}
 

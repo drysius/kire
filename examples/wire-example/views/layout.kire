@@ -3,13 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ $csrfToken || '' }}">
     <title>KireWire Example</title>
     @kirewire <!-- Adiciona o codigo do wire client -->
-    @assets
-    <style>body { font-family: sans-serif; }</style>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; }
+        nav { background: #333; color: white; padding: 1rem; }
+        nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 20px; }
+        nav a { color: white; text-decoration: none; }
+        nav a:hover { text-decoration: underline; }
+        main { padding: 2rem; }
+    </style>
 </head>
 <body>
-    @defined('content')
+    <nav>
+        <ul>
+            <li><strong>KireWire</strong></li>
+            <li><a href="/">Home</a></li>
+            <li><a href="/chat">Chat</a></li>
+            <li><a href="/search">Searchable</a></li>
+        </ul>
+    </nav>
+    <main>
+        @defined('content')
+    </main>
+    
+    @wire('toast')
 </body>
 </html>

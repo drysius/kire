@@ -95,7 +95,7 @@ export async function kireRuntime(
 		resultHtml = finalCtx["~res"];
 	}
 
-	if (!children && kire.$elements.size > 0) {
+	if (kire.$elements.size > 0) {
 		resultHtml = await processElements(kire, resultHtml, finalCtx);
 	}
 

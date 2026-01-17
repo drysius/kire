@@ -40,6 +40,8 @@ void (async () => {
 		if(!session.value) {
 			session.value = crypto.randomUUID();
 		}
+
+		
 		// Attach the identifier to the context (acting as 'req')
 		Kirewire.context(context, session.value);
 		return {
@@ -54,10 +56,25 @@ void (async () => {
 		// Pass the session ID as $wireToken for security in initial render
 		return await kire.view("views.index", {
 			$wireToken: context.cookie.session.value,
-			$csrfToken: "mock-csrf-token-" + context.cookie.session.value, // Mock CSRF
 			user: context.user
 		});
 	});
+
+    app.get("/chat", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("views.chat", {
+            $wireToken: context.cookie.session.value,
+            user: context.user
+        });
+    });
+
+    app.get("/search", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("views.search", {
+            $wireToken: context.cookie.session.value,
+            user: context.user
+        });
+    });
 
 	// Kirewire Endpoint using the simplified API
 	app.post(Kirewire.options.route, async (context) => {

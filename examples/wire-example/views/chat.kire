@@ -1,0 +1,10 @@
+@include('views.layout')
+
+@define('content')
+    <h1 style="text-align: center;">Real-time Chat Example</h1>
+    <p style="text-align: center; color: #666; margin-bottom: 30px;">
+        Demonstrates <code>wire:poll</code>, shared state, and form handling.
+    </p>
+
+    @wire('chat')
+@end

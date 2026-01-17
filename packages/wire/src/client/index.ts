@@ -1,6 +1,19 @@
-import { KireWireClient } from "./client";
+import Alpine from "alpinejs";
+import morph from "@alpinejs/morph";
+import { start } from "./lifecycle";
 
-// Auto-initialize if config is present
-if (typeof window !== "undefined" && window.__KIREWIRE_CONFIG__) {
-	window.KireWire = new KireWireClient(window.__KIREWIRE_CONFIG__);
+declare global {
+    interface Window {
+        Alpine: any;
+        __KIREWIRE_CONFIG__: any;
+    }
 }
+
+window.Alpine = Alpine;
+
+Alpine.plugin(morph);
+
+document.addEventListener('DOMContentLoaded', () => {
+    start();
+    Alpine.start();
+});

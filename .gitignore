@@ -9,6 +9,9 @@ dist
 
 **/llms.txt
 
+# studing livewire implementations
+livewire
+
 # code coverage
 coverage
 *.lcov

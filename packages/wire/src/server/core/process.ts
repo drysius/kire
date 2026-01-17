@@ -180,7 +180,15 @@ export async function processRequest(
 			}
 		}
 
-		let html = await instance.render();
+		let html = (instance as any).render();
+		if (typeof html === "string") {
+			html = await instance.kire.render(html, {
+				...instance.getDataForRender(),
+				errors: instance.__errors,
+			});
+		} else {
+			html = await html;
+		}
 		await instance.rendered();
 
 		if (!html || !html.trim()) {
@@ -203,8 +211,15 @@ export async function processRequest(
 			checksum: newChecksum,
 		};
 
+        const escapedSnapshot = JSON.stringify(finalSnapshot).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        const style = (!html || !html.trim()) ? ' style="display: none;"' : '';
+        
+        // Wrap the HTML to ensure the root element carries the Wire attributes, preserving the structure
+        // created by the directive.
+        const wrappedHtml = `<div wire:id="${instance.__id}" wire:snapshot="${escapedSnapshot}" wire:component="${compName}" x-data="kirewire"${style}>${html || ''}</div>`;
+
 		const effects: WireResponse["components"][0]["effects"] = {
-			html,
+			html: wrappedHtml,
 			dirty: updates ? Object.keys(updates) : [],
 		};
 

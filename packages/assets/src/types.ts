@@ -18,4 +18,5 @@ export interface KireAsset {
 export interface KireAssetsOptions {
 	prefix?: string;
 	domain?: string;
+	uniqueLink?: boolean;
 }

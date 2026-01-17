@@ -14,7 +14,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 	name: "@kirejs/markdown",
 	options: {},
 	load(kire: Kire, _opts) {
-		const _fnCache = kire.cached<Function>("@kirejs/markdown-fn");
+		const _fnCache = kire.cached<Function>("@kirejs/markdown");
 
 		// 1. mdrender: Render string content
 		kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {

@@ -1,0 +1,16 @@
+import { directive } from "../core/registry";
+import { parseAction } from "../core/parser";
+
+const handler = (el: HTMLElement, dir: any, component: any) => {
+    const event = el.tagName === 'FORM' ? 'submit' : 'click';
+    el.addEventListener(event, (e) => {
+        if (dir.modifiers.includes('prevent') || event === 'submit') e.preventDefault();
+        if (dir.modifiers.includes('stop')) e.stopPropagation();
+
+        const { method, params } = parseAction(dir.value);
+        component.call(method, params);
+    });
+};
+
+directive('click', handler);
+directive('submit', handler);

@@ -18,7 +18,7 @@ export abstract class WireComponent {
 	public async hydrated(): Promise<void> {}
 	public async rendered(): Promise<void> {}
 
-	public abstract render(): Promise<string>;
+	public abstract render(): Promise<string> | string;
 
 	protected async view(
 		path: string,
@@ -97,6 +97,32 @@ export abstract class WireComponent {
 				props[key] = val;
 			}
 		}
+		return props;
+	}
+
+	/**
+	 * Returns data available for the view rendering, including getters.
+	 */
+	public getDataForRender(): Record<string, unknown> {
+		const props = this.getPublicProperties();
+		
+		// Include Getters
+		let proto = Object.getPrototypeOf(this);
+		while (proto && proto !== WireComponent.prototype && proto !== Object.prototype) {
+			const descriptors = Object.getOwnPropertyDescriptors(proto);
+			for (const [key, descriptor] of Object.entries(descriptors)) {
+				if (key.startsWith("_") || key === "constructor") continue;
+				if (descriptor.get) {
+					try {
+						props[key] = (this as any)[key];
+					} catch (e) {
+						// Ignore errors in getters during data collection
+					}
+				}
+			}
+			proto = Object.getPrototypeOf(proto);
+		}
+		
 		return props;
 	}
 

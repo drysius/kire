@@ -1,0 +1,10 @@
+@include('views.layout')
+
+@define('content')
+    <h1 style="text-align: center;">Searchable List Example</h1>
+    <p style="text-align: center; color: #666; margin-bottom: 30px;">
+        Demonstrates <code>wire:model.live</code>, filtering, and <code>wire:loading</code>.
+    </p>
+
+    @wire('searchable')
+@end
