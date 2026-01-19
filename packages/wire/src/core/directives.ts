@@ -1,6 +1,6 @@
 import type { Kire } from "kire";
-import type { WireOptions } from "../../types";
-import { getClientScript } from "../web/client";
+import type { WireOptions } from "../types";
+import { getClientScript } from "../utils/client-script";
 
 export function registerDirectives(kire: Kire, options: WireOptions) {
 	kire.directive({
@@ -75,30 +75,41 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 
 	const injectScripts = (compiler: any) => {
 		const script = getClientScript({
-			endpoint: options.route || "/_kirewire",
-			method: options.method || "http",
+			endpoint: options.route || "/_wired",
+			adapter: options.adapter || "http",
 			csrf: options.csrf,
-		});
+		}, kire.production);
 		compiler.res(script);
 	};
 
 	kire.directive({
-		name: "kirewire",
+		name: "wired",
 		children: false,
 		type: "html",
-		description: "Injects the necessary client-side scripts for Kirewire.",
-		example: "@kirewire",
+		description: "Injects the necessary client-side scripts for Wired.",
+		example: "@wired",
 		onCall: injectScripts,
 	});
 
 	kire.directive({
-		name: "wireScripts",
+		name: "wiredScripts",
 		children: false,
 		type: "html",
-		description: "Alias for @kirewire. Injects client-side scripts.",
-		example: "@wireScripts",
+		description: "Alias for @wired. Injects client-side scripts.",
+		example: "@wiredScripts",
 		onCall: injectScripts,
 	});
+
+    // Legacy aliases
+	kire.directive({
+		name: "kirewire",
+		children: false,
+		type: "html",
+		description: "Legacy alias for @wired.",
+		example: "@kirewire",
+		onCall: injectScripts,
+	});
+
 
 	kire.schematic("attributes", {
 		global: {

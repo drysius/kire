@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Kire } from "kire";
-import type { WireContext } from "../types";
+import type { WireContext } from "./types";
 
 export abstract class WireComponent {
 	public __id: string = randomUUID();

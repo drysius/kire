@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { WireComponent, WireCore } from "../src";
-import { getClientScript } from "../src/server/web/client";
+import { WireComponent, Wired } from "../src";
+import { getClientScript } from "../src/utils/client-script";
 import { Kire } from "kire";
 
 class Cart extends WireComponent {
@@ -26,7 +26,6 @@ class EmptyComponent extends WireComponent {
 describe("Wire Listeners & Placeholders", () => {
     let window: any;
     let document: any;
-    let core: WireCore;
     const originalFetch = global.fetch;
 
     afterEach(() => {
@@ -35,10 +34,9 @@ describe("Wire Listeners & Placeholders", () => {
 
     beforeEach(() => {
         const kire = new Kire();
-        core = WireCore.get();
-        core.init(kire, { secret: "test" });
-        core.registerComponent("cart", Cart);
-        core.registerComponent("empty", EmptyComponent);
+        kire.plugin(Wired.plugin, { secret: "test" });
+        Wired.register("cart", Cart);
+        Wired.register("empty", EmptyComponent);
 
         window = new Window();
         document = window.document;
@@ -49,10 +47,11 @@ describe("Wire Listeners & Placeholders", () => {
         
         window.fetch = mock(async (url, opts) => {
             const body = JSON.parse(opts.body);
-            const res = await core.handleRequest(body);
+            const key = Wired.keystore("");
+            const res = await Wired.payload(key, body);
             return {
                 ok: true,
-                json: async () => res
+                json: async () => res.data
             };
         });
         global.fetch = window.fetch;
@@ -66,22 +65,21 @@ describe("Wire Listeners & Placeholders", () => {
     });
 
     const runScript = () => {
-        const scriptContent = getClientScript({ endpoint: "/_wire" }, false);
+        const scriptContent = getClientScript({ endpoint: "/_wired" }, false);
         const matches = scriptContent.matchAll(/<script>([\s\S]*?)<\/script>/g);
         for (const match of matches) {
             new Function(match[1])();
         }
     };
 
-
-
     test("should render hidden placeholder for empty component", async () => {
-        const res: any = await core.handleRequest({
+        const key = Wired.keystore("");
+        const res: any = await Wired.payload(key, {
             component: "empty",
             snapshot: "",
         });
 
-        const html = res.components[0].effects.html;
+        const html = res.data.components[0].effects.html;
         expect(html).toContain('style="display: none;"');
         expect(html).toContain('wire:id');
     });

@@ -4,7 +4,7 @@ import type {
 	WirePayload,
 	WireResponse,
 	WireSnapshot,
-} from "../../types";
+} from "../types";
 import type { ChecksumManager } from "./checksum";
 import { getIdentifier } from "./context";
 import { WireErrors } from "./errors";

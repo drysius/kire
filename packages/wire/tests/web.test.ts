@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import { Window } from "happy-dom";
-import { getClientScript } from "../src/server/web/client";
+import { getClientScript } from "../src/utils/client-script";
 
 describe("KireWire Advanced Client Features", () => {
 	let window: any;

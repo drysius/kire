@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { WireSnapshot } from "../../types";
+import type { WireSnapshot } from "../types";
 
 export class ChecksumManager {
 	constructor(private getSecret: () => string) {}

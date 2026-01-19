@@ -1,0 +1,32 @@
+{
+  "extends": "../tsconfig.base.build.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "C:\\Users\\Drylian\\Documents\\GitHub\\kire\\publish\\vs-kire\\dist\\types",
+    "noEmit": false,
+    "rootDir": "src",
+    "baseUrl": ".",
+    "skipLibCheck": true,
+    "paths": {
+      "*": [
+        "node_modules/*"
+      ],
+      "kire": [
+        "C:\\Users\\Drylian\\Documents\\GitHub\\kire\\publish\\core\\dist\\types\\index.d.ts"
+      ],
+      "@kirejs/*": [
+        "../packages/*/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "tests",
+    "dist",
+    "node_modules"
+  ]
+}

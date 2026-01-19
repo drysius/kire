@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KireWire Example</title>
-    @kirewire <!-- Adiciona o codigo do wire client -->
+    @wired <!-- Adiciona o codigo do wire client -->
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; line-height: 1.6; }
         nav { background: #333; color: white; padding: 1rem; }

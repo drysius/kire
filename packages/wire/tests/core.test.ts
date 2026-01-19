@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { Kire } from "kire";
-import { WireComponent, WireCore } from "../src";
+import { Wired, WireComponent } from "../src";
 
 // Mock component
 class Counter extends WireComponent {
@@ -15,24 +15,22 @@ class Counter extends WireComponent {
 	}
 }
 
-describe("WireCore", () => {
+describe("Wired", () => {
 	let kire: Kire;
-	let core: WireCore;
 
 	beforeEach(() => {
 		kire = new Kire();
-		core = WireCore.get();
-		core.init(kire, { secret: "test-secret" });
+		kire.plugin(Wired.plugin, { secret: "test-secret" });
 	});
 
 	test("should register and retrieve components", () => {
-		core.registerComponent("counter", Counter);
-		const Retrieved = core.getComponentClass("counter");
+		Wired.register("counter", Counter);
+		const Retrieved = Wired.getComponentClass("counter");
 		expect(Retrieved).toBe(Counter);
 	});
 
 	test("should handle initial request (render)", async () => {
-		core.registerComponent("counter", Counter);
+		Wired.register("counter", Counter);
 
 		const data = { count: 5 };
 		const memo = {
@@ -46,50 +44,56 @@ describe("WireCore", () => {
 			errors: [],
 			locale: "en",
 		};
-		const checksum = core.getChecksum().generate(data, memo);
+        
+        const key = Wired.keystore(""); // No key for simple test
+		const checksum = Wired.checksum.generate(data, memo, key);
 		const snapshot = JSON.stringify({ data, memo, checksum });
 
-		const response = (await core.handleRequest({
+		const response = (await Wired.payload(key, {
 			component: "counter",
 			snapshot: snapshot,
 			method: "increment",
 			params: [],
-		})) as any;
+		})).data as any;
 
 		expect(response.error).toBeUndefined();
 		expect(response.components).toBeDefined();
-		expect(response.components[0].effects.html).toBe("Count: 6");
+        // Check HTML content inside the wrapper
+		expect(response.components[0].effects.html).toContain("Count: 6");
 
 		const newSnap = JSON.parse(response.components[0].snapshot);
 		expect(newSnap.data.count).toBe(6);
 	});
 
 	test("should fail with invalid snapshot format", async () => {
-		const response = (await core.handleRequest({
+        const key = Wired.keystore("");
+		const response = (await Wired.payload(key, {
 			component: "counter",
 			snapshot: "invalid.json",
 			method: "increment",
-		})) as any;
+		})).data as any;
 
 		expect(response.error).toBe("Invalid snapshot format");
 	});
 
     test("should fail with invalid snapshot checksum", async () => {
+        const key = Wired.keystore("");
         const snapshot = JSON.stringify({ data: {}, memo: {}, checksum: "wrong" });
-		const response = (await core.handleRequest({
+		const response = (await Wired.payload(key, {
 			component: "counter",
 			snapshot: snapshot,
 			method: "increment",
-		})) as any;
+		})).data as any;
 
 		expect(response.error).toBe("Invalid snapshot checksum");
 	});
 
 	test("should fail with unknown component", async () => {
-		const response = (await core.handleRequest({
+        const key = Wired.keystore("");
+		const response = (await Wired.payload(key, {
 			component: "unknown-component",
 			snapshot: "",
-		})) as any;
+		})).data as any;
 
 		expect(response.error).toBe("Component not found");
 	});

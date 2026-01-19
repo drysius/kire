@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
-import { Kirewire, WireComponent, WireCore } from "../src";
-import { Elysiawire } from "../src/server/adapters/elysia";
+import { Wired, WireComponent } from "../src";
 
 // --- Mock Component ---
 class Counter extends WireComponent {
@@ -24,14 +23,28 @@ describe("Elysia Wire Integration", () => {
 
 	beforeAll(() => {
 		const kire = new Kire();
-		// Use specific secret to avoid conflicts if WireCore is shared/reset
-		kire.plugin(Kirewire, { secret: "elysia-secret" });
-		WireCore.get().registerComponent("counter", Counter);
+		// Use specific secret to avoid conflicts if Wired is shared/reset
+		kire.plugin(Wired.plugin, { secret: "elysia-secret" });
+		Wired.register("counter", Counter);
 
 		app = new Elysia();
-		Elysiawire(app);
+        
+        // Manual adapter setup for test
+        app.post(Wired.options.route, async (context) => {
+            if (Wired.validate(context.body)) {
+                // Mock secure key for test
+                const key = Wired.keystore("test-user");
+                const result = await Wired.payload(key, context.body as any);
+                context.set.status = result.code;
+                return result.data;
+            } else {
+                context.set.status = 400;
+                return Wired.invalid;
+            }
+        });
+
 		server = app.listen(0);
-		wireUrl = `http://localhost:${server.server?.port}/_kirewire`;
+		wireUrl = `http://localhost:${server.server?.port}/_wired`;
 	});
 
 	afterAll(() => {
@@ -39,7 +52,6 @@ describe("Elysia Wire Integration", () => {
 	});
 
 	test("should handle wire request via Elysia adapter", async () => {
-		const core = WireCore.get();
 		const data = { count: 5 };
 		const memo = {
 			id: "test-id",
@@ -52,7 +64,9 @@ describe("Elysia Wire Integration", () => {
 			errors: [],
 			locale: "en",
 		};
-		const checksum = core.getChecksum().generate(data, memo);
+        
+        const key = Wired.keystore("test-user");
+		const checksum = Wired.checksum.generate(data, memo, key);
 		const snapshot = JSON.stringify({ data, memo, checksum });
 
 		// 2. Client sends 'increment' action
@@ -74,7 +88,7 @@ describe("Elysia Wire Integration", () => {
 
 		const dataRes = (await res.json()) as any;
 		const comp = dataRes.components[0];
-		expect(comp.effects.html).toBe("<div>Count: 6</div>");
+		expect(comp.effects.html).toBe(`<div wire:id="test-id" wire:snapshot="${comp.snapshot.replace(/"/g, '&quot;')}" wire:component="counter" x-data="kirewire"><div>Count: 6</div></div>`);
 
 		// 4. Verify snapshot integrity
 		const newSnap = JSON.parse(comp.snapshot);

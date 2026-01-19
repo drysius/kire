@@ -1,11 +1,23 @@
 import type { Kire } from "kire";
 
+export interface WiredRequest {
+	identifiers: string[];
+	token?: string;
+	csrftoken?: string;
+	payload: any;
+	expire: number; // timestamp
+	created: number; // timestamp
+	renew: () => void;
+}
+
 export interface WireOptions {
 	components?: string;
-	method?: "http" | "socket";
+	adapter?: "http" | "socket" | "fivem";
 	route: string;
 	secret?: string;
 	csrf?: string;
+	expire?: string; // e.g. "10m"
+	onPayload?: (wired: WiredRequest) => void;
 }
 
 export interface WirePayload {

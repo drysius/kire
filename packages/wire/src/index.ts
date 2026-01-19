@@ -1,2 +1,7 @@
-export * from "./server/index";
-export { default } from "./server/index";
+// Export types and core classes
+export * from "./wired";
+export * from "./component";
+export * from "./types";
+
+import { Wired } from "./wired";
+export default Wired;

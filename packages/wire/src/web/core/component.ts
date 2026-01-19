@@ -1,4 +1,5 @@
 import type { WireRequest, WireResponse } from "../../types";
+import type { ClientAdapter } from "../../adapters/http";
 
 export class Component {
     public id: string;
@@ -6,7 +7,7 @@ export class Component {
     public snapshot: any;
     public data: any;
     
-    constructor(public el: HTMLElement, snapshot: string, public config: any) {
+    constructor(public el: HTMLElement, snapshot: string, public config: any, public adapter: ClientAdapter) {
         this.snapshot = JSON.parse(snapshot);
         this.id = this.snapshot.memo.id;
         this.name = this.snapshot.memo.name;
@@ -28,25 +29,13 @@ export class Component {
             method: payload.method || '$refresh',
             params: payload.params || [],
             updates: payload.updates,
-            _token: this.getCsrfToken()
+            _token: this.getCsrfToken() // Keep strictly for payload token if needed
         };
 
         this.setLoading(true, payload.method);
 
         try {
-            const res = await fetch(this.config.endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    ...(fullPayload._token ? { 'X-CSRF-TOKEN': fullPayload._token } : {})
-                },
-                body: JSON.stringify(fullPayload)
-            });
-
-            if (!res.ok) throw new Error(`Network error: ${res.status}`);
-            
-            const response: WireResponse = await res.json();
+            const response: WireResponse = await this.adapter.request(fullPayload);
             this.handleResponse(response, payload.method);
 
         } catch (e) {
@@ -81,6 +70,7 @@ export class Component {
             }
         });
     }
+// ... remainder of file unchanged (morph, setLoading, getCsrfToken)
 
     private morph(html: string, newSnapshot: string, isPoll: boolean) {
         const parser = new DOMParser();
