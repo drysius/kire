@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { KireCompletionItemProvider } from "./features/completion";
 import { KireDiagnosticProvider } from "./features/diagnostic";
 import { KireDocumentSymbolProvider } from "./features/documentSymbol";
+import { KireFoldingRangeProvider } from "./features/folding";
 import { FeatureFormatting } from "./features/formatting";
 import { KireHoverProvider } from "./features/hover";
 import {
@@ -37,6 +38,10 @@ export class KireLanguageFeatures {
 			vscode.languages.registerDocumentSymbolProvider(
 				selector,
 				new KireDocumentSymbolProvider(),
+			),
+			vscode.languages.registerFoldingRangeProvider(
+				selector,
+				new KireFoldingRangeProvider(),
 			),
 			vscode.languages.registerDocumentSemanticTokensProvider(
 				selector,

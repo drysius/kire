@@ -9,7 +9,6 @@
             </li>
         @end
     </ul>
-
     @if(hasMore)
         <div wire:intersect="loadMore" style="text-align: center; padding: 20px; color: #666;">
             <span wire:loading.remove>Loading more...</span>
