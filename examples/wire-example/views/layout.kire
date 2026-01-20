@@ -21,12 +21,12 @@
             <li><a href="/">Home</a></li>
             <li><a href="/chat">Chat</a></li>
             <li><a href="/search">Searchable</a></li>
+            <li><a href="/infinity">Infinity Scroll</a></li>
+            <li><a href="/toast">Toast</a></li>
         </ul>
     </nav>
     <main>
         @defined('content')
     </main>
-    
-    @wire('toast')
 </body>
 </html>

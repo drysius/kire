@@ -9,6 +9,12 @@ import './directives/click';
 import './directives/model';
 import './directives/poll';
 import './directives/loading';
+import './directives/init';
+import './directives/navigate';
+import './directives/keydown';
+import './directives/ignore';
+import './directives/offline';
+import './directives/intersect';
 
 export default function WiredAlpinePlugin(Alpine: any) {
     const config = (window as any).__KIREWIRE_CONFIG__ || { endpoint: '/_wired', adapter: 'http' };

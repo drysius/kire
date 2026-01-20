@@ -1,0 +1,23 @@
+<div style="max-width: 600px; margin: 0 auto;">
+    <h2>Infinite Scroll Example</h2>
+    <p>Scroll down to load more items.</p>
+
+    <ul style="list-style: none; padding: 0;">
+        @for(item in items)
+            <li style="padding: 20px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff;">
+                {{ item }}
+            </li>
+        @end
+    </ul>
+
+    @if(hasMore)
+        <div wire:intersect="loadMore" style="text-align: center; padding: 20px; color: #666;">
+            <span wire:loading.remove>Loading more...</span>
+            <span wire:loading>Fetching data...</span>
+        </div>
+    @else
+        <div style="text-align: center; padding: 20px; color: #888;">
+            No more items to load.
+        </div>
+    @end
+</div>

@@ -7,6 +7,14 @@ const handler = (el: HTMLElement, dir: any, component: any) => {
         if (dir.modifiers.includes('prevent') || event === 'submit') e.preventDefault();
         if (dir.modifiers.includes('stop')) e.stopPropagation();
 
+        // wire:confirm support
+        const confirmMsg = el.getAttribute('wire:confirm');
+        if (confirmMsg) {
+            if (!confirm(confirmMsg)) {
+                return;
+            }
+        }
+
         const { method, params } = parseAction(dir.value);
         component.call(method, params);
     });

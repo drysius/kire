@@ -71,6 +71,22 @@ void (async () => {
         });
     });
 
+    app.get("/infinity", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("views.infinity", {
+            $wireToken: context.wireKey,
+            user: context.user
+        });
+    });
+
+    app.get("/toast", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("views.toast-page", {
+            $wireToken: context.wireKey,
+            user: context.user
+        });
+    });
+
 	// Wired Endpoint
 	app.post(Wired.options.route, async (context) => {
 		// 1. Basic Payload Validation

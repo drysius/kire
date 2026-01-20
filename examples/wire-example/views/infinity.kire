@@ -1,0 +1,5 @@
+@include('views.layout')
+
+@define('content')
+    @wire('infinity-scroll')
+@end
