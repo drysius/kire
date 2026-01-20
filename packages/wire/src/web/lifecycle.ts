@@ -1,5 +1,5 @@
 import { Component } from './core/component';
-import { addComponent, removeComponent, findComponentByEl } from './core/store';
+import { addComponent, removeComponent, findComponentByEl, findComponent } from './core/store';
 import { getDirectives } from './core/directives';
 import { getDirectiveHandler } from './core/registry';
 import { HttpAdapter, SocketAdapter, FivemAdapter } from '../adapters';
@@ -80,9 +80,21 @@ export default function WiredAlpinePlugin(Alpine: any) {
                 if (mutation.type === 'childList') {
                     mutation.addedNodes.forEach(node => processNode(node));
                     mutation.removedNodes.forEach(node => {
-                        if (node.nodeType === 1 && (node as HTMLElement).hasAttribute('wire:id')) {
-                             const id = (node as HTMLElement).getAttribute('wire:id');
-                             if(id) removeComponent(id);
+                        if (node.nodeType === 1) {
+                             // Check the node itself
+                             const el = node as HTMLElement;
+                             if (el.hasAttribute('wire:id')) {
+                                 const id = el.getAttribute('wire:id');
+                                 if(id) {
+                                     const comp = findComponent(id); // Import findComponent
+                                     if (comp) {
+                                         comp.cleanup();
+                                         removeComponent(id);
+                                     }
+                                 }
+                             }
+                             // Check children (deep cleanup) - optional but recommended
+                             // For now, let's just handle the root removal or assume flat structure for components
                         }
                     });
                 }

@@ -13,7 +13,7 @@ export default class Sender extends WireComponent {
 		return `
         <div style="border: 1px solid #ccc; padding: 10px;">
             <h3>Sender</h3>
-            <input wire:model="text" type="text" placeholder="Type a message..." />
+            <input wire:model="text" type="text" value="${this.text}" placeholder="Type a message..." />
             <button wire:click="send">Send Event</button>
         </div>
         `;

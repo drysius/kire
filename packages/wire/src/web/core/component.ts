@@ -6,12 +6,37 @@ export class Component {
     public name: string;
     public snapshot: any;
     public data: any;
+    private cleanupFns: Function[] = [];
+    private activeRequests = new Set<string>();
     
     constructor(public el: HTMLElement, snapshot: string, public config: any, public adapter: ClientAdapter) {
         this.snapshot = JSON.parse(snapshot);
         this.id = this.snapshot.memo.id;
         this.name = this.snapshot.memo.name;
         this.data = this.snapshot.data;
+        
+        this.initListeners();
+    }
+
+    private initListeners() {
+        const listeners = this.snapshot.memo.listeners || {};
+        Object.entries(listeners).forEach(([event, method]) => {
+            const handler = (e: any) => {
+                const params = e.detail ?? [];
+                // If detail is not an array, wrap it? Or assume call handles it?
+                // component.call expects array.
+                const args = Array.isArray(params) ? params : [params];
+                this.call(method as string, args);
+            };
+            
+            window.addEventListener(event, handler);
+            this.cleanupFns.push(() => window.removeEventListener(event, handler));
+        });
+    }
+
+    public cleanup() {
+        this.cleanupFns.forEach(fn => fn());
+        this.cleanupFns = [];
     }
 
     async call(method: string, params: any[] = []) {
@@ -107,11 +132,26 @@ export class Component {
     }
 
     private setLoading(loading: boolean, target?: string) {
-        if (loading) this.el.setAttribute('wire:loading-state', 'true');
-        else this.el.removeAttribute('wire:loading-state');
+        // Use a unique key for each request type to allow concurrency tracking
+        // If target is undefined (global), we use 'global'
+        // If target is '$set', we might want to differentiate *which* property?
+        // For now, simple target tracking.
+        const key = target || 'global';
+        
+        if (loading) {
+            this.activeRequests.add(key);
+            this.el.setAttribute('wire:loading-state', 'true');
+        } else {
+            this.activeRequests.delete(key);
+            if (this.activeRequests.size === 0) {
+                this.el.removeAttribute('wire:loading-state');
+            }
+        }
+        
+        const anyLoading = this.activeRequests.size > 0;
 
         window.dispatchEvent(new CustomEvent('wire:loading', { 
-            detail: { id: this.id, loading, target } 
+            detail: { id: this.id, loading, target, anyLoading } 
         }));
     }
 
