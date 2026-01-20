@@ -216,7 +216,7 @@ export async function processRequest(
         
         // Wrap the HTML to ensure the root element carries the Wire attributes, preserving the structure
         // created by the directive.
-        const wrappedHtml = `<div wire:id="${instance.__id}" wire:snapshot="${escapedSnapshot}" wire:component="${compName}" x-data="kirewire"${style}>${html || ''}</div>`;
+        const wrappedHtml = `<div wire:id="${instance.__id}" wire:snapshot="${escapedSnapshot}" wire:component="${compName}"${style}>${html || ''}</div>`;
 
 		const effects: WireResponse["components"][0]["effects"] = {
 			html: wrappedHtml,

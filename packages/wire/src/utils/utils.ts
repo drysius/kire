@@ -4,8 +4,8 @@ export function parseParams(action: string): { method: string; params: any[] } {
 
 	if (action.includes("(")) {
 		const parts = action.split("(");
-		method = parts[0];
-		const argsContent = parts[1].slice(0, -1);
+		method = parts[0]!;
+		const argsContent = parts[1]!.slice(0, -1);
 		if (argsContent.trim()) {
 			// Basic CSV parser that respects quotes
 			const regex = /(".*?"|'.*?'|[^",\s]+)(?=\s*,|\s*$)/g;

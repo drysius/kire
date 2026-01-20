@@ -56,7 +56,7 @@ export interface WireSnapshot {
 		children: any[];
 		scripts: string[];
 		assets: string[];
-		errors: any[];
+		errors: any[] | Record<string, any>;
 		locale: string;
 		[key: string]: any;
 	};

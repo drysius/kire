@@ -1,4 +1,3 @@
-import Alpine from 'alpinejs';
 import { Component } from './core/component';
 import { addComponent, removeComponent, findComponentByEl } from './core/store';
 import { getDirectives } from './core/directives';
@@ -11,9 +10,12 @@ import './directives/model';
 import './directives/poll';
 import './directives/loading';
 
-export function start() {
+export default function WiredAlpinePlugin(Alpine: any) {
     const config = (window as any).__KIREWIRE_CONFIG__ || { endpoint: '/_wired', adapter: 'http' };
-    console.log(config)
+    
+    // Polyfill for x-data="kirewire" safety
+    Alpine.data('kirewire', () => ({}));
+
     let adapter: any;
     switch (config.adapter) {
         case 'socket':
@@ -27,40 +29,69 @@ export function start() {
             break;
     }
 
-    Alpine.interceptInit(el => {
-        // Skip if not inside a component and not a component itself
-        if (!el.hasAttribute('wire:id') && !el.closest('[wire\\:id]')) return;
+    const processNode = (node: Node) => {
+        if (node.nodeType !== 1) return;
+        const el = node as HTMLElement;
+        
+        // Prevent double processing
+        if ((el as any).__wire_processed) return;
 
-        // 1. Initialize Component
-        if (el.hasAttribute('wire:id')) {
+        // 1. Initialize Component if root
+        let component = findComponentByEl(el);
+        if (!component && el.hasAttribute('wire:id')) {
             const snapshot = el.getAttribute('wire:snapshot');
             if (snapshot) {
-                const component = new Component(el, snapshot, config, adapter);
+                component = new Component(el, snapshot, config, adapter);
                 addComponent(component);
                 (el as any).__livewire = component;
-
-                Alpine.onAttributeRemoved(el, 'wire:id', () => {
-                    removeComponent(component.id);
-                });
             }
         }
 
-        // 2. Process Directives
-        const component = findComponentByEl(el);
-        if (!component) return;
+        // 2. Process Directives if inside component
+        if (component) {
+            const directives = getDirectives(el);
+            if (directives.length > 0) {
+                 directives.forEach(directive => {
+                    handleDirective(el, directive, component!);
+                });
+                (el as any).__wire_processed = true;
+            }
+        }
 
-        const directives = getDirectives(el);
-        directives.forEach(directive => {
-            handleDirective(el, directive, component);
-        });
-    });
+        // 3. Recurse efficiently
+        let child = el.firstElementChild;
+        while (child) {
+            processNode(child);
+            child = child.nextElementSibling;
+        }
+    };
+
+    const init = () => {
+         processNode(document.body);
+
+         new MutationObserver(mutations => {
+            for (const mutation of mutations) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(node => processNode(node));
+                    mutation.removedNodes.forEach(node => {
+                        if (node.nodeType === 1 && (node as HTMLElement).hasAttribute('wire:id')) {
+                             const id = (node as HTMLElement).getAttribute('wire:id');
+                             if(id) removeComponent(id);
+                        }
+                    });
+                }
+            }
+         }).observe(document.body, { childList: true, subtree: true });
+    };
+
+    if (document.body) {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
 }
 
-
 function handleDirective(el: HTMLElement, directive: any, component: Component) {
-    if ((el as any).__wire_processed) return;
-    (el as any).__wire_processed = true;
-
     const handler = getDirectiveHandler(directive.type);
     if (handler) {
         handler(el, directive, component);

@@ -13,7 +13,7 @@ export interface ClientConfig {
 let cachedScript: string | null = null;
 
 export const getClientScript = (config: ClientConfig, production = true) => {
-    const filename = production ? "wired.min.js" : "wired.js";
+    const filename = production ? "kirewire.min.js" : "kirewire.js";
     let scriptContent = "";
 
     if (production && cachedScript) {

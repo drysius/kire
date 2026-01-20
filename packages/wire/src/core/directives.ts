@@ -66,12 +66,13 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 const $esc = $snap.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const $style = (!$html || !$html.trim()) ? ' style="display: none;"' : '';
 
-                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="${nameExpr}" x-data="kirewire"' + $style + '>');
+                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="${nameExpr}"' + $style + '>');
                 $ctx.res($html || '');
                 $ctx.res('</div>');
             })();`);
 		},
 	});
+
 
 	const injectScripts = (compiler: any) => {
 		const script = getClientScript({

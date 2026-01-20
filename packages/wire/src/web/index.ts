@@ -1,19 +1,13 @@
 import Alpine from "alpinejs";
 import morph from "@alpinejs/morph";
-import { start } from "./lifecycle";
+import WiredAlpinePlugin from "./lifecycle";
 
-declare global {
-    interface Window {
-        Alpine: any;
-        __KIREWIRE_CONFIG__: any;
-    }
-}
-
+//@ts-expect-error ignore
 window.Alpine = Alpine;
 
 Alpine.plugin(morph);
+Alpine.plugin(WiredAlpinePlugin);
 
 document.addEventListener('DOMContentLoaded', () => {
-    start();
     Alpine.start();
 });

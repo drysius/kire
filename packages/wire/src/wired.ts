@@ -7,6 +7,7 @@ import { attachContext } from "./core/context";
 import { registerDirectives } from "./core/directives";
 import { processRequest } from "./core/process";
 import { registry } from "./core/registry";
+import { JWT } from "./utils/crypto";
 import type { WireOptions, WirePayload, WiredRequest } from "./types";
 
 export class Wired {
@@ -131,10 +132,19 @@ export class Wired {
         if (Wired.options.expire) {
             const match = Wired.options.expire.match(/(\d+)([ms]+)/);
             if (match) {
-                const val = parseInt(match[1]);
+                const val = parseInt(match[1]!);
                 const unit = match[2];
                 if (unit === 'm') expire = val * 60;
                 else if (unit === 's') expire = val;
+            }
+        }
+
+        // Validate Token if exists
+        let isValidToken = false;
+        if (body._token) {
+            const payload = JWT.verify(body._token, Wired.options.secret!);
+            if (payload && payload.key === wirekey) {
+                isValidToken = true;
             }
         }
 
@@ -144,10 +154,10 @@ export class Wired {
             expire,
             created: now,
             renew: () => {
-                // Logic to renew token if we were using JWTs for the request session
-                // For now, this is a placeholder hook
+                const newToken = JWT.sign({ key: wirekey }, Wired.options.secret!, expire);
+                wireReq.token = newToken;
             },
-            token: body._token, // Assuming _token is CSRF/JWT combo
+            token: isValidToken ? body._token : undefined,
             csrftoken: body._token
         };
 
