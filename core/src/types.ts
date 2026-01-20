@@ -388,6 +388,7 @@ export interface AttributeDefinition {
 
 export interface KireSchematic {
 	package: string;
+	$schema:string,
 	repository?: string | { type: string; url: string };
 	version?: string;
 	directives?: DirectiveDefinition[];

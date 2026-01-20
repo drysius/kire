@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { KireCompletionItemProvider } from "./features/completion";
 import { KireDiagnosticProvider } from "./features/diagnostic";
 import { KireDocumentSymbolProvider } from "./features/documentSymbol";
-import { KireFormattingProvider } from "./features/formatting";
+import { FeatureFormatting } from "./features/formatting";
 import { KireHoverProvider } from "./features/hover";
 import {
 	KireSemanticTokensProvider,
@@ -45,7 +45,7 @@ export class KireLanguageFeatures {
 			),
 			vscode.languages.registerDocumentFormattingEditProvider(
 				selector,
-				new KireFormattingProvider(),
+				new FeatureFormatting(),
 			),
 		);
 

@@ -3,7 +3,6 @@ import {
 	type DocumentContext,
 	getLanguageService as getHtmlService,
 	type HoverSettings,
-	type HTMLFormatConfiguration,
 } from "vscode-html-languageservice";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { kireStore } from "@/store";
@@ -33,13 +32,6 @@ function toVsCodeRange(range: {
 
 function toLspPosition(position: vscode.Position) {
 	return { line: position.line, character: position.character };
-}
-
-function toLspRange(range: vscode.Range) {
-	return {
-		start: { line: range.start.line, character: range.start.character },
-		end: { line: range.end.line, character: range.end.character },
-	};
 }
 
 export class HtmlCompletionItemProvider
@@ -615,77 +607,6 @@ export class HtmlDocumentLinkProvider implements vscode.DocumentLinkProvider {
 	}
 }
 
-export class HtmlFormattingProvider
-	implements vscode.DocumentFormattingEditProvider
-{
-	provideDocumentFormattingEdits(
-		document: vscode.TextDocument,
-		options: vscode.FormattingOptions,
-		_token: vscode.CancellationToken,
-	): vscode.ProviderResult<vscode.TextEdit[]> {
-		const lspDoc = toLspDocument(document);
-
-		const htmlFormatConfig: HTMLFormatConfiguration = {
-			tabSize: options.tabSize,
-			insertSpaces: options.insertSpaces,
-			wrapLineLength: 120,
-			unformatted: "",
-			contentUnformatted: "pre,code,textarea",
-			indentInnerHtml: true,
-			preserveNewLines: true,
-			maxPreserveNewLines: options.insertSpaces ? undefined : 1,
-			indentHandlebars: false,
-			endWithNewline: false,
-			extraLiners: "head, body, /html",
-			wrapAttributes: "auto",
-		};
-
-		const textEdits = htmlLanguageService.format(
-			lspDoc,
-			undefined, // Range completo
-			htmlFormatConfig,
-		);
-
-		return textEdits.map(
-			(edit) => new vscode.TextEdit(toVsCodeRange(edit.range), edit.newText),
-		);
-	}
-}
-
-export class HtmlRangeFormattingProvider
-	implements vscode.DocumentRangeFormattingEditProvider
-{
-	provideDocumentRangeFormattingEdits(
-		document: vscode.TextDocument,
-		range: vscode.Range,
-		options: vscode.FormattingOptions,
-		_token: vscode.CancellationToken,
-	): vscode.ProviderResult<vscode.TextEdit[]> {
-		const lspDoc = toLspDocument(document);
-
-		const htmlFormatConfig: HTMLFormatConfiguration = {
-			tabSize: options.tabSize,
-			insertSpaces: options.insertSpaces,
-			wrapLineLength: 120,
-			unformatted: "",
-			contentUnformatted: "pre,code,textarea",
-			indentInnerHtml: true,
-			preserveNewLines: true,
-			maxPreserveNewLines: options.insertSpaces ? undefined : 1,
-		};
-
-		const textEdits = htmlLanguageService.format(
-			lspDoc,
-			toLspRange(range),
-			htmlFormatConfig,
-		);
-
-		return textEdits.map(
-			(edit) => new vscode.TextEdit(toVsCodeRange(edit.range), edit.newText),
-		);
-	}
-}
-
 // Extensão para encontrar tags correspondentes
 export class HtmlMatchingTagProvider {
 	async findMatchingTagPosition(
@@ -779,14 +700,6 @@ export class HtmlLanguageFeatures {
 			vscode.languages.registerDocumentLinkProvider(
 				{ language: "kire" },
 				new HtmlDocumentLinkProvider(),
-			),
-			vscode.languages.registerDocumentFormattingEditProvider(
-				{ language: "kire" },
-				new HtmlFormattingProvider(),
-			),
-			vscode.languages.registerDocumentRangeFormattingEditProvider(
-				{ language: "kire" },
-				new HtmlRangeFormattingProvider(),
 			),
 		];
 

@@ -3,9 +3,9 @@
 	"title": "Kire Configuration",
 	"description": "Configuration file for Kire directives to provide IntelliSense in editors.",
 	"type": "object",
-	"required": ["name", "directives"],
+	"required": ["package", "directives"],
 	"properties": {
-		"name": {
+		"package": {
 			"type": "string",
 			"description": "Name of the package providing these directives."
 		},
@@ -20,44 +20,76 @@
 			"type": "string"
 		},
 		"globals": {
-			"type": "object"
+			"type": "object",
+			"additionalProperties": true
+		},
+		"elements": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"required": ["name"],
+				"properties": {
+					"name": { "type": "string" },
+					"void": { "type": "boolean" }
+				}
+			}
+		},
+		"attributes": {
+			"type": "object",
+			"additionalProperties": {
+				"type": "object",
+				"additionalProperties": {
+					"type": "object",
+					"properties": {
+						"type": { "type": ["string", "boolean"] },
+						"comment": { "type": "string" },
+						"example": { "type": "string" }
+					}
+				}
+			}
 		},
 		"directives": {
 			"type": "array",
 			"description": "A list of directive definitions.",
-			"items": {
-				"type": "object",
-				"required": ["name", "onCall"],
-				"properties": {
-					"name": {
-						"type": "string",
-						"description": "The name of the directive (without the '@')."
-					},
-					"params": {
-						"type": "array",
-						"items": { "type": "string" }
-					},
-					"children": {
-						"type": "boolean",
-						"description": "Does this directive accept a block ending with @end?"
-					},
-					"childrenRaw": {
-						"type": "boolean"
-					},
-					"parents": {
-						"type": "array",
-						"items": { "$ref": "#/properties/directives/items" }
-					},
-					"description": {
-						"type": "string"
-					},
-					"example": {
-						"type": "string"
-					},
-					"type": {
-						"type": "string",
-						"enum": ["css", "js", "html"]
-					}
+			"items": { "$ref": "#/definitions/directive" }
+		}
+	},
+	"definitions": {
+		"directive": {
+			"type": "object",
+			"required": ["name"],
+			"properties": {
+				"name": {
+					"type": "string",
+					"description": "The name of the directive (without the '@')."
+				},
+				"params": {
+					"type": "array",
+					"items": { "type": "string" }
+				},
+				"children": {
+					"description": "Does this directive accept a block ending with @end?",
+					"oneOf": [
+						{ "type": "boolean" },
+						{ "type": "string", "enum": ["auto"] }
+					]
+				},
+				"childrenRaw": {
+					"type": "boolean"
+				},
+				"parents": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/directive" }
+				},
+				"description": {
+					"type": "string"
+				},
+				"example": {
+					"type": "string"
+				},
+				"type": {
+					"type": "string",
+					"enum": ["css", "js", "html"]
 				}
 			}
 		}

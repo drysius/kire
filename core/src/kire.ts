@@ -292,6 +292,7 @@ export class Kire implements KireClass {
 		});
 
 		return {
+			"$schema":"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
 			package: name,
 			repository,
 			version,
