@@ -1,0 +1,13 @@
+{
+    "package": "@kirejs/components",
+    "version": "0.1.0",
+    "directives": [],
+    "elements": [
+        {
+            "name": {},
+            "void": false
+        }
+    ],
+    "globals": {},
+    "attributes": {}
+}

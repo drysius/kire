@@ -18,55 +18,31 @@
             "example": "@wire('counter', { count: 10 })"
         },
         {
+            "name": "wired",
+            "children": false,
+            "type": "html",
+            "description": "Injects the necessary client-side scripts for Wired.",
+            "example": "@wired"
+        },
+        {
+            "name": "wiredScripts",
+            "children": false,
+            "type": "html",
+            "description": "Alias for @wired. Injects client-side scripts.",
+            "example": "@wiredScripts"
+        },
+        {
             "name": "kirewire",
             "children": false,
             "type": "html",
-            "description": "Injects the necessary client-side scripts for Kirewire.",
+            "description": "Legacy alias for @wired.",
             "example": "@kirewire"
-        },
-        {
-            "name": "wireScripts",
-            "children": false,
-            "type": "html",
-            "description": "Alias for @kirewire. Injects client-side scripts.",
-            "example": "@wireScripts"
         }
     ],
     "elements": [],
     "globals": {
-        "$wire": {
-            "options": {
-                "method": "string",
-                "route": "string",
-                "cookiename": "string",
-                "cookieexpire": "string",
-                "cookiehttp": "boolean",
-                "secret": "string"
-            },
-            "checksum": {
-                "secret": "string"
-            },
-            "components": {},
-            "kireInstance": {
-                "$directives": {},
-                "$elements": {},
-                "$globals": {},
-                "namespaces": {},
-                "mounts": {},
-                "production": "boolean",
-                "$resolver": "function",
-                "$readdir": "undefined",
-                "extension": "string",
-                "$files": {},
-                "$parser": "function",
-                "$compiler": "function",
-                "$var_locals": "string",
-                "$expose_locals": "boolean",
-                "$cache": {},
-                "$executor": "function",
-                "$schematics": {}
-            }
-        },
+        "Wired": "function",
+        "$wire": "function",
         "kire": {
             "$directives": {},
             "$elements": {},
@@ -84,7 +60,8 @@
             "$expose_locals": "boolean",
             "$cache": {},
             "$executor": "function",
-            "$schematics": {}
+            "$schematics": {},
+            "wired": "function"
         }
     },
     "attributes": {
@@ -104,20 +81,25 @@
                 "comment": "Handles form submission.",
                 "example": "wire:submit=\"save\""
             },
-            "wire:submit.prevent": {
-                "type": "string",
-                "comment": "Handles form submission and prevents default behavior.",
-                "example": "wire:submit.prevent=\"save\""
-            },
             "wire:keydown": {
                 "type": "string",
                 "comment": "Listens for keydown events.",
                 "example": "wire:keydown=\"search\""
             },
-            "wire:keydown.enter": {
+            "wire:keyup": {
                 "type": "string",
-                "comment": "Listens for the Enter key.",
-                "example": "wire:keydown.enter=\"search\""
+                "comment": "\nListens for keyup events.\n\n### Example\n```html\n<input wire:keyup.escape=\"cancel\" />\n```\n",
+                "example": "wire:keyup.escape=\"cancel\""
+            },
+            "wire:mouseenter": {
+                "type": "string",
+                "comment": "Triggers action when mouse enters the element.",
+                "example": "wire:mouseenter=\"showTooltip\""
+            },
+            "wire:mouseleave": {
+                "type": "string",
+                "comment": "Triggers action when mouse leaves the element.",
+                "example": "wire:mouseleave=\"hideTooltip\""
             },
             "wire:init": {
                 "type": "string",
@@ -129,20 +111,15 @@
                 "comment": "Toggles visibility or classes while a network request is pending.",
                 "example": "wire:loading"
             },
-            "wire:loading.class": {
-                "type": "string",
-                "comment": "Adds a class while a network request is pending.",
-                "example": "wire:loading.class=\"opacity-50\""
-            },
-            "wire:loading.attr": {
-                "type": "string",
-                "comment": "Adds an attribute while a network request is pending.",
-                "example": "wire:loading.attr=\"disabled\""
-            },
             "wire:target": {
                 "type": "string",
                 "comment": "Scopes loading indicators to a specific method or model.",
                 "example": "wire:target=\"save\""
+            },
+            "wire:poll": {
+                "type": "string",
+                "comment": "Polls the server at a specified interval.",
+                "example": "wire:poll.2s=\"refresh\""
             },
             "wire:ignore": {
                 "type": "boolean",
@@ -159,11 +136,6 @@
                 "comment": "Internal ID of the component instance (auto-generated).",
                 "example": "wire:id=\"...\""
             },
-            "wire:poll": {
-                "type": "string",
-                "comment": "Polls the server at a specified interval.",
-                "example": "wire:poll.2s=\"refresh\""
-            },
             "wire:navigate": {
                 "type": "boolean",
                 "comment": "Enables SPA-like navigation for links.",
@@ -173,6 +145,41 @@
                 "type": "string",
                 "comment": "Prompts the user for confirmation before an action.",
                 "example": "wire:confirm=\"Are you sure?\""
+            },
+            "wire:stream": {
+                "type": "boolean",
+                "comment": "Enables streaming updates for this element (if supported by the backend response).",
+                "example": "wire:stream"
+            },
+            "wire:offline": {
+                "type": "boolean",
+                "comment": "\nToggles visibility or classes when the browser goes offline.\n\n### Modifiers\n- `.class`: Adds a class when offline\n- `.attr`: Adds an attribute when offline\n- `.remove`: Hides when offline\n\n### Example\n```html\n<div wire:offline>You are currently offline.</div>\n```\n",
+                "example": "wire:offline"
+            },
+            "wire:dirty": {
+                "type": "boolean",
+                "comment": "\nToggles visibility or classes when the component state is \"dirty\" (unsaved changes).\nUsually used with `wire:model`.\n\n### Modifiers\n- `.class`: Adds a class when dirty\n- `.attr`: Adds an attribute when dirty\n- `.remove`: Hides when dirty\n\n### Example\n```html\n<input wire:model=\"name\">\n<span wire:dirty>Unsaved changes...</span>\n```\n",
+                "example": "wire:dirty"
+            },
+            "wire:submit.prevent": {
+                "type": "string",
+                "comment": "Handles form submission and prevents default behavior.",
+                "example": "wire:submit.prevent=\"save\""
+            },
+            "wire:keydown.enter": {
+                "type": "string",
+                "comment": "Listens for the Enter key.",
+                "example": "wire:keydown.enter=\"search\""
+            },
+            "wire:loading.class": {
+                "type": "string",
+                "comment": "Adds a class while a network request is pending.",
+                "example": "wire:loading.class=\"opacity-50\""
+            },
+            "wire:loading.attr": {
+                "type": "string",
+                "comment": "Adds an attribute while a network request is pending.",
+                "example": "wire:loading.attr=\"disabled\""
             }
         }
     }

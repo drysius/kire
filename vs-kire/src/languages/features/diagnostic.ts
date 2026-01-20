@@ -151,8 +151,26 @@ export class KireDiagnosticProvider {
 					);
 				}
 
-				// Handle block directives
-				if (directiveDef.children) {
+				// Validate parents (sub-directives)
+				const allowedParents = kireStore.getState().parentDirectives.get(name);
+				if (allowedParents && allowedParents.length > 0) {
+					const parent = directiveStack[directiveStack.length - 1];
+					if (!parent || !allowedParents.includes(parent.name)) {
+						diagnostics.push(
+							new vscode.Diagnostic(
+								new vscode.Range(
+									position,
+									position.translate(0, fullMatch.length),
+								),
+								`Directive @${name} must be used inside: @${allowedParents.join(
+									", @",
+								)}`,
+								vscode.DiagnosticSeverity.Error,
+							),
+						);
+					}
+				} else if (directiveDef.children) {
+					// Handle block directives (only if not a sub-directive)
 					if (directiveDef.children === "auto") {
 						const nextChars = text.substring(match.index, text.length);
 						const hasEnd = nextChars.includes("@end");

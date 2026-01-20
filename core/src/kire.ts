@@ -230,7 +230,7 @@ export class Kire implements KireClass {
 	 * @param data The schematic data.
 	 * @returns The Kire instance.
 	 */
-	public schematic(type: string, data: any) {
+	public schematic(type: "attributes" | "attributes.global" | string, data: any) {
 		if (type === "attributes") {
 			if (!this.$schematics.has(type)) {
 				this.$schematics.set(type, {});
@@ -240,6 +240,13 @@ export class Kire implements KireClass {
 				if (!current[key]) current[key] = {};
 				Object.assign(current[key], data[key]);
 			}
+		} else if (type === "attributes.global") {
+			if (!this.$schematics.has("attributes")) {
+				this.$schematics.set("attributes", {});
+			}
+			const current = this.$schematics.get("attributes");
+			if (!current.global) current.global = {};
+			Object.assign(current.global, data);
 		} else {
 			this.$schematics.set(type, data);
 		}
@@ -412,6 +419,40 @@ export class Kire implements KireClass {
 	): Promise<string> {
 		const fn = await this.compileFn(template);
 		return this.run(fn, locals);
+	}
+
+	/**
+	 * Generates a styled HTML error page for a given error.
+	 * Use this in your catch blocks to display errors nicely in the browser.
+	 * @param e The error object caught during rendering.
+	 * @returns A string containing the HTML error page.
+	 */
+	public renderError(e: any): string {
+		return `<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Kire Error</title>
+	<style>
+		body { font-family: system-ui, -apple-system, sans-serif; background: #1a1a1a; color: #fff; padding: 2rem; margin: 0; }
+		.error-container { background: #2a2a2a; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid #444; max-width: 1200px; margin: 0 auto; }
+		.error-header { background: #ef4444; color: white; padding: 1rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
+		.error-content { padding: 1.5rem; overflow-x: auto; }
+		pre { margin: 0; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; color: #e5e5e5; }
+	</style>
+</head>
+<body>
+	<div class="error-container">
+		<div class="error-header">
+			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+			Kire Runtime Error
+		</div>
+		<div class="error-content">
+			<pre>${(e.message || e.toString()).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+		</div>
+	</div>
+</body>
+</html>`;
 	}
 
 	/**

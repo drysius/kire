@@ -1,0 +1,17 @@
+{
+  "name": "@kirejs/components",
+  "version": "0.1.0",
+  "description": "Blade-like component system for Kire",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+		"kire": "workspace:../../core"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "bun-types": "latest"
+  }
+}

@@ -23,7 +23,7 @@ export async function kireRuntime(
 	locals: Record<string, any>,
 	children = false,
 ) {
-	const rctx: any = {};
+	const rctx: any = { kire };
 	for (const [k, v] of kire.$globals) {
 		rctx[k] = v;
 	}
@@ -226,7 +226,7 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 
 		const regex = isVoid
 			? new RegExp(`<(${tagName})([^>]*)>`, "gi")
-			: new RegExp(`<(${tagName})([^>]*)>([^]*?)<\\/\\1>`, "gi");
+			: new RegExp(`<(${tagName})([^>]*)(\/>|>(?:([^]*?))<\\/\\1>)`, "gi");
 
 		const matches = [];
 		let match: RegExpExecArray | null;
@@ -235,7 +235,7 @@ async function processElements(kire: Kire, html: string, ctx: any) {
 				full: match[0],
 				tagName: match[1],
 				attrs: match[2],
-				inner: isVoid ? "" : match[3],
+				inner: isVoid ? "" : (match[4] ?? ""),
 				index: match.index,
 			});
 		}

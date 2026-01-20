@@ -38,8 +38,8 @@ export async function generate() {
 
 				// Dynamic import
 				const mod = await import(resolve(entry));
-				const plugin = mod.default;
-
+				let plugin = mod.default;
+				if('plugin' in plugin) plugin = plugin.plugin;
 				if (!plugin) {
 					console.log(`⚠️  No default export found in ${entry}, skipping.`);
 					continue;

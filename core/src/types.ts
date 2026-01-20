@@ -380,6 +380,12 @@ export interface DirectiveDefinition {
 	type?: "css" | "js" | "html";
 }
 
+export interface AttributeDefinition {
+	type: string;
+	comment?: string;
+	example?: string;
+}
+
 export interface KireSchematic {
 	package: string;
 	repository?: string | { type: string; url: string };
@@ -387,7 +393,7 @@ export interface KireSchematic {
 	directives?: DirectiveDefinition[];
 	elements?: ElementDefinition[];
 	globals?: Record<string, any>;
-	attributes?: Record<string, Record<string, any>>;
+	attributes?: Record<string, Record<string, AttributeDefinition | string>>;
 }
 
 export interface KirePlugin<Options extends object | undefined = {}> {

@@ -75,6 +75,44 @@ export class KireCompletionItemProvider
 		if (char === "@" || linePrefix.endsWith("@")) {
 			if (linePrefix.endsWith("@@")) return []; // Escaped
 
+			// Determine active parent directive
+			const textBefore = document.getText(
+				new vscode.Range(new vscode.Position(0, 0), position),
+			);
+			const directiveStack: string[] = [];
+			const directiveRegex = /@([a-zA-Z0-9_]+)/g;
+			let match: RegExpExecArray | null;
+
+			// Re-scan to find context (simplified stack logic)
+			while ((match = directiveRegex.exec(textBefore)) !== null) {
+				const name = match[1];
+				// Ignore "end" for stack pushing, but use it to pop
+				if (name === "end") {
+					directiveStack.pop();
+				} else {
+					const def = kireStore.getState().directives.get(name);
+					// Logic: if it has children and is NOT a sub-directive (no parents defined), push.
+					// Or if it simply has children. (Simplified: block starters push)
+					// We need to avoid pushing intermediate directives like @else if they don't start NEW blocks in Kire structure
+					// But for completion context, we generally want to know the "surrounding" block.
+					// Safe heuristic: if definition has children=true/"auto", push.
+					// AND if it has 'parents', we might not push? (Like @else).
+					// Actually, standard Diagnostic logic: if (allowedParents) don't push.
+					const allowedParents = kireStore
+						.getState()
+						.parentDirectives.get(name);
+					if (allowedParents && allowedParents.length > 0) {
+						// It's a sub-directive (e.g. else), doesn't start a new nesting context usually
+					} else if (def?.children) {
+						directiveStack.push(name);
+					}
+				}
+			}
+			const activeParent =
+				directiveStack.length > 0
+					? directiveStack[directiveStack.length - 1]
+					: undefined;
+
 			kireStore.getState().directives.forEach((def) => {
 				const item = new vscode.CompletionItem(
 					def.name,
@@ -82,6 +120,21 @@ export class KireCompletionItemProvider
 				);
 				item.detail = `Kire Directive (${def.type || "general"})`;
 				item.documentation = new vscode.MarkdownString(def.description || "");
+
+				// Prioritize if valid child of active parent
+				if (activeParent) {
+					const validParents = kireStore
+						.getState()
+						.parentDirectives.get(def.name);
+					if (validParents && validParents.includes(activeParent)) {
+						item.sortText = `0_${def.name}`; // Top priority
+						item.preselect = true;
+					} else {
+						item.sortText = `1_${def.name}`;
+					}
+				} else {
+					item.sortText = `1_${def.name}`;
+				}
 
 				let snippet = def.name;
 				if (def.params && def.params.length > 0) {
@@ -128,6 +181,10 @@ export class KireCompletionItemProvider
 					vscode.CompletionItemKind.Keyword,
 				);
 				endItem.documentation = "Closes the current directive block.";
+				// Prioritize closing if stack is not empty
+				if (directiveStack.length > 0) {
+					endItem.sortText = "0_end";
+				}
 				items.push(endItem);
 			}
 		}
