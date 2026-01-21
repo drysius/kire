@@ -33,6 +33,7 @@
 		"prebuild": "bun run build.ts"
 	},
 	"devDependencies": {
+		"@happy-dom/global-registrator": "^20.3.4",
 		"@types/bun": "latest",
 		"happy-dom": "^20.3.3",
 		"morphdom": "^2.7.8"

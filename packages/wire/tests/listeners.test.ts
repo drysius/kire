@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
-import { Window } from "happy-dom";
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import { WireComponent, Wired } from "../src";
 import { getClientScript } from "../src/utils/client-script";
 import { Kire } from "kire";
@@ -24,26 +24,28 @@ class EmptyComponent extends WireComponent {
 }
 
 describe("Wire Listeners & Placeholders", () => {
-    let window: any;
-    let document: any;
     const originalFetch = global.fetch;
 
-    afterEach(() => {
+    afterEach(async () => {
         global.fetch = originalFetch;
+        try {
+            await GlobalRegistrator.unregister();
+        } catch {}
     });
 
-    beforeEach(() => {
+    beforeEach(async () => {
+        try {
+            await GlobalRegistrator.unregister();
+        } catch {}
+        await GlobalRegistrator.register();
+
         const kire = new Kire();
         kire.plugin(Wired.plugin, { secret: "test" });
         Wired.register("cart", Cart);
         Wired.register("empty", EmptyComponent);
-
-        window = new Window();
-        document = window.document;
-        global.window = new Window();
-        global.document = window.document;
-        global.CustomEvent = window.CustomEvent;
-        global.Event = window.Event;
+        
+        // Reset DOM
+        document.body.innerHTML = "";
         
         window.fetch = mock(async (url, opts) => {
             const body = JSON.parse(opts.body);
@@ -53,15 +55,7 @@ describe("Wire Listeners & Placeholders", () => {
                 ok: true,
                 json: async () => res.data
             };
-        });
-        global.fetch = window.fetch;
-        
-        global.MutationObserver = window.MutationObserver;
-        global.HTMLElement = window.HTMLElement;
-        global.setTimeout = window.setTimeout;
-        global.clearTimeout = window.clearTimeout;
-        global.setInterval = window.setInterval;
-        global.clearInterval = window.clearInterval;
+        }) as any;
     });
 
     const runScript = () => {
