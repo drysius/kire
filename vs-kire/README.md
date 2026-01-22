@@ -1,32 +1,73 @@
-# Kire for VS Code
+# KIRE IntelliSense
 
-This extension provides comprehensive language support for the **Kire** template engine in Visual Studio Code.
+**The official language support extension for the Kire templating engine.**
 
-## Features
+KIRE IntelliSense provides a rich development experience for [Kire](https://github.com/drysius/kire), a powerful and expressive templating engine inspired by Blade, designed for Node.js, Bun, and Deno.
 
-- **Syntax Highlighting**: Full colorization for Kire syntax, including directives (`@if`, `@for`, etc.), interpolations (`{{ ... }}`), and raw blocks.
-- **Embedded Languages**: Supports syntax highlighting for HTML, CSS, and JavaScript within Kire templates.
-- **Snippets**: Productivity-boosting snippets for common Kire directives.
-- **File Icon**: Dedicated icon for `.kire` files.
+![Extension Preview](images/hero.png)
+*> Tip: Place a screenshot of the syntax highlighting here named `images/hero.png`*
 
-## Supported File Extensions
+## ✨ Features
 
-- `.kire`
+### 🎨 Syntax Highlighting
+Full colorization for Kire's expressive syntax, distinguishing between directives, control structures, and raw HTML.
 
-## Installation
+- **Directives:** `@if`, `@else`, `@foreach`, `@wire`, etc.
+- **Interpolations:** `{{ variable }}` and `{{{ raw_html }}}`.
+- **Comments:** `{{-- Kire Comments --}}`.
 
-1. Install via the Extensions marketplace: search for "Kire".
-2. Or build from source:
-   ```bash
-   cd vs-kire
-   npm install
-   npm run build
-   ```
+### 🧠 Smart Autocomplete
+Get intelligent suggestions for directives and built-in variables as you type.
 
-## Usage
+![Autocomplete Example](images/autocomplete.gif)
+*> Tip: Place a gif of the autocomplete in action here named `images/autocomplete.gif`*
 
-Simply open any `.kire` file, and the extension will automatically activate, providing syntax highlighting and language features.
+### ⚡ Productivity Snippets
+Type less and do more with built-in snippets for common structures like layouts, loops, and conditional blocks.
 
-## Contributing
+### 🛠️ Embedded Language Support
+Seamlessly write HTML, CSS, and JavaScript within your `.kire` files with full language feature support.
 
-Pull requests are welcome! If you find a bug or have a feature request, please open an issue in the main Kire repository.
+## 🚀 Installation
+
+1. Open **VS Code**.
+2. Go to the **Extensions** view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
+3. Search for **"KIRE IntelliSense"**.
+4. Click **Install**.
+
+## 🔧 Usage
+
+Simply open any file ending in `.kire`. The extension will activate automatically.
+
+**Example Code:**
+
+```kire
+@layout('layouts.app')
+
+@section('content')
+    <div class="container">
+        <h1>Hello, {{ user.name }}!</h1>
+
+        @if(user.isAdmin)
+            <button wire:click="openAdminPanel">Admin Panel</button>
+        @else
+            <p>Welcome back to the dashboard.</p>
+        @endif
+
+        <ul>
+        @foreach(items as item)
+            <li>{{ item.name }}</li>
+        @endforeach
+        </ul>
+    </div>
+@endsection
+```
+
+## 🤝 Contributing
+
+Found a bug? Want to suggest a feature? Contributions are welcome!
+Please open an issue on the [GitHub Repository](https://github.com/drysius/kire).
+
+## 📄 License
+
+MIT

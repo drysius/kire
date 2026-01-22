@@ -1,10 +1,10 @@
 {
-	"name": "vs-kire",
-	"displayName": "Kire Language Support",
-	"description": "Language support for the Kire templating engine.",
-	"version": "0.0.1",
+	"name": "kire-intellisense",
+	"displayName": "KIRE IntelliSense",
+	"description": "Advanced language support and IntelliSense for the Kire templating engine.",
+	"version": "0.1.0",
 	"type": "module",
-	"publisher": "drysius",
+	"publisher": "Kire",
 	"icon": "image.png",
 	"engines": {
 		"vscode": "^1.104.0"
