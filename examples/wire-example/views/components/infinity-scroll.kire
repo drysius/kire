@@ -1,21 +1,29 @@
-<div style="max-width: 600px; margin: 0 auto;">
-    <h2>Infinite Scroll Example</h2>
-    <p>Scroll down to load more items.</p>
+<div class="max-w-xl mx-auto py-8">
+    <div class="text-center mb-8">
+        <h2 class="text-3xl font-bold mb-2">Infinite Scroll Example</h2>
+        <p class="text-base-content/70">Scroll down to load more items.</p>
+    </div>
 
-    <ul style="list-style: none; padding: 0;">
+    <ul class="flex flex-col gap-4">
         @for(item in items)
-            <li style="padding: 20px; border: 1px solid #ddd; margin-bottom: 10px; border-radius: 8px; background: #fff;">
-                {{ item }}
+            <li class="card bg-base-100 shadow-sm border border-base-200">
+                <div class="card-body p-4">
+                    <h3 class="font-medium text-lg">{{ item }}</h3>
+                </div>
             </li>
         @end
     </ul>
+
     @if(hasMore)
-        <div wire:intersect="loadMore" style="text-align: center; padding: 20px; color: #666;">
-            <span wire:loading.remove>Loading more...</span>
-            <span wire:loading>Fetching data...</span>
+        <div wire:intersect="loadMore" class="text-center py-8">
+            <span wire:loading.remove class="text-sm opacity-50">Loading more...</span>
+            <div wire:loading class="flex items-center justify-center gap-2 text-primary">
+                <span class="loading loading-spinner loading-md"></span>
+                <span>Fetching data...</span>
+            </div>
         </div>
     @else
-        <div style="text-align: center; padding: 20px; color: #888;">
+        <div class="text-center py-8 text-base-content/50 italic">
             No more items to load.
         </div>
     @end

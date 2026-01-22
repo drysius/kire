@@ -1,10 +1,12 @@
-@include('layouts.app')
+@include('layouts.app', it)
 
 @define('content')
-    <h1 style="text-align: center;">Real-time Chat Example</h1>
-    <p style="text-align: center; color: #666; margin-bottom: 30px;">
-        Demonstrates <code>wire:poll</code>, shared state, and form handling.
-    </p>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">Real-time Chat Example</h1>
+        <p class="text-base-content/70">
+            Demonstrates <code class="badge badge-ghost">wire:poll</code>, shared state, and form handling.
+        </p>
+    </div>
 
     @wire('chat')
 @end

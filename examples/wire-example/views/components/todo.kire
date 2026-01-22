@@ -4,15 +4,15 @@
 
         <div x-data="{ task: $wire.entangle('task') }" class="join w-full">
             <input 
-                type="text" 
-                x-model="task" 
-                @keydown.enter="$wire.add()"
-                placeholder="New Task..." 
-                class="input input-bordered join-item w-full" 
+            type="text" 
+            x-model="task" 
+            @keydown.enter="$wire.add()"
+            placeholder="New Task..." 
+            class="input input-bordered join-item w-full" 
             />
             <button @click="$wire.add()" class="btn btn-primary join-item">Add</button>
         </div>
-        
+
         @if(errors && errors.task)
             <div class="text-error text-sm mt-1">{{ errors.task }}</div>
         @end

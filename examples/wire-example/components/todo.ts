@@ -20,6 +20,6 @@ export default class Todo extends WireComponent {
     }
 
     render() {
-        return this.view('views.todo-component');
+        return this.view('components.todo');
     }
 }

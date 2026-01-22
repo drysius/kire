@@ -25,6 +25,6 @@ export default class InfinityScroll extends WireComponent {
 	}
 
 	async render() {
-		return this.view("views.infinity-scroll");
+		return this.view("components.infinity-scroll");
 	}
 }

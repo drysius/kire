@@ -1,0 +1,10 @@
+<div class="card bg-base-100 shadow-xl border border-success mt-4">
+    <div class="card-body">
+        <h3 class="card-title text-success">Heavy Component (Lazy Loaded)</h3>
+        <ul class="list-disc list-inside">
+            @for(item of data)
+                <li>{{ item }}</li>
+            @end
+        </ul>
+    </div>
+</div>

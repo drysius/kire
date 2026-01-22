@@ -1,39 +1,64 @@
-<div style="border: 1px solid #ddd; padding: 20px; max-width: 400px; margin: 20px auto;">
-    <h2>Register</h2>
-    @if(successMessage)
-        <div style="background: #d4edda; color: #155724; padding: 10px; margin-bottom: 10px;">
-            {{ successMessage }}
-        </div>
-    @end
+<div class="card bg-base-100 shadow-xl max-w-md mx-auto border border-base-200">
+    <div class="card-body">
+        <h2 class="card-title text-2xl mb-4">Register</h2>
+        
+        @if(successMessage)
+            <div role="alert" class="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ successMessage }}</span>
+            </div>
+        @end
 
-    <form wire:submit.prevent="register">
-        <div style="margin-bottom: 10px;">
-            <label>Name</label>
-            <input type="text" wire:model.defer="name" style="width: 100%; padding: 5px;">
-            @if(errors.name) <span style="color: red; font-size: 0.8em;">{{ errors.name }}</span> @end
-        </div>
+        <form wire:submit.prevent="register" class="flex flex-col gap-4">
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text">Name</span>
+                </label>
+                <input type="text" wire:model.defer="name" class="input input-bordered w-full {{ errors.name ? 'input-error' : '' }}" />
+                @if(errors.name) 
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ errors.name }}</span>
+                    </label> 
+                @end
+            </div>
 
-        <div style="margin-bottom: 10px;">
-            <label>Email</label>
-            <input type="email" wire:model.defer="email" placeholder="Updates on submit" style="width: 100%; padding: 5px;">
-            @if(errors.email) <span style="color: red; font-size: 0.8em;">{{ errors.email }}</span> @end
-        </div>
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text">Email</span>
+                </label>
+                <input type="email" wire:model.defer="email" placeholder="Updates on submit" class="input input-bordered w-full {{ errors.email ? 'input-error' : '' }}" />
+                @if(errors.email) 
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ errors.email }}</span>
+                    </label> 
+                @end
+            </div>
 
-        <div style="margin-bottom: 10px;">
-            <label>Password</label>
-            <input type="password" wire:model.defer="password" style="width: 100%; padding: 5px;">
-            @if(errors.password) <span style="color: red; font-size: 0.8em;">{{ errors.password }}</span> @end
-        </div>
+            <div class="form-control w-full">
+                <label class="label">
+                    <span class="label-text">Password</span>
+                </label>
+                <input type="password" wire:model.defer="password" class="input input-bordered w-full {{ errors.password ? 'input-error' : '' }}" />
+                @if(errors.password) 
+                    <label class="label">
+                        <span class="label-text-alt text-error">{{ errors.password }}</span>
+                    </label> 
+                @end
+            </div>
 
-        <div wire:ignore style="margin-bottom: 15px; border: 1px dashed #999; padding: 5px;">
-            <p><strong>Static Content (wire:ignore)</strong></p>
-            <input type="text" id="datepicker" placeholder="I am a JS plugin input">
-            <small>Type here and update the form. I won't reset.</small>
-        </div>
+            <div wire:ignore class="p-4 border-2 border-dashed border-base-300 rounded-lg bg-base-200/50">
+                <p class="font-bold mb-2">Static Content (wire:ignore)</p>
+                <input type="text" id="datepicker" placeholder="I am a JS plugin input" class="input input-sm input-bordered w-full" />
+                <p class="text-xs mt-2 opacity-70">Type here and update the form. I won't reset.</p>
+            </div>
 
-        <button type="submit" wire:loading.attr="disabled" style="padding: 8px 15px; cursor: pointer;">
-            <span wire:loading.remove>Register</span>
-            <span wire:loading style="display: none;">Processing...</span>
-        </button>
-    </form>
+            <div class="card-actions justify-end mt-4">
+                <button type="submit" wire:loading.attr="disabled" class="btn btn-primary w-full">
+                    <span wire:loading.remove>Register</span>
+                    <span wire:loading class="loading loading-spinner loading-sm"></span>
+                    <span wire:loading>Processing...</span>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>

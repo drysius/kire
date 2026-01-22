@@ -32,6 +32,9 @@ export async function processRequest(
 		}
 		
 		const instance = new ComponentClass();
+        if (payload.id) {
+            instance.__id = payload.id;
+        }
 		let memo = createInitialMemo(instance, compName!);
 		let state: Record<string, any> = {};
 

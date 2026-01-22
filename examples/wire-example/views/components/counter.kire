@@ -1,4 +1,4 @@
-<div class="flex flex-col items-center gap-4">
+<div class="flex flex-col w-full items-center gap-4">
     <div class="text-4xl font-mono font-bold">{{ count }}</div>
     <div class="join">
         <button wire:click="decrement" class="btn btn-warning join-item">-</button>

@@ -28,6 +28,6 @@ export default class Upload extends WireComponent {
     }
 
     render() {
-        return this.view("views.upload-component");
+        return this.view("components.upload");
     }
 }

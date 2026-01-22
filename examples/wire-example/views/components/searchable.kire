@@ -1,0 +1,62 @@
+<div class="card bg-base-100 shadow-xl w-full max-w-4xl mx-auto border border-base-200">
+    <div class="card-body">
+        <div class="flex flex-col md:flex-row gap-4 mb-4">
+            <div class="form-control flex-1">
+                <div class="relative">
+                    <input 
+                        wire:model.live.debounce.300ms="search" 
+                        type="text"
+                        value="{{ search }}"
+                        placeholder="Search users..." 
+                        class="input input-bordered w-full pr-10"
+                    />
+                    <div wire:loading class="absolute right-3 top-3">
+                        <span class="loading loading-spinner loading-xs text-primary"></span>
+                    </div>
+                </div>
+            </div>
+            <select wire:model.live="roleFilter" class="select select-bordered w-full md:w-auto">
+                <option value="">All Roles</option>
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+            </select>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+                <!-- head -->
+                <thead>
+                    <tr class="bg-base-200">
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(user of filteredUsers)
+                        <tr class="hover">
+                            <td class="font-medium">{{ user.name }}</td>
+                            <td class="opacity-70">{{ user.email }}</td>
+                            <td>
+                                <span class="badge {{ user.role === 'Admin' ? 'badge-primary' : 'badge-ghost' }} badge-sm">
+                                    {{ user.role }}
+                                </span>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center py-8 text-base-content/50">
+                                <div class="flex flex-col items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                      <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                    </svg>
+                                    <span>No users found matching "{{ search }}"</span>
+                                </div>
+                            </td>
+                        </tr>
+                    @end
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

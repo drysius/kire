@@ -32,6 +32,7 @@ export class Component {
 
         const fullPayload: any = {
             component: this.name,
+            id: this.id,
             method: '$refresh',
             params: [],
             // Passing initial params for mount
@@ -52,6 +53,7 @@ export class Component {
     }
     
     private initListeners() {
+        if (!this.snapshot) return;
         const listeners = this.snapshot.memo.listeners || {};
         Object.entries(listeners).forEach(([event, method]) => {
             const handler = (e: any) => {

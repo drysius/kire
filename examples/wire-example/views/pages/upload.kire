@@ -1,4 +1,4 @@
-@include('layouts.app')
+@include('layouts.app', it)
 
 @define('content')
     @wire('upload')

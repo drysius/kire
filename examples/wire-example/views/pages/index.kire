@@ -1,4 +1,4 @@
-@include('layouts.app')
+@include('layouts.app', it)
 
 @define('content')
     <div class="hero min-h-[30vh] bg-base-100 rounded-box mb-6">
@@ -16,7 +16,7 @@
             <div class="card-body">
                 <h2 class="card-title">Counter</h2>
                 <p>Simple state management.</p>
-                <div class="card-actions justify-end">
+                <div class="card-actions justify-center">
                     @wire('counter')
                 </div>
             </div>

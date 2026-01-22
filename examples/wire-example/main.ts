@@ -11,7 +11,7 @@ const app = new Elysia({
 }).derive(() => ({ wireKey:"", user: {} }));
 // Initialize Kire
 const kire = new Kire({
-	production: process.env.NODE_ENV === "production",
+	production: process.env.NODE_ENV === "production"
 });
 
 void (async () => {
@@ -30,11 +30,12 @@ void (async () => {
     kire.namespace("layouts", path.join(process.cwd(), "views/layouts"));
     kire.namespace("components", path.join(process.cwd(), "views/components"));
     kire.namespace("pages", path.join(process.cwd(), "views/pages"));
+
 	// register server components
 	await kire.wired("components/*.ts");
 
 	// Middleware to set Wired Context
-	app.derive(async (context) => {
+	app.derive({ as:'global' }, async (context) => {
 		const session = context.cookie.session;
 		if(!session.value) {
 			session.value = crypto.randomUUID();
@@ -43,10 +44,17 @@ void (async () => {
 		// Use session ID + IP for secure identifier
 		const ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
 		const wireKey = Wired.keystore(session.value as string, ip);
+        
+        const url = new URL(context.request.url);
+        const isActive = (path: string) => {
+             if (path === '/') return url.pathname === '/';
+             return url.pathname.startsWith(path);
+        };
+        kire.$global('isActive', isActive);
 
 		return {
 			user: { id: session.value, name: "Guest" },
-			wireKey
+			wireKey,
 		};
 	});
 
@@ -65,7 +73,7 @@ void (async () => {
         context.set.headers["Content-Type"] = "text/html";
         return await kire.view("pages.chat", {
             $wireToken: context.wireKey,
-            user: context.user
+            user: context.user,
         });
     });
 
@@ -73,7 +81,7 @@ void (async () => {
         context.set.headers["Content-Type"] = "text/html";
         return await kire.view("pages.search", {
             $wireToken: context.wireKey,
-            user: context.user
+            user: context.user,
         });
     });
 
@@ -87,9 +95,9 @@ void (async () => {
 
     app.get("/toast", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.view("pages.toast-page", {
+        return await kire.view("pages.toast", {
             $wireToken: context.wireKey,
-            user: context.user
+            user: context.user,
         });
     });
 
@@ -97,7 +105,7 @@ void (async () => {
         context.set.headers["Content-Type"] = "text/html";
         return await kire.view("pages.upload", {
             $wireToken: context.wireKey,
-            user: context.user
+            user: context.user,
         });
     });
 
@@ -113,7 +121,7 @@ void (async () => {
 
     app.get("/stream", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.render("@include('views.layout') @define('content') @wire('streamer') @end", { $wireToken: context.wireKey, user: context.user });
+        return await kire.view("pages.todo", { $wireToken: context.wireKey, user: context.user });
     });
 
     app.get("/lazy", async (context) => {

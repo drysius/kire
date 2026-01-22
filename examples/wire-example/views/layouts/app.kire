@@ -4,15 +4,46 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>KireWire Example</title>
-        
+
         <!-- Tailwind + DaisyUI -->
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.10/dist/full.min.css" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
         @wired
-        
+
         <style>
             [x-cloak] { display: none !important; }
+            :root:has(input.theme-controller[value=dark]:checked),[data-theme="dark"] {
+                color-scheme: dark;
+                --color-base-100: oklch(14% 0 0);
+                --color-base-200: oklch(20% 0 0);
+                --color-base-300: oklch(26% 0 0);
+                --color-base-content: oklch(97% 0 0);
+                --color-primary: oklch(78% 0.115 274.713);
+                --color-primary-content: oklch(25% 0.09 281.288);
+                --color-secondary: oklch(81% 0.117 11.638);
+                --color-secondary-content: oklch(27% 0.105 12.094);
+                --color-accent: oklch(87% 0.15 154.449);
+                --color-accent-content: oklch(26% 0.065 152.934);
+                --color-neutral: oklch(43% 0 0);
+                --color-neutral-content: oklch(98% 0 0);
+                --color-info: oklch(58% 0.158 241.966);
+                --color-info-content: oklch(97% 0.013 236.62);
+                --color-success: oklch(62% 0.194 149.214);
+                --color-success-content: oklch(98% 0.018 155.826);
+                --color-warning: oklch(66% 0.179 58.318);
+                --color-warning-content: oklch(98% 0.022 95.277);
+                --color-error: oklch(58% 0.253 17.585);
+                --color-error-content: oklch(96% 0.015 12.422);
+                --radius-selector: 0rem;
+                --radius-field: 0.5rem;
+                --radius-box: 1rem;
+                --size-selector: 0.25rem;
+                --size-field: 0.25rem;
+                --border: 1px;
+                --depth: 0;
+                --noise: 0;
+            }
         </style>
     </head>
     <body>
@@ -23,18 +54,18 @@
                 <div class="navbar bg-base-100 w-full lg:hidden shadow-sm">
                     <div class="flex-none">
                         <label for="my-drawer-2" class="btn btn-square btn-ghost drawer-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                         </label>
                     </div>
                     <div class="flex-1">
                         <a class="btn btn-ghost text-xl">KireWire</a>
                     </div>
                 </div>
-                
+
                 <main class="w-full max-w-4xl p-6 flex-1 flex flex-col">
                     @defined('content')
                 </main>
-            
+
             </div> 
             <div class="drawer-side">
                 <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label> 
@@ -42,9 +73,12 @@
                     <!-- Sidebar content here -->
                     <li class="mb-4">
                         <div class="flex items-center gap-3 px-2">
-                            <div class="avatar placeholder">
-                                <div class="bg-neutral text-neutral-content rounded-full w-10">
-                                    <span class="text-xl">K</span>
+                            <div class="avatar">
+                                <div class="w-10 rounded">
+                                    <img
+                                    src="https://raw.githubusercontent.com/drysius/kire/refs/heads/main/vs-kire/icon.svg"
+                                    alt="Kire"
+                                    />
                                 </div>
                             </div>
                             <div>
@@ -53,21 +87,20 @@
                             </div>
                         </div>
                     </li>
-                    
+
                     <li><h2 class="menu-title">Examples</h2></li>
-                    <li><a href="/" class="{{ isActive('/') ? 'active' : '' }}">Dashboard</a></li>
-                    <li><a href="/todo" class="{{ isActive('/todo') ? 'active' : '' }}">Todo List</a></li>
-                    <li><a href="/chat" class="{{ isActive('/chat') ? 'active' : '' }}">Real-time Chat</a></li>
-                    <li><a href="/users" class="{{ isActive('/users') ? 'active' : '' }}">Users & Pagination</a></li>
-                    
+                    <li><a href="/" class="{{ isActive('/') ? 'bg-primary text-primary-content' : '' }}">Dashboard</a></li>
+                    <li><a href="/todo" class="{{ isActive('/todo') ? 'bg-primary text-primary-content' : '' }}">Todo List</a></li>
+                    <li><a href="/chat" class="{{ isActive('/chat') ? 'bg-primary text-primary-content' : '' }}">Real-time Chat</a></li>
+                    <li><a href="/users" class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a></li>
+
                     <li><h2 class="menu-title">Features</h2></li>
-                    <li><a href="/upload" class="{{ isActive('/upload') ? 'active' : '' }}">File Upload</a></li>
-                    <li><a href="/stream" class="{{ isActive('/stream') ? 'active' : '' }}">Streaming</a></li>
-                    <li><a href="/lazy" class="{{ isActive('/lazy') ? 'active' : '' }}">Lazy Loading</a></li>
-                    <li><a href="/toast" class="{{ isActive('/toast') ? 'active' : '' }}">Toasts</a></li>
-                </ul>
-            
-            </div>
-        </div>
-    </body>
-</html>
+                    <li><a href="/upload" class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
+                    <li><a href="/stream" class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
+                    <li><a href="/lazy" class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
+                    <li><a href="/toast" class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>                </ul>
+
+                    </div>
+                </div>
+            </body>
+        </html>

@@ -18,6 +18,6 @@ export default class Toast extends WireComponent {
     }
 
     async render() {
-        return this.view("views.toast");
+        return this.view("components.toast");
     }
 }

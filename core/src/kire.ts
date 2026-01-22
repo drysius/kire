@@ -35,6 +35,11 @@ export class Kire implements KireClass {
 	public $globals: Map<string, any> = new Map();
 
 	/**
+	 * Registry of application-level global variables accessible directly in templates.
+	 */
+	public $app_globals: Map<string, any> = new Map();
+
+	/**
 	 * Registry of namespaces for path resolution.
 	 * Maps prefix (e.g. "~") to absolute path templates.
 	 */
@@ -291,6 +296,10 @@ export class Kire implements KireClass {
 			globals[key] = processValue(value);
 		});
 
+		this.$app_globals.forEach((value, key) => {
+			globals[key] = processValue(value);
+		});
+
 		return {
 			"$schema":"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
 			package: name,
@@ -364,6 +373,18 @@ export class Kire implements KireClass {
 	 */
 	public $ctx(key: string, value: any) {
 		this.$globals.set(key, value);
+		return this;
+	}
+
+	/**
+	 * Registers an application-level global variable accessible directly in all templates.
+	 * Unlike $ctx, these are intended for data/constants rather than helpers.
+	 * @param key The variable name.
+	 * @param value The value.
+	 * @returns The Kire instance for chaining.
+	 */
+	public $global(key: string, value: any) {
+		this.$app_globals.set(key, value);
 		return this;
 	}
 

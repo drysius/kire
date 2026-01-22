@@ -1,47 +1,5 @@
-@include('layouts.app')
+@include('layouts.app', it)
 
 @define('content')
-<div class="card bg-base-100 shadow-xl">
-    <div class="card-body">
-        <h2 class="card-title">User Management</h2>
-        
-        <div class="form-control mb-4">
-            <input 
-                type="text" 
-                wire:model.live="search" 
-                placeholder="Search users..." 
-                class="input input-bordered w-full" 
-            />
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for(user of users.data)
-                        <tr class="hover">
-                            <th>{{ user.id }}</th>
-                            <td>{{ user.name }}</td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="2" class="text-center italic opacity-50">No users found.</td>
-                        </tr>
-                    @end
-                </tbody>
-            </table>
-        </div>
-
-        <div class="flex justify-between items-center mt-4">
-            <button wire:click="previousPage" class="btn btn-sm" {{ users.currentPage === 1 ? 'disabled' : '' }}>Previous</button>
-            <span class="text-sm">Page {{ users.currentPage }} of {{ users.lastPage }}</span>
-            <button wire:click="nextPage" class="btn btn-sm" {{ !users.hasMore ? 'disabled' : '' }}>Next</button>
-        </div>
-    </div>
-</div>
+    @wire('users')
 @end

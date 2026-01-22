@@ -24,6 +24,7 @@ export interface WirePayload {
 	component: string;
 	snapshot: string; // JSON string containing { data, memo, checksum }
 	method?: string;
+    id?: string; // Optional ID for lazy loading or initialization
 	params?: unknown[];
 	updates?: Record<string, unknown>;
 	// _token acts as validation but isn't part of the core payload processing logic usually, but good to have

@@ -1,10 +1,12 @@
-@include('layouts.app')
+@include('layouts.app', it)
 
 @define('content')
-    <h1 style="text-align: center;">Searchable List Example</h1>
-    <p style="text-align: center; color: #666; margin-bottom: 30px;">
-        Demonstrates <code>wire:model.live</code>, filtering, and <code>wire:loading</code>.
-    </p>
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">Searchable List Example</h1>
+        <p class="text-base-content/70">
+            Demonstrates <code class="badge badge-ghost">wire:model.live</code>, filtering, and <code class="badge badge-ghost">wire:loading</code>.
+        </p>
+    </div>
 
     @wire('searchable')
 @end

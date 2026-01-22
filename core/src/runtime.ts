@@ -27,6 +27,9 @@ export async function kireRuntime(
 	for (const [k, v] of kire.$globals) {
 		rctx[k] = v;
 	}
+	for (const [k, v] of kire.$app_globals) {
+		rctx[k] = v;
+	}
 	Object.assign(rctx, locals);
 
 	if (kire.$expose_locals) {

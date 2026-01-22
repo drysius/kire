@@ -25,6 +25,6 @@ export default class Users extends PaginatedUsers {
     }
 
     render() {
-        return this.view('views.users');
+        return this.view('components.users');
     }
 }
