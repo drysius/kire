@@ -5,21 +5,35 @@ import { getClientScript } from "../utils/client-script";
 export function registerDirectives(kire: Kire, options: WireOptions) {
 	kire.directive({
 		name: "wire",
-		params: ["name:string", "params?:object"],
+		params: ["name:string", "params?:object", "options?:object"],
 		children: false,
 		type: "html",
 		description: "Renders a Kirewire component.",
-		example: "@wire('counter', { count: 10 })",
+		example: "@wire('counter', { count: 10 }, { lazy: true })",
 		async onCall(compiler) {
 			const nameExpr = compiler.param("name");
 			const paramsExpr = compiler.param("params") || "{}";
+            const optionsExpr = compiler.param("options") || "{}";
 
 			compiler.raw(`await (async () => {
                 const $w = $ctx.$wire;
-                const $c = $w.getComponentClass(${JSON.stringify(nameExpr)});
+                const $name = ${JSON.stringify(nameExpr)};
+                const $params = ${paramsExpr};
+                const $opts = ${optionsExpr};
+                
+                if ($opts.lazy) {
+                    const $id = crypto.randomUUID();
+                    const $pJson = JSON.stringify($params).replace(/"/g, '&quot;');
+                    $ctx.res('<div wire:id="' + $id + '" wire:lazy="true" wire:component="' + $name + '" wire:init-params="' + $pJson + '">');
+                    $ctx.res($opts.placeholder || 'Loading...');
+                    $ctx.res('</div>');
+                    return;
+                }
+
+                const $c = $w.getComponentClass($name);
                 
                 if (!$c) {
-                    $ctx.res('<!-- Wire component "${nameExpr}" not found -->');
+                    $ctx.res('<!-- Wire component "' + $name + '" not found -->');
                     return;
                 }
 
@@ -27,7 +41,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 $i.kire = $ctx.kire;
                 $i.context = { ...$ctx, kire: $ctx.kire };
 
-                if ($i.mount) await $i.mount(${paramsExpr});
+                if ($i.mount) await $i.mount($params);
                 
                 let $html = $i.render();
                 if (typeof $html === "string") {
@@ -43,7 +57,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 
                 const $memo = {
                     id: $i.__id,
-                    name: ${JSON.stringify(nameExpr)},
+                    name: $name,
                     path: "/", 
                     method: "GET",
                     children: [],
@@ -66,7 +80,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 const $esc = $snap.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const $style = (!$html || !$html.trim()) ? ' style="display: none;"' : '';
 
-                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="${nameExpr}"' + $style + '>');
+                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="' + $name + '"' + $style + '>');
                 $ctx.res($html || '');
                 $ctx.res('</div>');
             })();`);

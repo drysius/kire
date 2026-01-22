@@ -13,11 +13,6 @@ export default class Receiver extends WireComponent {
 	}
 
 	async render() {
-		return `
-        <div style="border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
-            <h3>Receiver</h3>
-            <p>${this.message}</p>
-        </div>
-        `;
+		return this.view('components.receiver');
 	}
 }

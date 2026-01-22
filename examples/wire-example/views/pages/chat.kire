@@ -1,4 +1,4 @@
-@include('views.layout')
+@include('layouts.app')
 
 @define('content')
     <h1 style="text-align: center;">Real-time Chat Example</h1>

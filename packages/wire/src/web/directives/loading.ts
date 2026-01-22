@@ -1,30 +1,26 @@
 import { directive } from "../core/registry";
+import { toggleBooleanState } from "../utils/shared";
 
 directive('loading', (el, dir, component) => {
+    // Initial state check - usually hidden unless .remove
+    // We assume default state is NOT loading
+    toggleBooleanState(el, dir, false, el.style.display);
+
     window.addEventListener('wire:loading', (e: any) => {
         if (e.detail.id !== component.id) return;
         
-        const loading = e.detail.loading;
-        const target = e.detail.target;
-
-        // wire:target check
+        let isLoading = false;
         const targetAttr = el.getAttribute('wire:target');
-        if (targetAttr && target) {
+
+        if (targetAttr) {
             const targets = targetAttr.split(',').map(t => t.trim());
-            if (!targets.includes(target)) return;
+            // Check if any of the targets are active
+            isLoading = targets.some(t => (component as any).activeRequests.has(t));
+        } else {
+            // Global loading (no target specified)
+            isLoading = e.detail.anyLoading;
         }
 
-        if (dir.modifiers.includes('class')) {
-            const classes = dir.value.split(' ');
-            if (loading) el.classList.add(...classes);
-            else el.classList.remove(...classes);
-        } else if (dir.modifiers.includes('attr')) {
-            if (loading) el.setAttribute(dir.value, 'true');
-            else el.removeAttribute(dir.value);
-        } else if (dir.modifiers.includes('remove')) {
-            el.style.display = loading ? 'none' : '';
-        } else {
-            el.style.display = loading ? 'inline-block' : 'none';
-        }
+        toggleBooleanState(el, dir, isLoading, el.style.display);
     });
 });

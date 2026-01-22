@@ -25,6 +25,6 @@ export default class RegisterForm extends WireComponent {
 	}
 
 	async render() {
-		return this.view("views.form");
+		return this.view("views.components.form");
 	}
 }

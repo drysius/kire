@@ -1,4 +1,4 @@
-@include('views.layout')
+@include('layouts.app')
 
 @define('content')
     @wire('toast')

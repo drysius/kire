@@ -1,0 +1,14 @@
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title">Live Stream Logs</h2>
+        <p>Demonstrates server-side HTML streaming.</p>
+        
+        <div class="card-actions">
+            <button wire:click="addLog" class="btn btn-secondary btn-sm">Add Log Stream</button>
+        </div>
+
+        <div wire:stream="logs" class="mockup-code h-64 overflow-y-auto mt-4 bg-neutral text-neutral-content block">
+            <!-- Stream Target -->
+        </div>
+    </div>
+</div>

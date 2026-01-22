@@ -15,9 +15,15 @@ import './directives/keydown';
 import './directives/ignore';
 import './directives/offline';
 import './directives/intersect';
+import './directives/loading-progress';
+import './directives/stream';
+import { registerMagic } from './core/magic';
 
 export default function WiredAlpinePlugin(Alpine: any) {
     const config = (window as any).__KIREWIRE_CONFIG__ || { endpoint: '/_wired', adapter: 'http' };
+    
+    // Register $wire magic
+    registerMagic(Alpine);
     
     // Polyfill for x-data="kirewire" safety
     Alpine.data('kirewire', () => ({}));
@@ -46,10 +52,16 @@ export default function WiredAlpinePlugin(Alpine: any) {
         let component = findComponentByEl(el);
         if (!component && el.hasAttribute('wire:id')) {
             const snapshot = el.getAttribute('wire:snapshot');
-            if (snapshot) {
+            const isLazy = el.hasAttribute('wire:lazy');
+
+            if (snapshot || isLazy) {
                 component = new Component(el, snapshot, config, adapter);
                 addComponent(component);
                 (el as any).__livewire = component;
+
+                if (isLazy && !snapshot) {
+                    component.loadLazy();
+                }
             }
         }
 

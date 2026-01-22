@@ -1,0 +1,10 @@
+@include('layouts.app')
+
+@define('content')
+    <div class="prose max-w-none mb-6">
+        <h1>Server Streaming</h1>
+        <p>This example demonstrates how the server can push HTML updates to specific elements on the page without re-rendering the whole component.</p>
+    </div>
+
+    @wire('streamer')
+@end

@@ -1,0 +1,49 @@
+<div class="card bg-base-100 shadow-xl w-full max-w-2xl mx-auto">
+    <div class="card-body">
+        <h2 class="card-title">File Upload</h2>
+        
+        @if(message)
+            <div class="alert alert-success">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span>{{ message }}</span>
+            </div>
+        @end
+
+        <div class="form-control w-full">
+            <div class="label">
+                <span class="label-text">Pick a file (supports defer)</span>
+            </div>
+            <input type="file" wire:model.defer="file" class="file-input file-input-bordered w-full" />
+        </div>
+
+        @if(file)
+            <div class="stats shadow mt-4 w-full">
+                <div class="stat">
+                    <div class="stat-title">Selected File</div>
+                    <div class="stat-value text-lg">{{ file.name }}</div>
+                    <div class="stat-desc">{{ (file.size / 1024).toFixed(2) }} KB</div>
+                    @if(file.type.startsWith('image/'))
+                        <div class="mt-2">
+                            <img src="{{ file.content }}" class="max-h-32 rounded-lg border border-base-300" />
+                        </div>
+                    @end
+                </div>
+            </div>
+        @end
+
+        <!-- Progress Bar -->
+        <div wire:loading wire:target="save" class="w-full mt-4">
+            <progress class="progress progress-primary w-full" wire:loading-progress wire:target="save"></progress>
+            <div class="text-center text-xs mt-1 opacity-70">
+                <span wire:loading-progress wire:target="save" data-show-text="true">0%</span> Uploading...
+            </div>
+        </div>
+
+        <div class="card-actions justify-end mt-4">
+            <button wire:click="save" class="btn btn-primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">Upload</span>
+                <span wire:loading wire:target="save" class="loading loading-spinner"></span>
+            </button>
+        </div>
+    </div>
+</div>

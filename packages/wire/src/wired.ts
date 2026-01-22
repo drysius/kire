@@ -8,7 +8,7 @@ import { attachContext } from "./core/context";
 import { registerDirectives } from "./core/directives";
 import { processRequest } from "./core/process";
 import { registry } from "./core/registry";
-import type { WireOptions, WirePayload, WiredRequest } from "./types";
+import type { WireContext, WireOptions, WirePayload, WiredRequest } from "./types";
 import { JWT } from "./utils/crypto";
 
 export class Wired {
@@ -19,7 +19,7 @@ export class Wired {
         expire: "10m",
     };
 
-    public static invalid = { code: 400, error: "Invalid Request" };
+    public static invalid = { code: 400, error: "Invalid Request", data:{} };
     public static checksum: ChecksumManager;
     private static kire: Kire;
 
@@ -126,10 +126,61 @@ export class Wired {
     }
 
     public static validate(body: any): boolean {
-        return body && typeof body === 'object' && (Boolean(body.component) || Boolean(body.snapshot));
+        return body && typeof body === 'object' && (Boolean(body.component) || Boolean(body.snapshot) || Boolean(body._wired_payload));
     }
 
-    public static async payload(wirekey: string, body: WirePayload, contextOverrides: Partial<WireContext> = {}) {
+    public static async payload(wirekey: string, body: any, contextOverrides: Partial<WireContext> = {}) {
+        // Handle Multipart/FormData
+        // Expects body to be parsed by framework (e.g. Elysia)
+        if (body && typeof body === 'object' && body._wired_payload) {
+            try {
+                const originalPayload = JSON.parse(body._wired_payload);
+                
+                // Recursively restore files
+                const restoreFiles = async (obj: any): Promise<any> => {
+                    if (obj && typeof obj === 'object') {
+                        if (obj._wire_file) {
+                            const fileId = obj._wire_file;
+                            const file = body[fileId];
+                            if (file) {
+                                // Convert Blob/File to Base64 (Server-side)
+                                // Adapting to standard File API (Bun/Node)
+                                const arrayBuffer = await file.arrayBuffer();
+                                const buffer = Buffer.from(arrayBuffer);
+                                const base64 = buffer.toString('base64');
+                                const mime = file.type || 'application/octet-stream';
+                                
+                                return {
+                                    name: file.name,
+                                    size: file.size,
+                                    type: mime,
+                                    lastModified: file.lastModified,
+                                    content: `data:${mime};base64,${base64}`
+                                };
+                            }
+                            return null;
+                        }
+                        
+                        if (Array.isArray(obj)) {
+                            return Promise.all(obj.map(restoreFiles));
+                        }
+                        
+                        const newObj: any = {};
+                        for (const key in obj) {
+                            newObj[key] = await restoreFiles(obj[key]);
+                        }
+                        return newObj;
+                    }
+                    return obj;
+                };
+
+                body = await restoreFiles(originalPayload);
+            } catch (e) {
+                console.error("Failed to parse multipart wired payload", e);
+                return Wired.invalid;
+            }
+        }
+
         // Construct WiredRequest for hooks
         const now = Math.floor(Date.now() / 1000);
         let expire = 600; // 10m default

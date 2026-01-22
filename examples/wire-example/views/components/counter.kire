@@ -1,0 +1,8 @@
+<div class="flex flex-col items-center gap-4">
+    <div class="text-4xl font-mono font-bold">{{ count }}</div>
+    <div class="join">
+        <button wire:click="decrement" class="btn btn-warning join-item">-</button>
+        <button wire:click="reset" class="btn btn-ghost join-item">Reset</button>
+        <button wire:click="increment" class="btn btn-success join-item">+</button>
+    </div>
+</div>

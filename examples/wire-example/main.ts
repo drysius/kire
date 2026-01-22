@@ -4,7 +4,11 @@ import { Wired } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 
-const app = new Elysia();
+const app = new Elysia({
+    serve: {
+		maxRequestBodySize: 600 * 1024 * 1024 // 600MB
+	}
+}).derive(() => ({ wireKey:"", user: {} }));
 // Initialize Kire
 const kire = new Kire({
 	production: process.env.NODE_ENV === "production",
@@ -23,7 +27,9 @@ void (async () => {
 
 	// add views namespace for .kire files
 	kire.namespace("views", path.join(process.cwd(), "views"));
-
+    kire.namespace("layouts", path.join(process.cwd(), "views/layouts"));
+    kire.namespace("components", path.join(process.cwd(), "views/components"));
+    kire.namespace("pages", path.join(process.cwd(), "views/pages"));
 	// register server components
 	await kire.wired("components/*.ts");
 
@@ -36,7 +42,7 @@ void (async () => {
 		
 		// Use session ID + IP for secure identifier
 		const ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
-		const wireKey = Wired.keystore(session.value, ip);
+		const wireKey = Wired.keystore(session.value as string, ip);
 
 		return {
 			user: { id: session.value, name: "Guest" },
@@ -49,7 +55,7 @@ void (async () => {
 		context.set.headers["Content-Type"] = "text/html";
 		
 		// Pass the wireKey as $wireToken so initial render checksum matches server expectations
-		return await kire.view("views.index", {
+		return await kire.view("pages.index", {
 			$wireToken: context.wireKey,
 			user: context.user
 		});
@@ -57,7 +63,7 @@ void (async () => {
 
     app.get("/chat", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.view("views.chat", {
+        return await kire.view("pages.chat", {
             $wireToken: context.wireKey,
             user: context.user
         });
@@ -65,7 +71,7 @@ void (async () => {
 
     app.get("/search", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.view("views.search", {
+        return await kire.view("pages.search", {
             $wireToken: context.wireKey,
             user: context.user
         });
@@ -73,7 +79,7 @@ void (async () => {
 
     app.get("/infinity", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.view("views.infinity", {
+        return await kire.view("pages.infinity", {
             $wireToken: context.wireKey,
             user: context.user
         });
@@ -81,26 +87,74 @@ void (async () => {
 
     app.get("/toast", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
-        return await kire.view("views.toast-page", {
+        return await kire.view("pages.toast-page", {
             $wireToken: context.wireKey,
             user: context.user
         });
     });
 
+    app.get("/upload", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("pages.upload", {
+            $wireToken: context.wireKey,
+            user: context.user
+        });
+    });
+
+    app.get("/todo", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("pages.todo", { $wireToken: context.wireKey, user: context.user });
+    });
+
+    app.get("/users", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("pages.users", { $wireToken: context.wireKey, user: context.user });
+    });
+
+    app.get("/stream", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.render("@include('views.layout') @define('content') @wire('streamer') @end", { $wireToken: context.wireKey, user: context.user });
+    });
+
+    app.get("/lazy", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await kire.view("pages.lazy", { $wireToken: context.wireKey, user: context.user });
+    });
+
 	// Wired Endpoint
 	app.post(Wired.options.route, async (context) => {
-		// 1. Basic Payload Validation
-		if (Wired.validate(context.body)) {
-			
-			// 2. Process the request
-			const result = await Wired.payload(context.wireKey, context.body as any);
+        console.log(`[POST] ${Wired.options.route} - Incoming Request`);
+        try {
+            // Debug logs
+            // console.log("Headers:", context.request.headers);
+            // console.log("Body Type:", typeof context.body);
+            // if (typeof context.body === 'object') {
+            //     console.log("Body Keys:", Object.keys(context.body || {}));
+            //     if ((context.body as any)._wired_payload) {
+            //         console.log("Multipart Payload found");
+            //     }
+            // }
 
-			context.set.status = result.code;
-			return result.data;
-		} else {
-			context.set.status = 400;
-			return Wired.invalid;
-		}
+            // 1. Basic Payload Validation
+            const isValid = Wired.validate(context.body);
+            if (isValid) {
+                // 2. Process the request
+                console.log("Validation passed. Processing payload...");
+                const result = await Wired.payload(context.wireKey, context.body as any);
+                
+                console.log("Payload processed. Code:", result.code);
+                context.set.status = result.code;
+                return result.data;
+            } else {
+                console.warn("Validation failed for body:", context.body);
+                context.set.status = 400;
+                return Wired.invalid;
+            }
+        } catch (e) {
+            console.error("[Server Error] Exception in /_wired handler:", e);
+            context.set.status = 500;
+            return { error: "Internal Server Error" };
+        }
 	});
 
 	app.listen(3000);

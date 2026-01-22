@@ -1,0 +1,84 @@
+<div style="padding: 20px;">
+    <h2>Toast Notification Example</h2>
+    <div style="display: flex; gap: 10px;">
+        <button wire:click="showSuccess" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">
+            Show Success
+        </button>
+        <button wire:click="showError" style="padding: 10px 20px; background: #ef4444; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">
+            Show Error
+        </button>
+        <button wire:click="showInfo" style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; transition: background 0.2s;">
+            Show Info
+        </button>
+    </div>
+</div>
+
+<!-- Global Toast Container -->
+<div 
+    x-data="{ 
+        toasts: [],
+        add(type, message) {
+            const id = Date.now();
+            this.toasts.push({ id, type, message, visible: false });
+            
+            // Trigger animation in next tick
+            requestAnimationFrame(() => {
+                const index = this.toasts.findIndex(t => t.id === id);
+                if(index !== -1) this.toasts[index].visible = true;
+            });
+
+            setTimeout(() => {
+                this.remove(id);
+            }, 4000);
+        },
+        remove(id) {
+            const index = this.toasts.findIndex(t => t.id === id);
+            if (index !== -1) {
+                this.toasts[index].visible = false;
+                // Wait for animation to finish before removing from array
+                setTimeout(() => {
+                    this.toasts = this.toasts.filter(t => t.id !== id);
+                }, 300);
+            }
+        }
+    }"
+    @notify.window="add($event.detail[0].type, $event.detail[0].message)"
+    style="position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none;"
+>
+    <template x-for="toast in toasts" :key="toast.id">
+        <div 
+            style="pointer-events: auto; display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 8px; background: white; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); min-width: 300px; border: 1px solid #e5e7eb; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);"
+            :style="toast.visible ? 'opacity: 1; transform: translateY(0) scale(1);' : 'opacity: 0; transform: translateY(20px) scale(0.95);'"
+        >
+            <!-- Icon -->
+            <div :style="`
+                display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%;
+                background-color: ${
+                    toast.type === 'success' ? '#d1fae5' : 
+                    toast.type === 'error' ? '#fee2e2' : '#dbeafe'
+                };
+                color: ${
+                    toast.type === 'success' ? '#059669' : 
+                    toast.type === 'error' ? '#dc2626' : '#2563eb'
+                };
+            `">
+                <!-- Success -->
+                <svg x-show="toast.type === 'success'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <!-- Error -->
+                <svg x-show="toast.type === 'error'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <!-- Info -->
+                <svg x-show="toast.type === 'info'" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            </div>
+
+            <!-- Content -->
+            <div style="flex: 1;">
+                <p x-text="toast.message" style="margin: 0; font-size: 0.95rem; font-weight: 500; color: #1f2937;"></p>
+            </div>
+
+            <!-- Close Button -->
+            <button @click="remove(toast.id)" style="background: transparent; border: none; cursor: pointer; color: #9ca3af; padding: 4px; display: flex;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+    </template>
+</div>

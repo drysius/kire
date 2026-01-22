@@ -12,7 +12,7 @@ export interface PackageInfo {
 }
 
 export async function getPackages(): Promise<PackageInfo[]> {
-	const packagePaths = await glob(["core", "packages/*", "kire-intelicensse"]);
+	const packagePaths = await glob(["core", "packages/*", "vs-kire"]);
 	const packages = new Map<string, PackageInfo>();
 
 	for (const packagePath of packagePaths) {

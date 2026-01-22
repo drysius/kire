@@ -1,0 +1,36 @@
+@include('layouts.app')
+
+@define('content')
+    <div class="hero min-h-[30vh] bg-base-100 rounded-box mb-6">
+        <div class="hero-content text-center">
+            <div class="max-w-md">
+                <h1 class="text-5xl font-bold">Hello there</h1>
+                <p class="py-6">Welcome to the KireWire Kitchen Sink. Explore the examples to see how it works.</p>
+                <a href="/todo" class="btn btn-primary">Get Started</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Counter</h2>
+                <p>Simple state management.</p>
+                <div class="card-actions justify-end">
+                    @wire('counter')
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title">Events</h2>
+                <p>Communication between components.</p>
+                <div class="flex flex-col gap-4">
+                    @wire('sender')
+                    @wire('receiver')
+                </div>
+            </div>
+        </div>
+    </div>
+@end

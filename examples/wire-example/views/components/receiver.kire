@@ -1,0 +1,6 @@
+<div class="card bg-base-200 shadow-sm">
+    <div class="card-body p-4">
+        <h3 class="card-title text-sm">Receiver</h3>
+        <p class="text-sm opacity-75">{{ message }}</p>
+    </div>
+</div>

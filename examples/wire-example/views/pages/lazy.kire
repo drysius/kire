@@ -1,0 +1,15 @@
+@include('layouts.app')
+
+@define('content')
+<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2>Lazy Loading Example</h2>
+    <p>The component below will only load after the page is ready.</p>
+
+    @wire('heavy', { id: 123 }, { 
+        lazy: true, 
+        placeholder: '<div style="padding: 20px; border: 1px dashed gray;">Loading heavy data...</div>' 
+    })
+
+    <p style="margin-top: 20px;">This text is rendered immediately.</p>
+</div>
+@end

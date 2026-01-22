@@ -77,6 +77,11 @@ class Publisher {
 }
 
 const args = process.argv.slice(2);
-const version = args[0]; // Optional version argument
+let version = args[0];
+
+if (version?.startsWith("v")) {
+	version = version.slice(1);
+}
+
 const publisher = new Publisher();
 publisher.publish(version).catch(console.error);

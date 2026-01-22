@@ -3,7 +3,9 @@ import { getValueFromElement } from "../core/value";
 
 directive('model', (el, dir, component) => {
     const prop = dir.value;
-    const eventType = (dir.modifiers.includes('lazy') || el.tagName === 'SELECT') ? 'change' : 'input';
+    const isFile = el instanceof HTMLInputElement && el.type === 'file';
+    const isDefer = dir.modifiers.includes('defer');
+    const eventType = (dir.modifiers.includes('lazy') || el.tagName === 'SELECT' || isFile) ? 'change' : 'input';
     
     let debounce = 150;
     const debounceMod = dir.modifiers.find((m: string) => m.startsWith('debounce'));
@@ -15,8 +17,31 @@ directive('model', (el, dir, component) => {
     if (eventType === 'change') debounce = 0;
 
     let timeout: any;
-    el.addEventListener(eventType, () => {
+    el.addEventListener(eventType, async () => {
+        if (isFile) {
+            const input = el as HTMLInputElement;
+            let val: any = null;
+
+            if (input.files && input.files.length > 0) {
+                // Pass raw File objects. The HttpAdapter will handle FormData conversion.
+                val = input.multiple ? Array.from(input.files) : input.files[0];
+            }
+            
+            if (isDefer) {
+                component.deferUpdate({ [prop]: val });
+            } else {
+                component.update({ [prop]: val });
+            }
+            return;
+        }
+
         const val = getValueFromElement(el);
+        
+        if (isDefer) {
+            component.deferUpdate({ [prop]: val });
+            return;
+        }
+
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             component.update({ [prop]: val });
@@ -24,7 +49,4 @@ directive('model', (el, dir, component) => {
     });
     
     // Initial Sync
-    // We only set if DOM is empty/default to respect server state on hydration
-    // But for model, we usually want to sync server -> client on load if client is empty?
-    // Or if server rendered value="" attribute, it's already there.
 });

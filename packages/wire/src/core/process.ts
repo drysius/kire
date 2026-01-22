@@ -47,11 +47,19 @@ export async function processRequest(
 		// 4. Initialize Component
 		initializeComponent(instance, kire, contextOverrides, memo);
 
+        // 4.1 Initial Mount (Lazy)
+        if (!payload.snapshot) {
+            if (instance.mount) {
+                // If it's lazy, updates contains the init-params
+                await instance.mount(payload.updates || {});
+            }
+        }
+
 		// 5. Hydrate & Update
 		instance.fill(state);
 		await instance.hydrated();
 		
-		if (payload.updates) {
+		if (payload.snapshot && payload.updates) {
 			await applyUpdates(instance, payload.updates);
 		}
 
@@ -147,8 +155,10 @@ export async function applyUpdates(instance: WireComponent, updates: Record<stri
 		if (isReservedProperty(prop)) continue;
 
 		if (prop in instance) {
+            await instance.updating(prop, value);
 			(instance as any)[prop] = value;
 			instance.clearErrors(prop);
+            await instance.updated(prop, value);
 		}
 	}
 }
@@ -159,9 +169,9 @@ export async function executeMethod(
 	params: unknown[]
 ): Promise<{ error?: { code: number; data: { error: string } } } | void> {
 	const FORBIDDEN_METHODS = [
-		"mount", "render", "hydrated", "updated", "rendered", "view",
+		"mount", "render", "hydrated", "updated", "updating", "rendered", "view",
 		"emit", "redirect", "addError", "clearErrors", "fill",
-		"getPublicProperties", "constructor", "getDataForRender"
+		"getPublicProperties", "constructor", "getDataForRender", "validate", "stream"
 	];
 
 	if (FORBIDDEN_METHODS.includes(method) || method.startsWith("_")) {
@@ -171,6 +181,7 @@ export async function executeMethod(
 	if (method === "$set" && params.length === 2) {
 		const [prop, value] = params;
 		if (typeof prop === "string" && !isReservedProperty(prop)) {
+            await instance.updating(prop, value);
 			(instance as any)[prop] = value;
 			instance.clearErrors(prop);
 			await instance.updated(prop, value);
@@ -179,7 +190,6 @@ export async function executeMethod(
 		await instance.updated("$refresh", null);
 	} else if (typeof (instance as any)[method] === "function") {
 		await (instance as any)[method](...params);
-		await instance.updated(method, params[0]);
 	}
 }
 
@@ -227,9 +237,25 @@ export function createResponse(
 
 	if (instance.__events.length > 0)
 		effects.emits = instance.__events.map((e) => ({ event: e.name, params: e.params }));
+    
+    if (instance.__streams.length > 0)
+        (effects as any).streams = instance.__streams;
+
 	if (instance.__redirect) effects.redirect = instance.__redirect;
 	if (Object.keys(instance.__errors).length > 0) effects.errors = instance.__errors as any;
 	if (Object.keys(instance.listeners).length > 0) effects.listeners = instance.listeners;
+
+    // Handle Query String Sync
+    if (instance.queryString && instance.queryString.length > 0) {
+        const queryParams = new URLSearchParams();
+        for (const key of instance.queryString) {
+            const val = (instance as any)[key];
+            if (val !== undefined && val !== null && val !== "") {
+                queryParams.set(key, String(val));
+            }
+        }
+        effects.url = queryParams.toString();
+    }
 
 	return {
 		code: 200,

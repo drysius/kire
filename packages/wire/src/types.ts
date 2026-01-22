@@ -38,7 +38,9 @@ export interface WireResponse {
 			returns?: unknown[];
 			dirty?: string[];
 			emits?: Array<{ event: string; params: any[] }>;
+			streams?: Array<any>;
 			redirect?: string;
+			url?: string; // Query String Update
 			errors?: Record<string, string>;
 			listeners?: Record<string, string>;
 		};
