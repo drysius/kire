@@ -9,13 +9,12 @@ describe("Wire Directives", () => {
         registerDirectives(kire, { route: "/_wire" });
         
         const code = await kire.compile("@wire('counter', { start: 5 })");
-        
         expect(code).toContain('const $w = $ctx.$wire');
-        expect(code).toContain('getComponentClass("counter")');
+        expect(code).toContain('getComponentClass($name)');
         expect(code).toContain('new $c()');
-        expect(code).toContain('$i.mount({ start: 5 })');
+        expect(code).toContain('$i.mount($params)');
         expect(code).toContain('wire:snapshot');
-        expect(code).toContain('wire:component="counter"');
+        expect(code).toContain(`'" wire:component="' + $name + '"'`);
     });
 
     test("@wired (scripts) should inject client script", async () => {

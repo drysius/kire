@@ -74,3 +74,4 @@ export interface WireContext {
 	socket?: unknown;
 	[key: string]: unknown;
 }
+
