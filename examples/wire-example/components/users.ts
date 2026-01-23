@@ -1,13 +1,10 @@
-import { WireComponent, WithPagination } from "@kirejs/wire";
+import { WirePageComponent } from "@kirejs/wire";
 
 // Mock data
 const ALL_USERS = Array.from({ length: 50 }, (_, i) => ({ id: i + 1, name: `User ${i + 1}` }));
 
-// Manual Mixin application because TS decorators are experimental
-class BaseUsers extends WireComponent {}
-const PaginatedUsers = WithPagination(BaseUsers);
 
-export default class Users extends PaginatedUsers {
+export default class Users extends WirePageComponent {
     public search = "";
     
     // Sync 'search' and 'page' with URL
@@ -18,7 +15,7 @@ export default class Users extends PaginatedUsers {
         return this.paginate(filtered);
     }
 
-    async updating(name: string, value: any) {
+    async updating(name: string, _value: any) {
         if (name === 'search') {
             this.resetPage(); // Reset page when searching
         }

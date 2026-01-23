@@ -1,6 +1,7 @@
 // Export types and core classes
 export * from "./wired";
 export * from "./component";
+export * from "./page-component";
 export * from "./types";
 export * from "./traits/pagination";
 

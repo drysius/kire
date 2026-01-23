@@ -1,29 +1,9 @@
 import * as vscode from "vscode";
 import { kireStore } from "../../store";
+import { HtmlDiagnosticProvider } from "../html";
 
 export class TagAutoCloseProvider {
 	private disposable: vscode.Disposable;
-
-	// Standard HTML void elements
-	private readonly htmlVoidElements = new Set([
-		"area",
-		"base",
-		"br",
-		"col",
-		"embed",
-		"hr",
-		"img",
-		"input",
-		"link",
-		"meta",
-		"param",
-		"source",
-		"track",
-		"wbr",
-		"command",
-		"keygen",
-		"menuitem",
-	]);
 
 	constructor() {
 		this.disposable = vscode.workspace.onDidChangeTextDocument(
@@ -76,14 +56,11 @@ export class TagAutoCloseProvider {
 		if (!tagName) return;
 
 		// Check if void
-		if (this.htmlVoidElements.has(tagName.toLowerCase())) return;
+		if (HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase())) return;
 
 		// Check Kire elements definition
 		const kireElement = kireStore.getState().elements.get(tagName);
 		if (kireElement?.void) return;
-
-		// Insert closing tag
-		const _snippet = `</${tagName}>`;
 
 		// We use a snippet string to place cursor between tags if we want,
 		// but typically auto-close just appends closing tag and keeps cursor inside.

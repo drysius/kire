@@ -2,7 +2,7 @@
 	"name": "kire-intellisense",
 	"displayName": "KIRE IntelliSense",
 	"description": "Advanced language support and IntelliSense for the Kire templating engine.",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"publisher": "Kire",
 	"icon": "image.png",

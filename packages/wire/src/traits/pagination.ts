@@ -30,17 +30,34 @@ export function WithPagination<TBase extends Constructor<WireComponent>>(Base: T
             this.page = 1;
         }
         
-        // Helper to slice array data
-        public paginate(items: any[]) {
-            const start = (this.page - 1) * this.perPage;
-            const end = start + this.perPage;
+        // Helper to slice array data or handle existing pagination
+        public paginate(items: any[] | { data: any[]; total: number }) {
+            let data: any[] = [];
+            let total = 0;
+
+            if (Array.isArray(items)) {
+                total = items.length;
+                const start = (this.page - 1) * this.perPage;
+                const end = start + this.perPage;
+                data = items.slice(start, end);
+            } else {
+                data = items.data;
+                total = items.total;
+            }
+
+            const lastPage = Math.ceil(total / this.perPage);
+            const startItem = (this.page - 1) * this.perPage + 1;
+            const endItem = Math.min(this.page * this.perPage, total);
+
             return {
-                data: items.slice(start, end),
-                total: items.length,
+                data,
+                total,
                 currentPage: this.page,
-                lastPage: Math.ceil(items.length / this.perPage),
+                lastPage,
                 perPage: this.perPage,
-                hasMore: end < items.length
+                hasMore: this.page < lastPage,
+                from: total > 0 ? startItem : 0,
+                to: total > 0 ? endItem : 0,
             };
         }
     };

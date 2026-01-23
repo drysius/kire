@@ -335,7 +335,9 @@ export interface ElementDefinition {
 	description?: string;
 	example?: string;
 	void?: boolean;
-	onCall: KireElementHandler;
+	type?: "html" | "javascript" | "css";
+	attributes?: Record<string, AttributeDefinition | string>;
+	onCall?: KireElementHandler; // Optional because schematic-only elements don't have handlers
 }
 
 /**

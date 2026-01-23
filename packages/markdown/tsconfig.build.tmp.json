@@ -1,9 +1,9 @@
 {
-  "extends": "../tsconfig.base.build.json",
+  "extends": "../../tsconfig.base.build.json",
   "compilerOptions": {
     "declaration": true,
     "emitDeclarationOnly": true,
-    "declarationDir": "C:\\Users\\Drylian\\Documents\\GitHub\\kire\\publish\\vs-kire\\dist\\types",
+    "declarationDir": "C:\\Users\\Drylian\\Documents\\GitHub\\kire\\publish\\packages\\markdown\\dist\\types",
     "noEmit": false,
     "rootDir": "src",
     "baseUrl": ".",
@@ -16,7 +16,7 @@
         "C:\\Users\\Drylian\\Documents\\GitHub\\kire\\publish\\core\\dist\\types\\index.d.ts"
       ],
       "@kirejs/*": [
-        "../packages/*/src/index.ts"
+        "../../packages/*/src/index.ts"
       ]
     }
   },

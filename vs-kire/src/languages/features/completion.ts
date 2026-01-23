@@ -190,20 +190,46 @@ export class KireCompletionItemProvider
 		}
 
 		// 3. Attributes (Inside element tag)
-		// Heuristic: line has <tagName, and we are not inside quotes (simplified)
-		const tagMatch = linePrefix.match(/<[a-zA-Z0-9_-]+/);
-		if (tagMatch && !linePrefix.includes(">")) {
-			// Check if we are inside a directive param or something else
-			// If last char is space, or we are typing an attribute name
-			const isAttributeContext = /\s[a-zA-Z0-9_\-:]*$/.test(linePrefix);
+		// Heuristic: line starts with <tagName ... (handling multiline is harder with linePrefix, assuming single line or simple context)
+		// Better regex: Find last <TAG that isn't closed
+		const lastTagMatch = linePrefix.match(/<([a-zA-Z0-9_-]+)(?:\s+[^>]*?)?$/);
+		
+		if (lastTagMatch) {
+			const tagName = lastTagMatch[1];
+			
+			// Check if we are inside quotes (simple toggle check)
+			const quoteCount = (linePrefix.match(/['"]/g) || []).length;
+			if (quoteCount % 2 !== 0) return items; // Inside attribute value
 
-			if (isAttributeContext) {
-				kireStore.getState().attributes.forEach((def, name) => {
+			// Global Attributes
+			kireStore.getState().attributes.forEach((def, name) => {
+				const item = new vscode.CompletionItem(
+					name,
+					vscode.CompletionItemKind.Property,
+				);
+				item.detail = `Attribute (${def.type})`;
+
+				const doc = new vscode.MarkdownString(def.comment || "");
+				if (def.example) {
+					doc.appendCodeblock(def.example, "html");
+				}
+				item.documentation = doc;
+
+				item.insertText = new vscode.SnippetString(`${name}="$0"`);
+				items.push(item);
+			});
+
+			// Element-specific Attributes
+			const elementDef = kireStore.getState().elements.get(tagName);
+			if (elementDef && elementDef.attributes) {
+				Object.entries(elementDef.attributes).forEach(([name, rawDef]) => {
+					const def = typeof rawDef === 'string' ? { type: rawDef } : rawDef;
 					const item = new vscode.CompletionItem(
 						name,
 						vscode.CompletionItemKind.Property,
 					);
-					item.detail = `Attribute (${def.type})`;
+					item.detail = `Attribute (${def.type}) [${tagName}]`;
+					item.sortText = `0_${name}`; // Prioritize specific attributes
 
 					const doc = new vscode.MarkdownString(def.comment || "");
 					if (def.example) {

@@ -1,29 +1,10 @@
 import * as vscode from "vscode";
 import { type DirectiveDefinition, kireStore } from "../../store";
 import { parseParamDefinition } from "../../utils/params";
+import { HtmlDiagnosticProvider } from "../html";
 
 export class KireDiagnosticProvider {
 	private diagnosticCollection: vscode.DiagnosticCollection;
-
-	// HTML void elements (self-closing)
-	private readonly htmlVoidElements = new Set([
-		"area",
-		"base",
-		"br",
-		"col",
-		"embed",
-		"hr",
-		"img",
-		"input",
-		"link",
-		"meta",
-		"param",
-		"source",
-		"track",
-		"wbr",
-		"command",
-		"keygen",
-	]);
 
 	constructor() {
 		this.diagnosticCollection =
@@ -446,7 +427,7 @@ export class KireDiagnosticProvider {
 					}
 				} else if (
 					isSelfClosing &&
-					!this.htmlVoidElements.has(name.toLowerCase())
+					!HtmlDiagnosticProvider.htmlVoidElements.has(name.toLowerCase())
 				) {
 					// Non-void element with self-closing tag (error)
 					diagnostics.push(
@@ -630,7 +611,7 @@ export class KireDiagnosticProvider {
 				continue; // Skip Kire elements, they're validated elsewhere
 			}
 
-			const isVoid = this.htmlVoidElements.has(tagName.toLowerCase());
+			const isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase());
 
 			if (!isClosing && !isVoid) {
 				stack.push({

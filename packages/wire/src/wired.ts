@@ -41,6 +41,25 @@ export class Wired {
 		// Register attributes schema
 		kire.schematic("attributes.global", WireAttributes);
 
+        // Register standard Alpine.js elements
+        kire.schematic("elements", {
+            template: {
+                description: "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
+                attributes: {
+                    "x-for": {
+                        type: "string",
+                        comment: "Iterates over an array or object. Must be used on a <template> tag.",
+                        example: 'x-for="item in items"'
+                    },
+                    "x-if": {
+                        type: "string",
+                        comment: "Conditionally renders content. Must be used on a <template> tag.",
+                        example: 'x-if="open"'
+                    }
+                }
+            }
+        });
+
 		// Register directives
 		registerDirectives(kire, Wired.options);
 

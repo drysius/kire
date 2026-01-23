@@ -1,4 +1,4 @@
-import { Wired, WireComponent } from "@kirejs/wire";
+import { WireComponent } from "@kirejs/wire";
 
 export default class InfinityScroll extends WireComponent {
 	public items: string[] = [];

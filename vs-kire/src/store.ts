@@ -15,6 +15,8 @@ export interface ElementDefinition {
 	description?: string;
 	example?: string;
 	void?: boolean;
+	type?: "html" | "javascript" | "css";
+	attributes?: Record<string, AttributeDefinition | string>;
 }
 
 export interface AttributeDefinition {

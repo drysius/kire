@@ -396,7 +396,7 @@ export class HtmlSelectionRangeProvider
 
 export class HtmlDiagnosticProvider {
 	// HTML void elements (self-closing)
-	private readonly htmlVoidElements = new Set([
+	public static readonly htmlVoidElements = new Set([
 		"area",
 		"base",
 		"br",
@@ -413,6 +413,17 @@ export class HtmlDiagnosticProvider {
 		"wbr",
 		"command",
 		"keygen",
+		// SVG void elements
+		"path",
+		"circle",
+		"line",
+		"rect",
+		"ellipse",
+		"polygon",
+		"polyline",
+		"stop",
+		"use",
+		"image",
 	]);
 
 	createDiagnostics(document: vscode.TextDocument): vscode.Diagnostic[] {
@@ -440,7 +451,7 @@ export class HtmlDiagnosticProvider {
 			const position = document.positionAt(match.index);
 
 			// Check if element is void (self-closing)
-			let isVoid = this.htmlVoidElements.has(tagName.toLowerCase());
+			let isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase());
 			// kire element check
 			if (store.elements.get(tagName))
 				isVoid = !!store.elements.get(tagName)?.void;
@@ -530,8 +541,61 @@ export class HtmlDiagnosticProvider {
 		text: string,
 		diagnostics: vscode.Diagnostic[],
 	) {
-		// Validate unquoted attribute values
-		const unquotedAttrRegex = /\s([a-zA-Z-]+)=([^"'\s>]+)(?=\s|\/?>)/g;
+		const store = kireStore.getState();
+
+		// 1. Validate JavaScript Attributes (Nested Quotes)
+		const jsAttrRegex = /([:@a-zA-Z0-9\-\.]+)\s*=\s*(["'])/g;
+		let jsMatch: RegExpExecArray | null;
+
+		while ((jsMatch = jsAttrRegex.exec(text)) !== null) {
+			const attrName = jsMatch[1];
+			const quote = jsMatch[2];
+			const startValueIndex = jsMatch.index + jsMatch[0].length;
+
+			// Check if attribute is javascript type
+			let def = store.attributes.get(attrName);
+			if (!def) {
+				// Try to find in generic elements if not global (simplified)
+				for (const el of store.elements.values()) {
+					if (el.attributes && el.attributes[attrName]) {
+						const attr = el.attributes[attrName];
+						def = typeof attr === "string" ? { type: attr } : attr;
+						break;
+					}
+				}
+			}
+
+			if (def?.type === "javascript") {
+				let current = startValueIndex;
+				while (current < text.length) {
+					const char = text[current];
+					if (char === quote && text[current - 1] !== "\\") {
+						// Found a closing quote. Check if it looks like premature closure.
+						// Look ahead for suspicious characters that suggest JS continuation (brackets, parens, dot, semicolon)
+						// instead of HTML attribute separators (space, >, /)
+						const nextChunk = text.slice(current + 1, current + 50); // Peek ahead
+						const trimmedNext = nextChunk.trim();
+						
+						if (trimmedNext && /^[a-zA-Z0-9_{}\[\]\(\),.;+\-*\/=!&|]/.test(trimmedNext)) {
+							// High probability of unescaped quote error
+							const position = document.positionAt(current);
+							diagnostics.push(
+								new vscode.Diagnostic(
+									new vscode.Range(position, position.translate(0, 1)),
+									`Unescaped quote in JavaScript attribute. Use \\${quote} to avoid breaking HTML syntax.`,
+									vscode.DiagnosticSeverity.Error,
+								),
+							);
+						}
+						break; // Stop after first unescaped quote to match parser behavior
+					}
+					current++;
+				}
+			}
+		}
+
+		// 2. Validate unquoted attribute values
+		const unquotedAttrRegex = /\s([a-zA-Z0-9\-\:@\.]+)=([^"'\s>]+)(?=\s|\/?>)/g;
 		let match: RegExpExecArray | null;
 
 		while ((match = unquotedAttrRegex.exec(text)) !== null) {
@@ -545,7 +609,8 @@ export class HtmlDiagnosticProvider {
 			if (
 				attrValue.includes(" ") ||
 				attrValue.includes("=") ||
-				attrValue.includes(">")
+				attrValue.includes(">") ||
+				attrValue.includes("{") // JS object start
 			) {
 				diagnostics.push(
 					new vscode.Diagnostic(
@@ -557,20 +622,8 @@ export class HtmlDiagnosticProvider {
 			}
 		}
 
-		// Validate empty attribute values
-		const emptyAttrRegex = /\s([a-zA-Z-]+)=(?=\s|\/?>)/g;
-		while ((match = emptyAttrRegex.exec(text)) !== null) {
-			const attrName = match[1];
-			const position = document.positionAt(match.index + match[0].indexOf("="));
-
-			diagnostics.push(
-				new vscode.Diagnostic(
-					new vscode.Range(position, position.translate(0, 1)),
-					`Attribute "${attrName}" has empty value`,
-					vscode.DiagnosticSeverity.Warning,
-				),
-			);
-		}
+		// 3. Validate empty attribute values (if strict, but usually allowed for boolean)
+		// Skipping strict empty check for now as standard HTML allows it (boolean attrs)
 	}
 }
 
@@ -651,6 +704,36 @@ export class HtmlLinkedEditingProvider {
 	}
 }
 
+export class HtmlDocumentFormattingEditProvider
+	implements vscode.DocumentFormattingEditProvider
+{
+	provideDocumentFormattingEdits(
+		document: vscode.TextDocument,
+		options: vscode.FormattingOptions,
+		_token: vscode.CancellationToken,
+	): vscode.ProviderResult<vscode.TextEdit[]> {
+		const lspDoc = toLspDocument(document);
+		
+		// Configure formatting options
+		const formatOptions = {
+			tabSize: options.tabSize,
+			insertSpaces: options.insertSpaces,
+			indentScripts: "keep" as any, // Don't mangle script tags
+			unformatted: "", // Add tags to skip if needed
+		};
+
+		const textEdits = htmlLanguageService.format(
+			lspDoc,
+			undefined, // range (undefined = full doc)
+			formatOptions,
+		);
+
+		return textEdits.map(
+			(edit) => new vscode.TextEdit(toVsCodeRange(edit.range), edit.newText),
+		);
+	}
+}
+
 // Classe principal para registrar todos os providers
 export class HtmlLanguageFeatures {
 	static register(_context: vscode.ExtensionContext): vscode.Disposable {
@@ -700,6 +783,10 @@ export class HtmlLanguageFeatures {
 			vscode.languages.registerDocumentLinkProvider(
 				{ language: "kire" },
 				new HtmlDocumentLinkProvider(),
+			),
+			vscode.languages.registerDocumentFormattingEditProvider(
+				{ language: "kire" },
+				new HtmlDocumentFormattingEditProvider(),
 			),
 		];
 

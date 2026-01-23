@@ -300,13 +300,22 @@ export class Kire implements KireClass {
 			globals[key] = processValue(value);
 		});
 
+		const elements = Array.from(this.$elements.values());
+		const schematicElements = this.$schematics.get("elements");
+		if (schematicElements) {
+			// schematicElements is a Record<string, ElementDefinition>
+			Object.entries(schematicElements).forEach(([name, def]: [string, any]) => {
+				elements.push({ name, ...def });
+			});
+		}
+
 		return {
 			"$schema":"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
 			package: name,
 			repository,
 			version,
 			directives: Array.from(this.$directives.values()),
-			elements: Array.from(this.$elements.values()),
+			elements,
 			globals: globals,
 			attributes: this.$schematics.get("attributes") || {},
 		};

@@ -1,4 +1,5 @@
 {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
     "package": "@kirejs/wire",
     "repository": {
         "type": "git",
@@ -10,12 +11,13 @@
             "name": "wire",
             "params": [
                 "name:string",
-                "params?:object"
+                "params?:object",
+                "options?:object"
             ],
             "children": false,
             "type": "html",
             "description": "Renders a Kirewire component.",
-            "example": "@wire('counter', { count: 10 })"
+            "example": "@wire('counter', { count: 10 }, { lazy: true })"
         },
         {
             "name": "wired",
@@ -39,7 +41,24 @@
             "example": "@kirewire"
         }
     ],
-    "elements": [],
+    "elements": [
+        {
+            "name": "template",
+            "description": "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
+            "attributes": {
+                "x-for": {
+                    "type": "string",
+                    "comment": "Iterates over an array or object. Must be used on a <template> tag.",
+                    "example": "x-for=\"item in items\""
+                },
+                "x-if": {
+                    "type": "string",
+                    "comment": "Conditionally renders content. Must be used on a <template> tag.",
+                    "example": "x-if=\"open\""
+                }
+            }
+        }
+    ],
     "globals": {
         "Wired": "function",
         "$wire": "function",
@@ -47,6 +66,7 @@
             "$directives": {},
             "$elements": {},
             "$globals": {},
+            "$app_globals": {},
             "namespaces": {},
             "mounts": {},
             "production": "boolean",
@@ -160,6 +180,91 @@
                 "type": "boolean",
                 "comment": "\nToggles visibility or classes when the component state is \"dirty\" (unsaved changes).\nUsually used with `wire:model`.\n\n### Modifiers\n- `.class`: Adds a class when dirty\n- `.attr`: Adds an attribute when dirty\n- `.remove`: Hides when dirty\n\n### Example\n```html\n<input wire:model=\"name\">\n<span wire:dirty>Unsaved changes...</span>\n```\n",
                 "example": "wire:dirty"
+            },
+            "x-data": {
+                "type": "javascript",
+                "comment": "Declares a new Alpine component scope.",
+                "example": "x-data=\"{ open: false }\""
+            },
+            "x-init": {
+                "type": "javascript",
+                "comment": "Runs code when an element is initialized.",
+                "example": "x-init=\"console.log('I am being initialized')\""
+            },
+            "x-show": {
+                "type": "boolean",
+                "comment": "Toggles the visibility of an element.",
+                "example": "x-show=\"open\""
+            },
+            "x-bind": {
+                "type": "javascript",
+                "comment": "Sets the value of an attribute.",
+                "example": "x-bind:class=\"{ 'hidden': !open }\""
+            },
+            "x-on": {
+                "type": "javascript",
+                "comment": "Attaches an event listener to the element.",
+                "example": "x-on:click=\"open = !open\""
+            },
+            "x-text": {
+                "type": "javascript",
+                "comment": "Updates the text content of an element.",
+                "example": "x-text=\"username\""
+            },
+            "x-html": {
+                "type": "javascript",
+                "comment": "Updates the inner HTML of an element.",
+                "example": "x-html=\"content\""
+            },
+            "x-model": {
+                "type": "javascript",
+                "comment": "Adds two-way data binding to an element.",
+                "example": "x-model=\"search\""
+            },
+            "x-for": {
+                "type": "javascript",
+                "comment": "Iterates over an array or object. Must be used on a <template> tag.",
+                "example": "x-for=\"item in items\""
+            },
+            "x-transition": {
+                "type": "boolean",
+                "comment": "Applies enter and leave transitions to an element.",
+                "example": "x-transition.duration.500ms"
+            },
+            "x-effect": {
+                "type": "javascript",
+                "comment": "Executes a script each time one of its dependencies changes.",
+                "example": "x-effect=\"console.log(open)\""
+            },
+            "x-ignore": {
+                "type": "boolean",
+                "comment": "Prevents Alpine from initializing attributes within the element.",
+                "example": "x-ignore"
+            },
+            "x-ref": {
+                "type": "string",
+                "comment": "References an element directly by name.",
+                "example": "x-ref=\"myInput\""
+            },
+            "x-cloak": {
+                "type": "boolean",
+                "comment": "Hides the element until Alpine has initialized.",
+                "example": "x-cloak"
+            },
+            "x-teleport": {
+                "type": "string",
+                "comment": "Teleports the element to another part of the DOM.",
+                "example": "x-teleport=\"body\""
+            },
+            "x-if": {
+                "type": "javascript",
+                "comment": "Conditionally renders an element. Must be used on a <template> tag.",
+                "example": "x-if=\"open\""
+            },
+            "x-id": {
+                "type": "string",
+                "comment": "Generates a unique ID for accessible elements.",
+                "example": "x-id=\"['text-input']\""
             },
             "wire:submit.prevent": {
                 "type": "string",

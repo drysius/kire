@@ -292,4 +292,90 @@ Usually used with \`wire:model\`.
 `,
     example: "wire:dirty",
   },
+  // Alpine.js Attributes
+  "x-data": {
+    type: "javascript",
+    comment: "Declares a new Alpine component scope.",
+    example: 'x-data="{ open: false }"',
+  },
+  "x-init": {
+    type: "javascript",
+    comment: "Runs code when an element is initialized.",
+    example: 'x-init="console.log(\'I am being initialized\')"',
+  },
+  "x-show": {
+    type: "boolean",
+    comment: "Toggles the visibility of an element.",
+    example: 'x-show="open"',
+  },
+  "x-bind": {
+    type: "javascript",
+    comment: "Sets the value of an attribute.",
+    example: 'x-bind:class="{ \'hidden\': !open }"',
+  },
+  "x-on": {
+    type: "javascript",
+    comment: "Attaches an event listener to the element.",
+    example: 'x-on:click="open = !open"',
+  },
+  "x-text": {
+    type: "javascript",
+    comment: "Updates the text content of an element.",
+    example: 'x-text="username"',
+  },
+  "x-html": {
+    type: "javascript",
+    comment: "Updates the inner HTML of an element.",
+    example: 'x-html="content"',
+  },
+  "x-model": {
+    type: "javascript",
+    comment: "Adds two-way data binding to an element.",
+    example: 'x-model="search"',
+  },
+  "x-for": {
+    type: "javascript",
+    comment: "Iterates over an array or object. Must be used on a <template> tag.",
+    example: 'x-for="item in items"',
+  },
+  "x-transition": {
+    type: "boolean",
+    comment: "Applies enter and leave transitions to an element.",
+    example: 'x-transition.duration.500ms',
+  },
+  "x-effect": {
+    type: "javascript",
+    comment: "Executes a script each time one of its dependencies changes.",
+    example: 'x-effect="console.log(open)"',
+  },
+  "x-ignore": {
+    type: "boolean",
+    comment: "Prevents Alpine from initializing attributes within the element.",
+    example: "x-ignore",
+  },
+  "x-ref": {
+    type: "string",
+    comment: "References an element directly by name.",
+    example: 'x-ref="myInput"',
+  },
+  "x-cloak": {
+    type: "boolean",
+    comment: "Hides the element until Alpine has initialized.",
+    example: "x-cloak",
+  },
+  "x-teleport": {
+    type: "string",
+    comment: "Teleports the element to another part of the DOM.",
+    example: 'x-teleport="body"',
+  },
+  "x-if": {
+    type: "javascript",
+    comment: "Conditionally renders an element. Must be used on a <template> tag.",
+    example: 'x-if="open"',
+  },
+  "x-id": {
+    type: "string", // Usually a string array literal, but mostly treated as string config
+    comment: "Generates a unique ID for accessible elements.",
+    example: 'x-id="[\'text-input\']"',
+  },
 } as const;

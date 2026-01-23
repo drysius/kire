@@ -26,10 +26,34 @@
 			"include": "#interpolations"
 		},
 		{
+			"include": "#kire-attributes"
+		},
+		{
 			"include": "text.html.basic"
 		}
 	],
 	"repository": {
+		"kire-attributes": {
+			"patterns": [
+				{
+					"begin": "\\b(x-[a-z0-9-]+|wire:[a-z0-9\\.]+)\\s*=\\s*(['\"])",
+					"beginCaptures": {
+						"1": { "name": "entity.other.attribute-name.html" },
+						"2": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "\\2",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end.html" }
+					},
+					"contentName": "source.js",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					]
+				}
+			]
+		},
 		"comments": {
 			"patterns": [
 				{
