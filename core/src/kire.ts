@@ -117,6 +117,52 @@ export class Kire implements KireClass {
 	}
 
 	/**
+	 * Reference to the parent Kire instance if this is a fork.
+	 */
+	protected $parent?: Kire;
+
+	/**
+	 * Creates a forked instance of Kire.
+	 * The fork shares cache, compiled files, directives, elements, and configuration with the parent,
+	 * but has isolated context ($globals and $app_globals).
+	 *
+	 * Use this for per-request isolation while maintaining performance.
+	 */
+	public fork(): Kire {
+		// Initialize without default directives to avoid overhead
+		const fork = new Kire({ directives: false });
+
+		// Link to parent
+		fork.$parent = this;
+
+		// Copy configuration
+		fork.production = this.production;
+		fork.extension = this.extension;
+		fork.$var_locals = this.$var_locals;
+		fork.$expose_locals = this.$expose_locals;
+		fork.$resolver = this.$resolver;
+		fork.$executor = this.$executor;
+		fork.$parser = this.$parser;
+		fork.$compiler = this.$compiler;
+		fork.$readdir = this.$readdir;
+
+		// Share heavyweight/static resources by reference
+		fork.$cache = this.$cache;
+		fork.$files = this.$files;
+		fork.$directives = this.$directives;
+		fork.$elements = this.$elements;
+		fork.$schematics = this.$schematics;
+		fork.namespaces = this.namespaces;
+		fork.mounts = this.mounts;
+
+		// Isolate Context (Clone maps)
+		fork.$globals = new Map(this.$globals);
+		fork.$app_globals = new Map(this.$app_globals);
+
+		return fork;
+	}
+
+	/**
 	 * Retrieves or initializes a namespaced cache store.
 	 * @param namespace The namespace for the cache.
 	 * @returns The cache map for the given namespace.
@@ -235,7 +281,10 @@ export class Kire implements KireClass {
 	 * @param data The schematic data.
 	 * @returns The Kire instance.
 	 */
-	public schematic(type: "attributes" | "attributes.global" | string, data: any) {
+	public schematic(
+		type: "attributes" | "attributes.global" | string,
+		data: any,
+	) {
 		if (type === "attributes") {
 			if (!this.$schematics.has(type)) {
 				this.$schematics.set(type, {});
@@ -304,13 +353,16 @@ export class Kire implements KireClass {
 		const schematicElements = this.$schematics.get("elements");
 		if (schematicElements) {
 			// schematicElements is a Record<string, ElementDefinition>
-			Object.entries(schematicElements).forEach(([name, def]: [string, any]) => {
-				elements.push({ name, ...def });
-			});
+			Object.entries(schematicElements).forEach(
+				([name, def]: [string, any]) => {
+					elements.push({ name, ...def });
+				},
+			);
 		}
 
 		return {
-			"$schema":"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+			$schema:
+				"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
 			package: name,
 			repository,
 			version,

@@ -18,7 +18,7 @@ export function showAndStartProgressBar() {
     setTimeout(() => {
         if (! inProgress) return
         NProgress.start()
-    }, 150)
+    }, 50)
 }
 
 export function finishAndHideProgressBar() {
