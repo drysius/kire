@@ -89,16 +89,16 @@
                     </li>
 
                     <li><h2 class="menu-title">Examples</h2></li>
-                    <li><a href="/" class="{{ isActive('/') ? 'bg-primary text-primary-content' : '' }}">Dashboard</a></li>
-                    <li><a href="/todo" class="{{ isActive('/todo') ? 'bg-primary text-primary-content' : '' }}">Todo List</a></li>
-                    <li><a href="/chat" class="{{ isActive('/chat') ? 'bg-primary text-primary-content' : '' }}">Real-time Chat</a></li>
-                    <li><a href="/users" class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a></li>
+                    <li><a href="/" wire:navigate class="{{ isActive('/') ? 'bg-primary text-primary-content' : '' }}">Dashboard</a></li>
+                    <li><a href="/todo" wire:navigate class="{{ isActive('/todo') ? 'bg-primary text-primary-content' : '' }}">Todo List</a></li>
+                    <li><a href="/chat" wire:navigate class="{{ isActive('/chat') ? 'bg-primary text-primary-content' : '' }}">Real-time Chat</a></li>
+                    <li><a href="/users" wire:navigate class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a></li>
 
                     <li><h2 class="menu-title">Features</h2></li>
-                    <li><a href="/upload" class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
-                    <li><a href="/stream" class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
-                    <li><a href="/lazy" class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
-                    <li><a href="/toast" class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>                </ul>
+                    <li><a href="/upload" wire:navigate class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
+                    <li><a href="/stream" wire:navigate class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
+                    <li><a href="/lazy" wire:navigate class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
+                    <li><a href="/toast" wire:navigate class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>                </ul>
 
                     </div>
                 </div>

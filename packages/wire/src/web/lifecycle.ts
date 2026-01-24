@@ -10,7 +10,6 @@ import './directives/model';
 import './directives/poll';
 import './directives/loading';
 import './directives/init';
-import './directives/navigate';
 import './directives/keydown';
 import './directives/ignore';
 import './directives/offline';
@@ -18,14 +17,13 @@ import './directives/intersect';
 import './directives/loading-progress';
 import './directives/stream';
 import { registerMagic } from './core/magic';
+import { wildcardHandler } from './directives/wildcard';
 
 export default function WiredAlpinePlugin(Alpine: any) {
     const config = (window as any).__KIREWIRE_CONFIG__ || { endpoint: '/_wired', adapter: 'http' };
     
-    // Register $wire magic
     registerMagic(Alpine);
     
-    // Polyfill for x-data="kirewire" safety
     Alpine.data('kirewire', () => ({}));
 
     let adapter: any;
@@ -41,89 +39,84 @@ export default function WiredAlpinePlugin(Alpine: any) {
             break;
     }
 
-    const processNode = (node: Node) => {
-        if (node.nodeType !== 1) return;
-        const el = node as HTMLElement;
-        
-        // Prevent double processing
-        if ((el as any).__wire_processed) return;
+    Alpine.interceptInit(
+        Alpine.skipDuringClone((el: HTMLElement) => {
+            // 1. Initialize Component if root
+            if (el.hasAttribute('wire:id')) {
+                const id = el.getAttribute('wire:id');
+                if (id && !(el as any).__kirewire && !findComponent(id)) {
+                    const snapshot = el.getAttribute('wire:snapshot');
+                    const isLazy = el.hasAttribute('wire:lazy');
 
-        // 1. Initialize Component if root
-        let component = findComponentByEl(el);
-        if (!component && el.hasAttribute('wire:id')) {
-            const snapshot = el.getAttribute('wire:snapshot');
-            const isLazy = el.hasAttribute('wire:lazy');
+                    if (snapshot || isLazy) {
+                        const component = new Component(el, snapshot, config, adapter);
+                        addComponent(component);
+                        (el as any).__kirewire = component;
 
-            if (snapshot || isLazy) {
-                component = new Component(el, snapshot, config, adapter);
-                addComponent(component);
-                (el as any).__livewire = component;
-
-                if (isLazy && !snapshot) {
-                    component.loadLazy();
+                        if (isLazy && !snapshot) {
+                            component.loadLazy();
+                        }
+                    }
                 }
             }
-        }
 
-        // 2. Process Directives if inside component
-        if (component) {
-            const directives = getDirectives(el);
-            if (directives.length > 0) {
-                 directives.forEach(directive => {
-                    handleDirective(el, directive, component!);
-                });
-                (el as any).__wire_processed = true;
-            }
-        }
-
-        // 3. Recurse efficiently
-        let child = el.firstElementChild;
-        while (child) {
-            processNode(child);
-            child = child.nextElementSibling;
-        }
-    };
-
-    const init = () => {
-         processNode(document.body);
-
-         new MutationObserver(mutations => {
-            for (const mutation of mutations) {
-                if (mutation.type === 'childList') {
-                    mutation.addedNodes.forEach(node => processNode(node));
-                    mutation.removedNodes.forEach(node => {
-                        if (node.nodeType === 1) {
-                             // Check the node itself
-                             const el = node as HTMLElement;
-                             if (el.hasAttribute('wire:id')) {
-                                 const id = el.getAttribute('wire:id');
-                                 if(id) {
-                                     const comp = findComponent(id); // Import findComponent
-                                     if (comp) {
-                                         comp.cleanup();
-                                         removeComponent(id);
-                                     }
-                                 }
-                             }
-                             // Check children (deep cleanup) - optional but recommended
-                             // For now, let's just handle the root removal or assume flat structure for components
-                        }
+            // 2. Process Directives
+            // findComponentByEl walks up. If we just created the component on 'el', it returns it.
+            const component = findComponentByEl(el);
+            if (component) {
+                // Check if already processed to avoid duplicate listeners?
+                // Alpine init runs once per element usually.
+                // But let's be safe if we rely on __wire_processed property?
+                // Livewire doesn't use that, relies on directive registration logic.
+                
+                // My directives registration:
+                const directives = getDirectives(el);
+                if (directives.length > 0) {
+                     directives.forEach(directive => {
+                        handleDirective(el, directive, component!);
                     });
                 }
             }
-         }).observe(document.body, { childList: true, subtree: true });
-    };
+        })
+    );
 
-    if (document.body) {
-        init();
-    } else {
-        document.addEventListener('DOMContentLoaded', init);
-    }
+    // Cleanup observer
+    const observer = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+                mutation.removedNodes.forEach(node => {
+                    if (node.nodeType === 1) {
+                         const el = node as HTMLElement;
+                         if (el.hasAttribute('wire:id')) {
+                             const id = el.getAttribute('wire:id');
+                             if(id) {
+                                 const comp = findComponent(id);
+                                 if (comp) {
+                                     comp.cleanup();
+                                     removeComponent(id);
+                                 }
+                             }
+                         }
+                    }
+                });
+            }
+        }
+     });
+
+     if (document.body) {
+         observer.observe(document.body, { childList: true, subtree: true });
+     } else {
+         document.addEventListener('DOMContentLoaded', () => {
+             observer.observe(document.body, { childList: true, subtree: true });
+         });
+     }
 }
 
 function handleDirective(el: HTMLElement, directive: any, component: Component) {
     const handler = getDirectiveHandler(directive.type);
     if (handler) {
         handler(el, directive, component);
+    } else {
+        wildcardHandler(el, directive, component);
     }
 }

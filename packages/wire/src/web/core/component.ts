@@ -1,7 +1,10 @@
 import type { WireRequest, WireResponse } from "../../types";
 import type { ClientAdapter } from "../../adapters/http";
+import { trigger } from "./hooks";
+import { runInterceptors, actionInterceptors, messageInterceptors, requestInterceptors } from "./interceptor";
 
 export class Component {
+    // ... (existing properties)
     public id: string;
     public name: string;
     public snapshot: any;
@@ -23,7 +26,26 @@ export class Component {
             this.snapshot = null;
         }
         
+        trigger('component.init', { component: this });
+        
         this.initListeners();
+    }
+
+    public processEffects(effects: any) {
+        trigger('effect', {
+            component: this,
+            effects,
+        });
+
+        if (effects.scripts && Array.isArray(effects.scripts)) {
+            effects.scripts.forEach((script: string) => {
+                if ((window as any).Alpine) {
+                    (window as any).Alpine.evaluate(this.el, script);
+                } else {
+                    new Function(script).call(this.data);
+                }
+            });
+        }
     }
 
     public async loadLazy() {
@@ -35,7 +57,6 @@ export class Component {
             id: this.id,
             method: '$refresh',
             params: [],
-            // Passing initial params for mount
             updates: params, 
             _token: this.getCsrfToken()
         };
@@ -72,8 +93,26 @@ export class Component {
         this.cleanupFns = [];
     }
 
+    public inscribeSnapshotAndEffectsOnElement() {
+        if (!this.el || !this.snapshot) return;
+        const snapshotString = JSON.stringify(this.snapshot).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+        this.el.setAttribute('wire:snapshot', snapshotString);
+    }
+
     async call(method: string, params: any[] = []) {
-        return this.sendRequest({ method, params });
+        const lifecycle: any = { onSend: [], onSuccess: [], onError: [], onFinish: [] };
+        
+        const ctx = {
+            action: { component: this, name: method, params },
+            onSend: (cb: any) => lifecycle.onSend.push(cb),
+            onSuccess: (cb: any) => lifecycle.onSuccess.push(cb),
+            onError: (cb: any) => lifecycle.onError.push(cb),
+            onFinish: (cb: any) => lifecycle.onFinish.push(cb),
+        };
+
+        runInterceptors(actionInterceptors, ctx);
+
+        return this.sendRequest({ method, params }, lifecycle);
     }
 
     async update(updates: Record<string, any>) {
@@ -84,7 +123,7 @@ export class Component {
         Object.assign(this.pendingUpdates, updates);
     }
 
-    private async sendRequest(payload: Partial<WireRequest>) {
+    private async sendRequest(payload: Partial<WireRequest>, actionLifecycle?: any) {
         const updates = { ...this.pendingUpdates, ...payload.updates };
         this.pendingUpdates = {};
 
@@ -94,19 +133,48 @@ export class Component {
             method: payload.method || '$refresh',
             params: payload.params || [],
             updates: Object.keys(updates).length > 0 ? updates : undefined,
-            _token: this.getCsrfToken() // Keep strictly for payload token if needed
+            _token: this.getCsrfToken()
         };
+
+        // Message Interceptors
+        const messageLifecycle: any = { onSend: [], onSuccess: [], onError: [], onFinish: [] };
+        const messageCtx = {
+            message: { component: this, payload: fullPayload },
+            onSend: (cb: any) => messageLifecycle.onSend.push(cb),
+            onSuccess: (cb: any) => messageLifecycle.onSuccess.push(cb),
+            onError: (cb: any) => messageLifecycle.onError.push(cb),
+            onFinish: (cb: any) => messageLifecycle.onFinish.push(cb),
+        };
+        runInterceptors(messageInterceptors, messageCtx);
+
+        // Request Interceptors (simplified, assuming 1:1 for now)
+        const requestLifecycle: any = { onSend: [], onSuccess: [], onError: [], onFinish: [] };
+        const requestCtx = {
+            request: { url: this.config.endpoint, payload: fullPayload },
+            onSend: (cb: any) => requestLifecycle.onSend.push(cb),
+            onSuccess: (cb: any) => requestLifecycle.onSuccess.push(cb),
+            onError: (cb: any) => requestLifecycle.onError.push(cb),
+            onFinish: (cb: any) => requestLifecycle.onFinish.push(cb),
+        };
+        runInterceptors(requestInterceptors, requestCtx);
 
         this.setLoading(true, payload.method);
 
+        const lifecycles = [actionLifecycle, messageLifecycle, requestLifecycle];
+        lifecycles.forEach(l => l?.onSend.forEach((cb: any) => cb()));
+
         try {
             const response: WireResponse = await this.adapter.request(fullPayload);
+            
+            lifecycles.forEach(l => l?.onSuccess.forEach((cb: any) => cb(response)));
+            
             this.handleResponse(response, payload.method);
 
         } catch (e) {
             console.error(e);
-             // Restore pending updates on failure? (Optional optimization)
+            lifecycles.forEach(l => l?.onError.forEach((cb: any) => cb(e)));
         } finally {
+            lifecycles.forEach(l => l?.onFinish.forEach((cb: any) => cb()));
             this.setLoading(false, payload.method);
         }
     }
@@ -123,21 +191,22 @@ export class Component {
                 // Sync back to Alpine if needed (handled by Alpine reactivity usually)
             }
 
+            this.processEffects(comp.effects);
+
             if (comp.effects.redirect) window.location.href = comp.effects.redirect;
             
-            if (comp.effects.url) {
-                const currentUrl = new URL(window.location.href);
-                // Merge new query params
-                const newParams = new URLSearchParams(comp.effects.url);
-                newParams.forEach((v, k) => currentUrl.searchParams.set(k, v));
-                // Clean empty
-                // history.pushState({}, '', currentUrl.toString());
-                // Livewire style: replaceState or pushState depending on config, usually push
-                window.history.pushState({}, '', '?' + newParams.toString());
-            }
-
-            if (comp.effects.html) {
-                this.morph(comp.effects.html, comp.snapshot, method === '$refresh');
+                            if (comp.effects.url) {
+                            const currentUrl = new URL(window.location.href);
+                            // Merge new query params
+                            const newParams = new URLSearchParams(comp.effects.url);
+                            newParams.forEach((v, k) => currentUrl.searchParams.set(k, v));
+                            // Clean empty
+                            // history.pushState({}, '', currentUrl.toString());
+                            // Kirewire style: replaceState or pushState depending on config, usually push
+                            window.history.pushState({}, '', '?' + newParams.toString());
+                        }
+            
+                        if (comp.effects.html) {                this.morph(comp.effects.html, comp.snapshot, method === '$refresh');
             }
             
             // Dispatch update event for Entangle
@@ -181,15 +250,19 @@ export class Component {
         if (!newEl) return;
         newEl.setAttribute("wire:snapshot", newSnapshot);
 
+        trigger('morph', { el: this.el, component: this });
+
         (window as any).Alpine.morph(this.el, newEl, {
             updating: (el: any, toEl: any, childrenOnly: any, skip: any) => {
+                trigger('morph.updating', { el, toEl, component: this, skip, childrenOnly });
+
                 if (el instanceof Element && el.hasAttribute("wire:ignore")) return skip();
 
                 // Input preservation logic
                 if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
                     if (toEl instanceof Element && el.hasAttribute("wire:model")) {
                         // If it's a polling update, we generally want to force update values
-                        // unless specifically protected (Livewire doesn't typically protect poll updates on models)
+                        // unless specifically protected (Kirewire doesn't typically protect poll updates on models)
                         if (isPoll) return;
 
                         // Check if value changed on server
@@ -220,6 +293,8 @@ export class Component {
                         : el.id
             }
         });
+
+        trigger('morphed', { el: this.el, component: this });
     }
 
     private setLoading(loading: boolean, target?: string) {

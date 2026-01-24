@@ -11,11 +11,26 @@ export function findComponent(id: string) {
 }
 
 export function findComponentByEl(el: HTMLElement): Component | undefined {
-    let root = el.closest('[wire\\:id]');
-    if (!root) return undefined;
+    // Optimization: check if element itself is a component root with instance attached
+    if ((el as any).__kirewire) return (el as any).__kirewire;
+
+    // Walk up manually checking for __kirewire or wire:id
+    let current: HTMLElement | null = el;
+    while (current) {
+        if ((current as any).__kirewire) return (current as any).__kirewire;
+        
+        if (current.hasAttribute && current.hasAttribute('wire:id')) {
+             const id = current.getAttribute('wire:id');
+             if (id) {
+                 const comp = components.get(id);
+                 if (comp) return comp;
+             }
+        }
+        
+        current = current.parentElement;
+    }
     
-    let id = root.getAttribute('wire:id');
-    return id ? components.get(id) : undefined;
+    return undefined;
 }
 
 export function removeComponent(id: string) {
@@ -24,4 +39,12 @@ export function removeComponent(id: string) {
 
 export function allComponents() {
     return Array.from(components.values());
+}
+
+export function first() {
+    return components.values().next().value;
+}
+
+export function getByName(name: string) {
+    return Array.from(components.values()).filter(c => c.name === name);
 }
