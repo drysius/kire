@@ -14,15 +14,17 @@ export class Component {
     private pendingUpdates: Record<string, any> = {};
     
     constructor(public el: HTMLElement, snapshot: string | null, public config: any, public adapter: ClientAdapter) {
+        const Alpine = (window as any).Alpine;
+        
         if (snapshot) {
             this.snapshot = JSON.parse(snapshot);
             this.id = this.snapshot.memo.id;
             this.name = this.snapshot.memo.name;
-            this.data = this.snapshot.data;
+            this.data = Alpine ? Alpine.reactive(this.snapshot.data) : this.snapshot.data;
         } else {
             this.id = el.getAttribute('wire:id') || '';
             this.name = el.getAttribute('wire:component') || '';
-            this.data = {};
+            this.data = Alpine ? Alpine.reactive({}) : {};
             this.snapshot = null;
         }
         
@@ -49,6 +51,9 @@ export class Component {
     }
 
     public async loadLazy() {
+        // console.log(`[KireWire] loadLazy started for ${this.id}`);
+        // const start = performance.now();
+
         const paramsJson = this.el.getAttribute('wire:init-params');
         const params = paramsJson ? JSON.parse(paramsJson) : {};
 
@@ -65,11 +70,13 @@ export class Component {
 
         try {
             const response: WireResponse = await this.adapter.request(fullPayload);
+            // console.log(`[KireWire] loadLazy response received for ${this.id} in ${performance.now() - start}ms`);
             this.handleResponse(response, '$refresh');
         } catch (e) {
-            console.error(e);
+            console.error(`[KireWire] loadLazy error for ${this.id}`, e);
         } finally {
             this.setLoading(false, '$lazy');
+            // console.log(`[KireWire] loadLazy finished for ${this.id} in ${performance.now() - start}ms`);
         }
     }
     
@@ -254,6 +261,10 @@ export class Component {
 
         (window as any).Alpine.morph(this.el, newEl, {
             updating: (el: any, toEl: any, childrenOnly: any, skip: any) => {
+                if (el === this.el) {
+                    (toEl as any).__kirewire = this;
+                }
+
                 trigger('morph.updating', { el, toEl, component: this, skip, childrenOnly });
 
                 if (el instanceof Element && el.hasAttribute("wire:ignore")) return skip();

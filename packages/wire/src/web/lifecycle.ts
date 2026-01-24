@@ -39,24 +39,44 @@ export default function WiredAlpinePlugin(Alpine: any) {
             break;
     }
 
+    Alpine.addRootSelector(() => '[wire\\:id]');
+
     Alpine.interceptInit(
         Alpine.skipDuringClone((el: HTMLElement) => {
             // 1. Initialize Component if root
             if (el.hasAttribute('wire:id')) {
-                const id = el.getAttribute('wire:id');
-                if (id && !(el as any).__kirewire && !findComponent(id)) {
+                // const start = performance.now();
+                // console.log(`[KireWire] Init start for ${el.getAttribute('wire:id')}`, el);
+
+                const id = el.getAttribute('wire:id')!;
+                let component = findComponent(id);
+
+                if (!component) {
                     const snapshot = el.getAttribute('wire:snapshot');
                     const isLazy = el.hasAttribute('wire:lazy');
 
                     if (snapshot || isLazy) {
-                        const component = new Component(el, snapshot, config, adapter);
-                        addComponent(component);
-                        (el as any).__kirewire = component;
-
-                        if (isLazy && !snapshot) {
-                            component.loadLazy();
+                        try {
+                            component = new Component(el, snapshot, config, adapter);
+                            addComponent(component);
+                        } catch (e) {
+                            console.error('KireWire: Failed to initialize component', el, e);
                         }
+                    } else {
+                        console.warn('KireWire: Component missing wire:snapshot or wire:lazy', el);
                     }
+                }
+                
+                if (component) {
+                    (el as any).__kirewire = component;
+                    
+                    if (el.hasAttribute('wire:lazy') && !el.getAttribute('wire:snapshot')) {
+                         component.loadLazy();
+                    }
+
+                    // console.log(`[KireWire] Init success for ${id} in ${performance.now() - start}ms`);
+                } else {
+                    // console.log(`[KireWire] Init failed/skipped for ${id} in ${performance.now() - start}ms`);
                 }
             }
 
