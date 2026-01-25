@@ -33,7 +33,6 @@ describe("KireAssets SVG", () => {
 		mockFetch.mockRestore();
 	});
 
-
 	it("should load and cache local SVG via resolver", async () => {
 		const kire = new Kire({
 			plugins: [KireAssets],
@@ -76,7 +75,10 @@ describe("KireAssets SVG", () => {
 
 		kireFS.express({ path: path }, mockRes, next);
 
-		expect(mockRes.setHeader).toHaveBeenCalledWith("Content-Type", "image/svg+xml");
+		expect(mockRes.setHeader).toHaveBeenCalledWith(
+			"Content-Type",
+			"image/svg+xml",
+		);
 		expect(mockRes.send).toHaveBeenCalledWith("<svg>served-icon</svg>");
 	});
 

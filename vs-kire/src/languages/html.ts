@@ -451,7 +451,9 @@ export class HtmlDiagnosticProvider {
 			const position = document.positionAt(match.index);
 
 			// Check if element is void (self-closing)
-			let isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase());
+			let isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(
+				tagName.toLowerCase(),
+			);
 			// kire element check
 			if (store.elements.get(tagName))
 				isVoid = !!store.elements.get(tagName)?.void;
@@ -544,7 +546,7 @@ export class HtmlDiagnosticProvider {
 		const store = kireStore.getState();
 
 		// 1. Validate JavaScript Attributes (Nested Quotes)
-		const jsAttrRegex = /([:@a-zA-Z0-9\-\.]+)\s*=\s*(["'])/g;
+		const jsAttrRegex = /([:@a-zA-Z0-9\-.]+)\s*=\s*(["'])/g;
 		let jsMatch: RegExpExecArray | null;
 
 		while ((jsMatch = jsAttrRegex.exec(text)) !== null) {
@@ -575,8 +577,11 @@ export class HtmlDiagnosticProvider {
 						// instead of HTML attribute separators (space, >, /)
 						const nextChunk = text.slice(current + 1, current + 50); // Peek ahead
 						const trimmedNext = nextChunk.trim();
-						
-						if (trimmedNext && /^[a-zA-Z0-9_{}\[\]\(\),.;+\-*\/=!&|]/.test(trimmedNext)) {
+
+						if (
+							trimmedNext &&
+							/^[a-zA-Z0-9_{}[\](),.;+\-*/=!&|]/.test(trimmedNext)
+						) {
 							// High probability of unescaped quote error
 							const position = document.positionAt(current);
 							diagnostics.push(
@@ -595,7 +600,7 @@ export class HtmlDiagnosticProvider {
 		}
 
 		// 2. Validate unquoted attribute values
-		const unquotedAttrRegex = /\s([a-zA-Z0-9\-\:@\.]+)=([^"'\s>]+)(?=\s|\/?>)/g;
+		const unquotedAttrRegex = /\s([a-zA-Z0-9\-:@.]+)=([^"'\s>]+)(?=\s|\/?>)/g;
 		let match: RegExpExecArray | null;
 
 		while ((match = unquotedAttrRegex.exec(text)) !== null) {
@@ -713,7 +718,7 @@ export class HtmlDocumentFormattingEditProvider
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.TextEdit[]> {
 		const lspDoc = toLspDocument(document);
-		
+
 		// Configure formatting options
 		const formatOptions = {
 			tabSize: options.tabSize,

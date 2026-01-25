@@ -17,7 +17,10 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 		const _fnCache = kire.cached<Function>("@kirejs/markdown");
 
 		// 1. mdrender: Render string content
-		kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {
+		kire.mdrender = async (
+			content: string,
+			locals: Record<string, any> = {},
+		) => {
 			const html = (await marked.parse(content)) as string;
 			return await kire.render(html, locals);
 		};
@@ -34,12 +37,12 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			try {
 				const resolved = kire.resolvePath(path, locals, "md");
 				const content = await kire.$resolver(resolved);
-				
+
 				// Convert MD to HTML
 				// We replace {{ var }} with {{ it.var }} ? No, that's unsafe regex.
-                // The user must write {{ it.var }} in their markdown if they want locals.
-                // Or we can try to support legacy by destructuring locals? No, "locals keys are unknown at compile time".
-                
+				// The user must write {{ it.var }} in their markdown if they want locals.
+				// Or we can try to support legacy by destructuring locals? No, "locals keys are unknown at compile time".
+
 				const htmlTemplate = (await marked.parse(content)) as string;
 
 				// Compile HTML as Kire template

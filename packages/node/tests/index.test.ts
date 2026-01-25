@@ -1,4 +1,12 @@
-import { afterAll, afterEach, beforeAll, describe, expect, mock, test } from "bun:test";
+import {
+	afterAll,
+	afterEach,
+	beforeAll,
+	describe,
+	expect,
+	mock,
+	test,
+} from "bun:test";
 import { rm, writeFile } from "node:fs/promises";
 import { Kire } from "kire";
 import KireNode from "../src/index";

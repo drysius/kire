@@ -12,7 +12,7 @@ export interface IParser {
  */
 export interface KireClass {
 	$executor?: KireExecutor;
-};
+}
 
 export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 
@@ -66,63 +66,66 @@ export interface KireOptions {
 	 * Name of the variable exposing locals in the template. Defaults to "it".
 	 */
 	varLocals?: string;
-    /**
-     * Parent Kire instance if this is a fork
-     */
-    parent?: Kire;
+	/**
+	 * Parent Kire instance if this is a fork
+	 */
+	parent?: Kire;
 }
 
-export type KireHook = 'before' | 'after' | 'end';
+export type KireHook = "before" | "after" | "end";
 
 /**
  * The runtime context object ($ctx) used during template execution.
  */
 export interface KireContext {
-    /**
-     * The LayeredMap containing global variables.
-     * Can be destructured at the start of the template.
-     */
-    $globals: LayeredMap<string, any> | Map<string, any>;
+	/**
+	 * The LayeredMap containing global variables.
+	 * Can be destructured at the start of the template.
+	 */
+	$globals: LayeredMap<string, any> | Map<string, any>;
 
-    /**
-     * The local variables passed to the render function.
-     * Often aliased as 'it' or defined via varLocals option.
-     */
-    $props: Record<string, any>;
+	/**
+	 * The local variables passed to the render function.
+	 * Often aliased as 'it' or defined via varLocals option.
+	 */
+	$props: Record<string, any>;
 
-    /**
-     * Information about the current file being rendered.
-     */
-    $file: KireFileMeta;
+	/**
+	 * Information about the current file being rendered.
+	 */
+	$file: KireFileMeta;
 
-    /**
-     * The Kire instance (or fork) executing this template.
-     */
-    $kire: Kire;
+	/**
+	 * The Kire instance (or fork) executing this template.
+	 */
+	$kire: Kire;
 
-    /**
-     * The accumulated output string.
-     */
-    $response: string;
+	/**
+	 * The accumulated output string.
+	 */
+	$response: string;
 
-    /**
-     * Appends content to the response buffer.
-     * @param str The content to append.
-     */
-    $add(str: string): void;
+	/**
+	 * Appends content to the response buffer.
+	 * @param str The content to append.
+	 */
+	$add(str: string): void;
 
-    /**
-     * Adds an event listener for lifecycle hooks.
-     * @param event The event name ('before', 'after', 'end').
-     * @param callback The function to execute.
-     */
-    $on(event: KireHook, callback: (ctx: KireContext) => Promise<void> | void): void;
+	/**
+	 * Adds an event listener for lifecycle hooks.
+	 * @param event The event name ('before', 'after', 'end').
+	 * @param callback The function to execute.
+	 */
+	$on(
+		event: KireHook,
+		callback: (ctx: KireContext) => Promise<void> | void,
+	): void;
 
-    /**
-     * Emits a lifecycle event.
-     * @param event The event name.
-     */
-    $emit(event: KireHook): Promise<void>;
+	/**
+	 * Emits a lifecycle event.
+	 * @param event The event name.
+	 */
+	$emit(event: KireHook): Promise<void>;
 
 	/**
 	 * Resolves a file path relative to the project root and aliases.
@@ -149,18 +152,18 @@ export interface KireContext {
 	 * Helper for HTML escaping.
 	 */
 	$escape(unsafe: any): string;
-    
-    /**
-     * Typed $ctx context use key of $ctx context with you type
-     * @param key
-     */
-    $typed<T>(key: string): T;
 
 	/**
-     * Runtime hooks
-     * @param key
-     */
-	$hooks:Map<KireHook, ((ctx: KireContext) => Promise<void> | void)[]>
+	 * Typed $ctx context use key of $ctx context with you type
+	 * @param key
+	 */
+	$typed<T>(key: string): T;
+
+	/**
+	 * Runtime hooks
+	 * @param key
+	 */
+	$hooks: Map<KireHook, ((ctx: KireContext) => Promise<void> | void)[]>;
 
 	/**
 	 * Arbitrary locals and globals access (fallback).
@@ -169,12 +172,12 @@ export interface KireContext {
 }
 
 export interface KireFileMeta {
-	path:string;
-	name:string;
-	execute:Function;
-	code:string;
-	source:string;
-	children?:boolean;
+	path: string;
+	name: string;
+	execute: Function;
+	code: string;
+	source: string;
+	children?: boolean;
 }
 
 /**
@@ -205,35 +208,35 @@ export interface CompilerContext {
 	 */
 	func(code: string): string;
 
-    /**
-     * Appends code to the pre-buffer.
-     */
-    pre(code: string): void;
+	/**
+	 * Appends code to the pre-buffer.
+	 */
+	pre(code: string): void;
 
-    /**
-     * Appends content to the result buffer.
-     */
-    res(content: string): void;
+	/**
+	 * Appends content to the result buffer.
+	 */
+	res(content: string): void;
 
-    /**
-     * Appends raw code to the result buffer.
-     */
-    raw(code: string): void;
+	/**
+	 * Appends raw code to the result buffer.
+	 */
+	raw(code: string): void;
 
-    /**
-     * Appends code to the pos-buffer.
-     */
-    pos(code: string): void;
+	/**
+	 * Appends code to the pos-buffer.
+	 */
+	pos(code: string): void;
 
-    /**
-     * Appends code to the global pre-hook.
-     */
-    $pre(code: string): void;
+	/**
+	 * Appends code to the global pre-hook.
+	 */
+	$pre(code: string): void;
 
-    /**
-     * Appends code to the global post-hook.
-     */
-    $pos(code: string): void;
+	/**
+	 * Appends code to the global post-hook.
+	 */
+	$pos(code: string): void;
 
 	/**
 	 * Throws a compilation error with a specific message.
@@ -390,7 +393,7 @@ export interface AttributeDefinition {
 
 export interface KireSchematic {
 	package: string;
-	$schema:string,
+	$schema: string;
 	repository?: string | { type: string; url: string };
 	version?: string;
 	directives?: DirectiveDefinition[];

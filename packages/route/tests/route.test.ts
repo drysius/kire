@@ -37,9 +37,9 @@ test("Kire Route - Integration in Template", async () => {
 });
 
 test("Kire Route - Wildcard matching", () => {
-    Route.set("/foo/bar/baz");
-    expect(Route.is("/foo/*")).toBe(true);
-    expect(Route.is("*/bar/*")).toBe(true);
-    expect(Route.is("/foo/bar/baz")).toBe(true);
-    expect(Route.is("/foo/*/baz")).toBe(true);
+	Route.set("/foo/bar/baz");
+	expect(Route.is("/foo/*")).toBe(true);
+	expect(Route.is("*/bar/*")).toBe(true);
+	expect(Route.is("/foo/bar/baz")).toBe(true);
+	expect(Route.is("/foo/*/baz")).toBe(true);
 });

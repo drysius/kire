@@ -1,17 +1,17 @@
 interface WireAttribute {
-  type: string;
-  comment: string;
-  example: string;
+	type: string;
+	comment: string;
+	example: string;
 }
 
 interface WireAttributes {
-  [key: string]: WireAttribute;
+	[key: string]: WireAttribute;
 }
 
 export const WireAttributes: WireAttributes = {
-  "wire:click": {
-    type: "string",
-    comment: `
+	"wire:click": {
+		type: "string",
+		comment: `
 Handles click events and calls a component method.
 
 ### Modifiers
@@ -29,11 +29,11 @@ Handles click events and calls a component method.
 <button wire:click.prevent="save">Save</button>
 \`\`\`
 `,
-    example: 'wire:click="increment"',
-  },
-  "wire:model": {
-    type: "string",
-    comment: `
+		example: 'wire:click="increment"',
+	},
+	"wire:model": {
+		type: "string",
+		comment: `
 Two-way data binding for component properties. Syncs the input value with the component state.
 
 ### Modifiers
@@ -48,11 +48,11 @@ Two-way data binding for component properties. Syncs the input value with the co
 <input wire:model.live.debounce.300ms="search" type="text" />
 \`\`\`
 `,
-    example: 'wire:model="search"',
-  },
-  "wire:submit": {
-    type: "string",
-    comment: `
+		example: 'wire:model="search"',
+	},
+	"wire:submit": {
+		type: "string",
+		comment: `
 Handles form submission events. Automatically prevents default submission if \`.prevent\` is used.
 
 ### Modifiers
@@ -65,11 +65,11 @@ Handles form submission events. Automatically prevents default submission if \`.
 </form>
 \`\`\`
 `,
-    example: 'wire:submit.prevent="save"',
-  },
-  "wire:keydown": {
-    type: "string",
-    comment: `
+		example: 'wire:submit.prevent="save"',
+	},
+	"wire:keydown": {
+		type: "string",
+		comment: `
 Listens for keydown events on the element. Can be scoped to specific keys.
 
 ### Modifiers
@@ -82,11 +82,11 @@ Listens for keydown events on the element. Can be scoped to specific keys.
 <input wire:keydown.enter="search" />
 \`\`\`
 `,
-    example: 'wire:keydown.enter="search"',
-  },
-  "wire:keyup": {
-    type: "string",
-    comment: `
+		example: 'wire:keydown.enter="search"',
+	},
+	"wire:keyup": {
+		type: "string",
+		comment: `
 Listens for keyup events.
 
 ### Example
@@ -94,21 +94,21 @@ Listens for keyup events.
 <input wire:keyup.escape="cancel" />
 \`\`\`
 `,
-    example: 'wire:keyup.escape="cancel"',
-  },
-  "wire:mouseenter": {
-    type: "string",
-    comment: "Triggers action when mouse enters the element.",
-    example: 'wire:mouseenter="showTooltip"',
-  },
-  "wire:mouseleave": {
-    type: "string",
-    comment: "Triggers action when mouse leaves the element.",
-    example: 'wire:mouseleave="hideTooltip"',
-  },
-  "wire:init": {
-    type: "string",
-    comment: `
+		example: 'wire:keyup.escape="cancel"',
+	},
+	"wire:mouseenter": {
+		type: "string",
+		comment: "Triggers action when mouse enters the element.",
+		example: 'wire:mouseenter="showTooltip"',
+	},
+	"wire:mouseleave": {
+		type: "string",
+		comment: "Triggers action when mouse leaves the element.",
+		example: 'wire:mouseleave="hideTooltip"',
+	},
+	"wire:init": {
+		type: "string",
+		comment: `
 Runs an action immediately after the component initializes and renders in the DOM.
 Useful for lazy loading data or triggering client-side setup.
 
@@ -119,11 +119,11 @@ Useful for lazy loading data or triggering client-side setup.
 </div>
 \`\`\`
 `,
-    example: 'wire:init="loadData"',
-  },
-  "wire:loading": {
-    type: "string",
-    comment: `
+		example: 'wire:init="loadData"',
+	},
+	"wire:loading": {
+		type: "string",
+		comment: `
 Toggles visibility or classes while a network request is pending.
 By default, it hides the element until a request starts, then shows it.
 
@@ -142,11 +142,11 @@ By default, it hides the element until a request starts, then shows it.
 <div wire:loading.class="opacity-50">Content</div>
 \`\`\`
 `,
-    example: "wire:loading",
-  },
-  "wire:target": {
-    type: "string",
-    comment: `
+		example: "wire:loading",
+	},
+	"wire:target": {
+		type: "string",
+		comment: `
 Scopes \`wire:loading\` indicators to a specific method or model update.
 The loading state will only trigger when the specified action is being performed.
 
@@ -156,11 +156,11 @@ The loading state will only trigger when the specified action is being performed
 <span wire:loading wire:target="save">Saving...</span>
 \`\`\`
 `,
-    example: 'wire:target="save"',
-  },
-  "wire:poll": {
-    type: "string",
-    comment: `
+		example: 'wire:target="save"',
+	},
+	"wire:poll": {
+		type: "string",
+		comment: `
 Polls the server at a specified interval to refresh the component.
 
 ### Modifiers
@@ -176,11 +176,11 @@ Polls the server at a specified interval to refresh the component.
 </div>
 \`\`\`
 `,
-    example: 'wire:poll.2s="refresh"',
-  },
-  "wire:ignore": {
-    type: "boolean",
-    comment: `
+		example: 'wire:poll.2s="refresh"',
+	},
+	"wire:ignore": {
+		type: "boolean",
+		comment: `
 Tells Kirewire to ignore this element and its children during DOM updates.
 Useful for integrating third-party libraries (like Charts, Maps, Datepickers) that modify the DOM.
 
@@ -194,11 +194,11 @@ Useful for integrating third-party libraries (like Charts, Maps, Datepickers) th
 </div>
 \`\`\`
 `,
-    example: "wire:ignore",
-  },
-  "wire:key": {
-    type: "string",
-    comment: `
+		example: "wire:ignore",
+	},
+	"wire:key": {
+		type: "string",
+		comment: `
 Assigns a unique key to an element for DOM diffing.
 Crucial inside loops to ensure elements are updated correctly and state is preserved.
 
@@ -211,17 +211,17 @@ Crucial inside loops to ensure elements are updated correctly and state is prese
 @endforeach
 \`\`\`
 `,
-    example: 'wire:key="item-{{ id }}"',
-  },
-  "wire:id": {
-    type: "string",
-    comment:
-      "Internal ID of the component instance (auto-generated). Usually you do not need to touch this.",
-    example: 'wire:id="..."',
-  },
-  "wire:navigate": {
-    type: "boolean",
-    comment: `
+		example: 'wire:key="item-{{ id }}"',
+	},
+	"wire:id": {
+		type: "string",
+		comment:
+			"Internal ID of the component instance (auto-generated). Usually you do not need to touch this.",
+		example: 'wire:id="..."',
+	},
+	"wire:navigate": {
+		type: "boolean",
+		comment: `
 Enables SPA-like navigation for links.
 When clicked, Kirewire fetches the page in the background and swaps the body content without a full page reload.
 
@@ -233,11 +233,11 @@ When clicked, Kirewire fetches the page in the background and swaps the body con
 <a href="/profile" wire:navigate>Profile</a>
 \`\`\`
 `,
-    example: "wire:navigate",
-  },
-  "wire:confirm": {
-    type: "string",
-    comment: `
+		example: "wire:navigate",
+	},
+	"wire:confirm": {
+		type: "string",
+		comment: `
 Prompts the user for confirmation before performing an action.
 Uses the native browser \`confirm()\` dialog.
 
@@ -248,17 +248,17 @@ Uses the native browser \`confirm()\` dialog.
 </button>
 \`\`\`
 `,
-    example: 'wire:confirm="Are you sure?"',
-  },
-  "wire:stream": {
-    type: "boolean",
-    comment:
-      "Enables streaming updates for this element (if supported by the backend response).",
-    example: "wire:stream",
-  },
-  "wire:offline": {
-    type: "boolean",
-    comment: `
+		example: 'wire:confirm="Are you sure?"',
+	},
+	"wire:stream": {
+		type: "boolean",
+		comment:
+			"Enables streaming updates for this element (if supported by the backend response).",
+		example: "wire:stream",
+	},
+	"wire:offline": {
+		type: "boolean",
+		comment: `
 Toggles visibility or classes when the browser goes offline.
 
 ### Modifiers
@@ -271,11 +271,11 @@ Toggles visibility or classes when the browser goes offline.
 <div wire:offline>You are currently offline.</div>
 \`\`\`
 `,
-    example: "wire:offline",
-  },
-  "wire:dirty": {
-    type: "boolean",
-    comment: `
+		example: "wire:offline",
+	},
+	"wire:dirty": {
+		type: "boolean",
+		comment: `
 Toggles visibility or classes when the component state is "dirty" (unsaved changes).
 Usually used with \`wire:model\`.
 
@@ -290,92 +290,94 @@ Usually used with \`wire:model\`.
 <span wire:dirty>Unsaved changes...</span>
 \`\`\`
 `,
-    example: "wire:dirty",
-  },
-  // Alpine.js Attributes
-  "x-data": {
-    type: "javascript",
-    comment: "Declares a new Alpine component scope.",
-    example: 'x-data="{ open: false }"',
-  },
-  "x-init": {
-    type: "javascript",
-    comment: "Runs code when an element is initialized.",
-    example: 'x-init="console.log(\'I am being initialized\')"',
-  },
-  "x-show": {
-    type: "boolean",
-    comment: "Toggles the visibility of an element.",
-    example: 'x-show="open"',
-  },
-  "x-bind": {
-    type: "javascript",
-    comment: "Sets the value of an attribute.",
-    example: 'x-bind:class="{ \'hidden\': !open }"',
-  },
-  "x-on": {
-    type: "javascript",
-    comment: "Attaches an event listener to the element.",
-    example: 'x-on:click="open = !open"',
-  },
-  "x-text": {
-    type: "javascript",
-    comment: "Updates the text content of an element.",
-    example: 'x-text="username"',
-  },
-  "x-html": {
-    type: "javascript",
-    comment: "Updates the inner HTML of an element.",
-    example: 'x-html="content"',
-  },
-  "x-model": {
-    type: "javascript",
-    comment: "Adds two-way data binding to an element.",
-    example: 'x-model="search"',
-  },
-  "x-for": {
-    type: "javascript",
-    comment: "Iterates over an array or object. Must be used on a <template> tag.",
-    example: 'x-for="item in items"',
-  },
-  "x-transition": {
-    type: "boolean",
-    comment: "Applies enter and leave transitions to an element.",
-    example: 'x-transition.duration.500ms',
-  },
-  "x-effect": {
-    type: "javascript",
-    comment: "Executes a script each time one of its dependencies changes.",
-    example: 'x-effect="console.log(open)"',
-  },
-  "x-ignore": {
-    type: "boolean",
-    comment: "Prevents Alpine from initializing attributes within the element.",
-    example: "x-ignore",
-  },
-  "x-ref": {
-    type: "string",
-    comment: "References an element directly by name.",
-    example: 'x-ref="myInput"',
-  },
-  "x-cloak": {
-    type: "boolean",
-    comment: "Hides the element until Alpine has initialized.",
-    example: "x-cloak",
-  },
-  "x-teleport": {
-    type: "string",
-    comment: "Teleports the element to another part of the DOM.",
-    example: 'x-teleport="body"',
-  },
-  "x-if": {
-    type: "javascript",
-    comment: "Conditionally renders an element. Must be used on a <template> tag.",
-    example: 'x-if="open"',
-  },
-  "x-id": {
-    type: "string", // Usually a string array literal, but mostly treated as string config
-    comment: "Generates a unique ID for accessible elements.",
-    example: 'x-id="[\'text-input\']"',
-  },
+		example: "wire:dirty",
+	},
+	// Alpine.js Attributes
+	"x-data": {
+		type: "javascript",
+		comment: "Declares a new Alpine component scope.",
+		example: 'x-data="{ open: false }"',
+	},
+	"x-init": {
+		type: "javascript",
+		comment: "Runs code when an element is initialized.",
+		example: "x-init=\"console.log('I am being initialized')\"",
+	},
+	"x-show": {
+		type: "boolean",
+		comment: "Toggles the visibility of an element.",
+		example: 'x-show="open"',
+	},
+	"x-bind": {
+		type: "javascript",
+		comment: "Sets the value of an attribute.",
+		example: "x-bind:class=\"{ 'hidden': !open }\"",
+	},
+	"x-on": {
+		type: "javascript",
+		comment: "Attaches an event listener to the element.",
+		example: 'x-on:click="open = !open"',
+	},
+	"x-text": {
+		type: "javascript",
+		comment: "Updates the text content of an element.",
+		example: 'x-text="username"',
+	},
+	"x-html": {
+		type: "javascript",
+		comment: "Updates the inner HTML of an element.",
+		example: 'x-html="content"',
+	},
+	"x-model": {
+		type: "javascript",
+		comment: "Adds two-way data binding to an element.",
+		example: 'x-model="search"',
+	},
+	"x-for": {
+		type: "javascript",
+		comment:
+			"Iterates over an array or object. Must be used on a <template> tag.",
+		example: 'x-for="item in items"',
+	},
+	"x-transition": {
+		type: "boolean",
+		comment: "Applies enter and leave transitions to an element.",
+		example: "x-transition.duration.500ms",
+	},
+	"x-effect": {
+		type: "javascript",
+		comment: "Executes a script each time one of its dependencies changes.",
+		example: 'x-effect="console.log(open)"',
+	},
+	"x-ignore": {
+		type: "boolean",
+		comment: "Prevents Alpine from initializing attributes within the element.",
+		example: "x-ignore",
+	},
+	"x-ref": {
+		type: "string",
+		comment: "References an element directly by name.",
+		example: 'x-ref="myInput"',
+	},
+	"x-cloak": {
+		type: "boolean",
+		comment: "Hides the element until Alpine has initialized.",
+		example: "x-cloak",
+	},
+	"x-teleport": {
+		type: "string",
+		comment: "Teleports the element to another part of the DOM.",
+		example: 'x-teleport="body"',
+	},
+	"x-if": {
+		type: "javascript",
+		comment:
+			"Conditionally renders an element. Must be used on a <template> tag.",
+		example: 'x-if="open"',
+	},
+	"x-id": {
+		type: "string", // Usually a string array literal, but mostly treated as string config
+		comment: "Generates a unique ID for accessible elements.",
+		example: "x-id=\"['text-input']\"",
+	},
 } as const;

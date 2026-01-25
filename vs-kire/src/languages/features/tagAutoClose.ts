@@ -56,7 +56,8 @@ export class TagAutoCloseProvider {
 		if (!tagName) return;
 
 		// Check if void
-		if (HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase())) return;
+		if (HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase()))
+			return;
 
 		// Check Kire elements definition
 		const kireElement = kireStore.getState().elements.get(tagName);

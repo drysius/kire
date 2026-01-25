@@ -1,38 +1,40 @@
-import NProgress from 'nprogress'
+import NProgress from "nprogress";
 
-function getNonce() { return null; }
+function getNonce() {
+	return null;
+}
 
 NProgress.configure({
-    minimum: 0.1,
-    trickleSpeed: 200,
-    showSpinner: false,
-    parent: 'body',
-})
+	minimum: 0.1,
+	trickleSpeed: 200,
+	showSpinner: false,
+	parent: "body",
+});
 
-injectStyles()
+injectStyles();
 
-let inProgress = false
+let inProgress = false;
 
 export function showAndStartProgressBar() {
-    inProgress = true
-    setTimeout(() => {
-        if (! inProgress) return
-        NProgress.start()
-    }, 50)
+	inProgress = true;
+	setTimeout(() => {
+		if (!inProgress) return;
+		NProgress.start();
+	}, 50);
 }
 
 export function finishAndHideProgressBar() {
-    inProgress = false
-    NProgress.done()
+	inProgress = false;
+	NProgress.done();
 }
 
 export function removeAnyLeftOverStaleProgressBars() {
-    NProgress.remove()
+	NProgress.remove();
 }
 
 function injectStyles() {
-    let style = document.createElement('style')
-    style.innerHTML = `/* Make clicks pass-through */
+	const style = document.createElement("style");
+	style.innerHTML = `/* Make clicks pass-through */
     #nprogress { pointer-events: none; }
     #nprogress .bar {
       background: var(--kirewire-progress-bar-color, #29d);
@@ -70,8 +72,8 @@ function injectStyles() {
       0%   { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
-    `
-    let nonce = getNonce()
-    if (nonce) (style as any).nonce = nonce
-    document.head.appendChild(style)
+    `;
+	const nonce = getNonce();
+	if (nonce) (style as any).nonce = nonce;
+	document.head.appendChild(style);
 }

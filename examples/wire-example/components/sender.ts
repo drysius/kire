@@ -6,10 +6,10 @@ export default class Sender extends WireComponent {
 	async send() {
 		// Emit 'hello' event with the text
 		this.emit("hello", this.text);
-        this.text = "";
+		this.text = "";
 	}
 
 	render() {
-		return this.view('components.sender');
+		return this.view("components.sender");
 	}
 }

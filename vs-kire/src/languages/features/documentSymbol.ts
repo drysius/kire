@@ -24,14 +24,14 @@ export class KireDocumentSymbolProvider
 				const fullMatch = dirMatch[0];
 				const dirName = dirMatch[1];
 				const args = dirMatch[2] || "";
-				
+
 				const selectionRange = new vscode.Range(
 					i,
 					dirMatch.index,
 					i,
-					dirMatch.index + fullMatch.length
+					dirMatch.index + fullMatch.length,
 				);
-				
+
 				// Default range extends to end of line, will be updated if it's a block
 				const range = new vscode.Range(i, dirMatch.index, i, line.length);
 
@@ -47,7 +47,7 @@ export class KireDocumentSymbolProvider
 
 				// Check if it's a "Section" directive (file path)
 				const isSection = dirName.includes("/") || dirName.includes("\\");
-				
+
 				// Check definition for standard blocks
 				const def = kireStore.getState().directives.get(dirName);
 				const isBlock = def?.children === true || def?.children === "auto";
@@ -57,15 +57,21 @@ export class KireDocumentSymbolProvider
 					args,
 					isSection ? vscode.SymbolKind.File : vscode.SymbolKind.Function,
 					range,
-					selectionRange
+					selectionRange,
 				);
 
 				if (isSection) {
 					// Implicitly close previous open section if it's at the top of the stack
-					if (stack.length > 0 && (stack[stack.length - 1].kind === vscode.SymbolKind.File)) {
+					if (
+						stack.length > 0 &&
+						stack[stack.length - 1].kind === vscode.SymbolKind.File
+					) {
 						const closedSection = stack.pop()!;
 						// Previous section ends at the line before this one
-						closedSection.range = new vscode.Range(closedSection.range.start, new vscode.Position(Math.max(0, i - 1), 9999));
+						closedSection.range = new vscode.Range(
+							closedSection.range.start,
+							new vscode.Position(Math.max(0, i - 1), 9999),
+						);
 					}
 				}
 
@@ -81,7 +87,10 @@ export class KireDocumentSymbolProvider
 				if (isSection || isBlock) {
 					// For blocks, we assume they go until @end or implicit close
 					// We set the initial range to end of document as fallback
-					symbol.range = new vscode.Range(selectionRange.start, new vscode.Position(document.lineCount - 1, 9999));
+					symbol.range = new vscode.Range(
+						selectionRange.start,
+						new vscode.Position(document.lineCount - 1, 9999),
+					);
 					stack.push(symbol);
 				}
 			}

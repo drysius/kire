@@ -14,7 +14,9 @@ export default (kire: Kire) => {
 			if (ctx.children) {
 				ctx.raw(`await $ctx.$merge(async ($ctx) => {`);
 				await ctx.set(ctx.children);
-				ctx.raw(`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx.$response;`);
+				ctx.raw(
+					`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx.$response;`,
+				);
 				ctx.raw(`  $ctx.$response = '';`);
 				ctx.raw(`});`);
 			}
@@ -69,7 +71,7 @@ export default (kire: Kire) => {
 		onInit(ctx) {
 			ctx["~stacks"] = ctx["~stacks"] || {};
 
-            ctx.$on('after', async (c: any) => {
+			ctx.$on("after", async (c: any) => {
 				const ctx = c as any;
 				if (ctx["~stacks"]) {
 					for (const key in ctx["~stacks"]) {
@@ -79,7 +81,10 @@ export default (kire: Kire) => {
 							ctx.$response = ctx.$response.split(placeholder).join(content);
 						}
 					}
-					ctx.$response = ctx.$response.replace(/<!-- KIRE:stack\(.*?\) -->/g, "");
+					ctx.$response = ctx.$response.replace(
+						/<!-- KIRE:stack\(.*?\) -->/g,
+						"",
+					);
 				}
 			});
 		},

@@ -8,7 +8,7 @@ test("Kire Error Reporting - Should allow manual HTML error generation", async (
 	try {
 		await kire.render(template);
 		// If render didn't throw, fail the test
-		expect(true).toBe(false); 
+		expect(true).toBe(false);
 	} catch (e) {
 		const html = kire.renderError(e);
 		expect(html).toContain("<!DOCTYPE html>");

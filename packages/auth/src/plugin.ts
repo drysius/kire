@@ -60,7 +60,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		const loggedDirective = {
 			children: true,
 			type: "html",
-			description: "Alias for @auth. Renders the block if the user is authenticated.",
+			description:
+				"Alias for @auth. Renders the block if the user is authenticated.",
 			example: "@logged\n  <p>You are logged in.</p>\n@end",
 			async onCall(c: CompilerContext) {
 				c.raw("if (await $ctx.$auth_getUser($ctx)) {");
@@ -75,7 +76,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		kire.directive({
 			name: "user",
 			type: "js",
-			description: "Injects the current user object into a variable named 'user'.",
+			description:
+				"Injects the current user object into a variable named 'user'.",
 			example: "@user\n<p>Hello, {{ user.name }}</p>",
 			onCall(c) {
 				c.raw("const user = await $ctx.$auth_getUser($ctx);");
@@ -97,7 +99,7 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 				// To support variables, core parser needs update or user must pass quoted strings manually.
 				c.raw(
 					`if (await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx))) {
-`
+`,
 				);
 				if (c.children) await c.set(c.children);
 				if (c.parents) await c.set(c.parents);
@@ -116,7 +118,8 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			async onCall(c) {
 				const perm = c.param("perm");
 				c.raw(
-					`if (!(await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx)))) {`);
+					`if (!(await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx)))) {`,
+				);
 				if (c.children) await c.set(c.children);
 				c.raw("}");
 			},

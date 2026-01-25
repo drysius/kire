@@ -611,7 +611,9 @@ export class KireDiagnosticProvider {
 				continue; // Skip Kire elements, they're validated elsewhere
 			}
 
-			const isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase());
+			const isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(
+				tagName.toLowerCase(),
+			);
 
 			if (!isClosing && !isVoid) {
 				stack.push({

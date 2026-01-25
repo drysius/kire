@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { Kire } from "kire";
-import { Wired, WireComponent } from "../src";
+import { WireComponent, Wired } from "../src";
 
 class RegistrationForm extends WireComponent {
 	public email = "";
@@ -58,17 +58,19 @@ describe("Wire Scenarios", () => {
 			errors: [],
 			locale: "en",
 		};
-        const key = Wired.keystore("");
+		const key = Wired.keystore("");
 		const checksum = Wired.checksum.generate(data, memo, key);
 		let snapshot = JSON.stringify({ data, memo, checksum });
 
 		// 2. Submit Empty (Should Fail)
-		let res = (await Wired.payload(key, {
-			component: "register",
-			snapshot,
-			method: "save",
-			params: [],
-		})).data as any;
+		let res = (
+			await Wired.payload(key, {
+				component: "register",
+				snapshot,
+				method: "save",
+				params: [],
+			})
+		).data as any;
 
 		let compRes = res.components[0];
 		expect(compRes.effects.errors).toEqual({
@@ -80,12 +82,14 @@ describe("Wire Scenarios", () => {
 		snapshot = compRes.snapshot;
 
 		// 3. Update Email (Should Clear Error and Update State)
-		res = (await Wired.payload(key, {
-			component: "register",
-			snapshot,
-			method: "$set",
-			params: ["email", "test@example.com"],
-		})).data as any;
+		res = (
+			await Wired.payload(key, {
+				component: "register",
+				snapshot,
+				method: "$set",
+				params: ["email", "test@example.com"],
+			})
+		).data as any;
 
 		compRes = res.components[0];
 		const snapObj = JSON.parse(compRes.snapshot);
@@ -95,30 +99,36 @@ describe("Wire Scenarios", () => {
 		// 4. Fill remaining and submit
 
 		// Set password
-		res = (await Wired.payload(key, {
-			component: "register",
-			snapshot,
-			method: "$set",
-			params: ["password", "123"],
-		})).data as any;
+		res = (
+			await Wired.payload(key, {
+				component: "register",
+				snapshot,
+				method: "$set",
+				params: ["password", "123"],
+			})
+		).data as any;
 		snapshot = res.components[0].snapshot;
 
 		// Set terms
-		res = (await Wired.payload(key, {
-			component: "register",
-			snapshot,
-			method: "$set",
-			params: ["terms", true],
-		})).data as any;
+		res = (
+			await Wired.payload(key, {
+				component: "register",
+				snapshot,
+				method: "$set",
+				params: ["terms", true],
+			})
+		).data as any;
 		snapshot = res.components[0].snapshot;
 
 		// Save
-		res = (await Wired.payload(key, {
-			component: "register",
-			snapshot,
-			method: "save",
-			params: [],
-		})).data as any;
+		res = (
+			await Wired.payload(key, {
+				component: "register",
+				snapshot,
+				method: "save",
+				params: [],
+			})
+		).data as any;
 
 		compRes = res.components[0];
 		expect(compRes.effects.errors).toBeUndefined();

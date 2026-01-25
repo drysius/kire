@@ -1,4 +1,3 @@
-import type { Kire } from "src/kire";
 import type { KireContext } from "src/types";
 
 /**
@@ -8,7 +7,7 @@ import type { KireContext } from "src/types";
 export const processElements = async ($ctx: KireContext) => {
 	let resultHtml = $ctx.$response;
 	for (const def of $ctx.$kire.$elements) {
-        if(!def.onCall) continue;
+		if (!def.onCall) continue;
 		const tagName = def.name instanceof RegExp ? def.name.source : def.name;
 
 		const isVoid =
@@ -20,7 +19,10 @@ export const processElements = async ($ctx: KireContext) => {
 
 		const regex = isVoid
 			? new RegExp(`<(${tagName})([^>]*)>`, "gi")
-			: new RegExp(`<(${tagName})([^>]*)(?:>(?:([^]*?))<\\/\\1>|\\s*\\/>)`, "gi");
+			: new RegExp(
+					`<(${tagName})([^>]*)(?:>(?:([^]*?))<\\/\\1>|\\s*\\/>)`,
+					"gi",
+				);
 
 		const matches = [];
 		let match: RegExpExecArray | null;
@@ -40,7 +42,7 @@ export const processElements = async ($ctx: KireContext) => {
 			const currentEnd = currentStart + m.full.length;
 
 			const attributes: Record<string, string> = {};
-			const attrRegex = /([a-zA-Z0-9_-]+)(?:=\"([^\"]*)\")?/g;
+			const attrRegex = /([a-zA-Z0-9_-]+)(?:="([^"]*)")?/g;
 			let attrMatch: RegExpExecArray | null;
 			while ((attrMatch = attrRegex.exec(m.attrs!)) !== null) {
 				attributes[attrMatch[1]!] = attrMatch[2] ?? "";
@@ -92,4 +94,4 @@ export const processElements = async ($ctx: KireContext) => {
 		}
 	}
 	return resultHtml;
-}
+};

@@ -47,15 +47,13 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 					if (kire.production) {
 						const hash = createHash("sha256").update(code).digest("hex");
 						ctx.raw(`$ctx.$add('<tailwind id="${hash}">');`);
-					}
-					else {
+					} else {
 						ctx.raw('$ctx.$add("<tailwind>");');
 					}
 
 					ctx.raw(`$ctx.$add(${JSON.stringify(code)});`);
 					ctx.raw('$ctx.$add("</tailwind>");');
-				}
-				catch (_error) {
+				} catch (_error) {
 					// Fallback behavior
 					const code = ctx.param("code") || "";
 					ctx.raw('$ctx.$add("<tailwind>");');
@@ -151,8 +149,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 						`<style>${processedCSS}</style>`,
 					);
 					ctx.update(newHtml);
-				}
-				catch (error) {
+				} catch (error) {
 					console.warn("Tailwind compilation error:", error);
 					// Fallback: use original content without processing
 					const newHtml = ctx.content.replace(

@@ -9,7 +9,10 @@ class Publisher {
 	private readonly VERSION = "\x1b[32mVERSION\x1b[0m";
 	private readonly PUBLISH = "\x1b[35mPUBLISH\x1b[0m";
 
-	private async updateVersion(pkg: PackageInfo, targetVersion?: string): Promise<void> {
+	private async updateVersion(
+		pkg: PackageInfo,
+		targetVersion?: string,
+	): Promise<void> {
 		const pkgPath = join(pkg.path, "package.json");
 		const content = await readFile(pkgPath, "utf-8");
 		const pkgJson = JSON.parse(content);

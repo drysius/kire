@@ -1,3 +1,3 @@
-import { compile } from "tailwindcss";
+import type { compile } from "tailwindcss";
 
 export type TailwindCompileOptions = Parameters<typeof compile>[1];

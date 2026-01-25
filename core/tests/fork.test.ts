@@ -6,7 +6,7 @@ test("Kire Fork - Context Isolation", () => {
 	kire.$ctx("globalVar", "original");
 
 	const fork = kire.fork();
-	
+
 	// Verify inheritance at fork time
 	expect(fork.$contexts.get("globalVar")).toBe("original");
 
@@ -21,8 +21,8 @@ test("Kire Fork - Context Isolation", () => {
 
 	// Modify parent context after fork
 	kire.$ctx("parentAdded", true);
-	// Fork should NOT see updates to parent context maps (because they are cloned)
-	expect(fork.$contexts.has("parentAdded")).toBe(false);
+	// Fork SHOULD see updates to parent context maps (because they are layered)
+	expect(fork.$contexts.has("parentAdded")).toBe(true);
 });
 
 test("Kire Fork - App Globals Isolation", () => {
@@ -44,7 +44,7 @@ test("Kire Fork - Shared Resources", async () => {
 		name: "shared",
 		onCall(ctx) {
 			ctx.raw('$ctx.$add("Shared")');
-		}
+		},
 	});
 
 	expect(fork.getDirective("shared")).toBeDefined();
@@ -55,11 +55,11 @@ test("Kire Fork - Shared Resources", async () => {
 	// We simulate this by checking if compiling on fork adds to parent's $files
 	const template = "Hello";
 	await fork.compileFn(template);
-	
+
 	// Assuming no resolver logic interferes with key generation for raw strings?
 	// compileFn doesn't cache to $files unless view() is called or we manually check internal behavior.
 	// But `view` caches.
-	
+
 	// Let's use internal check if possible, or assume behavior based on shared Map reference.
 	expect(fork.$files).toBe(kire.$files);
 	expect(fork.$cache).toBe(kire.$cache);

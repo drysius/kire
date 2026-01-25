@@ -13,7 +13,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 		async onCall(compiler) {
 			const nameExpr = compiler.param("name");
 			const paramsExpr = compiler.param("params") || "{}";
-            const optionsExpr = compiler.param("options") || "{}";
+			const optionsExpr = compiler.param("options") || "{}";
 
 			compiler.raw(`await (async () => {
                 const $w = $ctx.$wire;
@@ -87,13 +87,15 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 		},
 	});
 
-
 	const injectScripts = (compiler: any) => {
-		const script = getClientScript({
-			endpoint: options.route || "/_wired",
-			adapter: options.adapter || "http",
-			csrf: options.csrf,
-		}, kire.production);
+		const script = getClientScript(
+			{
+				endpoint: options.route || "/_wired",
+				adapter: options.adapter || "http",
+				csrf: options.csrf,
+			},
+			kire.production,
+		);
 		compiler.res(script);
 	};
 
@@ -115,7 +117,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 		onCall: injectScripts,
 	});
 
-    // Legacy aliases
+	// Legacy aliases
 	kire.directive({
 		name: "kirewire",
 		children: false,
@@ -124,7 +126,6 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 		example: "@kirewire",
 		onCall: injectScripts,
 	});
-
 
 	kire.schematic("attributes", {
 		global: {

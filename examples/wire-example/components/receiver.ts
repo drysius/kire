@@ -5,7 +5,7 @@ export default class Receiver extends WireComponent {
 
 	// Listen for 'hello' event and call 'updateMessage'
 	public listeners = {
-		"hello": "updateMessage"
+		hello: "updateMessage",
 	};
 
 	public updateMessage(text: string) {
@@ -13,6 +13,6 @@ export default class Receiver extends WireComponent {
 	}
 
 	async render() {
-		return this.view('components.receiver');
+		return this.view("components.receiver");
 	}
 }

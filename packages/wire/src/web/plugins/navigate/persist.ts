@@ -1,46 +1,50 @@
-let els: Record<string, Element> = {}
+let els: Record<string, Element> = {};
 
-export function storePersistantElementsForLater(callback: (el: Element) => void) {
-    els = {}
-    document.querySelectorAll('[x-persist]').forEach(i => {
-        const key = i.getAttribute('x-persist')
-        if (key) els[key] = i
-        callback(i);
-        (window as any).Alpine.mutateDom(() => {
-            i.remove()
-        })
-    })
+export function storePersistantElementsForLater(
+	callback: (el: Element) => void,
+) {
+	els = {};
+	document.querySelectorAll("[x-persist]").forEach((i) => {
+		const key = i.getAttribute("x-persist");
+		if (key) els[key] = i;
+		callback(i);
+		(window as any).Alpine.mutateDom(() => {
+			i.remove();
+		});
+	});
 }
 
-export function putPersistantElementsBack(callback: (old: Element, newEl: Element) => void) {
-    let usedPersists: string[] = []
+export function putPersistantElementsBack(
+	callback: (old: Element, newEl: Element) => void,
+) {
+	const usedPersists: string[] = [];
 
-    document.querySelectorAll('[x-persist]').forEach(i => {
-        const key = i.getAttribute('x-persist')
-        if (!key) return
-        
-        let old = els[key]
-        if (! old) return
+	document.querySelectorAll("[x-persist]").forEach((i) => {
+		const key = i.getAttribute("x-persist");
+		if (!key) return;
 
-        usedPersists.push(key);
+		const old = els[key];
+		if (!old) return;
 
-        (old as any)._x_wasPersisted = true
+		usedPersists.push(key);
 
-        callback(old, i);
+		(old as any)._x_wasPersisted = true;
 
-        (window as any).Alpine.mutateDom(() => {
-            i.replaceWith(old)
-        })
-    })
+		callback(old, i);
 
-    Object.entries(els).forEach(([key, el]) => {
-        if (usedPersists.includes(key)) return;
-        (window as any).Alpine.destroyTree(el)
-    })
+		(window as any).Alpine.mutateDom(() => {
+			i.replaceWith(old);
+		});
+	});
 
-    els = {}
+	Object.entries(els).forEach(([key, el]) => {
+		if (usedPersists.includes(key)) return;
+		(window as any).Alpine.destroyTree(el);
+	});
+
+	els = {};
 }
 
 export function isPersistedElement(el: Element) {
-    return el.nodeType === 1 && el.hasAttribute('x-persist')
+	return el.nodeType === 1 && el.hasAttribute("x-persist");
 }

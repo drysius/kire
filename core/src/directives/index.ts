@@ -13,7 +13,9 @@ export const KireDirectives: KirePlugin = {
 	load(kire) {
 		// Register internal helpers
 		// add md5 function
-		kire.$ctx("$require", async (path: string, locals: Record<string, any> = {}) => {
+		kire.$ctx(
+			"$require",
+			async (path: string, locals: Record<string, any> = {}) => {
 				// Use absolute path for caching key to avoid conflicts
 				const resolvedPath = resolvePath(
 					path,
@@ -69,7 +71,7 @@ export const KireDirectives: KirePlugin = {
 	},
 };
 
-function escapeHtml(unsafe: any): string {
+function _escapeHtml(unsafe: any): string {
 	if (unsafe === null || unsafe === undefined) return "";
 	return String(unsafe)
 		.replace(/&/g, "&amp;")

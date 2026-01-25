@@ -4,11 +4,11 @@ import { createExecutor } from "./executor";
 import { createReadDir, createResolver } from "./resolver";
 import type { NodePluginOptions } from "./types";
 
-export * from "./types";
-export * from "./resolver";
-export * from "./executor";
-export * from "./utils";
 export * from "./adapters";
+export * from "./executor";
+export * from "./resolver";
+export * from "./types";
+export * from "./utils";
 
 export const KireNode: KirePlugin<NodePluginOptions> = {
 	name: "@kirejs/node",

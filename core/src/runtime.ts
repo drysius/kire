@@ -1,19 +1,22 @@
 import type { Kire } from "./kire";
-import type { KireContext, KireFileMeta, KireHook } from "./types";
-import type { LayeredMap } from "./utils/layered-map";
-import { escapeHtml } from "./utils/html";
-import { md5 } from "./utils/md5";
+import type { KireContext, KireFileMeta } from "./types";
 import { processElements } from "./utils/elements-runner";
 import { formatKireError } from "./utils/format-error";
+import { escapeHtml } from "./utils/html";
+import { md5 } from "./utils/md5";
 
-export default async ($kire: Kire, locals: Record<string, any>, meta: KireFileMeta) => {
+export default async (
+	$kire: Kire,
+	locals: Record<string, any>,
+	meta: KireFileMeta,
+) => {
 	// make kire runtime context
 	const $ctx = {
 		...$kire.$contexts.toObject(),
 		$response: "",
 		get $res() {
 			return $ctx.$response;
-		}
+		},
 	} as KireContext;
 
 	// Kire Main declarations
@@ -24,18 +27,18 @@ export default async ($kire: Kire, locals: Record<string, any>, meta: KireFileMe
 	$ctx.$typed = (key) => $ctx[key];
 
 	// Kire Hooks
-	$ctx.$add = (str) => $ctx.$response += str;
+	$ctx.$add = (str) => ($ctx.$response += str);
 	$ctx.$hooks = new Map();
-	$ctx.$hooks.set('before', []);
-	$ctx.$hooks.set('after', []);
-	$ctx.$hooks.set('end', []);
+	$ctx.$hooks.set("before", []);
+	$ctx.$hooks.set("after", []);
+	$ctx.$hooks.set("end", []);
 	$ctx.$on = (ev, cb) => {
 		const hooks = $ctx.$hooks.get(ev);
 		if (hooks) {
 			hooks.push(cb);
 			$ctx.$hooks.set(ev, hooks);
 		}
-	}
+	};
 	$ctx.$emit = async (ev) => {
 		const hooks = $ctx.$hooks.get(ev);
 		if (hooks && hooks.length > 0) {
@@ -43,21 +46,25 @@ export default async ($kire: Kire, locals: Record<string, any>, meta: KireFileMe
 				await hook($ctx);
 			}
 		}
-	}
+	};
 
 	// Kire Utils
-	if(typeof $ctx.$require == "undefined") $ctx.$require = (path, locals) => $ctx.$kire.view(path, locals);
-	if(typeof $ctx.$escape == "undefined") $ctx.$escape = (unsafe) => escapeHtml(unsafe);
-	if(typeof $ctx.$md5 == "undefined") $ctx.$md5 = (str) => md5(str);
-	if(typeof $ctx.$resolve == "undefined")$ctx.$resolve = (path) => $kire.resolvePath(path);
-	if(typeof $ctx.$merge == "undefined") $ctx.$merge = async (fn) => {
-		const $pres = $ctx.$response;
-		$ctx.$response = "";
-		await fn($ctx);
-		$ctx.$response = $pres + $ctx.$response;
-	}
-	
-	// Only run if strictly necessary. 
+	if (typeof $ctx.$require === "undefined")
+		$ctx.$require = (path, locals) => $ctx.$kire.view(path, locals);
+	if (typeof $ctx.$escape === "undefined")
+		$ctx.$escape = (unsafe) => escapeHtml(unsafe);
+	if (typeof $ctx.$md5 === "undefined") $ctx.$md5 = (str) => md5(str);
+	if (typeof $ctx.$resolve === "undefined")
+		$ctx.$resolve = (path) => $kire.resolvePath(path);
+	if (typeof $ctx.$merge === "undefined")
+		$ctx.$merge = async (fn) => {
+			const $pres = $ctx.$response;
+			$ctx.$response = "";
+			await fn($ctx);
+			$ctx.$response = $pres + $ctx.$response;
+		};
+
+	// Only run if strictly necessary.
 	if ($ctx.$kire.$directives.size > 0) {
 		for (const directive of $ctx.$kire.$directives.values()) {
 			if (directive.onInit) {
@@ -72,20 +79,20 @@ export default async ($kire: Kire, locals: Record<string, any>, meta: KireFileMe
 	} catch (e: any) {
 		if ($ctx.$file.code) {
 			e.kireGeneratedCode = $ctx.$file.code;
-			formatKireError(e,$ctx);
+			formatKireError(e, $ctx);
 			e.toString = () => e.message;
 		}
 		throw e;
 	}
 
 	// Legacy hook support mapping to new event system
-	await $ctx.$emit('before');
+	await $ctx.$emit("before");
 
 	// Execute 'after' hooks
-	await $ctx.$emit('after');
+	await $ctx.$emit("after");
 
 	// Emit end
-	await $ctx.$emit('end');
+	await $ctx.$emit("end");
 
 	let resultHtml = $ctx.$response;
 
@@ -94,4 +101,4 @@ export default async ($kire: Kire, locals: Record<string, any>, meta: KireFileMe
 	}
 
 	return resultHtml;
-}
+};

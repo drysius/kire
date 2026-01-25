@@ -1,17 +1,29 @@
-import { scoped, AsyncFunction } from "./utils/scoped";
-import { LayeredMap } from "./utils/layered-map";
-import { Parser } from "./parser";
 import { Compiler } from "./compiler";
 import { KireDirectives } from "./directives";
+import { Parser } from "./parser";
 import KireRuntime from "./runtime";
+import type {
+	DirectiveDefinition,
+	ElementDefinition,
+	ICompilerConstructor,
+	IParserConstructor,
+	KireCache,
+	KireClass,
+	KireElementHandler,
+	KireElementOptions,
+	KireOptions,
+	KirePlugin,
+	KireSchematic,
+} from "./types";
+import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
-import type { DirectiveDefinition, ElementDefinition, ICompilerConstructor, IParserConstructor, KireCache, KireClass, KireElementHandler, KireElementOptions, KireOptions, KirePlugin, KireSchematic } from "./types";
+import { AsyncFunction, scoped } from "./utils/scoped";
 
 export class Kire implements KireClass {
-    /**
-     * Helper to execute code within a specific scope.
-     */
-    public $scoped = scoped;
+	/**
+	 * Helper to execute code within a specific scope.
+	 */
+	public $scoped = scoped;
 
 	/**
 	 * Registry of available directives (e.g., @if, @for).
@@ -88,7 +100,6 @@ export class Kire implements KireClass {
 	 */
 	public $var_locals: string;
 
-
 	/**
 	 * General purpose cache for plugins and internal features.
 	 */
@@ -122,9 +133,9 @@ export class Kire implements KireClass {
 	public fork(): Kire {
 		// Initialize without default directives to avoid overhead
 		const fork = new Kire({
-            directives: false,
-            parent: this
-        });
+			directives: false,
+			parent: this,
+		});
 
 		// Link to parent
 		fork.$parent = this;
@@ -171,10 +182,12 @@ export class Kire implements KireClass {
 		this.production = options.production ?? true;
 		this.extension = options.extension ?? "kire";
 		this.$var_locals = options.varLocals ?? "it";
-        this.$parent = options.parent;
+		this.$parent = options.parent;
 
 		// Default executor using AsyncFunction
-		this.$executor = options.executor ?? ((code, params) => new AsyncFunction(...params, code));
+		this.$executor =
+			options.executor ??
+			((code, params) => new AsyncFunction(...params, code));
 
 		this.$resolver =
 			options.resolver ??
@@ -184,7 +197,7 @@ export class Kire implements KireClass {
 
 		this.$parser = options.engine?.parser ?? Parser;
 		this.$compiler = options.engine?.compiler ?? Compiler;
-        
+
 		// Collect plugins to load
 		const pluginsToLoad: Array<{ p: KirePlugin<any>; o?: any }> = [];
 
@@ -379,7 +392,7 @@ export class Kire implements KireClass {
 		) {
 			this.$elements.add(nameOrDef as ElementDefinition);
 		} else {
-			if (!handler) throw new Error("Handler is required for legacy element()")
+			if (!handler) throw new Error("Handler is required for legacy element()");
 			this.$elements.add({
 				name: nameOrDef as string | RegExp,
 				void: opts?.void ?? false, // Default to false if not provided
@@ -594,17 +607,17 @@ export class Kire implements KireClass {
 	 * @returns The rendered string.
 	 */
 	public async run(
-		mainFn: Function & { [key: string]: any; },
+		mainFn: Function & { [key: string]: any },
 		locals: Record<string, any>,
 		children = false,
 	) {
 		return KireRuntime(this, locals, {
 			children,
-			code:mainFn._code,
-			execute:mainFn,
-			name:mainFn.name,
-			source:mainFn._source,
-			path:mainFn._path
+			code: mainFn._code,
+			execute: mainFn,
+			name: mainFn.name,
+			source: mainFn._source,
+			path: mainFn._path,
 		});
 	}
 }

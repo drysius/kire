@@ -64,7 +64,8 @@ export default (kire: Kire) => {
 		params: ["loop:$lhs {op:in/of} $rhs|statement:string"],
 		children: true,
 		type: "html",
-		description: "Iterates over an array or object. Supports @empty block if no iterations occur.",
+		description:
+			"Iterates over an array or object. Supports @empty block if no iterations occur.",
 		example: `@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end`,
 		parents: [
 			{

@@ -193,10 +193,10 @@ export class KireCompletionItemProvider
 		// Heuristic: line starts with <tagName ... (handling multiline is harder with linePrefix, assuming single line or simple context)
 		// Better regex: Find last <TAG that isn't closed
 		const lastTagMatch = linePrefix.match(/<([a-zA-Z0-9_-]+)(?:\s+[^>]*?)?$/);
-		
+
 		if (lastTagMatch) {
 			const tagName = lastTagMatch[1];
-			
+
 			// Check if we are inside quotes (simple toggle check)
 			const quoteCount = (linePrefix.match(/['"]/g) || []).length;
 			if (quoteCount % 2 !== 0) return items; // Inside attribute value
@@ -223,7 +223,7 @@ export class KireCompletionItemProvider
 			const elementDef = kireStore.getState().elements.get(tagName);
 			if (elementDef && elementDef.attributes) {
 				Object.entries(elementDef.attributes).forEach(([name, rawDef]) => {
-					const def = typeof rawDef === 'string' ? { type: rawDef } : rawDef;
+					const def = typeof rawDef === "string" ? { type: rawDef } : rawDef;
 					const item = new vscode.CompletionItem(
 						name,
 						vscode.CompletionItemKind.Property,

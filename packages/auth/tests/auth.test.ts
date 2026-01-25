@@ -10,7 +10,7 @@ describe("KireAuth", () => {
 				if (!user) return false;
 				return user.perms.includes(perm);
 			},
-			getUser: (ctx) => ctx.user,
+			getUser: (ctx) => ctx.$props.user,
 		});
 		return kire;
 	};

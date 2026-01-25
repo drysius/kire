@@ -3,7 +3,7 @@ declare module "kire" {
 		_assets?: {
 			scripts: string[]; // List of hashes
 			styles: string[]; // List of hashes
-			// SVGs are handled directly via img src, so we don't necessarily need a list here 
+			// SVGs are handled directly via img src, so we don't necessarily need a list here
 			// unless we want to preload them, but for now typical usage is direct reference.
 		};
 	}

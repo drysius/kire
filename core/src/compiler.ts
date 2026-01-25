@@ -8,7 +8,7 @@ export class Compiler {
 	private posBuffer: string[] = [];
 	private usedDirectives: Set<string> = new Set();
 
-	constructor(private kire: Kire) { }
+	constructor(private kire: Kire) {}
 
 	/**
 	 * Compiles a list of AST nodes into a JavaScript function body string.
@@ -21,14 +21,16 @@ export class Compiler {
 		this.posBuffer = [];
 		this.usedDirectives.clear();
 
-		const $globals = Array.from(this.kire.$globals.keys()).filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k));
+		const $globals = Array.from(this.kire.$globals.keys()).filter((k) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
+		);
 
 		if ($globals.length > 0) {
-			this.preBuffer.push(`let { ${$globals.join(', ')} } = $ctx.$globals;`);
+			this.preBuffer.push(`let { ${$globals.join(", ")} } = $ctx.$globals;`);
 		}
 
 		// 2. Define Locals Alias (default 'it')
-		const varLocals = this.kire.$var_locals || 'it';
+		const varLocals = this.kire.$var_locals || "it";
 		this.preBuffer.push(`let ${varLocals} = $ctx.$props;`);
 
 		await this.compileNodes(nodes);
@@ -39,7 +41,7 @@ export class Compiler {
 
 		// Main function body code
 		// Added 'with($ctx)' wrapper to support direct variable access
-		const code = `\n${pre}\n${res}\n${pos}\nreturn $ctx;\n`;
+		const code = `\n${pre}\n${res}\n${pos}\nreturn $ctx;\n//# sourceURL=kire-generated.js`;
 
 		return code;
 	}
@@ -145,7 +147,6 @@ export class Compiler {
 		node: Node,
 		directive: DirectiveDefinition,
 	): CompilerContext {
-		const self = this;
 		const paramsMap: Record<string, any> = {};
 
 		// Process and validate parameters
@@ -213,22 +214,22 @@ export class Compiler {
 			},
 			// Legacy/Standard Directive API
 			pre: (code: string) => {
-				self.preBuffer.push(code);
+				this.preBuffer.push(code);
 			},
 			res: (content: string) => {
-				self.resBuffer.push(`$ctx.$add(${JSON.stringify(content)});`);
+				this.resBuffer.push(`$ctx.$add(${JSON.stringify(content)});`);
 			},
 			raw: (code: string) => {
-				self.resBuffer.push(code);
+				this.resBuffer.push(code);
 			},
 			pos: (code: string) => {
-				self.posBuffer.push(code);
+				this.posBuffer.push(code);
 			},
 			$pre: (code: string) => {
-				self.resBuffer.push(`$ctx.$on('before', async ($ctx) => { ${code} });`);
+				this.resBuffer.push(`$ctx.$on('before', async ($ctx) => { ${code} });`);
 			},
 			$pos: (code: string) => {
-				self.resBuffer.push(`$ctx.$on('after', async ($ctx) => { ${code} });`);
+				this.resBuffer.push(`$ctx.$on('after', async ($ctx) => { ${code} });`);
 			},
 		};
 	}
