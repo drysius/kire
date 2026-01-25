@@ -85,9 +85,9 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 				ctx.raw(`        }`);
 				ctx.raw(`     }`);
 
-				ctx.raw(`     $ctx.res(finalSvg);`);
+				ctx.raw(`     $ctx.$add(finalSvg);`);
 				ctx.raw(`  } else {`);
-				ctx.raw(`     $ctx.res(svg);`);
+				ctx.raw(`     $ctx.$add(svg);`);
 				ctx.raw(`  }`);
 				ctx.raw(`})();`);
 			},

@@ -101,12 +101,12 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 `);
 				ctx.raw(`     }
 `);
-				ctx.raw(`     $ctx.res('<img src="' + src + '"' + attrsStr + ' />');
+				ctx.raw(`     $ctx.$add('<img src="' + src + '"' + attrsStr + ' />');
 `);
 				ctx.raw(`  } else {
 `);
 				ctx.raw(
-					`     $ctx.res('<!-- SVG not found: ' + ${JSON.stringify(pathExpr)} + ' -->');
+					`     $ctx.$add('<!-- SVG not found: ' + ${JSON.stringify(pathExpr)} + ' -->');
 `,
 				);
 				ctx.raw(`  }
@@ -186,7 +186,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			example: "@assets()",
 			onCall(ctx) {
 				ctx.pre(`$ctx._assets = { scripts: [], styles: [] };`);
-				ctx.raw(`$ctx.res('<${injectionTag}></${injectionTag}>');
+				ctx.raw(`$ctx.$add('<${injectionTag}></${injectionTag}>');
 `);
 			},
 		});

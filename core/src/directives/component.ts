@@ -15,8 +15,8 @@ export default (kire: Kire) => {
 			const name = compiler.param("name");
 			compiler.raw(`await $ctx.$merge(async ($ctx) => {`);
 			if (compiler.children) compiler.set(compiler.children);
-			compiler.raw(`  $slots[${JSON.stringify(name)}] = $ctx['~res'];`);
-			compiler.raw(`  $ctx['~res'] = '';`);
+			compiler.raw(`  $slots[${JSON.stringify(name)}] = $ctx.$response;`);
+			compiler.raw(`  $ctx.$response = '';`);
 			compiler.raw(`});`);
 		},
 	});
@@ -42,8 +42,8 @@ export default (kire: Kire) => {
 
 			if (compiler.children) await compiler.set(compiler.children);
 
-			compiler.raw(`    if (!$slots.default) $slots.default = $ctx['~res'];`);
-			compiler.raw(`    $ctx['~res'] = '';`); // Clear default content from parent stream
+			compiler.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
+			compiler.raw(`    $ctx.$response = '';`); // Clear default content from parent stream
 			compiler.raw(`  });`);
 
 			// Now load the component template and render it
@@ -57,7 +57,7 @@ export default (kire: Kire) => {
 
 			compiler.raw(`  const html = await $ctx.$require(path, finalLocals);`);
 			compiler.raw(`  if (html !== null) {`);
-			compiler.raw(`    $ctx.res(html);`);
+			compiler.raw(`    $ctx.$add(html);`);
 			compiler.raw(`  }`);
 
 			compiler.raw(`})();`);

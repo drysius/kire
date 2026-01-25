@@ -14,8 +14,8 @@ export default (kire: Kire) => {
 			if (ctx.children) {
 				ctx.raw(`await $ctx.$merge(async ($ctx) => {`);
 				await ctx.set(ctx.children);
-				ctx.raw(`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx['~res'];`);
-				ctx.raw(`  $ctx['~res'] = '';`);
+				ctx.raw(`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx.$response;`);
+				ctx.raw(`  $ctx.$response = '';`);
 				ctx.raw(`});`);
 			}
 		},
@@ -63,23 +63,23 @@ export default (kire: Kire) => {
 		onCall(compiler) {
 			const name = compiler.param("name");
 			compiler.raw(
-				`$ctx.res("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`,
+				`$ctx.$add("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`,
 			);
 		},
 		onInit(ctx) {
 			ctx["~stacks"] = ctx["~stacks"] || {};
 
-			ctx["~$pos"].push(async (c: any) => {
+            ctx.$on('after', async (c: any) => {
 				const ctx = c as any;
 				if (ctx["~stacks"]) {
 					for (const key in ctx["~stacks"]) {
 						const placeholder = `<!-- KIRE:stack(${key}) -->`;
-						if (ctx["~res"].includes(placeholder)) {
+						if (ctx.$response.includes(placeholder)) {
 							const content = ctx["~stacks"][key].join("\n");
-							ctx["~res"] = ctx["~res"].split(placeholder).join(content);
+							ctx.$response = ctx.$response.split(placeholder).join(content);
 						}
 					}
-					ctx["~res"] = ctx["~res"].replace(/<!-- KIRE:stack\(.*?\) -->/g, "");
+					ctx.$response = ctx.$response.replace(/<!-- KIRE:stack\(.*?\) -->/g, "");
 				}
 			});
 		},
@@ -103,9 +103,9 @@ export default (kire: Kire) => {
 			if (compiler.children) await compiler.set(compiler.children);
 
 			compiler.raw(
-				`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx['~res']);`,
+				`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`,
 			);
-			compiler.raw(`  $ctx['~res'] = '';`);
+			compiler.raw(`  $ctx.$response = '';`);
 			compiler.raw(`});`);
 		},
 	});

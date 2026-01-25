@@ -3,7 +3,7 @@ import { Kire } from "../src/index";
 
 test("Kire - Basic Interpolation", async () => {
 	const kire = new Kire();
-	const result = await kire.render("Hello {{ name }}!", { name: "World" });
+	const result = await kire.render("Hello {{ it.name }}!", { name: "World" });
 	expect(result).toBe("Hello World!");
 });
 
@@ -13,7 +13,7 @@ test("Kire - Simple Directive", async () => {
 	kire.directive({
 		name: "hello",
 		onCall(ctx) {
-			ctx.raw('$ctx.res("Hello Directive");');
+			ctx.raw('$ctx.$add("Hello Directive");');
 		},
 	});
 
@@ -29,7 +29,7 @@ test("Kire - Directive with Param", async () => {
 		params: ["msg:string"],
 		onCall(ctx) {
 			const msg = ctx.param("msg"); // Should be 'Test Message'
-			ctx.raw(`$ctx.res(${JSON.stringify(msg)});`); // Embed as a string literal
+			ctx.raw(`$ctx.$add(${JSON.stringify(msg)});`); // Embed as a string literal
 		},
 	});
 
@@ -45,8 +45,8 @@ test("Kire - Pre/Pos Buffers", async () => {
 		name: "wrap",
 		onCall(ctx) {
 			ctx.pre('const prefix = "START";');
-			ctx.raw("$ctx.res(prefix);");
-			ctx.raw('$ctx.res("CONTENT");');
+			ctx.raw("$ctx.$add(prefix);");
+			ctx.raw('$ctx.$add("CONTENT");');
 			ctx.pos("// End of script");
 		},
 	});

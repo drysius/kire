@@ -1,4 +1,5 @@
 import type { Kire } from "./kire";
+import type { LayeredMap } from "./utils/layered-map";
 
 export type KireCache<T = any> = Map<string, T>;
 
@@ -65,41 +66,63 @@ export interface KireOptions {
 	 * Name of the variable exposing locals in the template. Defaults to "it".
 	 */
 	varLocals?: string;
-	/**
-	 * Whether to expose locals as a specific variable (defined by varLocals).
-	 */
-	exposeLocals?: boolean;
+    /**
+     * Parent Kire instance if this is a fork
+     */
+    parent?: Kire;
 }
+
+export type KireHook = 'before' | 'after' | 'end';
 
 /**
  * The runtime context object ($ctx) used during template execution.
  */
 export interface KireContext {
-	/**
-	 * The accumulated string buffer for the local scope's output.
-	 */
-	"~res": string;
+    /**
+     * The LayeredMap containing global variables.
+     * Can be destructured at the start of the template.
+     */
+    $globals: LayeredMap<string, any> | Map<string, any>;
 
-	/**
-	 * A global buffer for code or functions to be executed *before* the main entry point's rendering logic.
-	 */
-	"~$pre": Function[];
+    /**
+     * The local variables passed to the render function.
+     * Often aliased as 'it' or defined via varLocals option.
+     */
+    $props: Record<string, any>;
 
-	/**
-	 * A global buffer for code or functions to be executed *after* the main entry point's rendering logic.
-	 */
-	"~$pos": Function[];
+    /**
+     * Information about the current file being rendered.
+     */
+    $file: KireFileMeta;
 
-	/**
-	 * Appends content to the current output buffer (~res).
-	 * @param str The content to append.
-	 */
-	res(str: string): void;
+    /**
+     * The Kire instance (or fork) executing this template.
+     */
+    $kire: Kire;
 
-	/**
-	 * Returns the current output buffer content.
-	 */
-	$res(): string;
+    /**
+     * The accumulated output string.
+     */
+    $response: string;
+
+    /**
+     * Appends content to the response buffer.
+     * @param str The content to append.
+     */
+    $add(str: string): void;
+
+    /**
+     * Adds an event listener for lifecycle hooks.
+     * @param event The event name ('before', 'after', 'end').
+     * @param callback The function to execute.
+     */
+    $on(event: KireHook, callback: (ctx: KireContext) => Promise<void> | void): void;
+
+    /**
+     * Emits a lifecycle event.
+     * @param event The event name.
+     */
+    $emit(event: KireHook): Promise<void>;
 
 	/**
 	 * Resolves a file path relative to the project root and aliases.
@@ -120,17 +143,38 @@ export interface KireContext {
 	/**
 	 * Helper for MD5 hashing.
 	 */
-	$md5?(str: string): string;
+	$md5(str: string): string;
 
 	/**
 	 * Helper for HTML escaping.
 	 */
-	$escape?(unsafe: any): string;
+	$escape(unsafe: any): string;
+    
+    /**
+     * Typed $ctx context use key of $ctx context with you type
+     * @param key
+     */
+    $typed<T>(key: string): T;
 
 	/**
-	 * Arbitrary locals and globals.
+     * Runtime hooks
+     * @param key
+     */
+	$hooks:Map<KireHook, ((ctx: KireContext) => Promise<void> | void)[]>
+
+	/**
+	 * Arbitrary locals and globals access (fallback).
 	 */
 	[key: string]: any;
+}
+
+export interface KireFileMeta {
+	path:string;
+	name:string;
+	execute:Function;
+	code:string;
+	source:string;
+	children?:boolean;
 }
 
 /**
@@ -161,45 +205,35 @@ export interface CompilerContext {
 	 */
 	func(code: string): string;
 
-	// --- Local Function Scope ---
+    /**
+     * Appends code to the pre-buffer.
+     */
+    pre(code: string): void;
 
-	/**
-	 * Pushes code to be executed *before* the local rendering result accumulation begins.
-	 * Useful for variable declarations or setup logic.
-	 */
-	pre(code: string): void;
+    /**
+     * Appends content to the result buffer.
+     */
+    res(content: string): void;
 
-	/**
-	 * Appends code that adds content to the local result buffer (~res).
-	 * @param content The raw content to append.
-	 */
-	res(content: string): void;
+    /**
+     * Appends raw code to the result buffer.
+     */
+    raw(code: string): void;
 
-	/**
-	 * Pushes raw code directly into the main execution flow of the compiled function.
-	 * @param code The JavaScript code to inject.
-	 */
-	raw(code: string): void;
+    /**
+     * Appends code to the pos-buffer.
+     */
+    pos(code: string): void;
 
-	/**
-	 * Pushes code to be executed *after* the local rendering result accumulation ends.
-	 * Useful for post-processing the result (replacements) or cleanup.
-	 */
-	pos(code: string): void;
+    /**
+     * Appends code to the global pre-hook.
+     */
+    $pre(code: string): void;
 
-	// --- Global Scope (Main File) ---
-
-	/**
-	 * Pushes code to the global pre-processing stack (~$pre).
-	 * These functions run before the main entry point's rendering logic.
-	 */
-	$pre(code: string): void;
-
-	/**
-	 * Pushes code to the global post-processing stack (~$pos).
-	 * These functions run after the main entry point's rendering logic has finished.
-	 */
-	$pos(code: string): void;
+    /**
+     * Appends code to the global post-hook.
+     */
+    $pos(code: string): void;
 
 	/**
 	 * Throws a compilation error with a specific message.
@@ -210,34 +244,6 @@ export interface CompilerContext {
 	 * Resolves a file path relative to the project root and aliases.
 	 */
 	resolve(path: string): string;
-
-	// --- Compiler State Inspection ---
-	// These properties allow checking the current state of the compilation buffers.
-
-	/**
-	 * The current content of the local result buffer code.
-	 */
-	"~res"?: string;
-
-	/**
-	 * The current content of the local pre-processing buffer code.
-	 */
-	"~pre"?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
-
-	/**
-	 * The current content of the local post-processing buffer code.
-	 */
-	"~pos"?: string[]; // Changed to string[] because it's a buffer of code lines in the compiler
-
-	/**
-	 * The current content of the global pre-processing buffer code.
-	 */
-	"~$pre"?: string[];
-
-	/**
-	 * The current content of the global post-processing buffer code.
-	 */
-	"~$pos"?: string[];
 
 	// --- Nesting & Structure ---
 
@@ -265,12 +271,6 @@ export interface KireElementContext extends KireContext {
 	 * The current global HTML content string. This is mutable and represents the state of the document.
 	 */
 	content: string;
-
-	/**
-	 * Typed $ctx context use key of $ctx context with you type
-	 * @param key
-	 */
-	$typed<T>(key: string): T;
 
 	/**
 	 * Details about the specific HTML element being processed.

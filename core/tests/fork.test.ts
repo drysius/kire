@@ -8,21 +8,21 @@ test("Kire Fork - Context Isolation", () => {
 	const fork = kire.fork();
 	
 	// Verify inheritance at fork time
-	expect(fork.$globals.get("globalVar")).toBe("original");
+	expect(fork.$contexts.get("globalVar")).toBe("original");
 
 	// Modify fork context
 	fork.$ctx("globalVar", "forked");
 	fork.$ctx("forkOnly", true);
 
 	// Verify isolation
-	expect(fork.$globals.get("globalVar")).toBe("forked");
-	expect(kire.$globals.get("globalVar")).toBe("original");
-	expect(kire.$globals.has("forkOnly")).toBe(false);
+	expect(fork.$contexts.get("globalVar")).toBe("forked");
+	expect(kire.$contexts.get("globalVar")).toBe("original");
+	expect(kire.$contexts.has("forkOnly")).toBe(false);
 
 	// Modify parent context after fork
 	kire.$ctx("parentAdded", true);
 	// Fork should NOT see updates to parent context maps (because they are cloned)
-	expect(fork.$globals.has("parentAdded")).toBe(false);
+	expect(fork.$contexts.has("parentAdded")).toBe(false);
 });
 
 test("Kire Fork - App Globals Isolation", () => {
@@ -31,8 +31,8 @@ test("Kire Fork - App Globals Isolation", () => {
 	const fork = kire.fork();
 
 	fork.$global("appVar", 2);
-	expect(fork.$app_globals.get("appVar")).toBe(2);
-	expect(kire.$app_globals.get("appVar")).toBe(1);
+	expect(fork.$globals.get("appVar")).toBe(2);
+	expect(kire.$globals.get("appVar")).toBe(1);
 });
 
 test("Kire Fork - Shared Resources", async () => {
@@ -43,7 +43,7 @@ test("Kire Fork - Shared Resources", async () => {
 	kire.directive({
 		name: "shared",
 		onCall(ctx) {
-			ctx.res("Shared");
+			ctx.raw('$ctx.$add("Shared")');
 		}
 	});
 

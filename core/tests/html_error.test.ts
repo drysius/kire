@@ -3,7 +3,7 @@ import { Kire } from "../src/index";
 
 test("Kire Error Reporting - Should allow manual HTML error generation", async () => {
 	const kire = new Kire({ production: false });
-	const template = `{{ nonExistentVariable.property }}`;
+	const template = `{{ it.nonExistentVariable.property }}`;
 
 	try {
 		await kire.render(template);

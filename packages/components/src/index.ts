@@ -49,14 +49,14 @@ export class KireComponents implements KirePlugin<ComponentOptions> {
 			try {
 				// Render the component view
 				// We use kire.view to render the file at 'components.<name>'
-				const rendered = await ctx.kire.view(viewPath, props);
+				const rendered = await ctx.$kire.view(viewPath, props);
 				
 				// Replace the <x-*> tag with the rendered content
 				ctx.replace(rendered);
 			} catch (e) {
 				console.error(`Failed to render component ${viewPath}`, e);
 				// If we have the error rendering helper, use it, otherwise show simple error
-				if (typeof (ctx.kire as any).renderError === 'function') {
+				if (typeof (ctx.$kire as any).renderError === 'function') {
                     // We assume this might be returned to client or just logged
                     // ctx.replace((ctx.kire as any).renderError(e)); 
                     // But usually we don't want to replace the component with a full HTML page.

@@ -16,7 +16,7 @@ export default (kire: Kire) => {
 			compiler.raw(`await $ctx.$merge(async ($ctx) => {
     const html = await $ctx.$require(${JSON.stringify(pathExpr)}, ${localsExpr});
     if (html !== null) {
-        $ctx.res(html);
+        $ctx.$add(html);
     }
 });`);
 		},

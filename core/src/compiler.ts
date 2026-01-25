@@ -8,7 +8,7 @@ export class Compiler {
 	private posBuffer: string[] = [];
 	private usedDirectives: Set<string> = new Set();
 
-	constructor(private kire: Kire) {}
+	constructor(private kire: Kire) { }
 
 	/**
 	 * Compiles a list of AST nodes into a JavaScript function body string.
@@ -21,6 +21,16 @@ export class Compiler {
 		this.posBuffer = [];
 		this.usedDirectives.clear();
 
+		const $globals = Array.from(this.kire.$globals.keys()).filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k));
+
+		if ($globals.length > 0) {
+			this.preBuffer.push(`let { ${$globals.join(', ')} } = $ctx.$globals;`);
+		}
+
+		// 2. Define Locals Alias (default 'it')
+		const varLocals = this.kire.$var_locals || 'it';
+		this.preBuffer.push(`let ${varLocals} = $ctx.$props;`);
+
 		await this.compileNodes(nodes);
 
 		const pre = this.preBuffer.join("\n");
@@ -28,7 +38,8 @@ export class Compiler {
 		const pos = this.posBuffer.join("\n");
 
 		// Main function body code
-		const code = `with($ctx) { \n${pre}\n${res}\n${pos}\nreturn $ctx;\n }`;
+		// Added 'with($ctx)' wrapper to support direct variable access
+		const code = `\n${pre}\n${res}\n${pos}\nreturn $ctx;\n`;
 
 		return code;
 	}
@@ -77,7 +88,7 @@ export class Compiler {
 	 */
 	private compileText(node: Node) {
 		if (node.content) {
-			this.resBuffer.push(`$ctx['~res'] += ${JSON.stringify(node.content)};`);
+			this.resBuffer.push(`$ctx.$add(${JSON.stringify(node.content)});`);
 		}
 	}
 
@@ -88,9 +99,9 @@ export class Compiler {
 	private compileVariable(node: Node) {
 		if (node.content) {
 			if (node.raw) {
-				this.resBuffer.push(`$ctx['~res'] += (${node.content});`);
+				this.resBuffer.push(`$ctx.$add(${node.content});`);
 			} else {
-				this.resBuffer.push(`$ctx['~res'] += $ctx.$escape(${node.content});`);
+				this.resBuffer.push(`$ctx.$add($ctx.$escape(${node.content}));`);
 			}
 		}
 	}
@@ -197,43 +208,27 @@ export class Compiler {
 			func: (code: string) => {
 				return `async function($ctx) { ${code} }`;
 			},
-			pre: (code: string) => {
-				this.preBuffer.push(code);
-			},
-			res: (content: string) => {
-				const escaped = content
-					.replace(/\\/g, "\\\\")
-					.replace(/`/g, "\\`")
-					.replace(/\${/g, "\\${ ");
-				this.resBuffer.push(`$ctx.res(\`${escaped}\`);`);
-			},
-			raw: (code: string) => {
-				this.resBuffer.push(code);
-			},
-			pos: (code: string) => {
-				this.posBuffer.push(code);
-			},
-			$pre: (code: string) => {
-				this.resBuffer.push(
-					`$ctx['~$pre'].push(async ($ctx) => { with($ctx) { ${code} } });`,
-				);
-			},
-			$pos: (code: string) => {
-				this.resBuffer.push(
-					`$ctx['~$pos'].push(async ($ctx) => { with($ctx) { ${code} } });`,
-				);
-			},
 			error: (msg: string) => {
 				throw new Error(`Error in directive @${node.name}: ${msg}`);
 			},
-			get "~res"() {
-				return self.resBuffer.join("\n");
+			// Legacy/Standard Directive API
+			pre: (code: string) => {
+				self.preBuffer.push(code);
 			},
-			get "~pre"() {
-				return self.preBuffer;
+			res: (content: string) => {
+				self.resBuffer.push(`$ctx.$add(${JSON.stringify(content)});`);
 			},
-			get "~pos"() {
-				return self.posBuffer;
+			raw: (code: string) => {
+				self.resBuffer.push(code);
+			},
+			pos: (code: string) => {
+				self.posBuffer.push(code);
+			},
+			$pre: (code: string) => {
+				self.resBuffer.push(`$ctx.$on('before', async ($ctx) => { ${code} });`);
+			},
+			$pos: (code: string) => {
+				self.resBuffer.push(`$ctx.$on('after', async ($ctx) => { ${code} });`);
 			},
 		};
 	}

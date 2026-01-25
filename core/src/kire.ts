@@ -1,23 +1,18 @@
+import { scoped, AsyncFunction } from "./utils/scoped";
+import { LayeredMap } from "./utils/layered-map";
+import { Parser } from "./parser";
 import { Compiler } from "./compiler";
 import { KireDirectives } from "./directives";
-import { Parser } from "./parser";
-import { kireRuntime } from "./runtime";
-import type {
-	DirectiveDefinition,
-	ElementDefinition,
-	ICompilerConstructor,
-	IParserConstructor,
-	KireCache,
-	KireClass,
-	KireElementHandler,
-	KireElementOptions,
-	KireOptions,
-	KirePlugin,
-	KireSchematic,
-} from "./types";
+import KireRuntime from "./runtime";
 import { resolvePath } from "./utils/resolve";
+import type { DirectiveDefinition, ElementDefinition, ICompilerConstructor, IParserConstructor, KireCache, KireClass, KireElementHandler, KireElementOptions, KireOptions, KirePlugin, KireSchematic } from "./types";
 
 export class Kire implements KireClass {
+    /**
+     * Helper to execute code within a specific scope.
+     */
+    public $scoped = scoped;
+
 	/**
 	 * Registry of available directives (e.g., @if, @for).
 	 * Maps directive names to their definitions.
@@ -32,12 +27,12 @@ export class Kire implements KireClass {
 	/**
 	 * Registry of global variables accessible in all templates.
 	 */
-	public $globals: Map<string, any> = new Map();
+	public $globals: LayeredMap<string, any> = new LayeredMap();
 
 	/**
-	 * Registry of application-level global variables accessible directly in templates.
+	 * Registry of application-level $ctx variables accessible directly in templates.
 	 */
-	public $app_globals: Map<string, any> = new Map();
+	public $contexts: LayeredMap<string, any> = new LayeredMap();
 
 	/**
 	 * Registry of namespaces for path resolution.
@@ -93,10 +88,6 @@ export class Kire implements KireClass {
 	 */
 	public $var_locals: string;
 
-	/**
-	 * Whether to expose local variables directly in the template scope (in addition to being under $var_locals).
-	 */
-	public $expose_locals: boolean;
 
 	/**
 	 * General purpose cache for plugins and internal features.
@@ -130,7 +121,10 @@ export class Kire implements KireClass {
 	 */
 	public fork(): Kire {
 		// Initialize without default directives to avoid overhead
-		const fork = new Kire({ directives: false });
+		const fork = new Kire({
+            directives: false,
+            parent: this
+        });
 
 		// Link to parent
 		fork.$parent = this;
@@ -139,7 +133,6 @@ export class Kire implements KireClass {
 		fork.production = this.production;
 		fork.extension = this.extension;
 		fork.$var_locals = this.$var_locals;
-		fork.$expose_locals = this.$expose_locals;
 		fork.$resolver = this.$resolver;
 		fork.$executor = this.$executor;
 		fork.$parser = this.$parser;
@@ -155,9 +148,8 @@ export class Kire implements KireClass {
 		fork.namespaces = this.namespaces;
 		fork.mounts = this.mounts;
 
-		// Isolate Context (Clone maps)
-		fork.$globals = new Map(this.$globals);
-		fork.$app_globals = new Map(this.$app_globals);
+		fork.$globals = new LayeredMap(this.$globals);
+		fork.$contexts = new LayeredMap(this.$contexts);
 
 		return fork;
 	}
@@ -179,15 +171,10 @@ export class Kire implements KireClass {
 		this.production = options.production ?? true;
 		this.extension = options.extension ?? "kire";
 		this.$var_locals = options.varLocals ?? "it";
-		this.$expose_locals = options.exposeLocals ?? true;
+        this.$parent = options.parent;
 
 		// Default executor using AsyncFunction
-		this.$executor =
-			options.executor ??
-			((code, params) => {
-				const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
-				return new AsyncFunction(...params, code);
-			});
+		this.$executor = options.executor ?? ((code, params) => new AsyncFunction(...params, code));
 
 		this.$resolver =
 			options.resolver ??
@@ -197,7 +184,7 @@ export class Kire implements KireClass {
 
 		this.$parser = options.engine?.parser ?? Parser;
 		this.$compiler = options.engine?.compiler ?? Compiler;
-
+        
 		// Collect plugins to load
 		const pluginsToLoad: Array<{ p: KirePlugin<any>; o?: any }> = [];
 
@@ -345,7 +332,7 @@ export class Kire implements KireClass {
 			globals[key] = processValue(value);
 		});
 
-		this.$app_globals.forEach((value, key) => {
+		this.$contexts.forEach((value, key) => {
 			globals[key] = processValue(value);
 		});
 
@@ -383,7 +370,7 @@ export class Kire implements KireClass {
 	public element(
 		nameOrDef: string | RegExp | ElementDefinition,
 		handler?: KireElementHandler,
-		options?: KireElementOptions,
+		opts?: KireElementOptions,
 	) {
 		if (
 			typeof nameOrDef === "object" &&
@@ -392,10 +379,10 @@ export class Kire implements KireClass {
 		) {
 			this.$elements.add(nameOrDef as ElementDefinition);
 		} else {
-			if (!handler) throw new Error("Handler is required for legacy element()");
+			if (!handler) throw new Error("Handler is required for legacy element()")
 			this.$elements.add({
 				name: nameOrDef as string | RegExp,
-				void: options?.void ?? false, // Default to false if not provided
+				void: opts?.void ?? false, // Default to false if not provided
 				onCall: handler,
 			});
 		}
@@ -433,7 +420,7 @@ export class Kire implements KireClass {
 	 * @returns The Kire instance for chaining.
 	 */
 	public $ctx(key: string, value: any) {
-		this.$globals.set(key, value);
+		this.$contexts.set(key, value);
 		return this;
 	}
 
@@ -445,7 +432,7 @@ export class Kire implements KireClass {
 	 * @returns The Kire instance for chaining.
 	 */
 	public $global(key: string, value: any) {
-		this.$app_globals.set(key, value);
+		this.$globals.set(key, value);
 		return this;
 	}
 
@@ -477,7 +464,7 @@ export class Kire implements KireClass {
 	 * @returns An async function that renders the template.
 	 */
 	public async compileFn(content: string): Promise<Function> {
-		const code = `${await this.compile(content)}\n//# sourceURL=kire-generated.js`;
+		const code = `${await this.compile(content)}`;
 		try {
 			const mainFn = this.$executor(code, ["$ctx"]);
 			(mainFn as any)._code = code;
@@ -607,10 +594,17 @@ export class Kire implements KireClass {
 	 * @returns The rendered string.
 	 */
 	public async run(
-		mainFn: Function,
+		mainFn: Function & { [key: string]: any; },
 		locals: Record<string, any>,
 		children = false,
 	) {
-		return kireRuntime(this, mainFn, locals, children);
+		return KireRuntime(this, locals, {
+			children,
+			code:mainFn._code,
+			execute:mainFn,
+			name:mainFn.name,
+			source:mainFn._source,
+			path:mainFn._path
+		});
 	}
 }

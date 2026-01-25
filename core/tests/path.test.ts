@@ -33,7 +33,7 @@ test("Kire - Resolver in Directive", async () => {
 		params: ["p:string"],
 		onCall(ctx) {
 			const resolved = kire.resolvePath(ctx.param("p"));
-			ctx.raw(`$ctx.res("${resolved}");`);
+			ctx.raw(`$ctx.$add("${resolved}");`);
 		},
 	});
 

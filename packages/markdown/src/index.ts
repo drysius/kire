@@ -36,6 +36,10 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 				const content = await kire.$resolver(resolved);
 				
 				// Convert MD to HTML
+				// We replace {{ var }} with {{ it.var }} ? No, that's unsafe regex.
+                // The user must write {{ it.var }} in their markdown if they want locals.
+                // Or we can try to support legacy by destructuring locals? No, "locals keys are unknown at compile time".
+                
 				const htmlTemplate = (await marked.parse(content)) as string;
 
 				// Compile HTML as Kire template
@@ -82,7 +86,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 						const files = await $ctx.$readdir(${JSON.stringify(source)});
 						for (const file of files) {
 							const html = await $ctx.$mdrender(file);
-							$ctx.res(html);
+							$ctx.$add(html);
 						}
 					})();`);
 					return;
@@ -90,7 +94,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 
 				ctx.raw(`await (async () => {
                     const html = await $ctx.$mdrender(${JSON.stringify(source)});
-                    $ctx.res(html);
+                    $ctx.$add(html);
                 })();`);
 			},
 		});
@@ -112,7 +116,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 						slots[file] = await $ctx.$mdrender(file);
 					}
 					$ctx[${JSON.stringify(name)}] = slots;
-					$ctx.res("<!-- KIRE_GEN:" + ${JSON.stringify(pattern)} + " -->");
+					$ctx.$add("<!-- KIRE_GEN:" + ${JSON.stringify(pattern)} + " -->");
 				})();`);
 			},
 		});

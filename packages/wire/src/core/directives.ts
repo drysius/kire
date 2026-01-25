@@ -24,16 +24,16 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 if ($opts.lazy) {
                     const $id = crypto.randomUUID();
                     const $pJson = JSON.stringify($params).replace(/"/g, '&quot;');
-                    $ctx.res('<div wire:id="' + $id + '" wire:lazy="true" wire:component="' + $name + '" wire:init-params="' + $pJson + '">');
-                    $ctx.res($opts.placeholder || 'Loading...');
-                    $ctx.res('</div>');
+                    $ctx.$add('<div wire:id="' + $id + '" wire:lazy="true" wire:component="' + $name + '" wire:init-params="' + $pJson + '">');
+                    $ctx.$add($opts.placeholder || 'Loading...');
+                    $ctx.$add('</div>');
                     return;
                 }
 
                 const $c = $w.getComponentClass($name);
                 
                 if (!$c) {
-                    $ctx.res('<!-- Wire component "' + $name + '" not found -->');
+                    $ctx.$add('<!-- Wire component "' + $name + '" not found -->');
                     return;
                 }
 
@@ -80,9 +80,9 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 const $esc = $snap.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const $style = (!$html || !$html.trim()) ? ' style="display: none;"' : '';
 
-                $ctx.res('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="' + $name + '"' + $style + '>');
-                $ctx.res($html || '');
-                $ctx.res('</div>');
+                $ctx.$add('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="' + $name + '"' + $style + '>');
+                $ctx.$add($html || '');
+                $ctx.$add('</div>');
             })();`);
 		},
 	});

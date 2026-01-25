@@ -46,21 +46,21 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 					// Generate cache ID if caching is enabled
 					if (kire.production) {
 						const hash = createHash("sha256").update(code).digest("hex");
-						ctx.raw(`$ctx.res('<tailwind id="${hash}">');`);
+						ctx.raw(`$ctx.$add('<tailwind id="${hash}">');`);
 					}
 					else {
-						ctx.raw('$ctx.res("<tailwind>");');
+						ctx.raw('$ctx.$add("<tailwind>");');
 					}
 
-					ctx.raw(`$ctx.res(${JSON.stringify(code)});`);
-					ctx.raw('$ctx.res("</tailwind>");');
+					ctx.raw(`$ctx.$add(${JSON.stringify(code)});`);
+					ctx.raw('$ctx.$add("</tailwind>");');
 				}
 				catch (_error) {
 					// Fallback behavior
 					const code = ctx.param("code") || "";
-					ctx.raw('$ctx.res("<tailwind>");');
-					ctx.raw(`$ctx.res(${JSON.stringify(code)});`);
-					ctx.raw('$ctx.res("</tailwind>");');
+					ctx.raw('$ctx.$add("<tailwind>");');
+					ctx.raw(`$ctx.$add(${JSON.stringify(code)});`);
+					ctx.raw('$ctx.$add("</tailwind>");');
 				}
 			},
 		});

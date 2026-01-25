@@ -42,12 +42,12 @@ describe("KireAssets", () => {
         <head>
           @assets()
           <style nocache>
-            .dynamic { color: {{ color }}; }
+            .dynamic { color: {{ it.color }}; }
           </style>
         </head>
         <body>
           <script nocache>
-            const user = "{{ name }}";
+            const user = "{{ it.name }}";
           </script>
         </body>
       </html>

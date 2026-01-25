@@ -8,7 +8,7 @@ test("Kire Components - Should render <x-name> as view", async () => {
     // Mock resolver
     kire.$resolver = async (path) => {
         if (path === "components/alert.kire") {
-            return `<div class="alert">{{ message }}</div>`;
+            return `<div class="alert">{{ it.message }}</div>`;
         }
         throw new Error(`File not found: ${path}`);
     };
@@ -27,7 +27,7 @@ test("Kire Components - Should support self-closing tags", async () => {
     
     kire.$resolver = async (path) => {
         if (path === "components/alert.kire") {
-            return `<div class="alert">{{ message }}</div>`;
+            return `<div class="alert">{{ it.message }}</div>`;
         }
         throw new Error(`File not found: ${path}`);
     };
@@ -45,7 +45,7 @@ test("Kire Components - Should render nested <x-ui.button>", async () => {
     
     kire.$resolver = async (path) => {
         if (path === "components/ui/button.kire") {
-            return `<button>{{ label }}</button>`;
+            return `<button>{{ it.label }}</button>`;
         }
         throw new Error(`File not found: ${path}`);
     };

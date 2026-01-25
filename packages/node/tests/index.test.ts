@@ -87,7 +87,7 @@ describe("@kirejs/node", () => {
 		// "hello" md5 is 5d41402abc4b2a76b9719d911017c592
 		const result = await kire.run(async ($ctx: any) => {
 			const hash = $ctx.$md5("hello");
-			$ctx.res(hash);
+			$ctx.$add(hash);
 			return $ctx;
 		}, {});
 		expect(result).toBe("5d41402abc4b2a76b9719d911017c592");

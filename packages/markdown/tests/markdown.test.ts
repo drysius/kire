@@ -46,7 +46,7 @@ describe("KireMarkdown", () => {
 			plugins: [KireMarkdown],
 			resolver: async (path) => {
 				if (path.includes("dynamic.md")) {
-					return "# Hello {{ name }}";
+					return "# Hello {{ it.name }}";
 				}
 				throw new Error("Not found");
 			},
