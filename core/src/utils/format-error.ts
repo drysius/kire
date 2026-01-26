@@ -1,4 +1,4 @@
-import type { KireContext } from "src/types";
+import type { KireContext } from "../types";
 
 /**
  * Formats a runtime error with source code context and visual markers.

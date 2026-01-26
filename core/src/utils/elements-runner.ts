@@ -1,4 +1,4 @@
-import type { KireContext } from "src/types";
+import type { KireContext } from "../types";
 
 /**
  * Processes custom elements (components/tags) in the rendered HTML.

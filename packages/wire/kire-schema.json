@@ -1,287 +1,296 @@
 {
-	"$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-	"package": "@kirejs/wire",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"version": "0.1.0",
-	"directives": [
-		{
-			"name": "wire",
-			"params": ["name:string", "params?:object", "options?:object"],
-			"children": false,
-			"type": "html",
-			"description": "Renders a Kirewire component.",
-			"example": "@wire('counter', { count: 10 }, { lazy: true })"
-		},
-		{
-			"name": "wired",
-			"children": false,
-			"type": "html",
-			"description": "Injects the necessary client-side scripts for Wired.",
-			"example": "@wired"
-		},
-		{
-			"name": "wiredScripts",
-			"children": false,
-			"type": "html",
-			"description": "Alias for @wired. Injects client-side scripts.",
-			"example": "@wiredScripts"
-		},
-		{
-			"name": "kirewire",
-			"children": false,
-			"type": "html",
-			"description": "Legacy alias for @wired.",
-			"example": "@kirewire"
-		}
-	],
-	"elements": [
-		{
-			"name": "template",
-			"description": "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
-			"attributes": {
-				"x-for": {
-					"type": "string",
-					"comment": "Iterates over an array or object. Must be used on a <template> tag.",
-					"example": "x-for=\"item in items\""
-				},
-				"x-if": {
-					"type": "string",
-					"comment": "Conditionally renders content. Must be used on a <template> tag.",
-					"example": "x-if=\"open\""
-				}
-			}
-		}
-	],
-	"globals": {
-		"Wired": "function",
-		"$wire": "function",
-		"kire": {
-			"$directives": {},
-			"$elements": {},
-			"$globals": {},
-			"$app_globals": {},
-			"namespaces": {},
-			"mounts": {},
-			"production": "boolean",
-			"$resolver": "function",
-			"$readdir": "undefined",
-			"extension": "string",
-			"$files": {},
-			"$parser": "function",
-			"$compiler": "function",
-			"$var_locals": "string",
-			"$expose_locals": "boolean",
-			"$cache": {},
-			"$executor": "function",
-			"$schematics": {},
-			"wired": "function"
-		}
-	},
-	"attributes": {
-		"global": {
-			"wire:click": {
-				"type": "string",
-				"comment": "Handles click events and calls a component method.",
-				"example": "wire:click=\"increment\""
-			},
-			"wire:model": {
-				"type": "string",
-				"comment": "Two-way data binding for component properties.",
-				"example": "wire:model=\"search\""
-			},
-			"wire:submit": {
-				"type": "string",
-				"comment": "Handles form submission.",
-				"example": "wire:submit=\"save\""
-			},
-			"wire:keydown": {
-				"type": "string",
-				"comment": "Listens for keydown events.",
-				"example": "wire:keydown=\"search\""
-			},
-			"wire:keyup": {
-				"type": "string",
-				"comment": "\nListens for keyup events.\n\n### Example\n```html\n<input wire:keyup.escape=\"cancel\" />\n```\n",
-				"example": "wire:keyup.escape=\"cancel\""
-			},
-			"wire:mouseenter": {
-				"type": "string",
-				"comment": "Triggers action when mouse enters the element.",
-				"example": "wire:mouseenter=\"showTooltip\""
-			},
-			"wire:mouseleave": {
-				"type": "string",
-				"comment": "Triggers action when mouse leaves the element.",
-				"example": "wire:mouseleave=\"hideTooltip\""
-			},
-			"wire:init": {
-				"type": "string",
-				"comment": "Runs an action immediately after the component initializes.",
-				"example": "wire:init=\"loadData\""
-			},
-			"wire:loading": {
-				"type": "string",
-				"comment": "Toggles visibility or classes while a network request is pending.",
-				"example": "wire:loading"
-			},
-			"wire:target": {
-				"type": "string",
-				"comment": "Scopes loading indicators to a specific method or model.",
-				"example": "wire:target=\"save\""
-			},
-			"wire:poll": {
-				"type": "string",
-				"comment": "Polls the server at a specified interval.",
-				"example": "wire:poll.2s=\"refresh\""
-			},
-			"wire:ignore": {
-				"type": "boolean",
-				"comment": "Tells Kirewire to ignore this element and its children during DOM updates.",
-				"example": "wire:ignore"
-			},
-			"wire:key": {
-				"type": "string",
-				"comment": "Assigns a unique key to an element for diffing.",
-				"example": "wire:key=\"item-{{ id }}\""
-			},
-			"wire:id": {
-				"type": "string",
-				"comment": "Internal ID of the component instance (auto-generated).",
-				"example": "wire:id=\"...\""
-			},
-			"wire:navigate": {
-				"type": "boolean",
-				"comment": "Enables SPA-like navigation for links.",
-				"example": "wire:navigate"
-			},
-			"wire:confirm": {
-				"type": "string",
-				"comment": "Prompts the user for confirmation before an action.",
-				"example": "wire:confirm=\"Are you sure?\""
-			},
-			"wire:stream": {
-				"type": "boolean",
-				"comment": "Enables streaming updates for this element (if supported by the backend response).",
-				"example": "wire:stream"
-			},
-			"wire:offline": {
-				"type": "boolean",
-				"comment": "\nToggles visibility or classes when the browser goes offline.\n\n### Modifiers\n- `.class`: Adds a class when offline\n- `.attr`: Adds an attribute when offline\n- `.remove`: Hides when offline\n\n### Example\n```html\n<div wire:offline>You are currently offline.</div>\n```\n",
-				"example": "wire:offline"
-			},
-			"wire:dirty": {
-				"type": "boolean",
-				"comment": "\nToggles visibility or classes when the component state is \"dirty\" (unsaved changes).\nUsually used with `wire:model`.\n\n### Modifiers\n- `.class`: Adds a class when dirty\n- `.attr`: Adds an attribute when dirty\n- `.remove`: Hides when dirty\n\n### Example\n```html\n<input wire:model=\"name\">\n<span wire:dirty>Unsaved changes...</span>\n```\n",
-				"example": "wire:dirty"
-			},
-			"x-data": {
-				"type": "javascript",
-				"comment": "Declares a new Alpine component scope.",
-				"example": "x-data=\"{ open: false }\""
-			},
-			"x-init": {
-				"type": "javascript",
-				"comment": "Runs code when an element is initialized.",
-				"example": "x-init=\"console.log('I am being initialized')\""
-			},
-			"x-show": {
-				"type": "boolean",
-				"comment": "Toggles the visibility of an element.",
-				"example": "x-show=\"open\""
-			},
-			"x-bind": {
-				"type": "javascript",
-				"comment": "Sets the value of an attribute.",
-				"example": "x-bind:class=\"{ 'hidden': !open }\""
-			},
-			"x-on": {
-				"type": "javascript",
-				"comment": "Attaches an event listener to the element.",
-				"example": "x-on:click=\"open = !open\""
-			},
-			"x-text": {
-				"type": "javascript",
-				"comment": "Updates the text content of an element.",
-				"example": "x-text=\"username\""
-			},
-			"x-html": {
-				"type": "javascript",
-				"comment": "Updates the inner HTML of an element.",
-				"example": "x-html=\"content\""
-			},
-			"x-model": {
-				"type": "javascript",
-				"comment": "Adds two-way data binding to an element.",
-				"example": "x-model=\"search\""
-			},
-			"x-for": {
-				"type": "javascript",
-				"comment": "Iterates over an array or object. Must be used on a <template> tag.",
-				"example": "x-for=\"item in items\""
-			},
-			"x-transition": {
-				"type": "boolean",
-				"comment": "Applies enter and leave transitions to an element.",
-				"example": "x-transition.duration.500ms"
-			},
-			"x-effect": {
-				"type": "javascript",
-				"comment": "Executes a script each time one of its dependencies changes.",
-				"example": "x-effect=\"console.log(open)\""
-			},
-			"x-ignore": {
-				"type": "boolean",
-				"comment": "Prevents Alpine from initializing attributes within the element.",
-				"example": "x-ignore"
-			},
-			"x-ref": {
-				"type": "string",
-				"comment": "References an element directly by name.",
-				"example": "x-ref=\"myInput\""
-			},
-			"x-cloak": {
-				"type": "boolean",
-				"comment": "Hides the element until Alpine has initialized.",
-				"example": "x-cloak"
-			},
-			"x-teleport": {
-				"type": "string",
-				"comment": "Teleports the element to another part of the DOM.",
-				"example": "x-teleport=\"body\""
-			},
-			"x-if": {
-				"type": "javascript",
-				"comment": "Conditionally renders an element. Must be used on a <template> tag.",
-				"example": "x-if=\"open\""
-			},
-			"x-id": {
-				"type": "string",
-				"comment": "Generates a unique ID for accessible elements.",
-				"example": "x-id=\"['text-input']\""
-			},
-			"wire:submit.prevent": {
-				"type": "string",
-				"comment": "Handles form submission and prevents default behavior.",
-				"example": "wire:submit.prevent=\"save\""
-			},
-			"wire:keydown.enter": {
-				"type": "string",
-				"comment": "Listens for the Enter key.",
-				"example": "wire:keydown.enter=\"search\""
-			},
-			"wire:loading.class": {
-				"type": "string",
-				"comment": "Adds a class while a network request is pending.",
-				"example": "wire:loading.class=\"opacity-50\""
-			},
-			"wire:loading.attr": {
-				"type": "string",
-				"comment": "Adds an attribute while a network request is pending.",
-				"example": "wire:loading.attr=\"disabled\""
-			}
-		}
-	}
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/wire",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "version": "0.1.0",
+    "directives": [
+        {
+            "name": "wire",
+            "params": [
+                "name:string",
+                "params?:object",
+                "options?:object"
+            ],
+            "children": false,
+            "type": "html",
+            "description": "Renders a Kirewire component.",
+            "example": "@wire('counter', { count: 10 }, { lazy: true })"
+        },
+        {
+            "name": "wired",
+            "children": false,
+            "type": "html",
+            "description": "Injects the necessary client-side scripts for Wired.",
+            "example": "@wired"
+        },
+        {
+            "name": "wiredScripts",
+            "children": false,
+            "type": "html",
+            "description": "Alias for @wired. Injects client-side scripts.",
+            "example": "@wiredScripts"
+        },
+        {
+            "name": "kirewire",
+            "children": false,
+            "type": "html",
+            "description": "Legacy alias for @wired.",
+            "example": "@kirewire"
+        }
+    ],
+    "elements": [
+        {
+            "name": "template",
+            "description": "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
+            "attributes": {
+                "x-for": {
+                    "type": "string",
+                    "comment": "Iterates over an array or object. Must be used on a <template> tag.",
+                    "example": "x-for=\"item in items\""
+                },
+                "x-if": {
+                    "type": "string",
+                    "comment": "Conditionally renders content. Must be used on a <template> tag.",
+                    "example": "x-if=\"open\""
+                }
+            }
+        }
+    ],
+    "globals": {
+        "Wired": "function",
+        "$wire": "function",
+        "kire": {
+            "$scoped": "function",
+            "$directives": {},
+            "$elements": {},
+            "$globals": {
+                "parent": "undefined"
+            },
+            "$contexts": {
+                "parent": "undefined"
+            },
+            "namespaces": {},
+            "mounts": {},
+            "production": "boolean",
+            "$resolver": "function",
+            "$readdir": "undefined",
+            "extension": "string",
+            "$files": {},
+            "$parser": "function",
+            "$compiler": "function",
+            "$var_locals": "string",
+            "$cache": {},
+            "$executor": "function",
+            "$parent": "undefined",
+            "$schematics": {},
+            "wired": "function"
+        }
+    },
+    "attributes": {
+        "global": {
+            "wire:click": {
+                "type": "string",
+                "comment": "Handles click events and calls a component method.",
+                "example": "wire:click=\"increment\""
+            },
+            "wire:model": {
+                "type": "string",
+                "comment": "Two-way data binding for component properties.",
+                "example": "wire:model=\"search\""
+            },
+            "wire:submit": {
+                "type": "string",
+                "comment": "Handles form submission.",
+                "example": "wire:submit=\"save\""
+            },
+            "wire:keydown": {
+                "type": "string",
+                "comment": "Listens for keydown events.",
+                "example": "wire:keydown=\"search\""
+            },
+            "wire:keyup": {
+                "type": "string",
+                "comment": "\nListens for keyup events.\n\n### Example\n```html\n<input wire:keyup.escape=\"cancel\" />\n```\n",
+                "example": "wire:keyup.escape=\"cancel\""
+            },
+            "wire:mouseenter": {
+                "type": "string",
+                "comment": "Triggers action when mouse enters the element.",
+                "example": "wire:mouseenter=\"showTooltip\""
+            },
+            "wire:mouseleave": {
+                "type": "string",
+                "comment": "Triggers action when mouse leaves the element.",
+                "example": "wire:mouseleave=\"hideTooltip\""
+            },
+            "wire:init": {
+                "type": "string",
+                "comment": "Runs an action immediately after the component initializes.",
+                "example": "wire:init=\"loadData\""
+            },
+            "wire:loading": {
+                "type": "string",
+                "comment": "Toggles visibility or classes while a network request is pending.",
+                "example": "wire:loading"
+            },
+            "wire:target": {
+                "type": "string",
+                "comment": "Scopes loading indicators to a specific method or model.",
+                "example": "wire:target=\"save\""
+            },
+            "wire:poll": {
+                "type": "string",
+                "comment": "Polls the server at a specified interval.",
+                "example": "wire:poll.2s=\"refresh\""
+            },
+            "wire:ignore": {
+                "type": "boolean",
+                "comment": "Tells Kirewire to ignore this element and its children during DOM updates.",
+                "example": "wire:ignore"
+            },
+            "wire:key": {
+                "type": "string",
+                "comment": "Assigns a unique key to an element for diffing.",
+                "example": "wire:key=\"item-{{ id }}\""
+            },
+            "wire:id": {
+                "type": "string",
+                "comment": "Internal ID of the component instance (auto-generated).",
+                "example": "wire:id=\"...\""
+            },
+            "wire:navigate": {
+                "type": "boolean",
+                "comment": "Enables SPA-like navigation for links.",
+                "example": "wire:navigate"
+            },
+            "wire:confirm": {
+                "type": "string",
+                "comment": "Prompts the user for confirmation before an action.",
+                "example": "wire:confirm=\"Are you sure?\""
+            },
+            "wire:stream": {
+                "type": "boolean",
+                "comment": "Enables streaming updates for this element (if supported by the backend response).",
+                "example": "wire:stream"
+            },
+            "wire:offline": {
+                "type": "boolean",
+                "comment": "\nToggles visibility or classes when the browser goes offline.\n\n### Modifiers\n- `.class`: Adds a class when offline\n- `.attr`: Adds an attribute when offline\n- `.remove`: Hides when offline\n\n### Example\n```html\n<div wire:offline>You are currently offline.</div>\n```\n",
+                "example": "wire:offline"
+            },
+            "wire:dirty": {
+                "type": "boolean",
+                "comment": "\nToggles visibility or classes when the component state is \"dirty\" (unsaved changes).\nUsually used with `wire:model`.\n\n### Modifiers\n- `.class`: Adds a class when dirty\n- `.attr`: Adds an attribute when dirty\n- `.remove`: Hides when dirty\n\n### Example\n```html\n<input wire:model=\"name\">\n<span wire:dirty>Unsaved changes...</span>\n```\n",
+                "example": "wire:dirty"
+            },
+            "x-data": {
+                "type": "javascript",
+                "comment": "Declares a new Alpine component scope.",
+                "example": "x-data=\"{ open: false }\""
+            },
+            "x-init": {
+                "type": "javascript",
+                "comment": "Runs code when an element is initialized.",
+                "example": "x-init=\"console.log('I am being initialized')\""
+            },
+            "x-show": {
+                "type": "boolean",
+                "comment": "Toggles the visibility of an element.",
+                "example": "x-show=\"open\""
+            },
+            "x-bind": {
+                "type": "javascript",
+                "comment": "Sets the value of an attribute.",
+                "example": "x-bind:class=\"{ 'hidden': !open }\""
+            },
+            "x-on": {
+                "type": "javascript",
+                "comment": "Attaches an event listener to the element.",
+                "example": "x-on:click=\"open = !open\""
+            },
+            "x-text": {
+                "type": "javascript",
+                "comment": "Updates the text content of an element.",
+                "example": "x-text=\"username\""
+            },
+            "x-html": {
+                "type": "javascript",
+                "comment": "Updates the inner HTML of an element.",
+                "example": "x-html=\"content\""
+            },
+            "x-model": {
+                "type": "javascript",
+                "comment": "Adds two-way data binding to an element.",
+                "example": "x-model=\"search\""
+            },
+            "x-for": {
+                "type": "javascript",
+                "comment": "Iterates over an array or object. Must be used on a <template> tag.",
+                "example": "x-for=\"item in items\""
+            },
+            "x-transition": {
+                "type": "boolean",
+                "comment": "Applies enter and leave transitions to an element.",
+                "example": "x-transition.duration.500ms"
+            },
+            "x-effect": {
+                "type": "javascript",
+                "comment": "Executes a script each time one of its dependencies changes.",
+                "example": "x-effect=\"console.log(open)\""
+            },
+            "x-ignore": {
+                "type": "boolean",
+                "comment": "Prevents Alpine from initializing attributes within the element.",
+                "example": "x-ignore"
+            },
+            "x-ref": {
+                "type": "string",
+                "comment": "References an element directly by name.",
+                "example": "x-ref=\"myInput\""
+            },
+            "x-cloak": {
+                "type": "boolean",
+                "comment": "Hides the element until Alpine has initialized.",
+                "example": "x-cloak"
+            },
+            "x-teleport": {
+                "type": "string",
+                "comment": "Teleports the element to another part of the DOM.",
+                "example": "x-teleport=\"body\""
+            },
+            "x-if": {
+                "type": "javascript",
+                "comment": "Conditionally renders an element. Must be used on a <template> tag.",
+                "example": "x-if=\"open\""
+            },
+            "x-id": {
+                "type": "string",
+                "comment": "Generates a unique ID for accessible elements.",
+                "example": "x-id=\"['text-input']\""
+            },
+            "wire:submit.prevent": {
+                "type": "string",
+                "comment": "Handles form submission and prevents default behavior.",
+                "example": "wire:submit.prevent=\"save\""
+            },
+            "wire:keydown.enter": {
+                "type": "string",
+                "comment": "Listens for the Enter key.",
+                "example": "wire:keydown.enter=\"search\""
+            },
+            "wire:loading.class": {
+                "type": "string",
+                "comment": "Adds a class while a network request is pending.",
+                "example": "wire:loading.class=\"opacity-50\""
+            },
+            "wire:loading.attr": {
+                "type": "string",
+                "comment": "Adds an attribute while a network request is pending.",
+                "example": "wire:loading.attr=\"disabled\""
+            }
+        }
+    }
 }

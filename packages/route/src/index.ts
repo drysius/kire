@@ -68,10 +68,10 @@ export class RouteManager {
 
 export const Route = new RouteManager();
 
-export const KireRoute: KirePlugin = {
+export default {
 	name: "@kirejs/route",
 	options: {},
 	load(kire) {
 		kire.$global("Route", Route);
 	},
-};
+} as KirePlugin;

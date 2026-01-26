@@ -1,15 +1,18 @@
 {
-	"$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-	"package": "@kirejs/route",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"version": "0.1.0",
-	"directives": [],
-	"elements": [],
-	"globals": {
-		"Route": "RouteManager"
-	},
-	"attributes": {}
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/route",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "version": "0.1.0",
+    "directives": [],
+    "elements": [],
+    "globals": {
+        "Route": {
+            "_path": "string",
+            "_name": "object"
+        }
+    },
+    "attributes": {}
 }

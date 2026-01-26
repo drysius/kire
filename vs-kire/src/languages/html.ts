@@ -604,10 +604,10 @@ export class HtmlDiagnosticProvider {
 		let match: RegExpExecArray | null;
 
 		while ((match = unquotedAttrRegex.exec(text)) !== null) {
-			const attrName = match[1];
-			const attrValue = match[2];
+			const attrName = match[1] as string;
+			const attrValue = match[2] as string;
 			const position = document.positionAt(
-				match.index + match[0].indexOf(attrValue),
+				match.index + match[0]!.indexOf(attrValue),
 			);
 
 			// Check if value needs quotes

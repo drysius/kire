@@ -5,6 +5,7 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 export function WithPagination<TBase extends Constructor<WireComponent>>(
 	Base: TBase,
 ) {
+	//@ts-expect-error ignore 
 	return class extends Base {
 		public page = 1;
 		public perPage = 10;
