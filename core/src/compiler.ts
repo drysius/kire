@@ -21,17 +21,8 @@ export class Compiler {
 		this.posBuffer = [];
 		this.usedDirectives.clear();
 
-		const $globals = Array.from(this.kire.$globals.keys()).filter((k) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
-		);
-
-		if ($globals.length > 0) {
-			this.preBuffer.push(`let { ${$globals.join(", ")} } = $ctx.$globals;`);
-		}
-
 		// 2. Define Locals Alias (default 'it')
 		const varLocals = this.kire.$var_locals || "it";
-		this.preBuffer.push(`let ${varLocals} = $ctx.$props;`);
 
 		await this.compileNodes(nodes);
 
@@ -40,8 +31,17 @@ export class Compiler {
 		const pos = this.posBuffer.join("\n");
 
 		// Main function body code
-		// Added 'with($ctx)' wrapper to support direct variable access
-		const code = `\n${pre}\n${res}\n${pos}\nreturn $ctx;\n//# sourceURL=kire-generated.js`;
+		// Added 'with($ctx.$globals)' wrapper to support direct variable access
+		// and dynamic globals resolution.
+		const code = `
+with ($ctx.$globals) {
+	let ${varLocals} = $ctx.$props;
+${pre}
+${res}
+${pos}
+}
+return $ctx;
+//# sourceURL=kire-generated.js`;
 
 		return code;
 	}

@@ -113,11 +113,10 @@ describe("Kire Real-world Scenarios", () => {
 		// Setup Namespaces
 		kire.namespace("views", viewsDir);
 		kire.namespace("comps", compsDir);
-		kire.namespace("theme", join(testDir, "themes/{name}"));
-
-		// Mount default data for theme namespace
-		kire.mount("theme", { name: "default" });
-
+							kire.namespace("theme", join(testDir, "themes/{name}"));
+		
+							// Mount default data for theme namespace
+							kire.$prop({ name: "default" });
 		// Setup Resolver (Realistic Node-like)
 		const { readFile } = await import("node:fs/promises");
 		kire.$resolver = async (path) => await readFile(path, "utf-8");

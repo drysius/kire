@@ -13,6 +13,7 @@ import type {
 	KireOptions,
 	KirePlugin,
 	KireSchematic,
+	KireContext,
 } from "./types";
 import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
@@ -46,15 +47,15 @@ export class Kire {
 	public $contexts: LayeredMap<string, any> = new LayeredMap();
 
 	/**
+	 * Registry of local variables accessible implicitly or via 'it'.
+	 */
+	public $props: LayeredMap<string, any> = new LayeredMap();
+
+	/**
 	 * Registry of namespaces for path resolution.
 	 * Maps prefix (e.g. "~") to absolute path templates.
 	 */
-	public namespaces: Map<string, string> = new Map();
-
-	/**
-	 * Registry of default data for namespaces.
-	 */
-	public mounts: Map<string, Record<string, any>> = new Map();
+	public $namespaces: Map<string, string> = new Map();
 
 	/**
 	 * Whether the instance is running in production mode.
@@ -94,8 +95,7 @@ export class Kire {
 	public $compiler: ICompilerConstructor;
 
 	/**
-	 * Name of the variable that holds local variables within the template scope.
-	 * Defaults to "it".
+	 * Name of the variable exposing locals in the template. Defaults to "it".
 	 */
 	public $var_locals: string;
 
@@ -155,11 +155,11 @@ export class Kire {
 		fork.$directives = this.$directives;
 		fork.$elements = this.$elements;
 		fork.$schematics = this.$schematics;
-		fork.namespaces = this.namespaces;
-		fork.mounts = this.mounts;
+		fork.$namespaces = this.$namespaces;
 
 		fork.$globals = new LayeredMap(this.$globals);
 		fork.$contexts = new LayeredMap(this.$contexts);
+		fork.$props = new LayeredMap(this.$props);
 
 		return fork;
 	}
@@ -235,19 +235,25 @@ export class Kire {
 	public namespace(name: string, path: string) {
 		// Normalize to unix path
 		const unixPath = path.replace(/\\/g, "/");
-		this.namespaces.set(name, unixPath);
+		this.$namespaces.set(name, unixPath);
 		return this;
 	}
 
 	/**
-	 * Mounts data to a namespace, used for resolving placeholders.
-	 * @param name The namespace prefix.
-	 * @param data The data object (e.g. { theme: 'dark' }).
+	 * Registers a local property implicitly available in templates.
+	 * Can be called as $prop(key, value) or $prop(object).
+	 * @param keyOrObj The property key or an object of properties.
+	 * @param value The value if key is a string.
 	 * @returns The Kire instance.
 	 */
-	public mount(name: string, data: Record<string, any>) {
-		this.cacheClear();
-		this.mounts.set(name, data);
+	public $prop(keyOrObj: string | Record<string, any>, value?: any) {
+		if (typeof keyOrObj === "string") {
+			this.$props.set(keyOrObj, value);
+		} else if (typeof keyOrObj === "object") {
+			for (const key in keyOrObj) {
+				this.$props.set(key, keyOrObj[key]);
+			}
+		}
 		return this;
 	}
 
@@ -507,9 +513,58 @@ export class Kire {
 	 * Generates a styled HTML error page for a given error.
 	 * Use this in your catch blocks to display errors nicely in the browser.
 	 * @param e The error object caught during rendering.
+	 * @param ctx The Kire runtime context (optional).
 	 * @returns A string containing the HTML error page.
 	 */
-	public renderError(e: any): string {
+	public renderError(e: any, ctx?: KireContext): string {
+		let snippet = "";
+		let location = "";
+
+		if (ctx && ctx.$file && ctx.$file.code && e.stack) {
+			const match =
+				e.stack.match(/kire-generated\.js:(\d+):(\d+)/) ||
+				e.stack.match(/eval:(\d+):(\d+)/) ||
+				e.stack.match(/<anonymous>:(\d+):(\d+)/);
+
+			if (match) {
+				const genLine = parseInt(match[1]) - 1;
+				const lines = ctx.$file.code.split("\n");
+				let sourceLine = -1;
+
+				for (let i = genLine; i >= 0; i--) {
+					const line = lines[i];
+					if (line && line.trim().startsWith("// kire-line:")) {
+						sourceLine = parseInt(line.split(":")[1].trim()) - 1;
+						break;
+					}
+				}
+
+				if (sourceLine !== -1 && ctx.$file.source) {
+					location = ` at ${ctx.$file.path}:${sourceLine + 1}`;
+					const sourceLines = ctx.$file.source.split("\n");
+					const start = Math.max(0, sourceLine - 2);
+					const end = Math.min(sourceLines.length, sourceLine + 3);
+
+					snippet = sourceLines
+						.slice(start, end)
+						.map((l, i) => {
+							const currentLine = start + i + 1;
+							const isCurrent = currentLine === sourceLine + 1;
+							return `<div style="display:flex; gap:1rem; ${isCurrent ? "background:rgba(239, 68, 68, 0.2);" : ""}"><span style="color:#666; user-select:none; width: 30px; text-align: right;">${currentLine}</span><span>${l.replace(/</g, "&lt;")}</span></div>`;
+						})
+						.join("");
+				}
+			}
+		}
+
+		const stack = (e.stack || "")
+			.split("\n")
+			.filter(
+				(l: string) =>
+					!l.includes("kire-generated.js") && !l.includes("new AsyncFunction"),
+			)
+			.join("\n");
+
 		return `<!DOCTYPE html>
 <html>
 <head>
@@ -521,16 +576,20 @@ export class Kire {
 		.error-header { background: #ef4444; color: white; padding: 1rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
 		.error-content { padding: 1.5rem; overflow-x: auto; }
 		pre { margin: 0; font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.9rem; line-height: 1.5; white-space: pre-wrap; color: #e5e5e5; }
+        .snippet { background: #111; padding: 1rem; border-radius: 4px; margin-bottom: 1rem; border: 1px solid #333; }
 	</style>
 </head>
 <body>
 	<div class="error-container">
 		<div class="error-header">
 			<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-			Kire Runtime Error
+			Kire Runtime Error${location}
 		</div>
 		<div class="error-content">
+            ${snippet ? `<div class="snippet"><pre>${snippet}</pre></div>` : ""}
 			<pre>${(e.message || e.toString()).replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
+            <br>
+            <pre style="color:#888;">${stack.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>
 		</div>
 	</div>
 </body>
@@ -591,9 +650,8 @@ export class Kire {
 	): string {
 		return resolvePath(
 			filepath,
-			this.namespaces,
-			this.mounts,
-			locals,
+			this.$namespaces,
+			{ ...this.$props.toObject(), ...locals },
 			extension === null ? "" : extension,
 		);
 	}

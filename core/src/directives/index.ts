@@ -17,10 +17,8 @@ export const KireDirectives: KirePlugin = {
 			"$require",
 			async (path: string, locals: Record<string, any> = {}) => {
 				// Use absolute path for caching key to avoid conflicts
-				const resolvedPath = resolvePath(
+				const resolvedPath = kire.resolvePath(
 					path,
-					kire.namespaces,
-					kire.mounts,
 					locals,
 					kire.extension,
 				);

@@ -1,7 +1,6 @@
 import type { Kire } from "./kire";
 import type { KireContext, KireFileMeta } from "./types";
 import { processElements } from "./utils/elements-runner";
-import { formatKireError } from "./utils/format-error";
 import { escapeHtml } from "./utils/html";
 import { md5 } from "./utils/md5";
 
@@ -21,7 +20,7 @@ export default async (
 
 	// Kire Main declarations
 	$ctx.$kire = $kire;
-	$ctx.$props = locals;
+	$ctx.$props = { ...$kire.$props.toObject(), ...locals };
 	$ctx.$globals = $kire.$globals.toObject();
 	$ctx.$file = meta;
 	$ctx.$typed = (key) => $ctx[key];
@@ -77,12 +76,8 @@ export default async (
 		// use $props do bind and $ctx value
 		await $ctx.$file.execute.call($ctx.$props, $ctx);
 	} catch (e: any) {
-		if ($ctx.$file.code) {
-			e.kireGeneratedCode = $ctx.$file.code;
-			formatKireError(e, $ctx);
-			e.toString = () => e.message;
-		}
-		throw e;
+		console.error(e);
+		return $kire.renderError(e, $ctx);
 	}
 
 	// Legacy hook support mapping to new event system

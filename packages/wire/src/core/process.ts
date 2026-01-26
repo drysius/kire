@@ -47,6 +47,7 @@ export async function processRequest(
 				payload.snapshot,
 				checksum,
 				identifier,
+				kire.production,
 			);
 			if (validation.error) return validation.error;
 
@@ -97,10 +98,14 @@ export async function processRequest(
 			compName!,
 		);
 	} catch (e: any) {
-		console.error("Error processing request:", e);
+		if (!kire.production) {
+			console.error("Error processing request:", e);
+		} else {
+			console.warn(`[Wired] Error processing request: ${e.message}`);
+		}
 		return {
-			code: WireErrors.server_error.code,
-			data: { error: e.message || "Internal Server Error" },
+			code: 500,
+			data: { error: e.message },
 		};
 	}
 }
@@ -146,6 +151,7 @@ export function validateSnapshot(
 	snapshotStr: string,
 	checksum: ChecksumManager,
 	identifier: string,
+	silent = false,
 ): {
 	snapshot?: WireSnapshot;
 	error?: { code: number; data: { error: string } };
@@ -179,10 +185,17 @@ export function validateSnapshot(
 			identifier,
 		)
 	) {
-		console.error("[Wired] Checksum mismatch!");
-		console.error("Identifier (Server):", identifier);
-		console.error("Snapshot Checksum (Client):", snapshot.checksum);
-		console.error("Calculated Checksum (Server):", checksum.generate(snapshot.data, snapshot.memo, identifier));
+		if (!silent) {
+			console.error("[Wired] Checksum mismatch!");
+			console.error("Identifier (Server):", identifier);
+			console.error("Snapshot Checksum (Client):", snapshot.checksum);
+			console.error(
+				"Calculated Checksum (Server):",
+				checksum.generate(snapshot.data, snapshot.memo, identifier),
+			);
+		} else {
+			console.warn("[Wired] Checksum mismatch!");
+		}
 		return {
 			error: {
 				code: WireErrors.invalid_checksum.code,

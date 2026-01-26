@@ -120,7 +120,8 @@ export class Wired {
 									registry.register(name, Comp);
 								}
 							} catch (e) {
-								console.error(`[Wired] Failed to load component: ${file}`, e);
+								if (!Wired.kire.production)
+									console.error(`[Wired] Failed to load component: ${file}`, e);
 							}
 						}
 					}
@@ -225,7 +226,11 @@ export class Wired {
 
 				body = await restoreFiles(originalPayload);
 			} catch (e) {
-				console.error("Failed to parse multipart wired payload", e);
+				if (!Wired.kire.production) {
+					console.error("Failed to parse multipart wired payload", e);
+				} else {
+					console.warn("Failed to parse multipart wired payload");
+				}
 				return Wired.invalid;
 			}
 		}
@@ -251,11 +256,15 @@ export class Wired {
 			if (payload && payload.key === wirekey) {
 				isValidToken = true;
 			} else {
-				console.warn("[Wired] Invalid Token:", {
-					received: body._token,
-					payload,
-					expectedKey: wirekey
-				});
+				if (!Wired.kire.production) {
+					console.warn("[Wired] Invalid Token:", {
+						received: body._token,
+						payload,
+						expectedKey: wirekey,
+					});
+				} else {
+					console.warn("[Wired] Invalid Token!");
+				}
 			}
 		} else {
 			// console.log("[Wired] No token provided in payload");

@@ -14,21 +14,11 @@ test("Kire Error Reporting - Should format runtime errors with context", async (
     <p>This will not run</p>
     `;
 
-	try {
-		await kire.render(template);
-	} catch (e: any) {
-		console.log(e.toString());
-		expect(e.message).toContain("Kire Error:");
-		// Check if console.error was called with the formatted message
-		expect(errorSpy).toHaveBeenCalled();
-		const errorMessage = errorSpy.mock.calls[0]![0] as string;
-
-		// Verify key parts of the formatted error
-		expect(errorMessage).toContain("Kire Error:");
-		expect(errorMessage).toContain("<anonymous>"); // Source
-		expect(errorMessage).toContain("{{ it.nonExistentVariable.property }}"); // Context snippet (Source code!)
-		expect(errorMessage).toContain("trace:"); // Stack trace section
-	} finally {
-		errorSpy.mockRestore();
-	}
+	const result = await kire.render(template);
+	
+    expect(errorSpy).toHaveBeenCalled();
+    expect(result).toContain("<!DOCTYPE html>");
+    expect(result).toContain("Kire Runtime Error");
+    
+    errorSpy.mockRestore();
 });

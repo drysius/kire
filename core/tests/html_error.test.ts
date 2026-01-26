@@ -1,18 +1,13 @@
 import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
-test("Kire Error Reporting - Should allow manual HTML error generation", async () => {
+test("Kire Error Reporting - Should return HTML error page automatically", async () => {
 	const kire = new Kire({ production: false });
 	const template = `{{ it.nonExistentVariable.property }}`;
 
-	try {
-		await kire.render(template);
-		// If render didn't throw, fail the test
-		expect(true).toBe(false);
-	} catch (e) {
-		const html = kire.renderError(e);
-		expect(html).toContain("<!DOCTYPE html>");
-		expect(html).toContain("Kire Runtime Error");
-		expect(html).toContain("nonExistentVariable");
-	}
+	const html = await kire.render(template);
+    
+	expect(html).toContain("<!DOCTYPE html>");
+	expect(html).toContain("Kire Runtime Error");
+	expect(html).toContain("nonExistentVariable");
 });
