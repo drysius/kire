@@ -8,7 +8,6 @@ import type {
 	ICompilerConstructor,
 	IParserConstructor,
 	KireCache,
-	KireClass,
 	KireElementHandler,
 	KireElementOptions,
 	KireOptions,
@@ -19,7 +18,7 @@ import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
 import { AsyncFunction, scoped } from "./utils/scoped";
 
-export class Kire implements KireClass {
+export class Kire {
 	/**
 	 * Helper to execute code within a specific scope.
 	 */

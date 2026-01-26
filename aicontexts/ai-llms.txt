@@ -1,0 +1,29 @@
+# Kire Ecosystem Documentation Index
+
+This directory contains specialized context files optimized for LLMs to understand the Kire framework and its ecosystem. Below is a guide to each available file.
+
+## Core Framework
+- **`kire.llms.txt`**: The definitive guide to the Kire engine. Covers syntax (directives like `@if`, `@for`, `@switch`), template inheritance (`@define`, `@include`), component slots, and the runtime context (`$ctx`). Essential for understanding how to write standard Kire templates.
+- **`kire-wire.llms.txt`**: Detailed documentation for **KireWire** (Wired), the full-stack reactivity system. Explains `WireComponent` classes, client-side state synchronization, Alpine.js integration, and the suite of `wire:*` directives (`wire:model`, `wire:click`, `wire:navigate`).
+
+## Packages & Plugins
+
+### Server & Runtime
+- **`node.llms.txt`**: Documentation for `@kirejs/node`. Explains how to run Kire in Node.js, Bun, or Deno, including file system adapters, VM-based isolation, and helper functions like `$readdir`.
+- **`route.llms.txt`**: Documentation for `@kirejs/route`. A simple helper for managing and checking active routes (e.g., highlighting active menu items) using `Route.is()`.
+
+### Assets & Styling
+- **`assets.llms.txt`**: Documentation for `@kirejs/assets`. Covers the asset management system that captures inline `<script>` and `<style>` tags, hashes them, and serves them efficiently. Includes usage of `@assets`.
+- **`tailwind.llms.txt`**: Documentation for `@kirejs/tailwind`. Explains the server-side JIT compiler for Tailwind CSS, allowing on-the-fly generation of styles from Kire templates via `@tailwind` or `<tailwind>`.
+- **`iconify.llms.txt`**: Documentation for `@kirejs/iconify`. Guide to using the Iconify integration for rendering thousands of SVG icons server-side using `@icon` or `<iconify>`.
+
+### Content & Logic
+- **`auth.llms.txt`**: Documentation for `@kirejs/auth`. Explains authentication and authorization directives (`@auth`, `@guest`, `@can`) for securing views and handling permissions.
+- **`components.llms.txt`**: Documentation for `@kirejs/components`. Describes the "Blade-like" component syntax support, enabling usage of custom HTML tags like `<x-alert />` that map to Kire view components.
+- **`markdown.llms.txt`**: Documentation for `@kirejs/markdown`. Covers rendering Markdown content within templates, including loading files via `@markdown` and creating slots from directory patterns with `@mdslots`.
+
+## Usage Strategy
+- For **Template Logic**, refer to `kire.llms.txt`.
+- For **Interactive UI/Forms**, refer to `kire-wire.llms.txt`.
+- For **Infrastructure/Setup**, refer to `node.llms.txt` and `assets.llms.txt`.
+- For **Styling/UI Components**, refer to `tailwind.llms.txt`, `iconify.llms.txt`, and `components.llms.txt`.

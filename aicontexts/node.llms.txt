@@ -1,0 +1,29 @@
+# @kirejs/node Documentation for LLMs
+
+## Overview
+The Node package provides the essential adapter for running Kire in Node.js, Bun, or Deno environments. It handles file system access (resolving views and reading directories) and provides an isolated execution environment (VM).
+
+## Features
+- **File Resolver:** Automatically reads `.kire` files from the local disk.
+- **Directory Reader:** Enables glob support for directives like `@markdown('*.md')`.
+- **Execution Isolation:** Optional VM-based executor to run template code in a sandbox.
+- **MD5 Helper:** Injects `$md5` helper into the runtime context.
+
+## Configuration
+
+```typescript
+import { KireNode } from '@kirejs/node';
+
+kire.plugin(KireNode, {
+    adapter: 'node', // 'node' (default), 'bun', 'deno', or 'fetch'
+    isolation: {
+        imports: false, // Allow 'require' inside templates
+        globals: true,  // Expose console, setTimeout, etc.
+        getContext: ($ctx) => ({ ... }) // Inject extra globals into the VM
+    }
+});
+```
+
+## Runtime Context Additions
+- `$readdir(pattern)`: Returns a list of files matching a glob pattern.
+- `$md5(string)`: Returns the MD5 hash of a string.

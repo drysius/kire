@@ -1,0 +1,53 @@
+# @kirejs/tailwind Documentation for LLMs
+
+## Overview
+The Tailwind package provides server-side Tailwind CSS compilation for Kire. It automatically extracts classes from your templates and generates the corresponding CSS.
+
+## Features
+- **Dynamic Compilation:** Compiles CSS on-the-fly during rendering.
+- **Automatic Discovery:** Scans the template being rendered for Tailwind classes.
+- **Asset Integration:** Works with `@kirejs/assets` to serve generated CSS as external files.
+
+## Usage
+
+### Directive `@tailwind`
+Processes a block of CSS with Tailwind.
+
+**Example:**
+```html
+@tailwind
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+
+  .my-custom-class {
+    @apply text-red-500 font-bold;
+  }
+@end
+```
+
+### Element `<tailwind>`
+An alternative to the directive.
+
+**Example:**
+```html
+<tailwind>
+  @import "tailwindcss";
+  
+  .btn { @apply p-2 rounded; }
+</tailwind>
+```
+
+## How it Works
+1. When a `@tailwind` or `<tailwind>` block is encountered, the plugin scans the **entire current HTML output** for class candidates.
+2. It compiles the CSS using Tailwind v4's engine.
+3. If `@kirejs/assets` is present, it hashes the result and injects it into the `@assets` placeholder. Otherwise, it inlines a `<style>` tag.
+
+## Configuration
+```typescript
+import { KireTailwind } from '@kirejs/tailwind';
+
+kire.plugin(KireTailwind, {
+    // Tailwind v4 compilation options
+});
+```

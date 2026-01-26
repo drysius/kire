@@ -2,7 +2,7 @@
 import 'kire';
 
 declare module 'kire' {
-    interface KireClass {
+    interface Kire {
         wired(path: string): Promise<void>;
     }
 }

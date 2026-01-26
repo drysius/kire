@@ -1,0 +1,61 @@
+# @kirejs/assets Documentation for LLMs
+
+## Overview
+The Assets package manages CSS and JS assets within Kire. It captures inline styles and scripts, caches them, and injects them as external links to optimize page loading and take advantage of browser caching.
+
+## Features
+- **Asset Capturing:** Automatically intercepts `<style>` and `<script>` tags.
+- **De-duplication:** Only includes the same asset once per page based on its hash.
+- **Asset Serving:** Provides middleware for Express, Fastify, Hono, and Elysia to serve the captured assets.
+- **SVG Handling:** Converts SVGs into served assets.
+
+## Directives
+
+### `@assets`
+The placeholder where all captured scripts and styles will be injected. Usually placed in the `<head>` of your layout.
+
+**Example:**
+```html
+<head>
+    @assets
+</head>
+```
+
+### `@svg`
+Loads an SVG file and renders an `<img>` tag pointing to the hashed asset URL.
+
+**Example:**
+```html
+@svg('icons/logo.svg', { class: 'w-8 h-8', alt: 'Company Logo' })
+```
+
+## Automatic Asset Handling
+When the plugin is active, standard tags are processed:
+
+```html
+<style>
+  /* This will be moved to an external .css file and replaced with a <link> in @assets */
+  body { background: #eee; }
+</style>
+
+<script>
+  /* This will be moved to an external .js file and replaced with a <script src> in @assets */
+  console.log('Page loaded');
+</script>
+```
+To prevent an element from being captured, add the `nocache` attribute:
+`<script nocache>...</script>`
+
+## Server Middleware
+You must register the asset handler in your server to serve the hashed files.
+
+```typescript
+import { createKireFS } from '@kirejs/assets';
+const kirefs = createKireFS(kire);
+
+// Express
+app.use(kirefs.express);
+
+// Hono
+app.use('*', kirefs.hono);
+```

@@ -1,32 +1,32 @@
 {
-	"name": "@kirejs/auth",
-	"description": "Authentication directives for Kire.",
-	"version": "0.1.0",
-	"main": "dist/cjs/index.cjs",
-	"module": "dist/esm/index.js",
-	"types": "dist/types/index.d.ts",
-	"typings": "dist/types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/types/index.d.ts",
-			"import": "./dist/esm/index.js",
-			"require": "./dist/cjs/index.cjs"
-		}
-	},
-	"type": "module",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"keywords": [
-		"backend",
-		"auth",
-		"kire",
-		"typescript"
-	],
-	"author": "drysius",
-	"license": "MIT",
-	"dependencies": {
-		"kire": "workspace:../../core"
-	}
+  "name": "@kirejs/auth",
+  "description": "Authentication directives for Kire.",
+  "version": "0.1.2",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "typings": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drysius/kire.git"
+  },
+  "keywords": [
+    "backend",
+    "auth",
+    "kire",
+    "typescript"
+  ],
+  "author": "drysius",
+  "license": "MIT",
+  "dependencies": {
+    "kire": "workspace:../../core"
+  }
 }

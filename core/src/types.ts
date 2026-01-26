@@ -7,21 +7,12 @@ export interface IParser {
 	parse(): Node[];
 }
 
-/**
- * Only used for add types in class of kire
- */
-export interface KireClass {
-	$executor?: KireExecutor;
-}
-
 export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 
 export interface ICompiler {
 	compile(nodes: Node[]): Promise<string>;
 }
 export type ICompilerConstructor = new (kire: Kire) => ICompiler;
-
-export type KireExecutor = (code: string, params: string[]) => Function;
 
 /**
  * Options for configuring the Kire instance.

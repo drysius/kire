@@ -1,0 +1,44 @@
+# @kirejs/iconify Documentation for LLMs
+
+## Overview
+The Iconify package provides a simple way to use thousands of icons from the Iconify API directly in Kire templates.
+
+## Usage
+
+### Directive `@icon`
+Renders an SVG icon.
+
+**Syntax:** `@icon(name, class, attributes)`
+
+**Example:**
+```kire
+@icon('mdi:home', 'text-blue-500', { width: 24, height: 24 })
+```
+
+### Element `<iconify />`
+A more HTML-like way to render icons.
+
+**Attributes:**
+- `i` or `icon`: The icon name (e.g., `mdi:check`).
+- `size`: Shortcut for both `width` and `height`.
+- `color`: Shortcut for the icon color.
+- Any other attribute is passed directly to the `<svg>` tag.
+
+**Example:**
+```html
+<iconify i="ph:user-bold" size="32" class="rounded-full" />
+```
+
+## Performance
+- **Caching:** Icons are cached by the Kire instance after the first fetch to avoid repeated API calls.
+- **SSR:** Icons are rendered as raw SVGs on the server, resulting in zero client-side JS overhead for icons.
+
+## Configuration
+```typescript
+import { KireIconify } from '@kirejs/iconify';
+
+kire.plugin(KireIconify, {
+    defaultClass: 'icon', // Added to all icons
+    apiUrl: 'https://api.iconify.design' // Custom API endpoint
+});
+```

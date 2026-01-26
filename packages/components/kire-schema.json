@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
     "package": "@kirejs/components",
-    "version": "0.1.0",
+    "version": "0.1.2",
     "directives": [],
     "elements": [
         {

@@ -1,38 +1,38 @@
 {
-	"name": "@kirejs/iconify",
-	"description": "Iconify integration for Kire.",
-	"version": "0.1.0",
-	"main": "dist/cjs/index.cjs",
-	"module": "dist/esm/index.js",
-	"types": "dist/types/index.d.ts",
-	"typings": "dist/types/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/types/index.d.ts",
-			"import": "./dist/esm/index.js",
-			"require": "./dist/cjs/index.cjs"
-		}
-	},
-	"type": "module",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/drysius/kire.git"
-	},
-	"keywords": [
-		"backend",
-		"icons",
-		"iconify",
-		"svg",
-		"kire",
-		"typescript"
-	],
-	"author": "drysius",
-	"license": "MIT",
-	"bugs": {
-		"url": "https://github.com/drysius/kire/issues"
-	},
-	"homepage": "https://github.com/drysius/kire#readme",
-	"dependencies": {
-		"kire": "workspace:../../core"
-	}
+  "name": "@kirejs/iconify",
+  "description": "Iconify integration for Kire.",
+  "version": "0.1.2",
+  "main": "dist/cjs/index.cjs",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "typings": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    }
+  },
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drysius/kire.git"
+  },
+  "keywords": [
+    "backend",
+    "icons",
+    "iconify",
+    "svg",
+    "kire",
+    "typescript"
+  ],
+  "author": "drysius",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/drysius/kire/issues"
+  },
+  "homepage": "https://github.com/drysius/kire#readme",
+  "dependencies": {
+    "kire": "workspace:../../core"
+  }
 }

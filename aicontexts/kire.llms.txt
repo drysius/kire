@@ -1,0 +1,251 @@
+# Kire Engine Documentation for LLMs
+
+## 1. Overview
+Kire is a high-performance, asynchronous template engine for Node.js/TypeScript, inspired by Laravel Blade but designed specifically for the JavaScript ecosystem. It features a robust directive system, component architecture, custom element handling, and a strictly typed runtime context.
+
+## 2. Syntax & Data Binding
+
+### 2.1 Interpolation
+- **Standard (Escaped):** `{{ variable }}`
+  - Automatically escapes HTML characters (`<`, `>`, `&`, `"`, `'`) to prevent XSS.
+  - Usage: `<h1>Hello, {{ user.name }}</h1>`
+- **Raw (Unescaped):** `{{{ variable }}}`
+  - Renders data exactly as is. Use with caution.
+  - Usage: `<div>{{{ rawHtmlContent }}}</div>`
+
+### 2.2 Server-Side JavaScript
+- **Block:** `<?js ... ?>`
+  - Executes arbitrary JavaScript logic during rendering.
+  - Usage: `<?js console.log('Rendering user:', it.user.id); ?>`
+
+## 3. Directives
+Directives are the primary control flow mechanism, prefixed with `@`.
+
+### 3.1 Conditionals
+```kire
+@if(user.isLoggedIn)
+    <p>Welcome back, {{ user.name }}!</p>
+@elif(user.isGuest)
+    <p>Please log in.</p>
+@else
+    <p>Unknown state.</p>
+@end
+```
+
+### 3.2 Loops
+Kire supports enhanced loops with pattern matching and "else/empty" logic.
+
+**Generic Iteration:**
+```kire
+@for(item of items)
+    <li>{{ item.name }}</li>
+@empty
+    <li>No items found.</li>
+@end
+```
+
+**Standard C-Style:**
+```kire
+@for(let i = 0; i < 10; i++)
+    <span>Index: {{ i }}</span>
+@end
+```
+
+### 3.3 Switch Statement
+```kire
+@switch(status)
+    @case('active')
+        <span class="green">Active</span>
+    @end
+    @case('pending')
+        <span class="yellow">Pending</span>
+    @end
+    @default
+        <span class="gray">Unknown</span>
+    @end
+@end
+```
+
+### 3.4 Variables
+Define block-scoped variables directly in the template.
+- `@const(name = 'value')`
+- `@let(count = 0)`
+
+## 4. Components & Layouts
+
+### 4.1 Includes
+Include partial views. Local variables can be passed as the second argument.
+```kire
+@include('partials/header', { title: 'Home' })
+```
+
+### 4.2 Component & Slots
+Kire uses a slot-based component system.
+- **Defining a Component usage:**
+  ```kire
+  @component('components/card', { id: 1 })
+      @slot('header')
+          <h3>Card Title</h3>
+      @end
+      
+      <p>This is the default slot content.</p>
+  @end
+  ```
+- **Inside the Component Template (`components/card.kire`):**
+  ```html
+  <div class="card" id="card-{{ id }}">
+      <div class="card-header">
+          {{{ slots.header }}}
+      </div>
+      <div class="card-body">
+          {{{ slots.default }}}
+      </div>
+  </div>
+  ```
+
+### 4.3 Layout Inheritance (Defines)
+Define sections in a child view to be rendered in a parent layout.
+```kire
+@define('sidebar')
+    <nav>...</nav>
+@end
+```
+Output the defined content elsewhere using:
+```kire
+@defined('sidebar')
+    <!-- Optional fallback content -->
+@end
+```
+
+### 4.4 Stacks
+Push content to a named stack (useful for scripts/styles).
+```kire
+@push('scripts')
+    <script src="/app.js"></script>
+@end
+```
+Render the stack:
+```kire
+@stack('scripts')
+```
+
+## 5. Custom Elements
+Kire allows mapping HTML tags to server-side logic (Middleware-like).
+
+**Definition (TypeScript):**
+```typescript
+kire.element('my-alert', async (ctx) => {
+    // Modify content, attributes, or replace the element entirely
+    const type = ctx.element.attributes.type || 'info';
+    ctx.replaceElement(`<div class="alert alert-${type}">${ctx.element.inner}</div>`);
+});
+```
+
+**Usage (Template):**
+```html
+<my-alert type="error">Something went wrong!</my-alert>
+```
+
+## 6. Runtime Context (`$ctx`)
+The `$ctx` object is available in all templates and directive handlers.
+
+| Property/Method | Description |
+|----------------|-------------|
+| `$props` | Local variables passed to the view (alias: `it`). |
+| `$globals` | Global variables shared across all views. |
+| `$response` | The current output string buffer. |
+| `$add(str)` | Appends string to the output buffer. |
+| `$escape(val)` | XSS escape function. |
+| `$resolve(path)`| Resolves a file path (handles namespaces/aliases). |
+| `$merge(fn)` | Creates a new isolation scope (used for capturing slots/defines). |
+| `$require(path, locals)` | Manually renders another template and returns the string. |
+| `$emit(event)` | Triggers lifecycle hooks (`before`, `after`, `end`). |
+
+## 7. Configuration & Instantiation
+
+**Basic Setup:**
+```typescript
+import { Kire } from '@kirejs/core';
+
+const kire = new Kire({
+    root: './views',
+    extension: 'kire', // defaults to 'kire'
+    production: process.env.NODE_ENV === 'production'
+});
+
+// Register Global
+kire.$global('appName', 'My Kire App');
+
+// Render
+const html = await kire.render('index', { user: { name: 'John' } });
+```
+
+**Namespaces:**
+Use namespaces to map prefixes to specific directories.
+```typescript
+kire.namespace('~', './src/views');
+// Usage: @include('~/partials/nav')
+```
+
+## 8. Extensibility
+Plugins can be created to bundle directives and elements.
+
+```typescript
+const MyPlugin: KirePlugin = {
+    name: 'my-plugin',
+    load(kire) {
+        kire.directive({ ... });
+        kire.element('...', ...);
+    }
+};
+
+kire.plugin(MyPlugin);
+```
+
+## 9. Best Practices
+1. **Logic Separation:** Keep complex logic out of templates. Use Custom Elements or pass pre-calculated data via `$props`.
+2. **Security:** Always use `{{ }}` for user input. Use `{{{ }}}` only for trusted HTML.
+3. **Caching:** Ensure `production: true` is set in production to enable template compilation caching.
+4. **Directives:** Use directives for control flow rather than embedding raw `<?js ?>` blocks for better readability and maintainability.
+
+## 10. Full Directive Reference
+
+### 10.1 Control Flow
+- **`@if(condition)`**: Starts a conditional block.
+- **`@elseif(condition)`** / **`@elif(condition)`**: Adds a new condition to an existing `@if`.
+- **`@else`**: Default block if previous conditions fail. Also used in `@for` for empty states.
+- **`@for(loop)`**: Iterates over arrays/objects. Supports JS syntax (`let i=0;...`) or enhanced (`item of items`, `key in object`).
+- **`@empty`**: Used inside `@for`. Renders if the iterated list is empty/null.
+- **`@switch(expression)`**: Starts a switch statement.
+- **`@case(value)`**: Defines a case in a switch.
+- **`@default`**: Default case in a switch.
+- **`@end`**: Closes any directive block.
+
+### 10.2 Variable Definition
+- **`@const(expression)`**: Declares a block-scoped constant. Ex: `@const(user = it.profile)`.
+- **`@let(expression)`**: Declares a block-scoped variable. Ex: `@let(count = 0)`.
+
+### 10.3 Layout & Sections
+- **`@define('name')`**: Defines a named content section for later capture.
+- **`@defined('name')`**: Renders a previously defined section. Supports fallback content inside.
+- **`@stack('name')`**: Creates a placeholder stack for content to be pushed to.
+- **`@push('name')`**: Pushes content to a named stack (e.g., scripts, css).
+
+### 10.4 Includes & Components
+- **`@include('path', {locals})`**: Renders a partial template in place.
+- **`@component('path', {props})`**: Loads a template as a component with slot support.
+- **`@slot('name')`**: Defines named content for a component slot. Default content goes to `default` slot.
+
+### 10.5 Parameter Syntax Summary
+| Directive | Parameters |
+| :--- | :--- |
+| `@if`, `@elif` | `(expression: any)` |
+| `@for` | `(lhs {in/of} rhs)` OR `(expression: string)` |
+| `@const`, `@let` | `(assignment: string)` |
+| `@switch` | `(expression: string)` |
+| `@case` | `(value: any)` |
+| `@include` | `(path: string, locals?: object)` |
+| `@component` | `(path: string, props?: object)` |
+| `@define`, `@defined` | `(name: string)` |
+| `@stack`, `@push` | `(name: string)` |
+| `@slot` | `(name: string)` |
