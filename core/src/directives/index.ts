@@ -15,7 +15,11 @@ export const KireDirectives: KirePlugin = {
 		// add md5 function
 		kire.$ctx(
 			"$require",
-			async (path: string, locals: Record<string, any> = {}) => {
+			async (
+				path: string,
+				locals: Record<string, any> = {},
+				controller?: ReadableStreamDefaultController,
+			) => {
 				// Use absolute path for caching key to avoid conflicts
 				const resolvedPath = kire.resolvePath(
 					path,
@@ -58,7 +62,7 @@ export const KireDirectives: KirePlugin = {
 
 				// Executa a função compilada com os locals e retorna o HTML
 				// We need to cast kire to any or make run public to access it from here since it was private
-				return (kire as any).run(compiledFn, locals, true);
+				return (kire as any).run(compiledFn, locals, true, controller);
 			},
 		);
 

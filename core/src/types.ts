@@ -14,6 +14,7 @@ export interface ICompiler {
 }
 export type ICompilerConstructor = new (kire: Kire) => ICompiler;
 
+export type KireExecutor = (code: string, params: string[]) => Function;
 /**
  * Options for configuring the Kire instance.
  */
@@ -26,6 +27,10 @@ export interface KireOptions {
 	 * Whether to run in production mode (enables caching). Defaults to true.
 	 */
 	production?: boolean;
+	/**
+	 * Whether to stream the response instead of buffering. Defaults to false.
+	 */
+	stream?: boolean;
 	/**
 	 * Custom file resolver function.
 	 */
@@ -132,7 +137,7 @@ export interface KireContext {
 	/**
 	 * Imports and renders another .kire template.
 	 */
-	$require?(path: string, locals?: Record<string, any>): Promise<string | null>;
+	$require?(path: string, locals?: Record<string, any>, controller?: ReadableStreamDefaultController): Promise<string | null>;
 
 	/**
 	 * Helper for MD5 hashing.
@@ -169,6 +174,7 @@ export interface KireFileMeta {
 	code: string;
 	source: string;
 	children?: boolean;
+	controller?: ReadableStreamDefaultController;
 }
 
 /**

@@ -1,0 +1,5 @@
+{
+  "name": "stream-example",
+  "module": "main.ts",
+  "type": "module"
+}

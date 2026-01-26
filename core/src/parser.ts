@@ -469,14 +469,17 @@ export class Parser {
 	private parseText() {
 		const nextInterpolation = this.template.indexOf("{{", this.cursor);
 		const nextDirective = this.template.indexOf("@", this.cursor);
+		const nextJs = this.template.indexOf("<?js", this.cursor);
+		const nextRaw = this.template.indexOf("{{{", this.cursor);
 
+		// Find the closest marker
+		const indices = [nextInterpolation, nextDirective, nextJs, nextRaw].filter(
+			(i) => i !== -1,
+		);
 		let nextIndex = -1;
-		if (nextInterpolation !== -1 && nextDirective !== -1) {
-			nextIndex = Math.min(nextInterpolation, nextDirective);
-		} else if (nextInterpolation !== -1) {
-			nextIndex = nextInterpolation;
-		} else if (nextDirective !== -1) {
-			nextIndex = nextDirective;
+
+		if (indices.length > 0) {
+			nextIndex = Math.min(...indices);
 		}
 
 		if (nextIndex === -1) {

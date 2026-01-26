@@ -14,6 +14,7 @@ import type {
 	KirePlugin,
 	KireSchematic,
 	KireContext,
+	KireExecutor,
 } from "./types";
 import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
@@ -80,6 +81,11 @@ export class Kire {
 	public extension: string;
 
 	/**
+	 * Whether to stream the response instead of buffering.
+	 */
+	public stream: boolean;
+
+	/**
 	 * Cache of compiled template functions, keyed by file path.
 	 */
 	public $files: Map<string, Function> = new Map();
@@ -107,7 +113,7 @@ export class Kire {
 	/**
 	 * The function used to execute compiled code.
 	 */
-	public $executor: (code: string, params: string[]) => Function;
+	public $executor: KireExecutor;
 
 	/**
 	 * Clears the internal file and data cache.
@@ -141,6 +147,7 @@ export class Kire {
 
 		// Copy configuration
 		fork.production = this.production;
+		fork.stream = this.stream;
 		fork.extension = this.extension;
 		fork.$var_locals = this.$var_locals;
 		fork.$resolver = this.$resolver;
@@ -179,6 +186,7 @@ export class Kire {
 
 	constructor(options: KireOptions = {}) {
 		this.production = options.production ?? true;
+		this.stream = options.stream ?? false;
 		this.extension = options.extension ?? "kire";
 		this.$var_locals = options.varLocals ?? "it";
 		this.$parent = options.parent;
@@ -504,9 +512,10 @@ export class Kire {
 	public async render(
 		template: string,
 		locals: Record<string, any> = {},
-	): Promise<string> {
+		controller?: ReadableStreamDefaultController,
+	): Promise<string | ReadableStream> {
 		const fn = await this.compileFn(template);
-		return this.run(fn, locals);
+		return this.run(fn, locals, false, controller);
 	}
 
 	/**
@@ -534,7 +543,7 @@ export class Kire {
 				for (let i = genLine; i >= 0; i--) {
 					const line = lines[i];
 					if (line && line.trim().startsWith("// kire-line:")) {
-						sourceLine = parseInt(line.split(":")[1].trim()) - 1;
+						sourceLine = parseInt(line.split(":")[1]!.trim()) - 1;
 						break;
 					}
 				}
@@ -606,7 +615,8 @@ export class Kire {
 	public async view(
 		path: string,
 		locals: Record<string, any> = {},
-	): Promise<string> {
+		controller?: ReadableStreamDefaultController,
+	): Promise<string | ReadableStream> {
 		let ext: string | null = this.extension;
 		if (path.endsWith(".md") || path.endsWith(".markdown")) {
 			ext = null;
@@ -633,7 +643,7 @@ export class Kire {
 		}
 
 		if (!compiled) throw new Error(`Could not load view: ${path}`);
-		return this.run(compiled, locals);
+		return this.run(compiled, locals, false, controller);
 	}
 
 	/**
@@ -667,6 +677,7 @@ export class Kire {
 		mainFn: Function & { [key: string]: any },
 		locals: Record<string, any>,
 		children = false,
+		controller?: ReadableStreamDefaultController,
 	) {
 		return KireRuntime(this, locals, {
 			children,
@@ -675,6 +686,7 @@ export class Kire {
 			name: mainFn.name,
 			source: mainFn._source,
 			path: mainFn._path,
+			controller,
 		});
 	}
 }

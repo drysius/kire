@@ -1,0 +1,28 @@
+@layout('~/layout', { title: 'Streaming Demo' })
+
+<div class="chunk">
+    <p>Loading first part of data...</p>
+</div>
+
+<?js
+    // Simulate a slow database call or API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+?>
+
+<div class="chunk">
+    <p>Part 2 arrived after 1 second!</p>
+    <p>Data: {{ it.data1 }}</p>
+</div>
+
+<?js
+    await new Promise(resolve => setTimeout(resolve, 1500));
+?>
+
+<div class="chunk">
+    <p>Part 3 arrived after another 1.5 seconds!</p>
+    <p>Final results: {{ it.data2 }}</p>
+</div>
+
+<div class="chunk" style="border-color: #28a745;">
+    <p><strong>Stream Complete!</strong></p>
+</div>
