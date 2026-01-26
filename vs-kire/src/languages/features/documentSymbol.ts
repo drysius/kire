@@ -17,13 +17,13 @@ export class KireDocumentSymbolProvider
 		const lines = text.split("\n");
 
 		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i];
+			const line = lines[i] as string;
 			const dirMatch = /@([a-zA-Z0-9_\\.\\/:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
 
 			if (dirMatch) {
 				const fullMatch = dirMatch[0];
-				const dirName = dirMatch[1];
-				const args = dirMatch[2] || "";
+				const dirName = dirMatch[1] as string;
+				const args = (dirMatch[2] || "") as string;
 
 				const selectionRange = new vscode.Range(
 					i,

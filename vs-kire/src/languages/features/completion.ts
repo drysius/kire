@@ -52,20 +52,21 @@ export class KireCompletionItemProvider
 			items.push(jsItem2);
 
 			kireStore.getState().elements.forEach((def) => {
+				const name = def.name as string;
 				const item = new vscode.CompletionItem(
-					def.name,
+					name,
 					vscode.CompletionItemKind.Class,
 				);
 				item.detail = "Kire Element";
-				item.documentation = new vscode.MarkdownString(def.description || "");
+				item.documentation = new vscode.MarkdownString(
+					(def.description || "") as string,
+				);
 				if (range) item.range = range;
 
 				if (def.void) {
-					item.insertText = new vscode.SnippetString(`${def.name} $0>`);
+					item.insertText = new vscode.SnippetString(`${name} $0>`);
 				} else {
-					item.insertText = new vscode.SnippetString(
-						`${def.name}>$0</${def.name}>`,
-					);
+					item.insertText = new vscode.SnippetString(`${name}>$0</${name}>`);
 				}
 				items.push(item);
 			});
@@ -85,7 +86,7 @@ export class KireCompletionItemProvider
 
 			// Re-scan to find context (simplified stack logic)
 			while ((match = directiveRegex.exec(textBefore)) !== null) {
-				const name = match[1];
+				const name = match[1] as string;
 				// Ignore "end" for stack pushing, but use it to pop
 				if (name === "end") {
 					directiveStack.pop();
@@ -114,29 +115,30 @@ export class KireCompletionItemProvider
 					: undefined;
 
 			kireStore.getState().directives.forEach((def) => {
+				const name = def.name as string;
 				const item = new vscode.CompletionItem(
-					def.name,
+					name,
 					vscode.CompletionItemKind.Keyword,
 				);
 				item.detail = `Kire Directive (${def.type || "general"})`;
-				item.documentation = new vscode.MarkdownString(def.description || "");
+				item.documentation = new vscode.MarkdownString(
+					(def.description || "") as string,
+				);
 
 				// Prioritize if valid child of active parent
 				if (activeParent) {
-					const validParents = kireStore
-						.getState()
-						.parentDirectives.get(def.name);
-					if (validParents && validParents.includes(activeParent)) {
-						item.sortText = `0_${def.name}`; // Top priority
+					const validParents = kireStore.getState().parentDirectives.get(name);
+					if (validParents && validParents.includes(activeParent as string)) {
+						item.sortText = `0_${name}`; // Top priority
 						item.preselect = true;
 					} else {
-						item.sortText = `1_${def.name}`;
+						item.sortText = `1_${name}`;
 					}
 				} else {
-					item.sortText = `1_${def.name}`;
+					item.sortText = `1_${name}`;
 				}
 
-				let snippet = def.name;
+				let snippet = name;
 				if (def.params && def.params.length > 0) {
 					snippet += "(";
 					snippet += def.params
@@ -155,10 +157,10 @@ export class KireCompletionItemProvider
 								if (p.includes("|")) {
 									label = p
 										.split("|")
-										.map((opt) => opt.split(":")[0])
+										.map((opt) => opt.split(":")[0] as string)
 										.join(" or ");
 								} else {
-									label = p.split(":")[0];
+									label = p.split(":")[0] as string;
 								}
 							}
 							return `\${{${i + 1}:${label}}}`;
@@ -195,7 +197,7 @@ export class KireCompletionItemProvider
 		const lastTagMatch = linePrefix.match(/<([a-zA-Z0-9_-]+)(?:\s+[^>]*?)?$/);
 
 		if (lastTagMatch) {
-			const tagName = lastTagMatch[1];
+			const tagName = lastTagMatch[1] as string;
 
 			// Check if we are inside quotes (simple toggle check)
 			const quoteCount = (linePrefix.match(/['"]/g) || []).length;

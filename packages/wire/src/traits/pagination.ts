@@ -6,7 +6,7 @@ export function WithPagination<TBase extends Constructor<WireComponent>>(
 	Base: TBase,
 ) {
 	//@ts-expect-error ignore 
-	return class extends Base {
+	return class WithPaginationMixin extends Base {
 		public page = 1;
 		public perPage = 10;
 

@@ -1,5 +1,5 @@
 import type { ClientAdapter } from "../../adapters/http";
-import type { WireRequest, WireResponse } from "../../types";
+import type { WirePayload, WireResponse } from "../../types";
 import { trigger } from "./hooks";
 import {
 	actionInterceptors,
@@ -149,13 +149,13 @@ export class Component {
 	}
 
 	private async sendRequest(
-		payload: Partial<WireRequest>,
+		payload: Partial<WirePayload>,
 		actionLifecycle?: any,
 	) {
 		const updates = { ...this.pendingUpdates, ...payload.updates };
 		this.pendingUpdates = {};
 
-		const fullPayload: WireRequest = {
+		const fullPayload: WirePayload = {
 			component: this.name,
 			snapshot: JSON.stringify(this.snapshot),
 			method: payload.method || "$refresh",

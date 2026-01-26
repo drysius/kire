@@ -50,7 +50,7 @@ export class KireSemanticTokensProvider
 		// Find Elements
 		while ((match = elementRegex.exec(text))) {
 			const fullMatch = match[0];
-			const tagName = match[1];
+			const tagName = match[1] as string;
 			const startOffset = match.index + (fullMatch.startsWith("</") ? 2 : 1);
 			const startPos = document.positionAt(startOffset);
 

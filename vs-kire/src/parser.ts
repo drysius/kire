@@ -27,7 +27,7 @@ export const parseFile = async (template: string): Promise<ParseError[]> => {
 	// Check for unclosed directives (items remaining on stack)
 	if (parser.stack && parser.stack.length > 0) {
 		for (const node of parser.stack) {
-			const loc = node.loc;
+			const loc = node.loc!;
 			// Parser uses 1-based indexing, VS Code uses 0-based
 			const startLine = (loc.start.line || 1) - 1;
 			const startCol = (loc.start.column || 1) - 1;

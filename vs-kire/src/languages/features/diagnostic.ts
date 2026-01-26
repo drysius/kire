@@ -88,8 +88,8 @@ export class KireDiagnosticProvider {
 			if (isInsideJs) continue;
 
 			const fullMatch = match[0];
-			const name = match[1];
-			const argsStr = match[2];
+			const name = match[1] as string;
+			const argsStr = match[2] as string;
 			const position = document.positionAt(match.index);
 
 			// Skip escaped directives @@
@@ -368,8 +368,8 @@ export class KireDiagnosticProvider {
 		let match: RegExpExecArray | null;
 		while ((match = elementRegex.exec(text)) !== null) {
 			const fullMatch = match[0];
-			const name = match[1];
-			const attributes = match[2];
+			const name = match[1] as string;
+			const attributes = match[2] as string;
 			const isSelfClosing = match[3] === "/";
 			const position = document.positionAt(match.index);
 
@@ -455,8 +455,8 @@ export class KireDiagnosticProvider {
 
 		let match: RegExpExecArray | null;
 		while ((match = elementRegex.exec(text)) !== null) {
-			const name = match[1];
-			const attrsStr = match[2];
+			const name = match[1] as string;
+			const attrsStr = match[2] as string;
 			const position = document.positionAt(match.index);
 
 			// Find element definition
@@ -478,8 +478,8 @@ export class KireDiagnosticProvider {
 				let attrMatch: RegExpExecArray | null;
 
 				while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
-					const attrName = attrMatch[1];
-					const attrValue = attrMatch[2];
+					const attrName = attrMatch[1] as string;
+					const attrValue = attrMatch[2] as string;
 					attributes[attrName] = attrValue;
 				}
 
@@ -487,14 +487,15 @@ export class KireDiagnosticProvider {
 				if ((elementDef as any).params) {
 					const requiredParams = (elementDef as any).params as string[];
 					requiredParams.forEach((paramName) => {
-						if (!attributes[paramName.split(":")[0]]) {
+						const pName = paramName.split(":")[0] as string;
+						if (!attributes[pName]) {
 							diagnostics.push(
 								new vscode.Diagnostic(
 									new vscode.Range(
 										position,
 										position.translate(0, name.length + 1),
 									),
-									`Element <${name}> requires attribute "${paramName.split(":")[0]}"`,
+									`Element <${name}> requires attribute "${pName}"`,
 									vscode.DiagnosticSeverity.Warning,
 								),
 							);
@@ -516,7 +517,7 @@ export class KireDiagnosticProvider {
 
 		while ((match = interpolationRegex.exec(text)) !== null) {
 			const fullMatch = match[0];
-			const content = match[1];
+			const content = match[1] as string;
 			const position = document.positionAt(match.index);
 
 			// Check for empty interpolations
@@ -535,7 +536,7 @@ export class KireDiagnosticProvider {
 		const rawInterpolationRegex = /\{\{\{([^}]*)\}\}\}/g;
 		while ((match = rawInterpolationRegex.exec(text)) !== null) {
 			const fullMatch = match[0];
-			const content = match[1];
+			const content = match[1] as string;
 			const position = document.positionAt(match.index);
 
 			if (!content.trim()) {
@@ -593,7 +594,7 @@ export class KireDiagnosticProvider {
 		let match: RegExpExecArray | null;
 		while ((match = tagRegex.exec(text)) !== null) {
 			const isClosing = match[1] === "/";
-			const tagName = match[2];
+			const tagName = match[2] as string;
 			const position = document.positionAt(match.index);
 
 			const isKireElement = Array.from(
@@ -634,7 +635,7 @@ export class KireDiagnosticProvider {
 						),
 					);
 				} else {
-					const last = stack[stack.length - 1];
+					const last = stack[stack.length - 1]!;
 					if (last.tag !== tagName) {
 						diagnostics.push(
 							new vscode.Diagnostic(
@@ -694,8 +695,8 @@ export class KireDiagnosticProvider {
 		// Validate attribute syntax
 		const unquotedAttrRegex = /\s([a-zA-Z-]+)=([^"'\s>]+)(?=\s|\/?>)/g;
 		while ((match = unquotedAttrRegex.exec(text)) !== null) {
-			const attrName = match[1];
-			const attrValue = match[2];
+			const attrName = match[1] as string;
+			const attrValue = match[2] as string;
 			const position = document.positionAt(
 				match.index + match[0].indexOf(attrValue),
 			);

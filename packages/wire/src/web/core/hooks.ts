@@ -5,9 +5,9 @@ const listeners: Record<string, ListenerCallback[]> = {};
 
 export function on(name: string, callback: ListenerCallback): Unsubscribe {
 	if (!listeners[name]) listeners[name] = [];
-	listeners[name].push(callback);
+	listeners[name]!.push(callback);
 	return () => {
-		listeners[name] = listeners[name].filter((i) => i !== callback);
+		listeners[name] = listeners[name]!.filter((i) => i !== callback);
 	};
 }
 
@@ -16,7 +16,7 @@ export function trigger(name: string, ...params: any[]) {
 	const finishers: Function[] = [];
 
 	for (let i = 0; i < callbacks.length; i++) {
-		const finisher = callbacks[i](...params);
+		const finisher = callbacks[i]!(...params);
 		if (typeof finisher === "function") finishers.push(finisher);
 	}
 
@@ -30,7 +30,7 @@ export async function triggerAsync(name: string, ...params: any[]) {
 	const finishers: Function[] = [];
 
 	for (let i = 0; i < callbacks.length; i++) {
-		const finisher = await callbacks[i](...params);
+		const finisher = await callbacks[i]!(...params);
 		if (typeof finisher === "function") finishers.push(finisher);
 	}
 
@@ -42,7 +42,7 @@ export async function triggerAsync(name: string, ...params: any[]) {
 function runFinishers(finishers: Function[], result: any) {
 	let latest = result;
 	for (let i = 0; i < finishers.length; i++) {
-		const iResult = finishers[i](latest);
+		const iResult = finishers[i]!(latest);
 		if (iResult !== undefined) {
 			latest = iResult;
 		}

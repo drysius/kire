@@ -22,7 +22,7 @@ export class KireFoldingRangeProvider implements vscode.FoldingRangeProvider {
 			const match = text.match(/^@([a-zA-Z0-9_]+)/);
 			if (!match) continue;
 
-			const name = match[1];
+			const name = match[1] as string;
 
 			// -------------------------
 			// Fecha bloco: @end
@@ -49,7 +49,7 @@ export class KireFoldingRangeProvider implements vscode.FoldingRangeProvider {
 			const isMiddle = state.parentDirectives.has(name);
 			if (isMiddle) {
 				if (stack.length > 0) {
-					const current = stack[stack.length - 1];
+					const current = stack[stack.length - 1]!;
 					const endLine = i - 1; // dobra até a linha anterior do @else/@elseif
 
 					if (endLine > current.line) {

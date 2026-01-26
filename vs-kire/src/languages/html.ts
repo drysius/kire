@@ -5,7 +5,7 @@ import {
 	type HoverSettings,
 } from "vscode-html-languageservice";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { kireStore } from "@/store";
+import { kireStore } from "../store";
 
 export const htmlLanguageService = getHtmlService();
 
@@ -447,7 +447,7 @@ export class HtmlDiagnosticProvider {
 		let match: RegExpExecArray | null;
 		while ((match = tagRegex.exec(text)) !== null) {
 			const isClosing = match[1] === "/";
-			const tagName = match[2];
+			const tagName = match[2] as string;
 			const position = document.positionAt(match.index);
 
 			// Check if element is void (self-closing)
@@ -479,7 +479,7 @@ export class HtmlDiagnosticProvider {
 						),
 					);
 				} else {
-					const last = stack[stack.length - 1];
+					const last = stack[stack.length - 1]!;
 
 					if (last.tag !== tagName) {
 						diagnostics.push(
@@ -550,8 +550,8 @@ export class HtmlDiagnosticProvider {
 		let jsMatch: RegExpExecArray | null;
 
 		while ((jsMatch = jsAttrRegex.exec(text)) !== null) {
-			const attrName = jsMatch[1];
-			const quote = jsMatch[2];
+			const attrName = jsMatch[1] as string;
+			const quote = jsMatch[2] as string;
 			const startValueIndex = jsMatch.index + jsMatch[0].length;
 
 			// Check if attribute is javascript type

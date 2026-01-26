@@ -329,8 +329,8 @@ export class FeatureFormatting
 		for (const b of blocks) {
 			if (b.mode !== "multiline" || !b.range) continue;
 
-			const s = b.range.start;
-			const e = b.range.end;
+			const s = b.range!.start;
+			const e = b.range!.end;
 
 			if (line < s.line || line > e.line) continue;
 
@@ -450,7 +450,7 @@ export class FeatureFormatting
 
 	private getHtmlTagName(line: string): string | null {
 		const match = line.match(/^<\s*([a-zA-Z][a-zA-Z0-9:-]*)\b/);
-		return match ? match[1].toLowerCase() : null;
+		return match ? (match[1] as string).toLowerCase() : null;
 	}
 
 	private isSingleLineHtmlElement(line: string, tag: string): boolean {
@@ -483,7 +483,7 @@ export class FeatureFormatting
 
 	private extractDirectiveName(line: string): string {
 		const match = line.match(/^@([a-zA-Z0-9_]+)/);
-		return match ? match[1] : "";
+		return match ? (match[1] as string) : "";
 	}
 
 	private getLeadingWhitespace(line: string): string {

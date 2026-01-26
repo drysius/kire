@@ -9,7 +9,7 @@ export class Directive {
 	) {
 		// wire:click.prevent="save"
 		const parts = name.replace("wire:", "").split(".");
-		this.type = parts[0];
+		this.type = parts[0] as string;
 		this.modifiers = parts.slice(1);
 		this.value = el.getAttribute(name) || "";
 	}

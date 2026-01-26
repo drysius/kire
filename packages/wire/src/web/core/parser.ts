@@ -8,8 +8,8 @@ export function parseAction(actionString: string): {
 	if (actionString.includes("(")) {
 		const match = actionString.match(/([^(]+)\((.*)\)/);
 		if (match) {
-			method = match[1].trim();
-			const argsContent = match[2];
+			method = (match[1] as string).trim();
+			const argsContent = match[2] as string;
 			if (argsContent.trim()) {
 				params = argsContent.split(",").map((a) => {
 					const clean = a.trim();
