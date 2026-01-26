@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { Kire } from "kire";
-import { KireRoute, Route } from "../src/index";
+import KireRoute, { Route } from "../src/index";
 
 test("Kire Route - Basic Logic", () => {
 	Route.set("/admin/dashboard", "admin.dashboard");

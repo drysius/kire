@@ -14,7 +14,7 @@ Register the plugin in your Kire instance:
 
 ```typescript
 import { Kire } from 'kire';
-import { KireRoute, Route } from '@kirejs/route';
+import KireRoute, { Route } from '@kirejs/route';
 
 const kire = new Kire();
 kire.plugin(KireRoute);
