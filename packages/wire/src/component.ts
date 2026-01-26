@@ -61,7 +61,31 @@ export abstract class WireComponent {
 			errors: this.__errors,
 			...locals,
 		};
-		return this.kire.view(path, data);
+
+		// Prepare injection
+		const keys = Object.keys(data).filter((k) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
+		);
+		const keysHash = keys.join("|");
+		const resolvedPath = this.kire.resolvePath(path);
+		const cacheKey = `wire:${resolvedPath}:${keysHash}`;
+
+		let compiled: Function | undefined;
+
+		if (this.kire.production && this.kire.$files.has(cacheKey)) {
+			compiled = this.kire.$files.get(cacheKey) as Function;
+		} else {
+			const content = await this.kire.$resolver(resolvedPath);
+			const injection = keys.length
+				? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>`
+				: "";
+			compiled = await this.kire.compileFn(injection + content);
+			if (this.kire.production) {
+				this.kire.$files.set(cacheKey, compiled);
+			}
+		}
+
+		return this.kire.run(compiled, data);
 	}
 
 	/**
@@ -79,7 +103,37 @@ export abstract class WireComponent {
 			errors: this.__errors,
 			...locals,
 		};
-		return this.kire.render(template, data);
+
+		const keys = Object.keys(data).filter((k) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
+		);
+		
+		// Otimização: Cache de templates inline baseada no conteúdo
+		// Usamos o md5 do template + keys injetadas como chave de cache
+		const injection = keys.length
+			? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>`
+			: "";
+			
+		const fullTemplate = injection + template;
+		
+		// Se estiver em produção, tenta usar o cache
+		if (this.kire.production) {
+			// Usar um hash simples do template string como chave é arriscado se for muito longo
+			// Mas para inline templates geralmente é ok. 
+			// Melhor: usar o helper $md5 do contexto se disponível, ou o kire internal
+			const cacheKey = `inline:${fullTemplate}`;
+			
+			if (this.kire.$files.has(cacheKey)) {
+				const compiled = this.kire.$files.get(cacheKey) as Function;
+				return this.kire.run(compiled, data);
+			}
+			
+			const compiled = await this.kire.compileFn(fullTemplate);
+			this.kire.$files.set(cacheKey, compiled);
+			return this.kire.run(compiled, data);
+		}
+
+		return this.kire.render(fullTemplate, data);
 	}
 
 	/**

@@ -16,7 +16,7 @@ test("Kire Route - Basic Logic", () => {
 
 test("Kire Route - Integration in Template", async () => {
 	const kire = new Kire();
-	kire.plugin(KireRoute);
+	kire.plugin(KireRoute); // ele add kire.$globaL('Route', Route);
 
 	Route.set("/users/1");
 
