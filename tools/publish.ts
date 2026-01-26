@@ -43,7 +43,7 @@ class Publisher {
 
 			console.log(`${this.PUBLISH} Publishing ${pkg.name}@${pkgJson.version}`);
 
-			await $`npm publish --access public`.env({ ...process.env}).cwd(pkg.publishPath);
+			await $`npm publish --provenance --access public`.env({ ...process.env, NODE_AUTH_TOKEN:process.env.NPM_TOKEN }).cwd(pkg.publishPath);
 
 			console.log(
 				`${this.PUBLISH} Successfully published ${pkg.name}@${pkgJson.version}`,
