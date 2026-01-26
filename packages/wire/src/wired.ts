@@ -250,7 +250,15 @@ export class Wired {
 			const payload = JWT.verify(body._token, Wired.options.secret!);
 			if (payload && payload.key === wirekey) {
 				isValidToken = true;
+			} else {
+				console.warn("[Wired] Invalid Token:", {
+					received: body._token,
+					payload,
+					expectedKey: wirekey
+				});
 			}
+		} else {
+			// console.log("[Wired] No token provided in payload");
 		}
 
 		const wireReq: WiredRequest = {

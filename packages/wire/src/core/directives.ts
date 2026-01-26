@@ -68,7 +68,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                     listeners: $i.listeners || {},
                 };
 
-                const $ident = $ctx.$wireToken || "";
+                const $ident = $ctx.$wireToken || ($ctx.$props && $ctx.$props.$wireToken) || "";
                 const $sum = $w.checksum.generate($state, $memo, $ident);
                 
                 const $snap = JSON.stringify({

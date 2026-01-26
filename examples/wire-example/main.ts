@@ -39,12 +39,16 @@ void (async () => {
 		const session = context.cookie.session;
 		if (!session.value) {
 			session.value = crypto.randomUUID();
+			session.path = "/";
+			session.httpOnly = true;
 		}
 
 		// Use session ID + IP for secure identifier
 		const ip =
 			context.server?.requestIP(context.request)?.address || "127.0.0.1";
 		const wireKey = Wired.keystore(session.value as string, ip);
+
+		console.log(`[Middleware] Path: ${context.request.url} | Session: ${session.value} | IP: ${ip} | WireKey: ${wireKey}`);
 
 		const url = new URL(context.request.url);
 		const isActive = (path: string) => {

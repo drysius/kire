@@ -9,7 +9,6 @@ import {
 } from "./interceptor";
 
 export class Component {
-	// ... (existing properties)
 	public id: string;
 	public name: string;
 	public snapshot: any;

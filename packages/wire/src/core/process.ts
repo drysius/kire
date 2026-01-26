@@ -179,6 +179,10 @@ export function validateSnapshot(
 			identifier,
 		)
 	) {
+		console.error("[Wired] Checksum mismatch!");
+		console.error("Identifier (Server):", identifier);
+		console.error("Snapshot Checksum (Client):", snapshot.checksum);
+		console.error("Calculated Checksum (Server):", checksum.generate(snapshot.data, snapshot.memo, identifier));
 		return {
 			error: {
 				code: WireErrors.invalid_checksum.code,

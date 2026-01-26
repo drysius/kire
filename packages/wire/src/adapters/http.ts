@@ -9,91 +9,68 @@ export class HttpAdapter implements ClientAdapter {
 	) {}
 
 	async request(payload: any) {
-		return new Promise((resolve, reject) => {
-			const xhr = new XMLHttpRequest();
-			xhr.open("POST", this.endpoint, true);
+		const files = new Map<string, File>();
 
-			xhr.setRequestHeader("Accept", "application/json");
-			if (this.csrf) xhr.setRequestHeader("X-CSRF-TOKEN", this.csrf);
-
-			// Extract Component ID
-			let componentId = null;
-			if (payload.snapshot) {
-				try {
-					const snap = JSON.parse(payload.snapshot);
-					componentId = snap.memo?.id;
-				} catch (e) {}
+		const scanForFiles = (obj: any): any => {
+			if (obj instanceof File) {
+				const id = `file_${Math.random().toString(36).substr(2, 9)}`;
+				files.set(id, obj);
+				return { _wire_file: id };
 			}
-
-			// Handle FormData if Files are present
-			let body: any = JSON.stringify(payload);
-			const files = new Map<string, File>();
-
-			const scanForFiles = (obj: any): any => {
-				if (obj instanceof File) {
-					const id = `file_${Math.random().toString(36).substr(2, 9)}`;
-					files.set(id, obj);
-					return { _wire_file: id };
-				}
-				if (obj instanceof FileList) {
-					return Array.from(obj).map(scanForFiles);
-				}
-				if (Array.isArray(obj)) {
-					return obj.map(scanForFiles);
-				}
-				if (obj && typeof obj === "object") {
-					const newObj: any = {};
-					for (const key in obj) {
-						newObj[key] = scanForFiles(obj[key]);
-					}
-					return newObj;
-				}
-				return obj;
-			};
-
-			const processedPayload = scanForFiles(payload);
-
-			if (files.size > 0) {
-				const fd = new FormData();
-				fd.append("_wired_payload", JSON.stringify(processedPayload));
-				files.forEach((file, id) => {
-					fd.append(id, file);
-				});
-				body = fd;
-				// Do not set Content-Type header for FormData, browser does it with boundary
-			} else {
-				xhr.setRequestHeader("Content-Type", "application/json");
+			if (obj instanceof FileList) {
+				return Array.from(obj).map(scanForFiles);
 			}
-
-			if (xhr.upload && componentId) {
-				xhr.upload.onprogress = (e) => {
-					if (e.lengthComputable) {
-						const percent = Math.round((e.loaded / e.total) * 100);
-						window.dispatchEvent(
-							new CustomEvent("wire:upload-progress", {
-								detail: { id: componentId, progress: percent },
-							}),
-						);
-					}
-				};
+			if (Array.isArray(obj)) {
+				return obj.map(scanForFiles);
 			}
-
-			// ... rest of onload/onerror/send
-			xhr.onload = () => {
-				if (xhr.status >= 200 && xhr.status < 300) {
-					try {
-						resolve(JSON.parse(xhr.responseText));
-					} catch (e) {
-						reject(new Error("Invalid JSON response"));
-					}
-				} else {
-					reject(new Error(`HTTP Error ${xhr.status}`));
+			if (obj && typeof obj === "object" && obj !== null) {
+				const newObj: any = {};
+				for (const key in obj) {
+					newObj[key] = scanForFiles(obj[key]);
 				}
-			};
+				return newObj;
+			}
+			return obj;
+		};
 
-			xhr.onerror = () => reject(new Error("Network Error"));
+		const processedPayload = scanForFiles(payload);
 
-			xhr.send(body);
+		let body: BodyInit;
+		const headers: HeadersInit = {
+			"Accept": "application/json",
+		};
+
+		if (this.csrf) {
+			// @ts-ignore
+			headers["X-CSRF-TOKEN"] = this.csrf;
+		}
+
+		if (files.size > 0) {
+			const fd = new FormData();
+			fd.append("_wired_payload", JSON.stringify(processedPayload));
+			files.forEach((file, id) => {
+				fd.append(id, file);
+			});
+			body = fd;
+		} else {
+			// @ts-ignore
+			headers["Content-Type"] = "application/json";
+			body = JSON.stringify(payload);
+		}
+
+		console.log("[KireWire] Request:", { url: this.endpoint, payload, headers });
+
+		const response = await fetch(this.endpoint, {
+			method: "POST",
+			headers,
+			body,
+			credentials: "include",
 		});
+
+		if (!response.ok) {
+			throw new Error(`HTTP Error ${response.status}`);
+		}
+
+		return await response.json();
 	}
 }
