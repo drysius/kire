@@ -40,7 +40,6 @@ End
             const { done, value } = await reader.read();
             if (done) break;
             const chunk = new TextDecoder().decode(value);
-            console.log("Chunk received:", chunk);
             chunks.push(chunk);
         }
         
@@ -118,5 +117,27 @@ End
         expect(fullOutput).toContain("Block B");
         // Verify no leakage (e.g. Block A appearing inside Block B's template)
         // This is hard to regex exactly without parsing, but basic check passes.
+    });
+
+    test("Should render immediately when stream is disabled", async () => {
+        const kire = new Kire();
+        kire.stream = false; // Disable streaming
+        
+        const template = `
+Start
+@defer
+  Immediate Content
+@end
+End
+`;
+        // In non-streaming mode, render returns string
+        const result = await kire.render(template);
+        
+        expect(result).toContain("Start");
+        expect(result).toContain("End");
+        expect(result).toContain("Immediate Content");
+        // Should NOT contain deferred placeholder or script
+        expect(result).not.toContain('<div id="defer-');
+        expect(result).not.toContain('<template id="tpl-defer-');
     });
 });

@@ -231,9 +231,15 @@ export default (kire: Kire) => {
 		children: true,
 		type: "html",
 		description:
-			"Defers rendering of a block until the main content is loaded (Out-of-Order Streaming).",
+			"Defers rendering of a block until the main content is loaded (Out-of-Order Streaming). Falls back to immediate rendering if streaming is disabled.",
 		async onCall(compiler) {
 			compiler.raw(`{`);
+
+			compiler.raw(`const deferredRender = async ($ctx) => {`);
+			if (compiler.children) await compiler.set(compiler.children);
+			compiler.raw(`};`);
+
+			compiler.raw(`if ($ctx.$kire.stream) {`);
 			compiler.raw(
 				`  const deferId = 'defer-' + Math.random().toString(36).substr(2, 9);`,
 			);
@@ -245,8 +251,7 @@ export default (kire: Kire) => {
 			compiler.raw(`    {`);
 			compiler.raw(`      const $ctx = $parentCtx.$fork();`);
 			compiler.raw(`      let swapScript = '';`);
-			compiler.raw(`      await $ctx.$merge(async ($ctx) => {`);
-			if (compiler.children) await compiler.set(compiler.children);
+			compiler.raw(`      await $ctx.$merge(deferredRender);`);
 			compiler.raw(`      const content = $ctx.$response;`);
 			compiler.raw(`      $ctx.$response = '';`);
 			compiler.raw(`      const templateId = 'tpl-' + deferId;`);
@@ -263,10 +268,13 @@ export default (kire: Kire) => {
                     })();
                 </script>
             \`;`);
-			compiler.raw(`    });`);
-			compiler.raw(`    $ctx.$add(swapScript);`);
+			compiler.raw(`      $ctx.$add(swapScript);`);
 			compiler.raw(`    }`);
 			compiler.raw(`  });`);
+			compiler.raw(`} else {`);
+			compiler.raw(`  await deferredRender($ctx);`);
+			compiler.raw(`}`);
+
 			compiler.raw(`}`);
 		},
 	});

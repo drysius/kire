@@ -104,6 +104,8 @@ export default function (
 			}
 		}
 
+		await $ctx.$emit("before");
+
 		try {
 			// use $props do bind and $ctx value
 			await $ctx.$file.execute.call($ctx.$props, $ctx);
@@ -113,7 +115,6 @@ export default function (
 			return $kire.renderError(e, $ctx);
 		}
 
-		await $ctx.$emit("before");
 		await $ctx.$emit("after");
 		await $ctx.$emit("end");
 
