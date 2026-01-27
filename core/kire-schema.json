@@ -211,6 +211,26 @@
             "example": "@slot('header')\n  <h1>This is the header</h1>\n@end"
         },
         {
+            "name": "section",
+            "params": [
+                "name:string"
+            ],
+            "children": true,
+            "type": "html",
+            "description": "Alias for @slot, commonly used in Laravel Blade.",
+            "example": "@section('header')\n  <h1>Header</h1>\n@end"
+        },
+        {
+            "name": "yield",
+            "params": [
+                "name:string",
+                "default?:string"
+            ],
+            "type": "html",
+            "description": "Renders the content of a named slot.",
+            "example": "@yield('header')"
+        },
+        {
             "name": "component",
             "params": [
                 "path:string",
@@ -219,6 +239,28 @@
             "children": true,
             "type": "html",
             "description": "Loads a template as a reusable component, allowing content to be passed into named slots.",
+            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+        },
+        {
+            "name": "layout",
+            "params": [
+                "path:string",
+                "variables:any"
+            ],
+            "children": true,
+            "type": "html",
+            "description": "Alias for @component, typically used for wrapping content.",
+            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+        },
+        {
+            "name": "extends",
+            "params": [
+                "path:string",
+                "variables:any"
+            ],
+            "children": true,
+            "type": "html",
+            "description": "Alias for @component/layout, used for inheritance.",
             "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
         }
     ],

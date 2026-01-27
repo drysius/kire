@@ -255,6 +255,11 @@ export class Kire {
 	 * @returns The Kire instance.
 	 */
 	public $prop(keyOrObj: string | Record<string, any>, value?: any) {
+		if (!this.$parent) {
+			console.warn(
+				"Kire Warning: You are setting props on the global instance. This data will be shared across all requests. Use kire.fork() for per-request isolation.",
+			);
+		}
 		if (typeof keyOrObj === "string") {
 			this.$props.set(keyOrObj, value);
 		} else if (typeof keyOrObj === "object") {
@@ -514,6 +519,11 @@ export class Kire {
 		locals: Record<string, any> = {},
 		controller?: ReadableStreamDefaultController,
 	): Promise<string | ReadableStream> {
+		if (!this.$parent) {
+			console.warn(
+				"Kire Warning: You are rendering on the global instance. Use kire.fork() for per-request isolation.",
+			);
+		}
 		const fn = await this.compileFn(template);
 		return this.run(fn, locals, false, controller);
 	}
@@ -617,6 +627,12 @@ export class Kire {
 		locals: Record<string, any> = {},
 		controller?: ReadableStreamDefaultController,
 	): Promise<string | ReadableStream> {
+		if (!this.$parent) {
+			console.warn(
+				"Kire Warning: You are rendering a view on the global instance. Use kire.fork() for per-request isolation.",
+			);
+		}
+
 		let ext: string | null = this.extension;
 		if (path.endsWith(".md") || path.endsWith(".markdown")) {
 			ext = null;

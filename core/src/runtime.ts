@@ -28,6 +28,7 @@ export default function (
 	$ctx.$hooks.set("before", []);
 	$ctx.$hooks.set("after", []);
 	$ctx.$hooks.set("end", []);
+	$ctx.$deferred = [];
 	$ctx.$on = (ev, cb) => {
 		const hooks = $ctx.$hooks.get(ev);
 		if (hooks) {
@@ -70,6 +71,27 @@ export default function (
 			await fn($ctx);
 			$ctx.$response = $pres + $ctx.$response;
 		};
+
+	$ctx.$fork = () => {
+		const newCtx = { ...$ctx };
+		newCtx.$merge = async (fn) => {
+			const originalAdd = newCtx.$add;
+			let buffer = "";
+			newCtx.$add = (str) => {
+				buffer += str;
+				newCtx.$response = (newCtx.$response || "") + str;
+			};
+			const prevRes = newCtx.$response;
+			newCtx.$response = "";
+
+			await fn(newCtx);
+
+			newCtx.$add = originalAdd;
+			newCtx.$response = prevRes + buffer;
+		};
+		newCtx.$fork = $ctx.$fork;
+		return newCtx;
+	};
 
 	// 2. Define Execution Logic
 	const execute = async () => {
@@ -145,6 +167,12 @@ export default function (
 					) {
 						controller.enqueue(encoder.encode(result));
 					}
+
+					// Handle deferred tasks
+					if ($ctx.$deferred && $ctx.$deferred.length > 0) {
+						await Promise.all($ctx.$deferred.map((t) => t()));
+					}
+
 					controller.close();
 				} catch (e) {
 					// Fallback for unexpected errors

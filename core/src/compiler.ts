@@ -30,16 +30,23 @@ export class Compiler {
 		const res = this.resBuffer.join("\n");
 		const pos = this.posBuffer.join("\n");
 
+		// Filter keys to ensure they are valid JS identifiers
+		const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
+		);
+		const destructuring =
+			sanitizedKeys.length > 0
+				? `var { ${sanitizedKeys.join(", ")} } = $ctx.$globals;`
+				: "";
+
 		// Main function body code
-		// Added 'with($ctx.$globals)' wrapper to support direct variable access
-		// and dynamic globals resolution.
+		// Removed 'with' and added destructuring
 		const code = `
-with ($ctx.$globals) {
-	let ${varLocals} = $ctx.$props;
+${destructuring}
+let ${varLocals} = $ctx.$props;
 ${pre}
 ${res}
 ${pos}
-}
 return $ctx;
 //# sourceURL=kire-generated.js`;
 

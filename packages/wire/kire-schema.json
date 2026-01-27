@@ -72,12 +72,15 @@
             "$contexts": {
                 "parent": "undefined"
             },
-            "namespaces": {},
-            "mounts": {},
+            "$props": {
+                "parent": "undefined"
+            },
+            "$namespaces": {},
             "production": "boolean",
             "$resolver": "function",
             "$readdir": "undefined",
             "extension": "string",
+            "stream": "boolean",
             "$files": {},
             "$parser": "function",
             "$compiler": "function",

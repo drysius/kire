@@ -200,4 +200,74 @@ export default (kire: Kire) => {
 			compiler.raw(`}`);
 		},
 	});
+
+	kire.directive({
+		name: "csrf",
+		type: "html",
+		description: "Renders a CSRF token input field.",
+		onCall(compiler) {
+			compiler.raw(`
+                if (typeof $ctx.$globals.csrf === 'undefined') {
+                    throw new Error("CSRF token not defined. Please define it using kire.$global('csrf', 'token')");
+                }
+                $ctx.$add(\`<input type="hidden" name="_token" value="\${$ctx.$globals.csrf}">\`);
+            `);
+		},
+	});
+
+	kire.directive({
+		name: "method",
+		params: ["method:string"],
+		type: "html",
+		description: "Spoofs an HTTP method using a hidden input.",
+		onCall(compiler) {
+			const method = compiler.param("method");
+			compiler.res(`<input type="hidden" name="_method" value="${method}">`);
+		},
+	});
+
+	kire.directive({
+		name: "defer",
+		children: true,
+		type: "html",
+		description:
+			"Defers rendering of a block until the main content is loaded (Out-of-Order Streaming).",
+		async onCall(compiler) {
+			compiler.raw(`{`);
+			compiler.raw(
+				`  const deferId = 'defer-' + Math.random().toString(36).substr(2, 9);`,
+			);
+			compiler.raw(`  $ctx.$add(\`<div id="\${deferId}"></div>\`);`);
+
+			compiler.raw(`  if (!$ctx.$deferred) $ctx.$deferred = [];`);
+			compiler.raw(`  $ctx.$deferred.push(async () => {`);
+			compiler.raw(`    const $parentCtx = $ctx;`);
+			compiler.raw(`    {`);
+			compiler.raw(`      const $ctx = $parentCtx.$fork();`);
+			compiler.raw(`      let swapScript = '';`);
+			compiler.raw(`      await $ctx.$merge(async ($ctx) => {`);
+			if (compiler.children) await compiler.set(compiler.children);
+			compiler.raw(`      const content = $ctx.$response;`);
+			compiler.raw(`      $ctx.$response = '';`);
+			compiler.raw(`      const templateId = 'tpl-' + deferId;`);
+			compiler.raw(`      swapScript = \`
+                <template id="\${templateId}">\${content}</template>
+                <script>
+                    (function() {
+                        var src = document.getElementById('\${templateId}');
+                        var dest = document.getElementById('\${deferId}');
+                        if (src && dest) {
+                            dest.replaceWith(src.content);
+                            src.remove();
+                        }
+                    })();
+                </script>
+            \`;`);
+			compiler.raw(`    });`);
+			compiler.raw(`    $ctx.$add(swapScript);`);
+			compiler.raw(`    }`);
+			compiler.raw(`  });`);
+			compiler.raw(`}`);
+		},
+	});
 };

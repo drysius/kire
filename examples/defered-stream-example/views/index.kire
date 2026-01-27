@@ -1,0 +1,32 @@
+@layout('~/layout', { title: 'Deferred Demo' })
+
+<div class="chunk">
+    <h3>Instant Content</h3>
+    <p>This renders immediately.</p>
+</div>
+
+@defer
+    <div class="chunk">
+        <h3>Fast Deferred Content</h3>
+        <p>{{ await $ctx.slowData(1000, 'Fast Block') }}</p>
+    </div>
+@end
+
+<div class="chunk">
+    <h3>More Instant Content</h3>
+    <p>This also renders immediately, appearing BEFORE the block above finishes loading.</p>
+</div>
+
+@defer
+    <div class="chunk">
+        <h3>Slow Deferred Content</h3>
+        <p>{{ await $ctx.slowData(3000, 'Slow Block') }}</p>
+    </div>
+@end
+
+<div class="chunk">
+    <h3>Footer Content</h3>
+    <p>Page footer rendered immediately.</p>
+</div>
+
+@end

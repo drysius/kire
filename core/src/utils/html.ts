@@ -11,5 +11,6 @@ export function escapeHtml(unsafe: any): string {
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;")
-		.replace(/'/g, "&#039;");
+		.replace(/'/g, "&#039;")
+		.replace(/`/g, "&#96;");
 }

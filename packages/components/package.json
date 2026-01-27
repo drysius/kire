@@ -7,6 +7,10 @@
   "scripts": {
     "test": "bun test"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drysius/kire.git"
+  },
   "dependencies": {
     "kire": "workspace:../../core"
   },

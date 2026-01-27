@@ -10,8 +10,10 @@ test("Kire fork globals with shared cache (Fixed)", async () => {
     const kire2 = kire.fork();
 
     // Mock resolvers
-    kire1.$resolver = async () => "{{ dynamicVar }}";
-    kire2.$resolver = async () => "{{ dynamicVar }}";
+    // Since we removed 'with', dynamic globals added after compilation (or in forks reusing cache)
+    // must be accessed via $ctx.$globals if they weren't present during initial compilation.
+    kire1.$resolver = async () => "{{ $ctx.$globals.dynamicVar }}";
+    kire2.$resolver = async () => "{{ $ctx.$globals.dynamicVar }}";
 
     // kire1: dynamicVar is undefined.
     // In 'with' block, accessing undefined property on object is undefined.
@@ -29,8 +31,8 @@ test("Kire fork globals with shared cache (Fixed)", async () => {
     // Kire default is ReferenceError for missing vars.
     
     const kire1Result = await kire1.view('common');
-    // It should render an error page now, not throw
-    expect(kire1Result).toContain("Kire Runtime Error");
+    // Accessing undefined property returns undefined, which renders as empty string. No error.
+    expect(kire1Result).toBe("");
 
     // kire2: HAS dynamicVar
     kire2.$global('dynamicVar', 'exists');

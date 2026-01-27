@@ -165,6 +165,16 @@ export interface KireContext {
 	 * Arbitrary locals and globals access (fallback).
 	 */
 	[key: string]: any;
+
+	/**
+	 * Pending deferred tasks for out-of-order streaming.
+	 */
+	$deferred?: (() => Promise<any>)[];
+
+    /**
+     * Forks the context for isolated execution (e.g. deferred tasks).
+     */
+    $fork(): KireContext;
 }
 
 export interface KireFileMeta {
