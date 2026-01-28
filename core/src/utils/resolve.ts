@@ -22,7 +22,7 @@ export function resolvePath(
 	);
 
 	for (const ns of sortedNamespaces) {
-		if (normalized.startsWith(ns)) {
+		if (normalized.startsWith(ns) || ns === "@") {
 			let template = namespaces.get(ns)!;
 			const data = { ...locals };
 
@@ -35,7 +35,12 @@ export function resolvePath(
 			template = template.replace(/\\/g, "/");
 
 			// Handle suffix
-			let suffix = normalized.slice(ns.length);
+			let suffix = "";
+			if (ns === "@") {
+				suffix = normalized;
+			} else {
+				suffix = normalized.slice(ns.length);
+			}
 
 			// Remove leading dot or slash from suffix if present to avoid double separator
 			if (suffix.startsWith(".") || suffix.startsWith("/")) {

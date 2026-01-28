@@ -1,0 +1,10 @@
+<div style="border: 1px solid red; padding: 10px; margin: 10px;">
+    <h3 style="color: red;">Child Component</h3>
+    <p>Executando lógica do filho...</p>
+    <?js
+        // Simulando um erro dentro do filho
+        const data = null;
+        // A linha abaixo deve gerar um erro mapeado para error-child.kire
+        console.log(data.nested.value);
+    ?>
+</div>

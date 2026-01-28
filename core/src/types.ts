@@ -12,7 +12,10 @@ export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 export interface ICompiler {
 	compile(nodes: Node[]): Promise<string>;
 }
-export type ICompilerConstructor = new (kire: Kire) => ICompiler;
+export type ICompilerConstructor = new (
+	kire: Kire,
+	filename?: string,
+) => ICompiler;
 
 export type KireExecutor = (code: string, params: string[]) => Function;
 /**
@@ -35,10 +38,6 @@ export interface KireOptions {
 	 * Custom file resolver function.
 	 */
 	resolver?: (filename: string) => Promise<string>;
-	/**
-	 * Path aliases for imports (e.g., { "~/": "./src/" }).
-	 */
-	alias?: Record<string, string>;
 	/**
 	 * Default file extension for templates. Defaults to "kire".
 	 */
@@ -183,6 +182,7 @@ export interface KireFileMeta {
 	execute: Function;
 	code: string;
 	source: string;
+	map?: any; // Source Map
 	children?: boolean;
 	controller?: ReadableStreamDefaultController;
 }

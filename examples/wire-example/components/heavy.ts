@@ -13,7 +13,7 @@ export default class Heavy extends WireComponent {
 			"Params: " + JSON.stringify(params),
 		];
 	}
-
+	
 	render() {
 		return this.view("components.heavy");
 	}

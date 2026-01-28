@@ -31,6 +31,7 @@ export const KireDirectives: KirePlugin = {
 				const isProd = kire.production;
 				const cachedHash = cached.get(`md5:${resolvedPath}`);
 				let compiledFn: Function | undefined = cached.get(`js:${resolvedPath}`);
+				let sourceMap: any = cached.get(`map:${resolvedPath}`);
 				let content = "";
 
 				if (!cachedHash || !compiledFn || !isProd) {
@@ -52,13 +53,22 @@ export const KireDirectives: KirePlugin = {
 					if (cachedHash === newHash && compiledFn) {
 						// Optimization: Content hasn't changed, reuse cached function
 					} else {
-						compiledFn = await kire.compileFn(content);
+						compiledFn = await kire.compileFn(content, resolvedPath);
+						sourceMap = (compiledFn as any)._map;
+
 						cached.set(`md5:${resolvedPath}`, newHash);
 						cached.set(`js:${resolvedPath}`, compiledFn); // Cache a função compilada
+						if (sourceMap) {
+							cached.set(`map:${resolvedPath}`, sourceMap);
+						}
 					}
 				}
 
 				if (!compiledFn) return null; // Retorna null se a função não foi compilada/cacheada
+
+				if (sourceMap && !(compiledFn as any)._map) {
+					(compiledFn as any)._map = sourceMap;
+				}
 
 				// Executa a função compilada com os locals e retorna o HTML
 				// We need to cast kire to any or make run public to access it from here since it was private

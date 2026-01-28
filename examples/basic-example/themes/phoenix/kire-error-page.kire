@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Custom Kire Error</title>
+    <style>
+        body { font-family: sans-serif; background: #333; color: #fff; padding: 2rem; }
+        .error-box { background: #500; padding: 1rem; border-radius: 5px; }
+        pre { background: #222; padding: 1rem; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Oops! Something went wrong.</h1>
+    <div class="error-box">
+        <h2>{{ it.error.name }}: {{ it.error.message }}</h2>
+        <p>Location: {{ it.error.fileMeta ? it.error.fileMeta.path : 'Unknown' }}</p>
+        <pre>{{ it.error.stack }}</pre>
+    </div>
+</body>
+</html>

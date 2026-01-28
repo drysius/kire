@@ -1,251 +1,143 @@
 # Kire Engine Documentation for LLMs
 
 ## 1. Overview
-Kire is a high-performance, asynchronous template engine for Node.js/TypeScript, inspired by Laravel Blade but designed specifically for the JavaScript ecosystem. It features a robust directive system, component architecture, custom element handling, and a strictly typed runtime context.
+Kire is a high-performance, asynchronous template engine for Node.js/TypeScript, inspired by Laravel Blade but built for the modern JavaScript ecosystem. It features a robust directive system, component architecture, custom element middleware, and first-class support for streaming and out-of-order rendering.
 
-## 2. Syntax & Data Binding
+## 2. Core Concepts
 
-### 2.1 Interpolation
-- **Standard (Escaped):** `{{ variable }}`
-  - Automatically escapes HTML characters (`<`, `>`, `&`, `"`, `'`) to prevent XSS.
-  - Usage: `<h1>Hello, {{ user.name }}</h1>`
-- **Raw (Unescaped):** `{{{ variable }}}`
-  - Renders data exactly as is. Use with caution.
-  - Usage: `<div>{{{ rawHtmlContent }}}</div>`
+### 2.1 Context Isolation
+Kire is designed for high-concurrency environments.
+- **Global Instance:** Holds shared configuration (directives, plugins, file cache).
+- **`kire.fork()`:** Creates a lightweight copy for per-request isolation. **Always use `fork()` handling requests** to ensure local variables (`$props`) and request-specific globals (`$globals`) do not leak between users.
 
-### 2.2 Server-Side JavaScript
-- **Block:** `<?js ... ?>`
-  - Executes arbitrary JavaScript logic during rendering.
-  - Usage: `<?js console.log('Rendering user:', it.user.id); ?>`
+### 2.2 Streaming & Defer
+Kire supports streaming responses to the client as they are generated.
+- Enable with `stream: true` in options.
+- **`@defer`**: Wraps slow-loading content. Kire will send placeholder HTML immediately, continue rendering the rest of the page, and then stream the deferred content script to inject it once ready (out-of-order flushing).
 
-## 3. Directives
-Directives are the primary control flow mechanism, prefixed with `@`.
+### 2.3 Namespaces
+Namespaces map short prefixes to file system paths.
+- **Standard:** `kire.namespace('~', './views/components')` maps `~/alert` to `./views/components/alert.kire`.
+- **Root Wildcard:** `kire.namespace('@', './themes/{theme}')` acts as a fallback root.
+  - If a path like `index` (no prefix) is requested, and no other namespace matches, it will resolve against the `@` namespace.
+  - Example: `kire.view('index', { theme: 'dark' })` -> resolves to `./themes/dark/index.kire`.
 
-### 3.1 Conditionals
+## 3. Syntax & Data Binding
+
+### 3.1 Interpolation
+- **Standard:** `{{ variable }}` - Escapes HTML entities (XSS protection).
+- **Raw:** `{{{ variable }}}` - Renders raw HTML.
+- **Directives:** `@directive(args)` - Control flow.
+
+### 3.2 Server-Side Logic
+- **`@const(name = value)`**: Block-scoped constant.
+- **`@let(name = value)`**: Block-scoped variable.
+- **`<?js ... ?>`**: Raw JavaScript execution block (discouraged in favor of directives).
+
+## 4. Directives Reference
+
+### 4.1 Conditional
 ```kire
-@if(user.isLoggedIn)
-    <p>Welcome back, {{ user.name }}!</p>
-@elif(user.isGuest)
-    <p>Please log in.</p>
+@if(user.role === 'admin')
+  <button>Delete</button>
+@elif(user.role === 'editor')
+  <button>Edit</button>
 @else
-    <p>Unknown state.</p>
+  <span>Read Only</span>
 @end
 ```
 
-### 3.2 Loops
-Kire supports enhanced loops with pattern matching and "else/empty" logic.
-
-**Generic Iteration:**
+### 4.2 Loops
+Supports JavaScript `for` syntax and simplified pattern matching.
 ```kire
-@for(item of items)
-    <li>{{ item.name }}</li>
+@for(user of users)
+  <div>{{ user.name }}</div>
 @empty
-    <li>No items found.</li>
+  <p>No users found.</p>
 @end
 ```
 
-**Standard C-Style:**
-```kire
-@for(let i = 0; i < 10; i++)
-    <span>Index: {{ i }}</span>
-@end
-```
-
-### 3.3 Switch Statement
+### 4.3 Switch
 ```kire
 @switch(status)
-    @case('active')
-        <span class="green">Active</span>
-    @end
-    @case('pending')
-        <span class="yellow">Pending</span>
-    @end
-    @default
-        <span class="gray">Unknown</span>
-    @end
+  @case('active') ... @end
+  @case('pending') ... @end
+  @default ... @end
 @end
 ```
 
-### 3.4 Variables
-Define block-scoped variables directly in the template.
-- `@const(name = 'value')`
-- `@let(count = 0)`
+### 4.4 Components & Layouts
+- **`@component('path', { props })`**: Renders a component.
+  - **Aliases**: `@layout`, `@extends`.
+- **`@slot('name')`**: Defines content for a named slot in the component.
+  - **Alias**: `@section`.
+- **`@yield('name', 'fallback')`**: (Inside component) Renders the slot content.
+- **`@include('path', { props })`**: Simple partial include.
 
-## 4. Components & Layouts
+### 4.5 Sections & Stacks
+- **`@define('name')`** / **`@defined('name')`**: Capture and render blocks of content.
+- **`@push('stackName')`**: Push content (like scripts) to a stack.
+- **`@stack('stackName')`**: Render all pushed content for that stack.
 
-### 4.1 Includes
-Include partial views. Local variables can be passed as the second argument.
-```kire
-@include('partials/header', { title: 'Home' })
-```
+### 4.6 Web Helpers
+- **`@csrf`**: Renders `<input type="hidden" name="_token" value="...">`.
+- **`@method('PUT')`**: Renders `<input type="hidden" name="_method" value="PUT">`.
+- **`@defer`**: Out-of-order streaming block.
 
-### 4.2 Component & Slots
-Kire uses a slot-based component system.
-- **Defining a Component usage:**
-  ```kire
-  @component('components/card', { id: 1 })
-      @slot('header')
-          <h3>Card Title</h3>
-      @end
-      
-      <p>This is the default slot content.</p>
-  @end
-  ```
-- **Inside the Component Template (`components/card.kire`):**
-  ```html
-  <div class="card" id="card-{{ id }}">
-      <div class="card-header">
-          {{{ slots.header }}}
-      </div>
-      <div class="card-body">
-          {{{ slots.default }}}
-      </div>
-  </div>
-  ```
-
-### 4.3 Layout Inheritance (Defines)
-Define sections in a child view to be rendered in a parent layout.
-```kire
-@define('sidebar')
-    <nav>...</nav>
-@end
-```
-Output the defined content elsewhere using:
-```kire
-@defined('sidebar')
-    <!-- Optional fallback content -->
-@end
-```
-
-### 4.4 Stacks
-Push content to a named stack (useful for scripts/styles).
-```kire
-@push('scripts')
-    <script src="/app.js"></script>
-@end
-```
-Render the stack:
-```kire
-@stack('scripts')
-```
-
-## 5. Custom Elements
-Kire allows mapping HTML tags to server-side logic (Middleware-like).
-
-**Definition (TypeScript):**
+## 5. Custom Elements (Middleware)
+Map HTML tags to server-side functions.
 ```typescript
-kire.element('my-alert', async (ctx) => {
-    // Modify content, attributes, or replace the element entirely
-    const type = ctx.element.attributes.type || 'info';
-    ctx.replaceElement(`<div class="alert alert-${type}">${ctx.element.inner}</div>`);
+kire.element('my-component', async (ctx) => {
+  // ctx.element.attributes
+  // ctx.element.inner
+  ctx.replaceElement(`<div>${ctx.element.inner}</div>`);
 });
 ```
 
-**Usage (Template):**
-```html
-<my-alert type="error">Something went wrong!</my-alert>
-```
+## 6. Runtime API (`$ctx`)
+Available in all templates as `this` (if unbound) or `$ctx`.
 
-## 6. Runtime Context (`$ctx`)
-The `$ctx` object is available in all templates and directive handlers.
+- **`$props`**: Local template variables.
+- **`$globals`**: Request-scoped globals.
+- **`$add(str)`**: Write to output.
+- **`$escape(str)`**: HTML escape.
+- **`$resolve(path)`**: Resolve path aliases.
+- **`$require(path, locals)`**: Render sub-template.
+- **`$merge(fn)`**: buffer capture helper.
 
-| Property/Method | Description |
-|----------------|-------------|
-| `$props` | Local variables passed to the view (alias: `it`). |
-| `$globals` | Global variables shared across all views. |
-| `$response` | The current output string buffer. |
-| `$add(str)` | Appends string to the output buffer. |
-| `$escape(val)` | XSS escape function. |
-| `$resolve(path)`| Resolves a file path (handles namespaces/aliases). |
-| `$merge(fn)` | Creates a new isolation scope (used for capturing slots/defines). |
-| `$require(path, locals)` | Manually renders another template and returns the string. |
-| `$emit(event)` | Triggers lifecycle hooks (`before`, `after`, `end`). |
+## 7. Kire Instance API
+Methods available on the `kire` instance.
 
-## 7. Configuration & Instantiation
+### Configuration & State
+- **`fork()`**: Creates a lightweight, isolated copy of the instance for handling a request.
+- **`namespace(name, path)`**: Registers a path namespace (supports `{var}` placeholders).
+- **`plugin(plugin, opts)`**: Loads a plugin.
+- **`$global(key, value)`**: Registers a global variable shared across ALL requests (read-only recommended).
+- **`$prop(key, value)`**: Registers a default local prop (use carefully, prefer passing to render).
+- **`cacheClear()`**: Clears compiled template cache.
+- **`cached(namespace)`**: Retrieves a namespaced cache store.
 
-**Basic Setup:**
+### Extensibility
+- **`directive(definition)`**: Registers a custom directive.
+- **`element(name, handler)`**: Registers a custom HTML element handler.
+- **`schematic(type, data)`**: Registers IDE support schematics.
+- **`pkgSchema(name, repo, version)`**: Generates a JSON schema for the project configuration.
+
+### Rendering
+- **`view(path, locals)`**: Renders a template file.
+- **`render(templateString, locals)`**: Renders a raw string.
+- **`renderError(error, ctx)`**: Generates a styled HTML error page.
+- **`compile(template)`**: Compiles template to JS source.
+- **`compileFn(template)`**: Compiles template to an executable function.
+- **`resolvePath(path, locals)`**: Resolves a path against registered namespaces.
+
+## 8. Configuration Options
 ```typescript
-import { Kire } from '@kirejs/core';
-
 const kire = new Kire({
-    root: './views',
-    extension: 'kire', // defaults to 'kire'
-    production: process.env.NODE_ENV === 'production'
+  extension: 'kire',
+  stream: false, // Enable for streaming support
+  production: process.env.NODE_ENV === 'production',
+  // Custom resolver (Required if not using default file system loaders)
+  resolver: async (path) => fs.readFile(path, 'utf8')
 });
-
-// Register Global
-kire.$global('appName', 'My Kire App');
-
-// Render
-const html = await kire.render('index', { user: { name: 'John' } });
 ```
-
-**Namespaces:**
-Use namespaces to map prefixes to specific directories.
-```typescript
-kire.namespace('~', './src/views');
-// Usage: @include('~/partials/nav')
-```
-
-## 8. Extensibility
-Plugins can be created to bundle directives and elements.
-
-```typescript
-const MyPlugin: KirePlugin = {
-    name: 'my-plugin',
-    load(kire) {
-        kire.directive({ ... });
-        kire.element('...', ...);
-    }
-};
-
-kire.plugin(MyPlugin);
-```
-
-## 9. Best Practices
-1. **Logic Separation:** Keep complex logic out of templates. Use Custom Elements or pass pre-calculated data via `$props`.
-2. **Security:** Always use `{{ }}` for user input. Use `{{{ }}}` only for trusted HTML.
-3. **Caching:** Ensure `production: true` is set in production to enable template compilation caching.
-4. **Directives:** Use directives for control flow rather than embedding raw `<?js ?>` blocks for better readability and maintainability.
-
-## 10. Full Directive Reference
-
-### 10.1 Control Flow
-- **`@if(condition)`**: Starts a conditional block.
-- **`@elseif(condition)`** / **`@elif(condition)`**: Adds a new condition to an existing `@if`.
-- **`@else`**: Default block if previous conditions fail. Also used in `@for` for empty states.
-- **`@for(loop)`**: Iterates over arrays/objects. Supports JS syntax (`let i=0;...`) or enhanced (`item of items`, `key in object`).
-- **`@empty`**: Used inside `@for`. Renders if the iterated list is empty/null.
-- **`@switch(expression)`**: Starts a switch statement.
-- **`@case(value)`**: Defines a case in a switch.
-- **`@default`**: Default case in a switch.
-- **`@end`**: Closes any directive block.
-
-### 10.2 Variable Definition
-- **`@const(expression)`**: Declares a block-scoped constant. Ex: `@const(user = it.profile)`.
-- **`@let(expression)`**: Declares a block-scoped variable. Ex: `@let(count = 0)`.
-
-### 10.3 Layout & Sections
-- **`@define('name')`**: Defines a named content section for later capture.
-- **`@defined('name')`**: Renders a previously defined section. Supports fallback content inside.
-- **`@stack('name')`**: Creates a placeholder stack for content to be pushed to.
-- **`@push('name')`**: Pushes content to a named stack (e.g., scripts, css).
-
-### 10.4 Includes & Components
-- **`@include('path', {locals})`**: Renders a partial template in place.
-- **`@component('path', {props})`**: Loads a template as a component with slot support.
-- **`@slot('name')`**: Defines named content for a component slot. Default content goes to `default` slot.
-
-### 10.5 Parameter Syntax Summary
-| Directive | Parameters |
-| :--- | :--- |
-| `@if`, `@elif` | `(expression: any)` |
-| `@for` | `(lhs {in/of} rhs)` OR `(expression: string)` |
-| `@const`, `@let` | `(assignment: string)` |
-| `@switch` | `(expression: string)` |
-| `@case` | `(value: any)` |
-| `@include` | `(path: string, locals?: object)` |
-| `@component` | `(path: string, props?: object)` |
-| `@define`, `@defined` | `(name: string)` |
-| `@stack`, `@push` | `(name: string)` |
-| `@slot` | `(name: string)` |

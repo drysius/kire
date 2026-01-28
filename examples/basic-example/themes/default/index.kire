@@ -8,6 +8,10 @@
 </head>
 <body>
     <h1 style="text-align: center;">Kire Example Page</h1>
+    <div style="display: flex; justify-content: center; gap: 10px;">
+        <button onclick="window.location.href='/error'">Test Error Mapping</button>
+        <button onclick="window.location.href='/error-require'">Test Require Error</button>
+    </div>
     <script>
         console.log("Hello from Kire!");
     </script>

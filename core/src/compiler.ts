@@ -1,14 +1,23 @@
 import type { Kire } from "./kire";
 import type { CompilerContext, DirectiveDefinition, Node } from "./types";
 import { parseParamDefinition } from "./utils/params";
+import { SourceMapGenerator } from "./utils/source-map";
 
 export class Compiler {
 	private preBuffer: string[] = [];
 	private resBuffer: string[] = [];
 	private posBuffer: string[] = [];
 	private usedDirectives: Set<string> = new Set();
+	private generator: SourceMapGenerator;
+	private resMappings: { index: number; node: Node; col: number }[] = [];
 
-	constructor(private kire: Kire) {}
+	constructor(
+		private kire: Kire,
+		private filename = "template.kire",
+	) {
+		this.generator = new SourceMapGenerator(filename);
+		this.generator.addSource(filename);
+	}
 
 	/**
 	 * Compiles a list of AST nodes into a JavaScript function body string.
@@ -19,6 +28,7 @@ export class Compiler {
 		this.preBuffer = [];
 		this.resBuffer = [];
 		this.posBuffer = [];
+		this.resMappings = [];
 		this.usedDirectives.clear();
 
 		// 2. Define Locals Alias (default 'it')
@@ -39,16 +49,56 @@ export class Compiler {
 				? `var { ${sanitizedKeys.join(", ")} } = $ctx.$globals;`
 				: "";
 
+		const startCode = `
+${destructuring}
+let ${varLocals} = $ctx.$props;
+${pre}
+`;
+		const startCodeLines = startCode.split("\n");
+        let currentGenLine = startCodeLines.length;
+
+		if (!this.kire.production) {
+			// Map buffer index to line number
+			const bufferLineOffsets = new Map<number, number>();
+			for (let i = 0; i < this.resBuffer.length; i++) {
+				bufferLineOffsets.set(i, currentGenLine);
+				const entry = this.resBuffer[i]!;
+				// Calculate lines occupied by this entry
+				// join('\n') adds a newline after each entry (except last, but we account for next start)
+				// Each entry occupies (newlines + 1) lines.
+				// The join adds 1 newline, moving start of next entry by 1 line.
+				// Wait. "a" -> 1 line. Next starts at +1.
+				// "a\nb" -> 2 lines. Next starts at +2.
+				// So increment = (newlines in entry) + 1.
+				currentGenLine += (entry.match(/\n/g) || []).length + 1;
+			}
+
+			for (const mapping of this.resMappings) {
+				const genLine = bufferLineOffsets.get(mapping.index);
+				if (genLine !== undefined) {
+					this.generator.addMapping({
+						genLine: genLine,
+						genCol: mapping.col,
+						sourceLine: mapping.node.loc!.start.line,
+						sourceCol: mapping.node.loc!.start.column,
+					});
+				}
+			}
+		}
+
 		// Main function body code
-		// Removed 'with' and added destructuring
-		const code = `
+		let code = `
 ${destructuring}
 let ${varLocals} = $ctx.$props;
 ${pre}
 ${res}
 ${pos}
 return $ctx;
-//# sourceURL=kire-generated.js`;
+//# sourceURL=${this.filename}`;
+
+		if (!this.kire.production) {
+			code += `\n//# sourceMappingURL=${this.generator.toDataUri()}`;
+		}
 
 		return code;
 	}
@@ -61,7 +111,6 @@ return $ctx;
 		let i = 0;
 		while (i < nodes.length) {
 			const node = nodes[i]!;
-			this.addSourceLine(node);
 			switch (node.type) {
 				case "text":
 					this.compileText(node);
@@ -81,22 +130,20 @@ return $ctx;
 	}
 
 	/**
-	 * Injects a comment indicating the source line number of the current node.
-	 * Used for error reporting mapping.
-	 * @param node The AST node.
-	 */
-	private addSourceLine(node: Node) {
-		if (node.loc) {
-			this.resBuffer.push(`// kire-line: ${node.loc.start.line}`);
-		}
-	}
-
-	/**
 	 * Compiles a text node, appending it to the result buffer.
 	 * @param node The text node.
 	 */
 	private compileText(node: Node) {
 		if (node.content) {
+			if (node.loc) {
+                const currentLine = node.loc.start.line;
+                this.resMappings.push({
+                    index: this.resBuffer.length + 1,
+                    node,
+                    col: this.resBuffer[this.resBuffer.length - 1]?.length || 0
+                });
+                this.resBuffer.push(`// kire-line: ${currentLine}`);
+            }
 			this.resBuffer.push(`$ctx.$add(${JSON.stringify(node.content)});`);
 		}
 	}
@@ -107,6 +154,15 @@ return $ctx;
 	 */
 	private compileVariable(node: Node) {
 		if (node.content) {
+			if (node.loc) {
+                const currentLine = node.loc.start.line;
+                this.resMappings.push({
+                    index: this.resBuffer.length + 1,
+                    node,
+                    col: this.resBuffer[this.resBuffer.length - 1]?.length || 0
+                });
+                this.resBuffer.push(`// kire-line: ${currentLine}`);
+            }
 			if (node.raw) {
 				this.resBuffer.push(`$ctx.$add(${node.content});`);
 			} else {
@@ -121,7 +177,29 @@ return $ctx;
 	 */
 	private compileJavascript(node: Node) {
 		if (node.content) {
-			this.resBuffer.push(node.content);
+			const lines = node.content.split("\n");
+			for (let i = 0; i < lines.length; i++) {
+				const lineContent = lines[i]!;
+				if (node.loc) {
+                    const currentLine = node.loc.start.line + i;
+					this.resMappings.push({
+						index: this.resBuffer.length + 1, // +1 because we will push the comment first
+						node: {
+							...node,
+							loc: {
+								start: {
+									line: currentLine,
+									column: i === 0 ? node.loc.start.column + 4 : 1, // +4 for <?js
+								},
+								end: node.loc.end,
+							},
+						},
+						col: 0,
+					});
+                    this.resBuffer.push(`// kire-line: ${currentLine}`);
+				}
+				this.resBuffer.push(lineContent);
+			}
 		}
 	}
 
@@ -140,6 +218,7 @@ return $ctx;
 			return;
 		}
 
+		if (node.loc) this.resMappings.push({ index: this.resBuffer.length, node, col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 });
 		const compiler = this.createCompilerContext(node, directive);
 		await directive.onCall(compiler);
 	}

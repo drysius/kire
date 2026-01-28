@@ -1,0 +1,7 @@
+<h1>Parent Page with Require</h1>
+<p>Esta página carrega um componente filho que contém um erro.</p>
+
+<div class="parent-container">
+    <!-- Usando require para carregar o filho -->
+    {{{ await $ctx.$require('views.error-child') }}}
+</div>

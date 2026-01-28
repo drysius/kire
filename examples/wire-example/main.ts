@@ -56,7 +56,7 @@ void (async () => {
 			return url.pathname.startsWith(path);
 		};
 		kire.$global("isActive", isActive);
-
+		kire.$global('request', context);
 		return {
 			user: { id: session.value, name: "Guest" },
 			wireKey,
@@ -138,7 +138,7 @@ void (async () => {
 		});
 	});
 
-	app.get("/lazy", async (context) => {
+	app.get("/lazy/:test", async (context) => {
 		context.set.headers["Content-Type"] = "text/html";
 		return await kire.view("pages.lazy", {
 			$wireToken: context.wireKey,

@@ -1,6 +1,6 @@
 {
-  "name": "@kirejs/route",
-  "description": "Laravel-like Route helper for Kire templates.",
+  "name": "@kirejs/utils",
+  "description": "A collection of Laravel-like utilities (Route, Html, etc.) for Kire templates.",
   "version": "0.1.2",
   "main": "dist/cjs/index.cjs",
   "module": "dist/esm/index.js",
@@ -21,7 +21,9 @@
   "keywords": [
     "kire",
     "route",
+    "html",
     "laravel",
+    "utils",
     "helper"
   ],
   "author": "drysius",

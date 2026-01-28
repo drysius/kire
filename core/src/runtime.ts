@@ -1,3 +1,4 @@
+import { KireError } from "./utils/error";
 import type { Kire } from "./kire";
 import type { KireContext, KireFileMeta } from "./types";
 import { processElements } from "./utils/elements-runner";
@@ -110,9 +111,10 @@ export default function (
 			// use $props do bind and $ctx value
 			await $ctx.$file.execute.call($ctx.$props, $ctx);
 		} catch (e: any) {
-			console.error(e);
+			const kireError = new KireError(e, $ctx.$file);
+			console.error(kireError.stack);
 			// In sync mode, return error HTML. In stream mode, this will be handled by wrapper.
-			return $kire.renderError(e, $ctx);
+			return $kire.renderError(kireError, $ctx);
 		}
 
 		await $ctx.$emit("after");

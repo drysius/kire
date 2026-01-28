@@ -7,7 +7,7 @@
         <p class="text-base-content/70">The component below will only load after the page is ready.</p>
     </div>
 
-    @wire('heavy', { id: 123 }, { 
+    @wire('heavy', {...request.params, id:123}, { 
         lazy: true, 
         placeholder: '<div class="alert alert-info shadow-sm"><span class="loading loading-spinner"></span> Loading heavy data...</div>' 
     })

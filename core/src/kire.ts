@@ -2,6 +2,7 @@ import { Compiler } from "./compiler";
 import { KireDirectives } from "./directives";
 import { Parser } from "./parser";
 import KireRuntime from "./runtime";
+import { KireError } from "./utils/error";
 import type {
 	DirectiveDefinition,
 	ElementDefinition,
@@ -19,12 +20,18 @@ import type {
 import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
 import { AsyncFunction, scoped } from "./utils/scoped";
+import { resolveSourceLocation } from "./utils/source-map";
 
 export class Kire {
 	/**
 	 * Helper to execute code within a specific scope.
 	 */
 	public $scoped = scoped;
+
+    /**
+     * Exposes the KireError class and helper utilities.
+     */
+    public $error = KireError;
 
 	/**
 	 * Registry of available directives (e.g., @if, @for).
@@ -232,6 +239,9 @@ export class Kire {
 		for (const item of pluginsToLoad) {
 			this.plugin(item.p, item.o);
 		}
+
+        // Attach html helper to $error
+        (this.$error as any).html = (e: any, ctx?: KireContext) => this.renderError(e, ctx);
 	}
 
 	/**
@@ -482,10 +492,10 @@ export class Kire {
 	 * @param template The template string.
 	 * @returns The compiled JavaScript code as a string.
 	 */
-	public async compile(template: string): Promise<string> {
+	public async compile(template: string, filename?: string): Promise<string> {
 		const parser = new this.$parser(template, this);
 		const nodes = parser.parse();
-		const compiler = new this.$compiler(this);
+		const compiler = new this.$compiler(this, filename);
 		return compiler.compile(nodes);
 	}
 
@@ -494,12 +504,29 @@ export class Kire {
 	 * @param content The template string.
 	 * @returns An async function that renders the template.
 	 */
-	public async compileFn(content: string): Promise<Function> {
-		const code = `${await this.compile(content)}`;
+	public async compileFn(
+		content: string,
+		filename = "template.kire",
+	): Promise<Function> {
+		const code = `${await this.compile(content, filename)}`;
 		try {
 			const mainFn = this.$executor(code, ["$ctx"]);
 			(mainFn as any)._code = code;
 			(mainFn as any)._source = content;
+			(mainFn as any)._path = filename;
+
+			// Extract map if exists
+			const mapMatch = code.match(
+				/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)/,
+			);
+			if (mapMatch) {
+				try {
+					const json = Buffer.from(mapMatch[1]!, "base64").toString("utf8");
+					(mainFn as any)._map = JSON.parse(json);
+				} catch (e) {
+					// Ignore map parsing error
+				}
+			}
 
 			return mainFn;
 		} catch (e) {
@@ -518,13 +545,14 @@ export class Kire {
 		template: string,
 		locals: Record<string, any> = {},
 		controller?: ReadableStreamDefaultController,
+		filename = "template.kire",
 	): Promise<string | ReadableStream> {
 		if (!this.$parent) {
 			console.warn(
 				"Kire Warning: You are rendering on the global instance. Use kire.fork() for per-request isolation.",
 			);
 		}
-		const fn = await this.compileFn(template);
+		const fn = await this.compileFn(template, filename);
 		return this.run(fn, locals, false, controller);
 	}
 
@@ -540,22 +568,47 @@ export class Kire {
 		let location = "";
 
 		if (ctx && ctx.$file && ctx.$file.code && e.stack) {
+			const safePath = ctx.$file.path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 			const match =
+				e.stack.match(new RegExp(`${safePath}:(\\d+):(\\d+)`)) ||
 				e.stack.match(/kire-generated\.js:(\d+):(\d+)/) ||
 				e.stack.match(/eval:(\d+):(\d+)/) ||
 				e.stack.match(/<anonymous>:(\d+):(\d+)/);
 
 			if (match) {
-				const genLine = parseInt(match[1]) - 1;
+				const genLine = parseInt(match[1]!) - 1;
+				const genCol = parseInt(match[2]!);
 				const lines = ctx.$file.code.split("\n");
 				let sourceLine = -1;
 
-				for (let i = genLine; i >= 0; i--) {
-					const line = lines[i];
-					if (line && line.trim().startsWith("// kire-line:")) {
-						sourceLine = parseInt(line.split(":")[1]!.trim()) - 1;
-						break;
+				// Try to resolve using source map first
+				if (ctx.$file.map) {
+                    console.log("Resolving map for", genLine + 1, genCol);
+					const resolved = resolveSourceLocation(
+						ctx.$file.map,
+						genLine + 1,
+						genCol,
+					);
+                    console.log("Resolved:", resolved);
+					if (resolved) {
+						sourceLine = resolved.line - 1;
 					}
+				}
+
+				// Fallback to kire-line comments
+				if (sourceLine === -1) {
+					for (let i = genLine; i >= 0; i--) {
+						const line = lines[i];
+						if (line && line.trim().startsWith("// kire-line:")) {
+							sourceLine = parseInt(line.split(":")[1]!.trim()) - 1;
+							break;
+						}
+					}
+				}
+
+				// If still not found, but we matched the actual filename, assume it might already be mapped
+				if (sourceLine === -1 && match[0].includes(ctx.$file.path)) {
+					sourceLine = genLine;
 				}
 
 				if (sourceLine !== -1 && ctx.$file.source) {
@@ -652,7 +705,7 @@ export class Kire {
 			compiled = this.$files.get(resolvedPath) as any;
 		} else {
 			const content = await this.$resolver(resolvedPath);
-			compiled = await this.compileFn(content);
+			compiled = await this.compileFn(content, resolvedPath);
 			if (this.production) {
 				this.$files.set(resolvedPath, compiled as any);
 			}
@@ -677,7 +730,7 @@ export class Kire {
 		return resolvePath(
 			filepath,
 			this.$namespaces,
-			{ ...this.$props.toObject(), ...locals },
+			{ ...this.$globals.toObject(), ...this.$props.toObject(), ...locals },
 			extension === null ? "" : extension,
 		);
 	}
@@ -702,6 +755,7 @@ export class Kire {
 			name: mainFn.name,
 			source: mainFn._source,
 			path: mainFn._path,
+			map: mainFn._map,
 			controller,
 		});
 	}

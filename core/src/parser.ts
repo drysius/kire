@@ -76,7 +76,7 @@ export class Parser {
 				const inner = this.template.slice(this.cursor + 4, end);
 				this.addNode({
 					type: "javascript",
-					content: inner.trim(),
+					content: inner,
 					start: this.cursor,
 					end: end + 2,
 					loc: this.getLoc(content),

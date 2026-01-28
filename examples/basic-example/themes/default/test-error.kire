@@ -1,0 +1,9 @@
+<h1>Test Error Page</h1>
+<p>This page will crash.</p>
+
+<?js
+    // Intentionally causing a TypeError
+    const missing = undefined;
+    console.log("About to crash...");
+    missing.property; // This throws TypeError
+?>

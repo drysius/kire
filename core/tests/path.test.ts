@@ -57,3 +57,20 @@ test("Kire - File Resolver Integration (Mock)", async () => {
 	const result = await kire.view("views.partial");
 	expect(result).toBe("Partial Content");
 });
+	test("Should resolve paths with variables from globals/props", () => {
+		const kire = new Kire();
+        kire.namespace("theme", "/app/themes/{theme}");
+        kire.$prop("theme", "dark");
+        
+		expect(kire.resolvePath("theme.index")).toBe("/app/themes/dark/index.kire");
+        
+        kire.$global("theme", "light");
+        // Globals might override props depending on merge order in resolvePath.
+        // In my implementation: { ...$globals, ...$props, ...locals }
+        // So props override globals.
+        expect(kire.resolvePath("theme.index")).toBe("/app/themes/dark/index.kire");
+        
+        // But if prop is unset?
+        kire.$props.delete("theme");
+        expect(kire.resolvePath("theme.index")).toBe("/app/themes/light/index.kire");
+	});
