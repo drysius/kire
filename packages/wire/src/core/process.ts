@@ -281,7 +281,14 @@ export async function executeMethod(
 		await instance.updated("$refresh", null);
 	} else if (typeof (instance as any)[method] === "function") {
 		await (instance as any)[method](...params);
-	}
+	} else {
+        return {
+            error: {
+                code: WireErrors.method_not_found.code,
+                data: { error: `Method '${method}' not found on component '${instance.constructor.name}'` },
+            }
+        }
+    }
 }
 
 export async function renderComponent(

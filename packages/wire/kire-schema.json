@@ -20,6 +20,18 @@
             "example": "@wire('counter', { count: 10 }, { lazy: true })"
         },
         {
+            "name": "live",
+            "params": [
+                "name:string",
+                "params?:object",
+                "options?:object"
+            ],
+            "children": false,
+            "type": "html",
+            "description": "Alias for @wire. Renders a Kirewire component.",
+            "example": "@live('counter', { count: 10 })"
+        },
+        {
             "name": "wired",
             "children": false,
             "type": "html",
@@ -64,6 +76,7 @@
         "$wire": "function",
         "kire": {
             "$scoped": "function",
+            "$error": "function",
             "$directives": {},
             "$elements": {},
             "$globals": {
@@ -79,8 +92,9 @@
             "production": "boolean",
             "$resolver": "function",
             "$readdir": "undefined",
-            "extension": "string",
-            "stream": "boolean",
+            "$extension": "string",
+            "$stream": "boolean",
+            "$silent": "boolean",
             "$files": {},
             "$parser": "function",
             "$compiler": "function",

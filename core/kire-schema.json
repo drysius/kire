@@ -145,6 +145,31 @@
             "description": "Renders if the loop had no iterations."
         },
         {
+            "name": "each",
+            "params": [
+                "loop:$lhs {op:in/of} $rhs"
+            ],
+            "children": true,
+            "type": "html",
+            "description": "Iterates over an array or object. Alias for @for but focused on iteration. Supports @else block if no iterations occur.",
+            "example": "@each(user in users)\n  {{ user.name }}\n@else\n  No users found\n@end",
+            "parents": [
+                {
+                    "name": "empty",
+                    "children": true,
+                    "type": "html",
+                    "description": "Renders if the loop had no iterations."
+                },
+                {
+                    "name": "else",
+                    "children": true,
+                    "type": "html",
+                    "description": "Renders a block of content if the preceding condition is false.",
+                    "example": "@else\n  Alternative content.\n@end"
+                }
+            ]
+        },
+        {
             "name": "const",
             "params": [
                 "expr:string"
@@ -188,6 +213,25 @@
             "type": "html",
             "description": "Provides a control flow statement similar to a JavaScript switch block.",
             "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end"
+        },
+        {
+            "name": "csrf",
+            "type": "html",
+            "description": "Renders a CSRF token input field."
+        },
+        {
+            "name": "method",
+            "params": [
+                "method:string"
+            ],
+            "type": "html",
+            "description": "Spoofs an HTTP method using a hidden input."
+        },
+        {
+            "name": "defer",
+            "children": true,
+            "type": "html",
+            "description": "Defers rendering of a block until the main content is loaded (Out-of-Order Streaming). Falls back to immediate rendering if streaming is disabled."
         },
         {
             "name": "include",

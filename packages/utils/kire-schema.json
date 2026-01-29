@@ -1,18 +1,25 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "@kirejs/route",
+    "package": "@kirejs/utils",
     "repository": {
         "type": "git",
         "url": "git+https://github.com/drysius/kire.git"
     },
     "version": "0.1.2",
-    "directives": [],
+    "directives": [
+        {
+            "name": "error",
+            "params": [
+                "name:string"
+            ],
+            "children": true,
+            "type": "html"
+        }
+    ],
     "elements": [],
     "globals": {
-        "Route": {
-            "_path": "string",
-            "_name": "object"
-        }
+        "Str": {},
+        "Arr": {}
     },
     "attributes": {}
 }
