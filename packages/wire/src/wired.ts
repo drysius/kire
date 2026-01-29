@@ -12,7 +12,6 @@ import type {
 	WireContext,
 	WiredRequest,
 	WireOptions,
-	WirePayload,
 } from "./types";
 import { JWT } from "./utils/crypto";
 

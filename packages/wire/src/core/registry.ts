@@ -2,7 +2,7 @@ import type { Kire } from "kire";
 import type { WireComponent } from "../component";
 
 export class ComponentRegistry {
-	private components = new Map<string, new () => WireComponent>();
+	private components = new Map<string, new (kire:Kire) => WireComponent>();
 	private kire: Kire | undefined;
 
 	constructor() {}
@@ -14,7 +14,7 @@ export class ComponentRegistry {
 		cache.set("components", this.components);
 	}
 
-	public register(name: string, component: new () => WireComponent) {
+	public register(name: string, component: new (kire:Kire) => WireComponent) {
 		this.components.set(name, component);
 		if (this.kire) {
 			const cache = this.kire.cached("@kirejs/wire");
@@ -22,7 +22,7 @@ export class ComponentRegistry {
 		}
 	}
 
-	public get(name: string): (new () => WireComponent) | undefined {
+	public get(name: string): (new (kire:Kire) => WireComponent) | undefined {
 		// First check local map
 		if (this.components.has(name)) {
 			return this.components.get(name);
