@@ -34,7 +34,7 @@ export async function processRequest(
 			};
 		}
 
-		const instance = new ComponentClass();
+		const instance = new ComponentClass(kire);
 		if (payload.id) {
 			instance.__id = payload.id;
 		}
@@ -213,7 +213,6 @@ export function initializeComponent(
 	overrides: Partial<WireContext>,
 	memo: WireSnapshot["memo"],
 ) {
-	instance.kire = kire;
 	instance.context = { kire: kire, ...overrides };
 	if (memo.id) instance.__id = memo.id;
 	instance.listeners = memo.listeners || {};

@@ -19,9 +19,16 @@ export abstract class WireComponent {
 	// Properties to sync with URL query string
 	public queryString: string[] = [];
 
-	public kire!: Kire;
 	public context: WireContext = { kire: undefined as any };
 	public params: Record<string, any> = {};
+
+    constructor(public kire: Kire) {
+        if (!kire) {
+            // Allow empty constructor for testing or manual instantiation if needed, 
+            // but kire must be injected before use.
+            // Ideally strictly required, but for backward compat/testing flexibility:
+        }
+    }
 
 	public async mount(..._args: unknown[]): Promise<void> {}
 	public async updated(_name: string, _value: unknown): Promise<void> {}
@@ -55,7 +62,7 @@ export abstract class WireComponent {
 	protected async view(
 		path: string,
 		locals: Record<string, unknown> = {},
-	): Promise<string> {
+	): Promise<string | ReadableStream> {
 		if (!this.kire) throw new Error("Kire instance not injected");
 		const data = {
 			...this.getDataForRender(),
@@ -69,7 +76,14 @@ export abstract class WireComponent {
 		);
 		const keysHash = keys.join("|");
 		const resolvedPath = this.kire.resolvePath(path);
-		const cacheKey = `wire:${resolvedPath}:${keysHash}`;
+
+        // Include globals in cache key
+        const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
+		);
+		const globalKeys = sanitizedKeys.sort().join("|");
+
+		const cacheKey = `wire:${resolvedPath}:${keysHash}:${globalKeys}`;
 
 		let compiled: Function | undefined;
 
@@ -97,7 +111,7 @@ export abstract class WireComponent {
 	protected async html(
 		template: string,
 		locals: Record<string, unknown> = {},
-	): Promise<string> {
+	): Promise<string| ReadableStream> {
 		if (!this.kire) throw new Error("Kire instance not injected");
 		const data = {
 			...this.getDataForRender(),
@@ -119,10 +133,16 @@ export abstract class WireComponent {
 		
 		// Se estiver em produção, tenta usar o cache
 		if (this.kire.production) {
+            // Include globals in cache key
+            const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
+                /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
+            );
+            const globalKeys = sanitizedKeys.sort().join("|");
+            
 			// Usar um hash simples do template string como chave é arriscado se for muito longo
 			// Mas para inline templates geralmente é ok. 
 			// Melhor: usar o helper $md5 do contexto se disponível, ou o kire internal
-			const cacheKey = `inline:${fullTemplate}`;
+			const cacheKey = `inline:${fullTemplate}:${globalKeys}`;
 			
 			if (this.kire.$files.has(cacheKey)) {
 				const compiled = this.kire.$files.get(cacheKey) as Function;

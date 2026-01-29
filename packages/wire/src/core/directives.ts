@@ -30,8 +30,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                     return;
                 }
 
-                const $i = new $c();
-                $i.kire = $ctx.$kire;
+                const $i = new $c($ctx.$kire);
                 $i.context = { ...$ctx, kire: $ctx.$kire };
                 $i.params = $params;
 
