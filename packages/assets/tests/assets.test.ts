@@ -4,7 +4,7 @@ import { createKireFS, KireAssets } from "../src/index";
 
 describe("KireAssets", () => {
 	it("should remove script and style tags and replace with placeholders", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [[KireAssets, { prefix: "_assets" }]],
 		});
 
@@ -33,7 +33,7 @@ describe("KireAssets", () => {
 	});
 
 	it("should ignore script and style tags with nocache attribute", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [[KireAssets, { prefix: "_assets" }]],
 		});
 
@@ -78,7 +78,7 @@ describe("KireAssets", () => {
 	});
 
 	it("should serve assets via KireFS middleware", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [KireAssets],
 		});
 

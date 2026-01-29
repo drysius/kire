@@ -40,10 +40,10 @@ describe("WireComponent", () => {
 		comp._privateProp = "secret";
 
 		const props = comp.getPublicProperties();
-		expect(props).toEqual({ title: "Changed", log: [], listeners: {} });
+		expect(props).toEqual({ title: "Changed", log: [], listeners: {}, params: {} });
 	});
 
-	test("should handle redirect", () => {
+	test("should handle redirect", async () => {
 		const comp = new LifecycleComponent();
 		comp.redirect("/new-url");
 		expect(comp.__redirect).toBe("/new-url");
@@ -59,7 +59,7 @@ describe("WireComponent", () => {
 	test("lifecycle execution order (simulated)", async () => {
 		// This test simulates what Core does
 		const comp = new LifecycleComponent();
-		comp.kire = new Kire();
+		comp.kire = new Kire({ silent: true });
 
 		// 1. Fill (Hydration)
 		comp.fill({ title: "Hydrated" });

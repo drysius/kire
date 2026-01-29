@@ -4,7 +4,7 @@ import { KireAuth } from "../src/index.ts";
 
 describe("KireAuth", () => {
 	const createKire = (_user: any = null) => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireAuth, {
 			canPerm: async (perm, user) => {
 				if (!user) return false;

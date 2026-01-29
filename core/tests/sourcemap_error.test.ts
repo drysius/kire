@@ -3,7 +3,7 @@ import { Kire } from "../src/kire";
 
 describe("Kire Source Map Error Reporting", () => {
 	test("Should use source map to report error location", async () => {
-		const kire = new Kire({ production: false }); // Enable source maps
+		const kire = new Kire({ silent: true, production: false }); // Enable source maps
 		
         // Template with multiple lines to ensure we aren't just lucky
 		const template = `

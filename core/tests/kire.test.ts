@@ -2,13 +2,13 @@ import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
 test("Kire - Basic Interpolation", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	const result = await kire.render("Hello {{ it.name }}!", { name: "World" });
 	expect(result).toBe("Hello World!");
 });
 
 test("Kire - Simple Directive", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.directive({
 		name: "hello",
@@ -22,7 +22,7 @@ test("Kire - Simple Directive", async () => {
 });
 
 test("Kire - Directive with Param", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.directive({
 		name: "echo",
@@ -39,7 +39,7 @@ test("Kire - Directive with Param", async () => {
 });
 
 test("Kire - Pre/Pos Buffers", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.directive({
 		name: "wrap",
@@ -56,7 +56,7 @@ test("Kire - Pre/Pos Buffers", async () => {
 });
 
 test("Kire - Nested Directives (If/ElseIf/Else)", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	const tpl1 = "@if(true)A@elseB@end";
 	const result1 = await kire.render(tpl1);

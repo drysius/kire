@@ -24,7 +24,7 @@ export const KireDirectives: KirePlugin = {
 				const resolvedPath = kire.resolvePath(
 					path,
 					locals,
-					kire.extension,
+					kire.$extension,
 				);
 
 				const cached = kire.cached("@kirejs/core");

@@ -15,7 +15,7 @@ describe("Layout Directives", () => {
 	});
 
 	it("should render a layout with parameters", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.namespace("layouts", testDir);
 		kire.$resolver = async (p) => await readFile(p, "utf-8");
 
@@ -28,7 +28,7 @@ describe("Layout Directives", () => {
 	});
 
 	it("should render a layout with implicit locals", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.namespace("layouts", testDir);
 		kire.$resolver = async (p) => await readFile(p, "utf-8");
 

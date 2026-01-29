@@ -39,7 +39,7 @@ describe("@kirejs/node", () => {
 	});
 
 	test("should use 'node' adapter by default", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode);
 		// Use view() for file resolution
 		const content = await kire.view("node-template.kire");
@@ -53,7 +53,7 @@ describe("@kirejs/node", () => {
 		}
 
 		// Use the real file we created
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode, { adapter: "bun" });
 
 		// Pass the filename without the extension; Kire will resolve it
@@ -62,7 +62,7 @@ describe("@kirejs/node", () => {
 	});
 
 	test("should throw error for 'deno' adapter when Deno is not available", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode, { adapter: "deno" });
 		// Use view() to trigger resolver
 		await expect(kire.view("template.kire")).rejects.toThrow(
@@ -71,7 +71,7 @@ describe("@kirejs/node", () => {
 	});
 
 	test("should use 'fetch' adapter for URLs", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode, { adapter: "fetch" });
 		// Use view() for URL resolution
 		const content = await kire.view("http://example.com/template");
@@ -81,7 +81,7 @@ describe("@kirejs/node", () => {
 	});
 
 	test("kire.view() should be able to resolve paths via resolver plugin", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode);
 
 		const content = await kire.view("node-template.kire", { name: "World" });
@@ -89,7 +89,7 @@ describe("@kirejs/node", () => {
 	});
 
 	test("should register $md5 helper using node crypto", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireNode);
 
 		// "hello" md5 is 5d41402abc4b2a76b9719d911017c592

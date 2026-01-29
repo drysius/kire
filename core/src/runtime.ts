@@ -129,7 +129,7 @@ export default function (
 	};
 
 	// 3. Handle Streaming vs Buffering
-	const isStreamRoot = $kire.stream && !meta.children && !meta.controller;
+	const isStreamRoot = $kire.$stream && !meta.children && !meta.controller;
 
 	if (isStreamRoot) {
 		const encoder = new TextEncoder();

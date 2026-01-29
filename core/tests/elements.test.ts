@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
 test("Kire - Elements: Style Processing", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	// Register an element handler for 'style'
 	kire.element("style", (ctx) => {
@@ -26,7 +26,7 @@ test("Kire - Elements: Style Processing", async () => {
 });
 
 test("Kire - Elements: Modifying Head", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.element("meta", (ctx) => {
 		// Move meta tags to the start of head

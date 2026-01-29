@@ -123,6 +123,57 @@ export default (kire: Kire) => {
 	});
 
 	kire.directive({
+		name: "each",
+		params: ["loop:$lhs {op:in/of} $rhs"],
+		children: true,
+		type: "html",
+		description:
+			"Iterates over an array or object. Alias for @for but focused on iteration. Supports @else block if no iterations occur.",
+		example: `@each(user in users)\n  {{ user.name }}\n@else\n  No users found\n@end`,
+		parents: [
+            // We also support explicit @empty if desired, or just map else to empty logic
+            {
+				name: "empty",
+				children: true,
+				type: "html",
+				description: "Renders if the loop had no iterations.",
+				async onCall(compiler) {
+					compiler.raw(`} if ($__empty) {`);
+					if (compiler.children) await compiler.set(compiler.children);
+				},
+			},
+            elseDirective,
+		],
+		async onCall(compiler) {
+			const lhs = compiler.param("lhs");
+			const rhs = compiler.param("rhs");
+			const op = compiler.param("op");
+
+			compiler.raw(`let $__empty = true;`);
+
+			if (lhs && rhs && op) {
+				compiler.raw(`for (const ${lhs.trim()} ${op} ${rhs.trim()}) {`);
+			} else {
+				compiler.error("Invalid each loop syntax. Expected @each(item in/of items)");
+			}
+
+			compiler.raw(`$__empty = false;`);
+
+			if (compiler.children) await compiler.set(compiler.children);
+
+			if (compiler.parents) {
+                // Hijack 'else' nodes and treat them as 'empty'
+				compiler.parents.forEach((p) => {
+					if (p.name === "else") p.name = "empty";
+				});
+				await compiler.set(compiler.parents);
+			}
+
+			compiler.raw(`}`);
+		},
+	});
+
+	kire.directive({
 		name: "const",
 		params: ["expr:string"],
 		type: "html",
@@ -239,7 +290,7 @@ export default (kire: Kire) => {
 			if (compiler.children) await compiler.set(compiler.children);
 			compiler.raw(`};`);
 
-			compiler.raw(`if ($ctx.$kire.stream) {`);
+			compiler.raw(`if ($ctx.$kire.$stream) {`);
 			compiler.raw(
 				`  const deferId = 'defer-' + Math.random().toString(36).substr(2, 9);`,
 			);

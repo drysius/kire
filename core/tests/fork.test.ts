@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
 test("Kire Fork - Context Isolation", () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	kire.$ctx("globalVar", "original");
 
 	const fork = kire.fork();
@@ -26,7 +26,7 @@ test("Kire Fork - Context Isolation", () => {
 });
 
 test("Kire Fork - App Globals Isolation", () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	kire.$global("appVar", 1);
 	const fork = kire.fork();
 
@@ -36,7 +36,7 @@ test("Kire Fork - App Globals Isolation", () => {
 });
 
 test("Kire Fork - Shared Resources", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	const fork = kire.fork();
 
 	// Directives are shared

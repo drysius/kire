@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { Kire } from "../src/index";
 
 describe("Kire Native Directives", () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	const render = (template: string, locals = {}) =>
 		kire.render(template, locals);
@@ -104,7 +104,7 @@ describe("Kire Real-world Scenarios", () => {
 	const viewsDir = join(testDir, "views");
 	const compsDir = join(testDir, "components");
 
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	beforeAll(async () => {
 		await mkdir(viewsDir, { recursive: true });

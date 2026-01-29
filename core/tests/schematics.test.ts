@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
 test("Kire Schematics - Should register global attributes", () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.schematic("attributes.global", {
 		"wire:click": {

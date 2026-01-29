@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { Kire } from "../src/index";
 
 test("Kire - Path Resolution and Namespaces", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	// Simulate root behavior or base namespace
 	kire.namespace("~", "/app/views");
@@ -24,7 +24,7 @@ test("Kire - Path Resolution and Namespaces", async () => {
 });
 
 test("Kire - Resolver in Directive", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	// Setup namespace
 	kire.namespace("~", "/home");
 
@@ -42,7 +42,7 @@ test("Kire - Resolver in Directive", async () => {
 });
 
 test("Kire - File Resolver Integration (Mock)", async () => {
-	const kire = new Kire({
+	const kire = new Kire({ silent: true,
 		resolver: async (filename) => {
 			if (filename === "/views/partial.kire") {
 				return "Partial Content";
@@ -58,7 +58,7 @@ test("Kire - File Resolver Integration (Mock)", async () => {
 	expect(result).toBe("Partial Content");
 });
 	test("Should resolve paths with variables from globals/props", () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
         kire.namespace("theme", "/app/themes/{theme}");
         kire.$prop("theme", "dark");
         

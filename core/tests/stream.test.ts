@@ -3,7 +3,7 @@ import { test, expect } from "bun:test";
 import { Kire } from "../src/kire";
 
 test("Kire Streaming - Should return a ReadableStream", async () => {
-    const kire = new Kire({ stream: true });
+    const kire = new Kire({ silent: true, stream: true });
     
     // Simple template
     kire.$resolver = async () => "Hello {{ it.name }}!";
@@ -25,7 +25,7 @@ test("Kire Streaming - Should return a ReadableStream", async () => {
     expect(result).toBe("Hello World!");
 });
 test("Kire Streaming - Nested includes should stream to same controller", async () => {
-    const kire = new Kire({ stream: true });
+    const kire = new Kire({ silent: true, stream: true });
     
     kire.production = false;
     kire.$resolver = async (path) => {
@@ -50,7 +50,7 @@ test("Kire Streaming - Nested includes should stream to same controller", async 
 });
 
 test("Kire Streaming - $merge should buffer correctly", async () => {
-     const kire = new Kire({ stream: true });
+     const kire = new Kire({ silent: true, stream: true });
      // Simulate a slot or captured block
      // @component is essentially a wrapper around $merge and includes
      kire.$resolver = async () => `

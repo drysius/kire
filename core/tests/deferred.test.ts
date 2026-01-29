@@ -3,7 +3,7 @@ import { Kire } from "../src/kire";
 
 describe("Kire Deferred Rendering", () => {
 	test("Should render placeholder and deferred script", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		const template = `
 Start
 @defer
@@ -25,7 +25,7 @@ End
         // Wait, I only added the await $deferred logic inside the isStreamRoot block.
         // So @defer ONLY works with streaming enabled.
         
-        kire.stream = true;
+        kire.$stream = true;
         
         const chunks: string[] = [];
         const controller = {
@@ -54,8 +54,8 @@ End
 	});
     
     test("Should execute deferred logic asynchronously", async () => {
-        const kire = new Kire();
-        kire.stream = true;
+        const kire = new Kire({ silent: true });
+        kire.$stream = true;
         
         // Mock a slow operation
         kire.$ctx('slow', async () => {
@@ -85,8 +85,8 @@ End
     });
 
     test("Should handle concurrent deferred blocks correctly", async () => {
-        const kire = new Kire();
-        kire.stream = true;
+        const kire = new Kire({ silent: true });
+        kire.$stream = true;
         
         kire.$ctx('slow', async (delay: number, label: string) => {
             await new Promise(r => setTimeout(r, delay));
@@ -120,8 +120,8 @@ End
     });
 
     test("Should render immediately when stream is disabled", async () => {
-        const kire = new Kire();
-        kire.stream = false; // Disable streaming
+        const kire = new Kire({ silent: true });
+        kire.$stream = false; // Disable streaming
         
         const template = `
 Start

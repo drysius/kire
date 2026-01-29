@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Kire } from "kire";
 
-const kire = new Kire();
+const kire = new Kire({ silent: true });
 
 describe("Escaped Directives", () => {
 	test("should render @@directive as @directive", async () => {

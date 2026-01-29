@@ -13,7 +13,7 @@ describe("KireAssets SVG", () => {
 			},
 		);
 
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [KireAssets],
 		});
 
@@ -34,7 +34,7 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should load and cache local SVG via resolver", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [KireAssets],
 			resolver: async (path) => {
 				if (path === "./local.svg") return "<svg>local-icon</svg>";
@@ -50,7 +50,7 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should serve SVG assets with correct content type", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [KireAssets],
 			resolver: async () => "<svg>served-icon</svg>",
 		});
@@ -83,7 +83,7 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should handle missing SVG gracefully", async () => {
-		const kire = new Kire({
+		const kire = new Kire({ silent: true,
 			plugins: [KireAssets],
 			resolver: async () => {
 				throw new Error("File not found");

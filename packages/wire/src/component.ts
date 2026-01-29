@@ -21,6 +21,7 @@ export abstract class WireComponent {
 
 	public kire!: Kire;
 	public context: WireContext = { kire: undefined as any };
+	public params: Record<string, any> = {};
 
 	public async mount(..._args: unknown[]): Promise<void> {}
 	public async updated(_name: string, _value: unknown): Promise<void> {}

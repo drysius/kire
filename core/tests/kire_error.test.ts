@@ -4,7 +4,7 @@ import { KireError } from "../src/utils/error";
 
 describe("KireError Stack Tracing", () => {
 	test("Should map stack trace to .kire file", async () => {
-		const kire = new Kire({ production: false });
+		const kire = new Kire({ silent: true, production: false });
 		const template = `
 <h1>Hello</h1>
 <?js throw new Error('Test Error') ?>

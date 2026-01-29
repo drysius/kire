@@ -113,11 +113,12 @@ export class Wired {
 									const relPath = file.slice(searchDir.length + 1);
 									const parsed = parse(relPath);
 									const dirParts = parsed.dir ? parsed.dir.split(/[\\/]/) : [];
-									const name = [...dirParts, parsed.name]
-										.join(".")
-										.toLowerCase();
+									const name = [...dirParts, parsed.name].join(".");
 
 									registry.register(name, Comp);
+                                    if (!Wired.kire.$silent) {
+                                        console.log(`[Wired] loaded wire component ${name}`);
+                                    }
 								}
 							} catch (e) {
 								if (!Wired.kire.production)
@@ -179,6 +180,7 @@ export class Wired {
 		wirekey: string,
 		body: any,
 		contextOverrides: Partial<WireContext> = {},
+		kire: Kire = Wired.kire,
 	) {
 		// Handle Multipart/FormData
 		// Expects body to be parsed by framework (e.g. Elysia)
@@ -298,7 +300,7 @@ export class Wired {
 
 		return processRequest(
 			mockReq,
-			Wired.kire,
+			kire,
 			registry,
 			Wired.checksum,
 			contextOverrides,

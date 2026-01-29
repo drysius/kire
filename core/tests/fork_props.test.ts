@@ -3,7 +3,7 @@ import { test, expect } from "bun:test";
 import { Kire } from "../src/kire";
 
 test("Kire fork globals with shared cache (Fixed)", async () => {
-    const kire = new Kire();
+    const kire = new Kire({ silent: true });
     kire.production = true; // Enable caching
 
     const kire1 = kire.fork();
@@ -44,7 +44,7 @@ test("Kire fork globals with shared cache (Fixed)", async () => {
 });
 
 test("$prop adds to locals", async () => {
-    const kire = new Kire();
+    const kire = new Kire({ silent: true });
     kire.$resolver = async () => "{{ it.foo }} - {{ it.bar }}";
     
     kire.$prop('foo', 'value1');
@@ -56,7 +56,7 @@ test("$prop adds to locals", async () => {
 });
 
 test("$prop object overload", async () => {
-    const kire = new Kire();
+    const kire = new Kire({ silent: true });
     kire.$resolver = async () => "{{ it.a }} {{ it.b }}";
     
     kire.$prop({ a: 1, b: 2 });
@@ -66,7 +66,7 @@ test("$prop object overload", async () => {
 });
 
 test("$namespaces works", async () => {
-    const kire = new Kire();
+    const kire = new Kire({ silent: true });
     kire.$resolver = async () => "resolved";
     
     // Register namespace
@@ -82,7 +82,7 @@ test("$namespaces works", async () => {
 });
 
 test("Removed mounts (should just use locals)", async () => {
-    const kire = new Kire();
+    const kire = new Kire({ silent: true });
     
     // Namespace with placeholder
     kire.namespace('plugin', '/plugins/{name}');

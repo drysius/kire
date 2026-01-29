@@ -87,7 +87,7 @@ describe("Process Core Logic", () => {
 
 	test("initializeComponent should inject dependencies", () => {
 		const comp = new TestComponent();
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		const memo: any = { id: "old-id", listeners: { click: "handler" } };
 
 		initializeComponent(comp, kire, { user: "admin" }, memo);
@@ -136,7 +136,7 @@ describe("Process Core Logic", () => {
 
 	test("renderComponent should return html string", async () => {
 		const comp = new TestComponent();
-		comp.kire = new Kire();
+		comp.kire = new Kire({ silent: true });
 
 		const html = await renderComponent(comp);
 		expect(html).toContain("Hello: 0");

@@ -44,7 +44,7 @@ describe("RouteManager", () => {
 
 describe("Kire Integration", () => {
     test("Route Global Injection via Fork", async () => {
-        const kire = new Kire();
+        const kire = new Kire({ silent: true });
         kire.plugin(KireUtils);
 
         const req1 = kire.fork();
@@ -64,7 +64,7 @@ describe("Kire Integration", () => {
     });
     
     test("URL Helper in Template", async () => {
-        const kire = new Kire();
+        const kire = new Kire({ silent: true });
         kire.plugin(KireUtils);
         
         const req = kire.fork();

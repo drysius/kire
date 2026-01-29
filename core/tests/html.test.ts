@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { Kire } from "../src/index";
 
 test("Kire - HTML Structure and Control Flow", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	const htmlTemplate = `
 <div class="user-profile">
@@ -42,7 +42,7 @@ test("Kire - Nested HTML Components", async () => {
 	const testDir = resolve("./test-html-env");
 	await mkdir(testDir, { recursive: true });
 
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	kire.namespace("ui", testDir);
 	kire.$resolver = async (p) => await readFile(p, "utf-8");
 

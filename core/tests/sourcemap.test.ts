@@ -3,7 +3,7 @@ import { Kire } from "../src/kire";
 
 describe("Kire Source Maps", () => {
 	test("Should generate sourceMappingURL", async () => {
-		const kire = new Kire({ production: false });
+		const kire = new Kire({ silent: true, production: false });
 		const template = "Hello {{ it.name }}!";
 		
 		const code = await kire.compile(template, "hello.kire");

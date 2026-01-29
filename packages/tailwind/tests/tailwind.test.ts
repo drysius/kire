@@ -6,7 +6,7 @@ import KireTailwind from "../src";
 
 describe("@Kirejs/Tailwind", () => {
 	it("should compile tailwind css using real compiler", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireTailwind);
 
 		const tpl = `
@@ -28,7 +28,7 @@ describe("@Kirejs/Tailwind", () => {
 	});
 
 	it("should integrate with @kirejs/assets for deduplication and offloading", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		// Load both plugins
 		// Load Tailwind first so its element handler runs first and pushes styles to assets
 		kire.plugin(KireTailwind);
@@ -72,7 +72,7 @@ describe("@Kirejs/Tailwind", () => {
 		expect(hash2).toBe(hash1);
 
 		// Cache size should still be 1 (deduplicated)
-		// Note: This assumes no other tests polluted the cache, but new Kire() is created per test.
+		// Note: This assumes no other tests polluted the cache, but new Kire({ silent: true }) is created per test.
 		// However, cached() might share global map if kire implementation uses static cache?
 		// Checking kire.ts: this.$cache = new Map(). It's instance based. So it is isolated.
 		expect(cache.size).toBe(1);

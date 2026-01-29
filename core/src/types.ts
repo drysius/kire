@@ -47,6 +47,10 @@ export interface KireOptions {
 	 */
 	directives?: boolean;
 	/**
+	 * Whether to suppress warnings and logs of kire.
+	 */
+	silent?:boolean;
+	/**
 	 * List of plugins to load.
 	 */
 	plugins?: (KirePlugin | [KirePlugin, any])[];

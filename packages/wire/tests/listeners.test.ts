@@ -39,7 +39,7 @@ describe("Wire Listeners & Placeholders", () => {
 		} catch {}
 		await GlobalRegistrator.register();
 
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(Wired.plugin, { secret: "test" });
 		Wired.register("cart", Cart);
 		Wired.register("empty", EmptyComponent);

@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { Kire } from "../src/index";
 
 test("Kire - Default Directives: define/defined", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	// Simple define and defined in same template
 	const tpl = `
@@ -23,7 +23,7 @@ test("Kire - Default Directives: define/defined", async () => {
 });
 
 test("Kire - Default Directives: native if/for", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	const tpl = `
     @if(true)
       True
@@ -44,7 +44,7 @@ test("Kire - Include", async () => {
 	const testDir = resolve("./test-defaults-env");
 	await mkdir(testDir, { recursive: true });
 
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 	kire.namespace("views", testDir);
 	kire.$resolver = async (path) => {
 		const { readFile } = await import("node:fs/promises");

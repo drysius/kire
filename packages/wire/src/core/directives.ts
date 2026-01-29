@@ -3,19 +3,12 @@ import type { WireOptions } from "../types";
 import { getClientScript } from "../utils/client-script";
 
 export function registerDirectives(kire: Kire, options: WireOptions) {
-	kire.directive({
-		name: "wire",
-		params: ["name:string", "params?:object", "options?:object"],
-		children: false,
-		type: "html",
-		description: "Renders a Kirewire component.",
-		example: "@wire('counter', { count: 10 }, { lazy: true })",
-		async onCall(compiler) {
-			const nameExpr = compiler.param("name");
-			const paramsExpr = compiler.param("params") || "{}";
-			const optionsExpr = compiler.param("options") || "{}";
+	const wireDirectiveHandler = async (compiler: any) => {
+		const nameExpr = compiler.param("name");
+		const paramsExpr = compiler.param("params") || "{}";
+		const optionsExpr = compiler.param("options") || "{}";
 
-			compiler.raw(`await (async () => {
+		compiler.raw(`await (async () => {
                 const $w = $ctx.$wire;
                 const $name = ${JSON.stringify(nameExpr)};
                 const $params = ${paramsExpr};
@@ -38,8 +31,9 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 }
 
                 const $i = new $c();
-                $i.kire = $ctx.kire;
-                $i.context = { ...$ctx, kire: $ctx.kire };
+                $i.kire = $ctx.$kire;
+                $i.context = { ...$ctx, kire: $ctx.$kire };
+                $i.params = $params;
 
                 if ($i.mount) await $i.mount($params);
                 
@@ -84,7 +78,26 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 $ctx.$add($html || '');
                 $ctx.$add('</div>');
             })();`);
-		},
+	};
+
+	kire.directive({
+		name: "wire",
+		params: ["name:string", "params?:object", "options?:object"],
+		children: false,
+		type: "html",
+		description: "Renders a Kirewire component.",
+		example: "@wire('counter', { count: 10 }, { lazy: true })",
+		onCall: wireDirectiveHandler,
+	});
+
+	kire.directive({
+		name: "live",
+		params: ["name:string", "params?:object", "options?:object"],
+		children: false,
+		type: "html",
+		description: "Alias for @wire. Renders a Kirewire component.",
+		example: "@live('counter', { count: 10 })",
+		onCall: wireDirectiveHandler,
 	});
 
 	const injectScripts = (compiler: any) => {

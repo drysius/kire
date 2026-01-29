@@ -3,7 +3,7 @@ import { Kire } from "kire";
 import KireComponents from "../src/index";
 
 test("Kire Components - Should render <x-name> as view", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	// Mock resolver
 	kire.$resolver = async (path) => {
@@ -23,7 +23,7 @@ test("Kire Components - Should render <x-name> as view", async () => {
 });
 
 test("Kire Components - Should support self-closing tags", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.$resolver = async (path) => {
 		if (path === "components/alert.kire") {
@@ -41,7 +41,7 @@ test("Kire Components - Should support self-closing tags", async () => {
 });
 
 test("Kire Components - Should render nested <x-ui.button>", async () => {
-	const kire = new Kire();
+	const kire = new Kire({ silent: true });
 
 	kire.$resolver = async (path) => {
 		if (path === "components/ui/button.kire") {

@@ -19,7 +19,7 @@ describe("Wired", () => {
 	let kire: Kire;
 
 	beforeEach(() => {
-		kire = new Kire();
+		kire = new Kire({ silent: true });
 		kire.plugin(Wired.plugin, { secret: "test-secret" });
 	});
 

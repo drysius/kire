@@ -47,7 +47,7 @@ describe("Html Helper", () => {
 
 describe("Template Integration (Old & Error)", () => {
     test("old() input helper", async () => {
-        const kire = new Kire();
+        const kire = new Kire({ silent: true });
         kire.plugin(KireUtils);
         
         const req = kire.fork();
@@ -60,7 +60,7 @@ describe("Template Integration (Old & Error)", () => {
     });
 
     test("@error directive", async () => {
-        const kire = new Kire();
+        const kire = new Kire({ silent: true });
         kire.plugin(KireUtils);
         
         const req = kire.fork();

@@ -23,7 +23,7 @@ describe("@kirejs/resolver", () => {
 	});
 
 	test("should correctly list files using $readdir with pattern", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireResolver);
 
 		if (!kire.$readdir) {
@@ -51,7 +51,7 @@ describe("@kirejs/resolver", () => {
 	});
 
 	test("should match glob patterns recursively", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireResolver);
 
 		// pattern: packages/resolver/**/*.ts

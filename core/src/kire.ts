@@ -85,12 +85,17 @@ export class Kire {
 	/**
 	 * Default extension for template files (e.g., "kire").
 	 */
-	public extension: string;
+	public $extension: string;
 
 	/**
 	 * Whether to stream the response instead of buffering.
 	 */
-	public stream: boolean;
+	public $stream: boolean;
+
+    /**
+     * Whether to suppress warnings and logs.
+     */
+    public $silent: boolean;
 
 	/**
 	 * Cache of compiled template functions, keyed by file path.
@@ -154,8 +159,9 @@ export class Kire {
 
 		// Copy configuration
 		fork.production = this.production;
-		fork.stream = this.stream;
-		fork.extension = this.extension;
+		fork.$stream = this.$stream;
+		fork.$extension = this.$extension;
+        fork.$silent = this.$silent;
 		fork.$var_locals = this.$var_locals;
 		fork.$resolver = this.$resolver;
 		fork.$executor = this.$executor;
@@ -193,8 +199,9 @@ export class Kire {
 
 	constructor(options: KireOptions = {}) {
 		this.production = options.production ?? true;
-		this.stream = options.stream ?? false;
-		this.extension = options.extension ?? "kire";
+		this.$stream = options.stream ?? false;
+		this.$extension = options.extension ?? "kire";
+        this.$silent = options.silent ?? false;
 		this.$var_locals = options.varLocals ?? "it";
 		this.$parent = options.parent;
 
@@ -265,10 +272,8 @@ export class Kire {
 	 * @returns The Kire instance.
 	 */
 	public $prop(keyOrObj: string | Record<string, any>, value?: any) {
-		if (!this.$parent) {
-			console.warn(
-				"Kire Warning: You are setting props on the global instance. This data will be shared across all requests. Use kire.fork() for per-request isolation.",
-			);
+		if (!this.$parent && !this.$silent) {
+			console.warn("[Kire] Warning: You are setting props on the global instance. This data will be shared across all requests. Use kire.fork() for per-request isolation.");
 		}
 		if (typeof keyOrObj === "string") {
 			this.$props.set(keyOrObj, value);
@@ -547,10 +552,8 @@ export class Kire {
 		controller?: ReadableStreamDefaultController,
 		filename = "template.kire",
 	): Promise<string | ReadableStream> {
-		if (!this.$parent) {
-			console.warn(
-				"Kire Warning: You are rendering on the global instance. Use kire.fork() for per-request isolation.",
-			);
+		if (!this.$parent && !this.$silent) {
+			console.warn("[Kire] Warning: You are rendering on the global instance. Use kire.fork() for per-request isolation.");
 		}
 		const fn = await this.compileFn(template, filename);
 		return this.run(fn, locals, false, controller);
@@ -680,13 +683,13 @@ export class Kire {
 		locals: Record<string, any> = {},
 		controller?: ReadableStreamDefaultController,
 	): Promise<string | ReadableStream> {
-		if (!this.$parent) {
+		if (!this.$parent && !this.$silent) {
 			console.warn(
-				"Kire Warning: You are rendering a view on the global instance. Use kire.fork() for per-request isolation.",
+				"[Kire] Warning: You are rendering a view on the global instance. Use kire.fork() for per-request isolation.",
 			);
 		}
 
-		let ext: string | null = this.extension;
+		let ext: string | null = this.$extension;
 		if (path.endsWith(".md") || path.endsWith(".markdown")) {
 			ext = null;
 		}
@@ -725,7 +728,7 @@ export class Kire {
 	public resolvePath(
 		filepath: string,
 		locals: Record<string, any> = {},
-		extension: string | null = this.extension,
+		extension: string | null = this.$extension,
 	): string {
 		return resolvePath(
 			filepath,

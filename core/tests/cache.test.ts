@@ -21,14 +21,14 @@ describe("Kire Core - Caching & Require", () => {
 	});
 
 	test("kire.compileFn should return an AsyncFunction", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		const fn = await kire.compileFn("Hello {{ name }}");
 		expect(fn).toBeInstanceOf(Function);
 		expect(fn.constructor.name).toBe("AsyncFunction");
 	});
 
 	test("$ctx.require should cache compiled functions", async () => {
-		const kire = new Kire({ production: true });
+		const kire = new Kire({ silent: true, production: true });
 		kire.namespace("views", testDir);
 		kire.$resolver = async (p) => await readFile(p, "utf-8");
 
@@ -53,7 +53,7 @@ describe("Kire Core - Caching & Require", () => {
 	});
 
 	test("$ctx.require should recompile if content changes (non-prod)", async () => {
-		const kire = new Kire({ production: false });
+		const kire = new Kire({ silent: true, production: false });
 		kire.namespace("views", testDir);
 		kire.$resolver = async (p) => await readFile(p, "utf-8");
 
@@ -74,7 +74,7 @@ describe("Kire Core - Caching & Require", () => {
 	});
 
 	test("$ctx.require should NOT recompile if content matches hash (non-prod optimization)", async () => {
-		const kire = new Kire({ production: false });
+		const kire = new Kire({ silent: true, production: false });
 		kire.namespace("views", testDir);
 		kire.$resolver = async (p) => await readFile(p, "utf-8");
 

@@ -21,14 +21,14 @@ export default (kire: Kire) => {
 		},
 	};
 
-	kire.directive(slotDirective);
+	kire.directive(slotDirective as never);
 
 	// Alias @section -> @slot
 	kire.directive({
 		...slotDirective,
 		name: "section",
 		description: "Alias for @slot, commonly used in Laravel Blade.",
-	});
+	} as never);
 
 	// @yield('name', 'default')
 	kire.directive({
@@ -73,7 +73,7 @@ export default (kire: Kire) => {
 			compiler.raw(`await (async () => {`);
 			compiler.raw(`  const $slots = {};`);
 
-			if (kire.stream) {
+			if (kire.$stream) {
 				// Streaming Mode: Deferred Execution
 				compiler.raw(`  $slots.default = async () => {`);
 				compiler.raw(`    $ctx.slots = $slots;`); // Expose slots
@@ -109,7 +109,7 @@ export default (kire: Kire) => {
 		},
 	};
 
-	kire.directive(componentDirective);
+	kire.directive(componentDirective as never);
 
 	// Alias @section -> @slot
 	kire.directive({
@@ -127,12 +127,12 @@ export default (kire: Kire) => {
 		...componentDirective,
 		name: "layout",
 		description: "Alias for @component, typically used for wrapping content.",
-	});
+	} as never);
 
 	// Alias @extends -> @component
 	kire.directive({
 		...componentDirective,
 		name: "extends",
 		description: "Alias for @component/layout, used for inheritance.",
-	});
+	} as never);
 };

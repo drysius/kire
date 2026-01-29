@@ -4,7 +4,7 @@ import { registerDirectives } from "../../src/core/directives";
 
 describe("Wire Directives", () => {
 	test("@wire directive should generate correct render logic", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_wire" });
 
 		const code = await kire.compile("@wire('counter', { start: 5 })");
@@ -17,7 +17,7 @@ describe("Wire Directives", () => {
 	});
 
 	test("@wired (scripts) should inject client script", async () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_custom_wire" });
 
 		// Mock resolver to avoid FS check in tests if possible,
@@ -33,7 +33,7 @@ describe("Wire Directives", () => {
 	});
 
 	test("attributes schema should be registered", () => {
-		const kire = new Kire();
+		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_wire" });
 
 		const schema = kire.pkgSchema("test-app");
