@@ -92,7 +92,7 @@ describe("Process Core Logic", () => {
 
 		initializeComponent(comp, kire, { user: "admin" }, memo);
 
-		expect(comp.kire).toBe(kire);
+		expect(comp.context.kire).toBe(kire);
 		expect(comp.context.user).toBe("admin");
 		expect(comp.__id).toBe("old-id");
 		expect(comp.listeners).toEqual({ click: "handler" });
