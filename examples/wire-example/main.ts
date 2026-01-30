@@ -138,13 +138,21 @@ void (async () => {
 		});
 	});
 
-	app.get("/lazy/:test", async (context) => {
+	app.get("/lazy", async (context) => {
 		context.set.headers["Content-Type"] = "text/html";
 		return await context.kire.view("pages.lazy", {
 			$wireToken: context.wireKey,
 			user: context.user,
 		});
 	});
+
+    app.get("/stress", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await context.kire.view("pages.stress", {
+            $wireToken: context.wireKey,
+            user: context.user,
+        });
+    });
 
 	// Wired Endpoint
 	app.post(Wired.options.route, async (context) => {
@@ -168,6 +176,8 @@ void (async () => {
 				const result = await Wired.payload(
 					context.wireKey,
 					context.body as any,
+                    {}, // context overrides
+                    context.kire // Pass the request-scoped kire instance
 				);
 
 				console.log("Payload processed. Code:", result.code);

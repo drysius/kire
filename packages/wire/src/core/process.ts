@@ -28,6 +28,9 @@ export async function processRequest(
 		// 2. Instantiate Component
 		const ComponentClass = resolveComponentClass(compName, registry);
 		if (!ComponentClass) {
+            if (!kire.$silent) {
+                console.error(`[Wired] Component class not found for: ${compName}`);
+            }
 			return {
 				code: WireErrors.invalid_request.code,
 				data: { error: "Component not found" },
@@ -268,19 +271,26 @@ export async function executeMethod(
 		};
 	}
 
-	if (method === "$set" && params.length === 2) {
-		const [prop, value] = params;
-		if (typeof prop === "string" && !isReservedProperty(prop)) {
-			await instance.updating(prop, value);
-			(instance as any)[prop] = value;
-			instance.clearErrors(prop);
-			await instance.updated(prop, value);
+	if (method === "$set") {
+		if (params.length === 2) {
+			const [prop, value] = params;
+			if (typeof prop === "string" && !isReservedProperty(prop)) {
+				await instance.updating(prop, value);
+				(instance as any)[prop] = value;
+				instance.clearErrors(prop);
+				await instance.updated(prop, value);
+			}
 		}
 	} else if (method === "$refresh") {
 		await instance.updated("$refresh", null);
+	} else if (method === "$unmount") {
+		await instance.unmount();
 	} else if (typeof (instance as any)[method] === "function") {
 		await (instance as any)[method](...params);
 	} else {
+        if (!instance.kire.$silent) {
+            console.error(`[Wired] Method not found: ${method} on ${instance.constructor.name}`);
+        }
         return {
             error: {
                 code: WireErrors.method_not_found.code,
@@ -295,10 +305,20 @@ export async function renderComponent(
 ): Promise<string> {
 	let html = (instance as any).render();
 	if (typeof html === "string") {
-		html = await instance.kire.render(html, {
+		const data = {
 			...instance.getDataForRender(),
 			errors: instance.__errors,
-		});
+		};
+
+		const keys = Object.keys(data).filter((k) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
+		);
+        
+		const injection = keys.length
+			? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>`
+			: "";
+        
+		html = await instance.kire.render(injection + html, data);
 	} else {
 		html = await html;
 	}

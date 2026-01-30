@@ -31,6 +31,7 @@ export abstract class WireComponent {
     }
 
 	public async mount(..._args: unknown[]): Promise<void> {}
+	public async unmount(): Promise<void> {}
 	public async updated(_name: string, _value: unknown): Promise<void> {}
 	public async updating(_name: string, _value: unknown): Promise<void> {}
 	public async hydrated(): Promise<void> {}
@@ -57,7 +58,7 @@ export abstract class WireComponent {
 		return isValid;
 	}
 
-	public abstract render(): Promise<string> | string;
+	public abstract render(): Promise<string | ReadableStream> | string | ReadableStream;
 
 	protected async view(
 		path: string,

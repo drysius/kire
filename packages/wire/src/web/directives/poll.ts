@@ -1,3 +1,4 @@
+import { parseAction } from "../core/parser";
 import { directive } from "../core/registry";
 import { extractDuration } from "../utils/shared";
 
@@ -43,7 +44,8 @@ directive("poll", (el, dir, component) => {
 		// Check if component is already loading to avoid pile-up
 		if (component.el.hasAttribute("wire:loading-state")) return;
 
-		component.call(action);
+		const { method, params } = parseAction(action);
+		component.call(method, params);
 	};
 
 	interval = setInterval(pollFn, duration);

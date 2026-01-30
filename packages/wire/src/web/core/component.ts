@@ -30,8 +30,8 @@ export class Component {
 			this.id = this.snapshot.memo.id;
 			this.name = this.snapshot.memo.name;
 			this.data = Alpine
-				? Alpine.reactive(this.snapshot.data)
-				: this.snapshot.data;
+				? Alpine.reactive(JSON.parse(JSON.stringify(this.snapshot.data)))
+				: JSON.parse(JSON.stringify(this.snapshot.data));
 		} else {
 			this.id = el.getAttribute("wire:id") || "";
 			this.name = el.getAttribute("wire:component") || "";
@@ -62,9 +62,6 @@ export class Component {
 	}
 
 	public async loadLazy() {
-		// console.log(`[KireWire] loadLazy started for ${this.id}`);
-		// const start = performance.now();
-
 		const paramsJson = this.el.getAttribute("wire:init-params");
 		const params = paramsJson ? JSON.parse(paramsJson) : {};
 
@@ -81,13 +78,11 @@ export class Component {
 
 		try {
 			const response: WireResponse = await this.adapter.request(fullPayload);
-			// console.log(`[KireWire] loadLazy response received for ${this.id} in ${performance.now() - start}ms`);
 			this.handleResponse(response, "$refresh");
 		} catch (e) {
 			console.error(`[KireWire] loadLazy error for ${this.id}`, e);
 		} finally {
 			this.setLoading(false, "$lazy");
-			// console.log(`[KireWire] loadLazy finished for ${this.id} in ${performance.now() - start}ms`);
 		}
 	}
 
@@ -110,6 +105,14 @@ export class Component {
 		this.cleanupFns.forEach((fn) => fn());
 		this.cleanupFns = [];
 	}
+
+    public destroy() {
+        // Fire-and-forget unmount request
+        // Use keepalive if possible to ensure request survives page navigation
+        this.sendRequest({ method: "$unmount", params: [] }, undefined, { keepalive: true }).catch(() => {
+            // Ignore errors during destroy
+        });
+    }
 
 	public inscribeSnapshotAndEffectsOnElement() {
 		if (!this.el || !this.snapshot) return;
@@ -151,6 +154,7 @@ export class Component {
 	private async sendRequest(
 		payload: Partial<WirePayload>,
 		actionLifecycle?: any,
+        requestOptions?: RequestInit,
 	) {
 		const updates = { ...this.pendingUpdates, ...payload.updates };
 		this.pendingUpdates = {};
@@ -202,7 +206,7 @@ export class Component {
 		lifecycles.forEach((l) => l?.onSend.forEach((cb: any) => cb()));
 
 		try {
-			const response: WireResponse = await this.adapter.request(fullPayload);
+			const response: WireResponse = await this.adapter.request(fullPayload, requestOptions);
 
 			lifecycles.forEach((l) =>
 				l?.onSuccess.forEach((cb: any) => cb(response)),
@@ -225,8 +229,11 @@ export class Component {
 			const snapObj = JSON.parse(comp.snapshot);
 
 			if (snapObj.memo.id === this.id) {
+				const Alpine = (window as any).Alpine;
 				this.snapshot = snapObj;
-				this.data = snapObj.data;
+				this.data = Alpine
+					? Alpine.reactive(JSON.parse(JSON.stringify(snapObj.data)))
+					: JSON.parse(JSON.stringify(snapObj.data));
 				// Sync back to Alpine if needed (handled by Alpine reactivity usually)
 			}
 
@@ -345,6 +352,7 @@ export class Component {
 
 						// If values are different (e.g. server cleared the input),
 						// we allow the update to proceed (no skip).
+						el.value = (toEl as any).value;
 						return;
 					}
 				}

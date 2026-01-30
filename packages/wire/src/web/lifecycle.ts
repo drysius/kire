@@ -127,6 +127,7 @@ export default function WiredAlpinePlugin(Alpine: any) {
 								const comp = findComponent(id);
 								if (comp) {
 									comp.cleanup();
+                                    comp.destroy();
 									removeComponent(id);
 								}
 							}

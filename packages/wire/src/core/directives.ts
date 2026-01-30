@@ -38,7 +38,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 
                 let $html = $i.render();
                 if (typeof $html === "string") {
-                    $html = await $i.kire.render($html, {
+                    $html = await $i.html($html, {
                         ...$i.getDataForRender(),
                         errors: $i.__errors,
                     });

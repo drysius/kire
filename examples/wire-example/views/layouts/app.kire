@@ -1,106 +1,127 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>KireWire Example</title>
 
-        <!-- Tailwind + DaisyUI -->
-        <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
-        <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KireWire Example</title>
 
-        @wired
+    <!-- Tailwind + DaisyUI -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-        <style>
-            [x-cloak] { display: none !important; }
-            :root:has(input.theme-controller[value=dark]:checked),[data-theme="dark"] {
-                color-scheme: dark;
-                --color-base-100: oklch(14% 0 0);
-                --color-base-200: oklch(20% 0 0);
-                --color-base-300: oklch(26% 0 0);
-                --color-base-content: oklch(97% 0 0);
-                --color-primary: oklch(78% 0.115 274.713);
-                --color-primary-content: oklch(25% 0.09 281.288);
-                --color-secondary: oklch(81% 0.117 11.638);
-                --color-secondary-content: oklch(27% 0.105 12.094);
-                --color-accent: oklch(87% 0.15 154.449);
-                --color-accent-content: oklch(26% 0.065 152.934);
-                --color-neutral: oklch(43% 0 0);
-                --color-neutral-content: oklch(98% 0 0);
-                --color-info: oklch(58% 0.158 241.966);
-                --color-info-content: oklch(97% 0.013 236.62);
-                --color-success: oklch(62% 0.194 149.214);
-                --color-success-content: oklch(98% 0.018 155.826);
-                --color-warning: oklch(66% 0.179 58.318);
-                --color-warning-content: oklch(98% 0.022 95.277);
-                --color-error: oklch(58% 0.253 17.585);
-                --color-error-content: oklch(96% 0.015 12.422);
-                --radius-selector: 0rem;
-                --radius-field: 0.5rem;
-                --radius-box: 1rem;
-                --size-selector: 0.25rem;
-                --size-field: 0.25rem;
-                --border: 1px;
-                --depth: 0;
-                --noise: 0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="drawer lg:drawer-open">
-            <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
-            <div class="drawer-content flex flex-col items-center justify-center bg-base-200 min-h-screen">
-                <!-- Page content here -->
-                <div class="navbar bg-base-100 w-full lg:hidden shadow-sm">
-                    <div class="flex-none">
-                        <label for="my-drawer-2" class="btn btn-square btn-ghost drawer-button">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                        </label>
-                    </div>
-                    <div class="flex-1">
-                        <a class="btn btn-ghost text-xl">KireWire</a>
-                    </div>
+    @wired
+
+    <style>
+    :root:has(input.theme-controller[value=dark]:checked),
+    [data-theme="dark"] {
+        color-scheme: dark;
+        --color-base-100: oklch(14% 0 0);
+        --color-base-200: oklch(20% 0 0);
+        --color-base-300: oklch(26% 0 0);
+        --color-base-content: oklch(97% 0 0);
+        --color-primary: oklch(78% 0.115 274.713);
+        --color-primary-content: oklch(25% 0.09 281.288);
+        --color-secondary: oklch(81% 0.117 11.638);
+        --color-secondary-content: oklch(27% 0.105 12.094);
+        --color-accent: oklch(87% 0.15 154.449);
+        --color-accent-content: oklch(26% 0.065 152.934);
+        --color-neutral: oklch(43% 0 0);
+        --color-neutral-content: oklch(98% 0 0);
+        --color-info: oklch(58% 0.158 241.966);
+        --color-info-content: oklch(97% 0.013 236.62);
+        --color-success: oklch(62% 0.194 149.214);
+        --color-success-content: oklch(98% 0.018 155.826);
+        --color-warning: oklch(66% 0.179 58.318);
+        --color-warning-content: oklch(98% 0.022 95.277);
+        --color-error: oklch(58% 0.253 17.585);
+        --color-error-content: oklch(96% 0.015 12.422);
+        --radius-selector: 0rem;
+        --radius-field: 0.5rem;
+        --radius-box: 1rem;
+        --size-selector: 0.25rem;
+        --size-field: 0.25rem;
+        --border: 1px;
+        --depth: 0;
+        --noise: 0;
+    }
+    </style>
+</head>
+
+<body>
+    <div class="drawer lg:drawer-open">
+        <input id="my-drawer-2" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content flex flex-col items-center justify-center bg-base-200 min-h-screen">
+            <!-- Page content here -->
+            <div class="navbar bg-base-100 w-full lg:hidden shadow-sm">
+                <div class="flex-none">
+                    <label for="my-drawer-2" class="btn btn-square btn-ghost drawer-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            class="inline-block w-5 h-5 stroke-current">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </label>
                 </div>
+                <div class="flex-1">
+                    <a class="btn btn-ghost text-xl">KireWire</a>
+                </div>
+            </div>
 
-                <main class="w-full max-w-4xl p-6 flex-1 flex flex-col">
-                    @defined('content')
-                </main>
+            <main class="w-full max-w-4xl p-6 flex-1 flex flex-col">
+                @defined('content')
+            </main>
 
-            </div> 
-            <div class="drawer-side">
-                <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label> 
-                <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content gap-2">
-                    <!-- Sidebar content here -->
-                    <li class="mb-4">
-                        <div class="flex items-center gap-3 px-2">
-                            <div class="avatar">
-                                <div class="w-10">
-                                    <img
-                                    src="https://raw.githubusercontent.com/drysius/kire/refs/heads/main/vs-kire/icon.svg"
-                                    alt="Kire"
-                                    />
-                                </div>
-                            </div>
-                            <div>
-                                <div class="font-bold">KireWire</div>
-                                <div class="text-xs opacity-50">v0.1.0</div>
+        </div>
+        <div class="drawer-side">
+            <label for="my-drawer-2" aria-label="close sidebar" class="drawer-overlay"></label>
+            <ul class="menu p-4 w-80 min-h-full bg-base-100 text-base-content gap-2">
+                <!-- Sidebar content here -->
+                <li class="mb-4">
+                    <div class="flex items-center gap-3 px-2">
+                        <div class="avatar">
+                            <div class="w-10">
+                                <img src="https://raw.githubusercontent.com/drysius/kire/refs/heads/main/vs-kire/icon.svg"
+                                    alt="Kire" />
                             </div>
                         </div>
-                    </li>
-
-                    <li><h2 class="menu-title">Examples</h2></li>
-                    <li><a href="/" wire:navigate class="{{ isActive('/') ? 'bg-primary text-primary-content' : '' }}">Dashboard</a></li>
-                    <li><a href="/todo" wire:navigate class="{{ isActive('/todo') ? 'bg-primary text-primary-content' : '' }}">Todo List</a></li>
-                    <li><a href="/chat" wire:navigate class="{{ isActive('/chat') ? 'bg-primary text-primary-content' : '' }}">Real-time Chat</a></li>
-                    <li><a href="/users" wire:navigate class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a></li>
-
-                    <li><h2 class="menu-title">Features</h2></li>
-                    <li><a href="/upload" wire:navigate class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
-                    <li><a href="/stream" wire:navigate class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
-                    <li><a href="/lazy" wire:navigate class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
-                    <li><a href="/toast" wire:navigate class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>                </ul>
-
+                        <div>
+                            <div class="font-bold">KireWire</div>
+                            <div class="text-xs opacity-50">v0.1.0</div>
+                        </div>
                     </div>
-                </div>
-            </body>
-        </html>
+                </li>
+
+                <li>
+                    <h2 class="menu-title">Examples</h2>
+                </li>
+                <li><a href="/" wire:navigate
+                        class="{{ isActive('/') ? 'bg-primary text-primary-content' : '' }}">Dashboard</a></li>
+                <li><a href="/todo" wire:navigate
+                        class="{{ isActive('/todo') ? 'bg-primary text-primary-content' : '' }}">Todo List</a></li>
+                <li><a href="/chat" wire:navigate
+                        class="{{ isActive('/chat') ? 'bg-primary text-primary-content' : '' }}">Real-time Chat</a></li>
+                <li><a href="/users" wire:navigate
+                        class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a>
+                </li>
+
+                <li>
+                    <h2 class="menu-title">Features</h2>
+                </li>
+                <li><a href="/upload" wire:navigate
+                        class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
+                <li><a href="/stream" wire:navigate
+                        class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
+                <li><a href="/lazy" wire:navigate
+                        class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
+                <li><a href="/toast" wire:navigate
+                        class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>
+                <li><a href="/stress" wire:navigate
+                        class="{{ isActive('/stress') ? 'bg-primary text-primary-content' : '' }}">Stress Poll</a></li>
+            </ul>
+
+        </div>
+    </div>
+</body>
+
+</html>

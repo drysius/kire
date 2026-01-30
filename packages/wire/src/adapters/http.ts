@@ -1,5 +1,5 @@
 export interface ClientAdapter {
-	request(payload: any): Promise<any>;
+	request(payload: any, options?: RequestInit): Promise<any>;
 }
 
 export class HttpAdapter implements ClientAdapter {
@@ -8,7 +8,7 @@ export class HttpAdapter implements ClientAdapter {
 		private csrf?: string,
 	) {}
 
-	async request(payload: any) {
+	async request(payload: any, options: RequestInit = {}) {
 		const files = new Map<string, File>();
 
 		const scanForFiles = (obj: any): any => {
@@ -58,13 +58,12 @@ export class HttpAdapter implements ClientAdapter {
 			body = JSON.stringify(payload);
 		}
 
-		console.log("[KireWire] Request:", { url: this.endpoint, payload, headers });
-
 		const response = await fetch(this.endpoint, {
 			method: "POST",
 			headers,
 			body,
 			credentials: "include",
+            ...options,
 		});
 
 		if (!response.ok) {
