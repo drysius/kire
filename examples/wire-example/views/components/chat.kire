@@ -1,9 +1,9 @@
-<div class="card bg-base-100 shadow-xl w-full max-w-2xl mx-auto overflow-hidden border border-base-300" wire:poll.1000ms>
+<div class="card bg-base-100 shadow-xl w-full max-w-2xl mx-auto overflow-hidden border border-base-300" wire:poll.5000ms>
     <div class="bg-base-200 p-4 border-b border-base-300 flex justify-between items-center">
         <h3 class="font-bold text-lg">Chat Room</h3>
         <div class="flex items-center gap-2">
             <span class="text-sm opacity-70">Username:</span>
-            <input wire:model="username" type="text" class="input input-sm input-bordered w-32" />
+            <input wire:model.defer="username" type="text" value="{{ username }}" class="input input-sm input-bordered w-32" />
         </div>
     </div>
 
@@ -31,7 +31,7 @@
     <div class="p-4 bg-base-200 border-t border-base-300">
         <div class="join w-full">
             <input 
-                wire:model="input" 
+                wire:model.defer="input" 
                 wire:keydown.enter="sendMessage"
                 type="text" 
                 placeholder="Type a message..." 

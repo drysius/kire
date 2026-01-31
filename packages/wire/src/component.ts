@@ -22,11 +22,19 @@ export abstract class WireComponent {
 	public context: WireContext = { kire: undefined as any };
 	public params: Record<string, any> = {};
 
+    public $globals: Record<string, any> = {};
+    public $props: Record<string, any> = {};
+    public $ctx: Record<string, any> = {};
+
     constructor(public kire: Kire) {
         if (!kire) {
             // Allow empty constructor for testing or manual instantiation if needed, 
             // but kire must be injected before use.
             // Ideally strictly required, but for backward compat/testing flexibility:
+        } else {
+            this.$globals = kire.$globals.toObject();
+            this.$props = kire.$props.toObject();
+            this.$ctx = kire.$contexts.toObject();
         }
     }
 
@@ -215,6 +223,9 @@ export abstract class WireComponent {
 		for (const key of keys) {
 			if (
 				key.startsWith("_") ||
+				key === "$globals" ||
+				key === "$props" ||
+				key === "$ctx" ||
 				key === "kire" ||
 				key === "context" ||
 				key === "queryString"
