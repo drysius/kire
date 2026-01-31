@@ -154,6 +154,14 @@ void (async () => {
         });
     });
 
+	app.get("/textarea", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await context.kire.view("pages.textarea", {
+            $wireToken: context.wireKey,
+            user: context.user,
+        });
+    });
+
 	// Wired Endpoint
 	app.post(Wired.options.route, async (context) => {
 		console.log(`[POST] ${Wired.options.route} - Incoming Request`);

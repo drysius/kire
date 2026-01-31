@@ -335,13 +335,19 @@ export class Component {
 					el instanceof HTMLTextAreaElement ||
 					el instanceof HTMLSelectElement
 				) {
-					if (toEl instanceof Element && el.hasAttribute("wire:model")) {
+					if (toEl instanceof Element && (el.hasAttribute("wire:model") || el.hasAttribute("wire:model.defer"))) {
 						// If it's a polling update, we generally want to force update values
 						// unless specifically protected (Kirewire doesn't typically protect poll updates on models)
 						if (isPoll) return;
 
 						// Check if value changed on server
-						const newValue = toEl.getAttribute("value");
+						let newValue;
+						if (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+							newValue = (toEl as any).value;
+						} else {
+							newValue = toEl.getAttribute("value");
+						}
+						
 						const currentValue = el.value;
 
 						// If the server value is effectively the same as current value,

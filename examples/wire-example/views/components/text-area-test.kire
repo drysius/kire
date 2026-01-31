@@ -1,0 +1,27 @@
+<div class="flex-1 relative p-10">
+    <h2 class="text-xl mb-4">Text Area Defer Test</h2>
+    <p class="mb-4">Type something and press Enter. The textarea should clear.</p>
+
+    <div class="flex gap-2">
+        <div class="flex-1 relative">
+            <textarea 
+                wire:model.defer="message"
+                wire:keydown.enter.prevent="submit" 
+                placeholder="Type a message..." 
+                class="textarea textarea-bordered w-full min-h-[2.5rem] max-h-32 bg-base-100 focus:outline-none resize-none py-2 leading-tight border p-2"
+                rows="3"></textarea>
+        </div>
+        <button class="btn btn-primary btn-circle" wire:click="submit">
+            Submit
+        </button>
+    </div>
+
+    <div class="mt-4">
+        Current Message on Server (reflected): <span x-text="$wire.message"></span>
+    </div>
+    
+    <!-- Simulate poll environment as requested by user context -->
+    <div wire:poll.5s>
+        <small class="text-gray-500">Polling active ({{ Date.now() }})</small>
+    </div>
+</div>

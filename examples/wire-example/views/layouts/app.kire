@@ -104,6 +104,9 @@
                 <li><a href="/users" wire:navigate
                         class="{{ isActive('/users') ? 'bg-primary text-primary-content' : '' }}">Users & Pagination</a>
                 </li>
+                <li><a href="/tickets" wire:navigate
+                        class="{{ isActive('/tickets') ? 'bg-primary text-primary-content' : '' }}">Support Tickets</a>
+                </li>
 
                 <li>
                     <h2 class="menu-title">Features</h2>
@@ -118,6 +121,8 @@
                         class="{{ isActive('/toast') ? 'bg-primary text-primary-content' : '' }}">Toasts</a></li>
                 <li><a href="/stress" wire:navigate
                         class="{{ isActive('/stress') ? 'bg-primary text-primary-content' : '' }}">Stress Poll</a></li>
+                <li><a href="/textarea" wire:navigate
+                        class="{{ isActive('/stress') ? 'bg-primary text-primary-content' : '' }}">textarea</a></li>
             </ul>
 
         </div>
