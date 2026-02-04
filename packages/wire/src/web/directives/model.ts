@@ -28,35 +28,31 @@ directive("model", (el, dir, component) => {
 			let val: any = null;
 
 			if (input.files && input.files.length > 0) {
-                // Helper to wrap file with progress state
                 const wrapFile = (file: File) => {
-                    // Create a reactive proxy if Alpine is available to ensure UI updates
-                    const wrapper = {
+                    return {
                         _is_upload_wrapper: true,
                         rawFile: file,
                         name: file.name,
                         size: file.size,
                         type: file.type,
                         lastModified: file.lastModified,
-                        uploading: {
-                            progress: 0,
-                            loaded: 0,
-                            total: file.size,
-                            percent: 0 // Alias for convenience
-                        }
+                        uploading: { progress: 0, percent: 0, loaded: 0, total: file.size }
                     };
-                    
-                    const Alpine = (window as any).Alpine;
-                    return Alpine ? Alpine.reactive(wrapper) : wrapper;
                 };
 
-				val = input.multiple 
-                    ? Array.from(input.files).map(wrapFile) 
-                    : wrapFile(input.files[0]);
+                const files = Array.from(input.files).map(wrapFile);
+                
+                // Consistency with server: value is an object with 'files' and 'uploading'
+                const wrapper = {
+                    _wire_type: 'WireFile',
+                    files: files,
+                    uploading: { progress: 0, percent: 0, loaded: 0, total: files.reduce((acc, f) => acc + f.size, 0) }
+                };
+
+                const Alpine = (window as any).Alpine;
+                val = Alpine ? Alpine.reactive(wrapper) : wrapper;
 			}
 
-            // Immediately set the property on the component to trigger Alpine UI updates
-            // (optimistic UI for "file selected")
             if (val) {
                 if (component.data) {
                     component.data[prop] = val;

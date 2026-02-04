@@ -14,6 +14,7 @@ import {
     FormatRegistry
 } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
+// @ts-expect-error Node.js 20+ feature
 import { MIMEType } from "node:util";
 
 // Setup standard formats
@@ -109,6 +110,7 @@ type BaseSchema<TRules extends string> =
 type WithOptional<
     TRules extends string,
     S extends TSchema,
+ Lark extends TSchema,
 > = IsOptional<TRules> extends true ? TOptional<S> : S;
 
 /** Schema inferido (quando TRules é literal). */
@@ -141,31 +143,6 @@ export type RuleValue<TRules extends string> =
 export type RuleDefault<TRules extends string> = string extends TRules
     ? unknown
     : RuleValue<TRules>;
-
-/* -------------------------------------------------------------------------------------------------
- * MIME Mapping and Helpers
- * ------------------------------------------------------------------------------------------------- */
-
-const EXTENSION_MIME_MAP: Record<string, string[]> = {
-    'jpg': ['image/jpeg'],
-    'jpeg': ['image/jpeg'],
-    'png': ['image/png'],
-    'gif': ['image/gif'],
-    'webp': ['image/webp'],
-    'pdf': ['application/pdf'],
-    'doc': ['application/msword'],
-    'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    'xls': ['application/vnd.ms-excel'],
-    'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-    'ppt': ['application/vnd.ms-powerpoint'],
-    'pptx': ['application/vnd.openxmlformats-officedocument.presentationml.presentation'],
-    'zip': ['application/zip', 'application/x-zip-compressed'],
-    'txt': ['text/plain'],
-    'csv': ['text/csv', 'text/comma-separated-values'],
-    'mp3': ['audio/mpeg'],
-    'mp4': ['video/mp4'],
-    'json': ['application/json'],
-};
 
 /* -------------------------------------------------------------------------------------------------
  * Runtime builders
@@ -257,7 +234,8 @@ function buildFileDeclaration(parts: string[]): TSchema {
         size: Type.Number(),
         type: Type.String(),
     });
-    return Type.Union([fileSchema, Type.Array(fileSchema)]);
+    // WireFile contains an array of files
+    return Type.Array(fileSchema);
 }
 
 /* -------------------------------------------------------------------------------------------------
@@ -316,35 +294,42 @@ export class Rule<T extends TSchema = TSchema> {
         return new Rule(Type.Boolean(), message);
     }
 
+    public static in(values: any[], message?: string) {
+        return new Rule(Type.Union(values.map(v => Type.Literal(v))), message);
+    }
+
     public static file(message?: string) {
-        return new Rule(
-            Type.Object({
-                name: Type.String(),
-                size: Type.Number(),
-                type: Type.String(),
-                lastModified: Type.Optional(Type.Number()),
-                content: Type.Optional(Type.String())
-            }),
-            message
-        );
+        const fileSchema = Type.Object({
+            name: Type.String(),
+            size: Type.Number(),
+            type: Type.String(),
+            lastModified: Type.Optional(Type.Number()),
+            content: Type.Optional(Type.String())
+        });
+        // By default wrap in array for WireFile compatibility
+        return new Rule(Type.Array(fileSchema), message);
     }
 
-    public min(value: number) {
+    public min(value: number, message?: string) {
         const s = this.schema as any;
-        if (s.type === 'string') return new Rule(Type.String({ ...s, minLength: value }), this.customMessage);
-        if (s.type === 'number' || s.type === 'integer') return new Rule(Type.Number({ ...s, minimum: value }), this.customMessage);
+        const msg = message || this.customMessage;
+        if (s.type === 'string') return new Rule(Type.String({ ...s, minLength: value }), msg);
+        if (s.type === 'number' || s.type === 'integer') return new Rule(Type.Number({ ...s, minimum: value }), msg);
+        if (s.type === 'array') return new Rule(Type.Array(s.items, { ...s, minItems: value }), msg);
         return this;
     }
 
-    public max(value: number) {
+    public max(value: number, message?: string) {
         const s = this.schema as any;
-        if (s.type === 'string') return new Rule(Type.String({ ...s, maxLength: value }), this.customMessage);
-        if (s.type === 'number' || s.type === 'integer') return new Rule(Type.Number({ ...s, maximum: value }), this.customMessage);
+        const msg = message || this.customMessage;
+        if (s.type === 'string') return new Rule(Type.String({ ...s, maxLength: value }), msg);
+        if (s.type === 'number' || s.type === 'integer') return new Rule(Type.Number({ ...s, maximum: value }), msg);
+        if (s.type === 'array') return new Rule(Type.Array(s.items, { ...s, maxItems: value }), msg);
         return this;
     }
 
-    public email() {
-        return new Rule(Type.String({ ...this.schema as any, format: 'email' }), this.customMessage);
+    public email(message?: string) {
+        return new Rule(Type.String({ ...this.schema as any, format: 'email' }), message || this.customMessage);
     }
 
     public getSchema() {
@@ -352,16 +337,34 @@ export class Rule<T extends TSchema = TSchema> {
     }
 
     public validate(value: any): { success: boolean; errors: string[] } {
+        // Handle WireFile instances automatically
+        let valToValidate = value;
+        if (value && typeof value === 'object' && value.files && Array.isArray(value.files)) {
+            valToValidate = value.files;
+        }
+
         const C = TypeCompiler.Compile(this.schema);
-        if (C.Check(value)) return { success: true, errors: [] };
+        if (C.Check(valToValidate)) return { success: true, errors: [] };
         
-        // Use custom message if provided, otherwise use TypeBox errors
         if (this.customMessage) {
             return { success: false, errors: [this.customMessage] };
         }
         
-        const errors = [...C.Errors(value)].map(e => e.message);
-        return { success: false, errors };
+        const errors = [...C.Errors(valToValidate)];
+        const firstError = errors[0];
+        let message = firstError ? firstError.message : "Validation failed";
+
+        if (firstError) {
+            const schema = firstError.schema as any;
+            if (firstError.keyword === 'minLength') message = `The field must be at least ${schema.minLength} characters.`;
+            if (firstError.keyword === 'maxLength') message = `The field may not be greater than ${schema.maxLength} characters.`;
+            if (firstError.keyword === 'minimum') message = `The field must be at least ${schema.minimum}.`;
+            if (firstError.keyword === 'maximum') message = `The field may not be greater than ${schema.maximum}.`;
+            if (firstError.keyword === 'minItems') message = `Please select at least ${schema.minItems} file(s).`;
+            if (firstError.keyword === 'maxItems') message = `You may not select more than ${schema.maxItems} file(s).`;
+        }
+
+        return { success: false, errors: [message] };
     }
 }
 
@@ -387,16 +390,18 @@ export function validateRule(value: any, rules: string, customMessage?: string):
         valToValidate = value.files;
     }
 
-    // Manual File Validation
+    // Manual File Validation (for complex MIME rules)
     if (parts.some(p => p === "file" || p.startsWith("file:"))) {
-        const fileParts = Array.isArray(valToValidate) ? valToValidate : [valToValidate];
+        const fileParts = Array.isArray(valToValidate) ? valToValidate : (valToValidate ? [valToValidate] : []);
         
-        // Count validation (max files)
-        const maxRule = parts.find(p => p.startsWith('max:'));
-        if (maxRule) {
-            const maxFiles = parseInt(maxRule.split(':')[1]!);
-            if (fileParts.length > maxFiles) {
-                return { success: false, error: customMessage || `The field may not have more than ${maxFiles} files.` };
+        // Count validation (max files) using min/max syntax if it's a file
+        for (const p of parts) {
+            const [key, raw] = p.split(":", 2);
+            if (key === 'max' && fileParts.length > parseInt(raw!)) {
+                return { success: false, error: customMessage || `You may not select more than ${raw} file(s).` };
+            }
+            if (key === 'min' && fileParts.length < parseInt(raw!)) {
+                return { success: false, error: customMessage || `Please select at least ${raw} file(s).` };
             }
         }
 
@@ -458,7 +463,7 @@ export function validateRule(value: any, rules: string, customMessage?: string):
     let message = firstError ? firstError.message : "Validation failed";
     
     //@ts-expect-error ignore
-    if ("keyword" in firstError) {
+    if (firstError && "keyword" in firstError) {
         if (firstError.keyword === 'minLength') message = `The field must be at least ${firstError.schema.minLength} characters.`;
         if (firstError.keyword === 'maxLength') message = `The field may not be greater than ${firstError.schema.maxLength} characters.`;
         if (firstError.keyword === 'minimum') message = `The field must be at least ${firstError.schema.minimum}.`;

@@ -10,6 +10,7 @@ export interface WireFileOptions {
 
 export class WireFile {
     public files: any[] = [];
+    public uploading = { progress: 100, percent: 100, loaded: 0, total: 0 };
     
     constructor(public options: WireFileOptions = {}) {}
 
@@ -54,16 +55,17 @@ export class WireFile {
             }
         }
         
+        // Completed state structure
+        const completedState = {
+            progress: 100,
+            loaded: 0, 
+            total: 0,
+            percent: 100
+        };
+        this.uploading = completedState;
+
         // Store in temp storage
         this.files = await Promise.all(validFiles.map(async f => {
-            // Completed state structure
-            const completedState = {
-                progress: 100,
-                loaded: f.size,
-                total: f.size,
-                percent: 100
-            };
-
             if (f.content && f.content.startsWith('data:')) {
                 const matches = f.content.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
                 if (matches && matches.length === 3) {
@@ -130,7 +132,8 @@ export class WireFile {
         return {
             _wire_type: 'WireFile',
             options: this.options,
-            files: safeFiles
+            files: safeFiles,
+            uploading: this.uploading
         };
     }
 }

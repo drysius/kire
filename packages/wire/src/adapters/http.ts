@@ -75,6 +75,9 @@ export class HttpAdapter implements ClientAdapter {
                 }
 
                 xhr.onload = () => {
+                    // Force 100% progress at the end
+                    if (onProgress) onProgress(100);
+
                     if (xhr.status >= 200 && xhr.status < 300) {
                         try {
                             resolve(JSON.parse(xhr.responseText));

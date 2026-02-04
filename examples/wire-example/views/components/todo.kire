@@ -6,6 +6,7 @@
             <input 
             type="text" 
             x-model="task" 
+            value="{{ task }}"
             @keydown.enter="$wire.add()"
             placeholder="New Task..." 
             class="input input-bordered join-item w-full" 

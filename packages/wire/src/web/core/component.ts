@@ -14,9 +14,9 @@ export class Component {
 	public name: string;
 	public snapshot: any;
 	public data: any;
-    private canonical: any = {}; // Last known server state
+    private canonical: any = {}; 
 	private cleanupFns: Function[] = [];
-	public activeRequests = new Set<string>();
+	public activeRequests = new Map<string, number>(); 
 	private pendingUpdates: Record<string, any> = {};
 
 	constructor(
@@ -64,7 +64,6 @@ export class Component {
 			});
 		}
 
-		// Re-register listeners if they changed (Livewire does this via effects)
 		if (effects.listeners) {
 			this.initListeners(effects.listeners);
 		}
@@ -119,9 +118,7 @@ export class Component {
 	public destroy() {
 		this.sendRequest({ method: "$unmount", params: [] }, undefined, {
 			keepalive: true,
-		}).catch(() => {
-			// Ignore errors during destroy
-		});
+		}).catch(() => {});
 	}
 
 	public inscribeSnapshotAndEffectsOnElement() {
@@ -134,10 +131,7 @@ export class Component {
 
 	async call(method: string, params: any[] = []) {
 		const lifecycle: any = {
-			onSend: [],
-			onSuccess: [],
-			onError: [],
-			onFinish: [],
+			onSend: [], onSuccess: [], onError: [], onFinish: [],
 		};
 
 		const ctx = {
@@ -169,11 +163,26 @@ export class Component {
 		const updates = { ...this.pendingUpdates, ...payload.updates };
 		this.pendingUpdates = {};
 
-        // Track active upload wrappers to update their progress
-        const activeUploads: any[] = [];
+        // Find all objects with 'uploading' property recursively
+        const uploadStateObjects: any[] = [];
+        const findUploading = (obj: any) => {
+            if (!obj || typeof obj !== 'object') return;
+            if (obj.uploading) {
+                uploadStateObjects.push(obj.uploading);
+            }
+            if (Array.isArray(obj)) {
+                obj.forEach(findUploading);
+            } else {
+                Object.values(obj).forEach(findUploading);
+            }
+        };
+        findUploading(updates);
+
+        // Find uploads wrapper for Multipart check
+        // We define findUploads here so it's in scope
         const findUploads = (obj: any) => {
             if (obj && obj._is_upload_wrapper) {
-                activeUploads.push(obj);
+                // Logic handled in adapter, but we might need tracking here if needed
             } else if (Array.isArray(obj)) {
                 obj.forEach(findUploads);
             } else if (obj && typeof obj === 'object') {
@@ -191,12 +200,8 @@ export class Component {
 			_token: this.getCsrfToken(),
 		};
 
-		// Message Interceptors
 		const messageLifecycle: any = {
-			onSend: [],
-			onSuccess: [],
-			onError: [],
-			onFinish: [],
+			onSend: [], onSuccess: [], onError: [], onFinish: [],
 		};
 		const messageCtx = {
 			message: { component: this, payload: fullPayload },
@@ -207,12 +212,8 @@ export class Component {
 		};
 		runInterceptors(messageInterceptors, messageCtx);
 
-		// Request Interceptors (simplified, assuming 1:1 for now)
 		const requestLifecycle: any = {
-			onSend: [],
-			onSuccess: [],
-			onError: [],
-			onFinish: [],
+			onSend: [], onSuccess: [], onError: [], onFinish: [],
 		};
 		const requestCtx = {
 			request: { url: this.config.endpoint, payload: fullPayload },
@@ -223,26 +224,21 @@ export class Component {
 		};
 		runInterceptors(requestInterceptors, requestCtx);
 
-		this.setLoading(true, payload.method);
+		const method = payload.method || "$refresh";
+		this.setLoading(true, method);
 
 		const lifecycles = [actionLifecycle, messageLifecycle, requestLifecycle];
 		lifecycles.forEach((l) => l?.onSend.forEach((cb: any) => cb()));
 
-        // Progress Handler
         const onProgress = (percent: number) => {
-            activeUploads.forEach(wrapper => {
-                if (wrapper.uploading) {
-                    wrapper.uploading.progress = percent;
-                    wrapper.uploading.percent = Math.round(percent);
-                    wrapper.uploading.loaded = (wrapper.size * percent) / 100;
-                }
+            const rounded = Math.round(percent);
+            uploadStateObjects.forEach(state => {
+                state.progress = percent;
+                state.percent = rounded;
+                if (state.total) state.loaded = (state.total * percent) / 100;
             });
-            // Dispatch a specific upload-progress event if anyone is listening (like loading-progress directive)
-            window.dispatchEvent(
-                new CustomEvent("wire:upload-progress", {
-                    detail: { id: this.id, progress: percent },
-                })
-            );
+            // Use internal trigger for progress
+            trigger("upload.progress", { component: this, progress: percent });
         };
 
 		try {
@@ -252,17 +248,14 @@ export class Component {
                 onProgress
 			);
 
-			lifecycles.forEach((l) =>
-				l?.onSuccess.forEach((cb: any) => cb(response)),
-			);
-
-			this.handleResponse(response, payload.method);
+			lifecycles.forEach((l) => l?.onSuccess.forEach((cb: any) => cb(response)));
+			this.handleResponse(response, method);
 		} catch (e) {
 			console.error(e);
 			lifecycles.forEach((l) => l?.onError.forEach((cb: any) => cb(e)));
 		} finally {
 			lifecycles.forEach((l) => l?.onFinish.forEach((cb: any) => cb()));
-			this.setLoading(false, payload.method);
+			this.setLoading(false, method);
 		}
 	}
 
@@ -282,13 +275,7 @@ export class Component {
 			if (comp.effects.redirect) window.location.href = comp.effects.redirect;
 
 			if (comp.effects.url) {
-				const currentUrl = new URL(window.location.href);
-				// Merge new query params
 				const newParams = new URLSearchParams(comp.effects.url);
-				newParams.forEach((v, k) => currentUrl.searchParams.set(k, v));
-				// Clean empty
-				// history.pushState({}, '', currentUrl.toString());
-				// Kirewire style: replaceState or pushState depending on config, usually push
 				window.history.pushState({}, "", "?" + newParams.toString());
 			}
 
@@ -296,33 +283,22 @@ export class Component {
 				this.morph(comp.effects.html, comp.snapshot);
 			}
 
-			// Dispatch update event for Entangle
-			window.dispatchEvent(
-				new CustomEvent(`wire:update:${this.id}`, {
-					detail: this.data,
-				}),
-			);
+            // Internal event for update
+			trigger("component.updated", { component: this, data: this.data });
+			window.dispatchEvent(new CustomEvent(`wire:update:${this.id}`, { detail: this.data }));
 
 			if (comp.effects.emits) {
-				comp.effects.emits.forEach((e: any) => {
-					// Use new dispatch helper
-					dispatch(this, e.event, e.params);
-				});
+				comp.effects.emits.forEach((e: any) => dispatch(this, e.event, e.params));
 			}
 
-			// Handle Streams (if present in effects)
 			if ((comp.effects as any).streams) {
-				(comp.effects as any).streams.forEach((stream: any) =>
-					this.processStream(stream),
-				);
+				(comp.effects as any).streams.forEach((stream: any) => this.processStream(stream));
 			}
 		});
 	}
 
     private mergeNewState(newData: any) {
         for (const key in newData) {
-            // Only update client state if the server actually changed this property
-            // This prevents overwriting local changes that haven't been synced yet
             const serverValue = newData[key];
             const previousServerValue = this.canonical[key];
 
@@ -330,28 +306,17 @@ export class Component {
                 this.data[key] = serverValue;
             }
         }
-        // Update canonical state to the new server truth
         this.canonical = JSON.parse(JSON.stringify(newData));
     }
 
-	private processStream(stream: {
-		target: string;
-		content: string;
-		replace?: boolean;
-		method?: string;
-	}) {
-		const targets = document.querySelectorAll(
-			`[wire\\:stream="${stream.target}"]`,
-		);
-		targets.forEach((el) => {
-			if (stream.replace) {
-				el.outerHTML = stream.content;
-			} else {
+	private processStream(stream: any) {
+		const targets = document.querySelectorAll(`[wire\\:stream="${stream.target}"]`);
+		targets.forEach((el: any) => {
+			if (stream.replace) el.outerHTML = stream.content;
+			else {
 				const method = stream.method || "append";
-				if (method === "append")
-					el.insertAdjacentHTML("beforeend", stream.content);
-				if (method === "prepend")
-					el.insertAdjacentHTML("afterbegin", stream.content);
+				if (method === "append") el.insertAdjacentHTML("beforeend", stream.content);
+				if (method === "prepend") el.insertAdjacentHTML("afterbegin", stream.content);
 				if (method === "remove") el.remove();
 				if (method === "update") el.innerHTML = stream.content;
 			}
@@ -362,7 +327,6 @@ export class Component {
 		const parser = new DOMParser();
 		const doc = parser.parseFromString(html, "text/html");
 		const newEl = doc.body.firstElementChild as HTMLElement;
-
 		if (!newEl) return;
 		newEl.setAttribute("wire:snapshot", newSnapshot);
 
@@ -370,66 +334,18 @@ export class Component {
 
 		(window as any).Alpine.morph(this.el, newEl, {
 			updating: (el: any, toEl: any, childrenOnly: any, skip: any) => {
-				if (el === this.el) {
-					(toEl as any).__kirewire = this;
+				if (el === this.el) (toEl as any).__kirewire = this;
+				trigger("morph.updating", { el, toEl, component: this, skip, childrenOnly });
+				if (el instanceof Element && el.hasAttribute("wire:ignore")) return skip();
+				if (el instanceof HTMLDialogElement && toEl instanceof HTMLDialogElement) {
+					if (el.hasAttribute('open') && !toEl.hasAttribute('open')) toEl.setAttribute('open', '');
 				}
-
-				trigger("morph.updating", {
-					el,
-					toEl,
-					component: this,
-					skip,
-					childrenOnly,
-				});
-
-				if (el instanceof Element && el.hasAttribute("wire:ignore"))
-					return skip();
-
-				// Dialog preservation logic (keep modal open if it was open on client)
-				if (
-					el instanceof HTMLDialogElement &&
-					toEl instanceof HTMLDialogElement
-				) {
-					if (el.hasAttribute("open") && !toEl.hasAttribute("open")) {
-						toEl.setAttribute("open", "");
-					}
-				}
-
-				// Input preservation logic
-				if (
-					el instanceof HTMLInputElement ||
-					el instanceof HTMLTextAreaElement ||
-					el instanceof HTMLSelectElement
-				) {
-					// If element is focused, skip update to avoid disrupting user
+				if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
 					if (el === document.activeElement) return skip();
-
-					// If it has wire:model.defer, we trust client state over server state during polls/updates
-					// (unless it's a specific response to a save action, but here we are general)
 					if (el.hasAttribute("wire:model.defer")) return skip();
-
 					if (toEl instanceof Element && el.hasAttribute("wire:model")) {
-						// Check if value changed on server
-						let newValue;
-						if (
-							el instanceof HTMLTextAreaElement ||
-							el instanceof HTMLSelectElement
-						) {
-							newValue = (toEl as any).value;
-						} else {
-							newValue = toEl.getAttribute("value");
-						}
-
-						const currentValue = el.value;
-
-						// If the server value is effectively the same as current value,
-						// we skip DOM update to preserve cursor position / selection state.
-						if (newValue === currentValue) {
-							return skip();
-						}
-
-						// If values are different (e.g. server cleared the input),
-						// we allow the update to proceed (no skip).
+						let newValue = (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) ? (toEl as any).value : toEl.getAttribute("value");
+						if (newValue === el.value) return skip();
 						el.value = (toEl as any).value;
 						return;
 					}
@@ -437,48 +353,36 @@ export class Component {
 			},
 			key: (el: any) => {
 				if (typeof el.hasAttribute !== "function") return;
-				return el.hasAttribute(`wire:id`)
-					? el.getAttribute(`wire:id`)
-					: el.hasAttribute(`wire:key`)
-						? el.getAttribute(`wire:key`)
-						: el.id;
+				return el.hasAttribute(`wire:id`) ? el.getAttribute(`wire:id`) : el.hasAttribute(`wire:key`) ? el.getAttribute(`wire:key`) : el.id;
 			},
 		});
 
 		trigger("morphed", { el: this.el, component: this });
 	}
 
-	private setLoading(loading: boolean, target?: string) {
-		// Use a unique key for each request type to allow concurrency tracking
-		// If target is undefined (global), we use 'global'
-		// If target is '$set', we might want to differentiate *which* property?
-		// For now, simple target tracking.
+	public setLoading(loading: boolean, target?: string) {
 		const key = target || "global";
+        let count = this.activeRequests.get(key) || 0;
 
 		if (loading) {
-			this.activeRequests.add(key);
+            count++;
+			this.activeRequests.set(key, count);
 			this.el.setAttribute("wire:loading-state", "true");
 		} else {
-			this.activeRequests.delete(key);
+            count = Math.max(0, count - 1);
+            if (count === 0) this.activeRequests.delete(key);
+            else this.activeRequests.set(key, count);
+            
 			if (this.activeRequests.size === 0) {
 				this.el.removeAttribute("wire:loading-state");
 			}
 		}
 
-		const anyLoading = this.activeRequests.size > 0;
-
-		window.dispatchEvent(
-			new CustomEvent("wire:loading", {
-				detail: { id: this.id, loading, target, anyLoading },
-			}),
-		);
+        // Use internal hook instead of window event
+        trigger("loading", { component: this, loading, target, anyLoading: this.activeRequests.size > 0 });
 	}
 
 	private getCsrfToken() {
-		return (
-			document
-				.querySelector(`meta[name="${this.config.csrf || "csrf-token"}"]`)
-				?.getAttribute("content") || undefined
-		);
+		return document.querySelector(`meta[name="${this.config.csrf || "csrf-token"}"]`)?.getAttribute("content") || undefined;
 	}
 }
