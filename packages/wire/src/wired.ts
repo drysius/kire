@@ -8,10 +8,12 @@ import { attachContext } from "./core/context";
 import { registerDirectives } from "./core/directives";
 import { processRequest } from "./core/process";
 import { registry } from "./core/registry";
+import { WireFileCaching, WireMemoryCaching } from "./core/cache";
 import type {
 	WireContext,
 	WiredRequest,
 	WireOptions,
+    WireCacheDriver,
 } from "./types";
 import { JWT } from "./utils/crypto";
 
@@ -22,6 +24,21 @@ export class Wired {
 		secret: randomUUID(),
 		expire: "10m",
 	};
+
+    public static cache: WireCacheDriver;
+
+    public static async storeTempFile(buffer: Buffer | any, mime: string, name: string): Promise<string> {
+        const id = randomUUID();
+        // Fire and forget auto-expire logic if needed, but cache driver usually handles persistence.
+        // For FS cache, we might want a cleanup job, but simple setTimeout is fine for prototype.
+        await Wired.cache.set(id, buffer, mime);
+        setTimeout(() => Wired.cache.del(id), 1000 * 60 * 60);
+        return id;
+    }
+
+    public static async getTempFile(id: string) {
+        return await Wired.cache.get(id);
+    }
 
 	public static invalid = { code: 400, error: "Invalid Request", data: {} };
 	public static checksum: ChecksumManager;
@@ -36,6 +53,13 @@ export class Wired {
 			if (!Wired.options.secret) Wired.options.secret = randomUUID();
 
 			Wired.checksum = new ChecksumManager(() => Wired.options.secret!);
+
+            // Initialize Cache
+            if (Wired.options.cache) {
+                Wired.cache = Wired.options.cache;
+            } else {
+                Wired.cache = new WireMemoryCaching(kire);
+            }
 
 			// Expose Wired on Kire instance
 			kire.$ctx("Wired", Wired);
@@ -185,27 +209,70 @@ export class Wired {
 		// Expects body to be parsed by framework (e.g. Elysia)
 		if (body && typeof body === "object" && body._wired_payload) {
 			try {
-				const originalPayload = JSON.parse(body._wired_payload);
+                let payloadData = body._wired_payload;
+                
+                if (Array.isArray(payloadData)) {
+                    payloadData = payloadData[payloadData.length - 1]; // Take last if multiple?
+                }
+
+                // Fastify multipart might wrap field values in objects { value: '...' }
+                if (typeof payloadData === 'object' && payloadData !== null && 'value' in payloadData) {
+                    payloadData = payloadData.value;
+                }
+
+                if (typeof payloadData !== 'string') {
+                    return Wired.invalid;
+                }
+
+				const originalPayload = JSON.parse(payloadData);
 
 				// Recursively restore files
 				const restoreFiles = async (obj: any): Promise<any> => {
 					if (obj && typeof obj === "object") {
 						if (obj._wire_file) {
 							const fileId = obj._wire_file;
-							const file = body[fileId];
+							let file = body[fileId];
+                            
+                            // Fastify array of files support (though usually one per id here)
+                            if (Array.isArray(file)) file = file[0];
+
 							if (file) {
-								// Convert Blob/File to Base64 (Server-side)
-								// Adapting to standard File API (Bun/Node)
-								const arrayBuffer = await file.arrayBuffer();
-								const buffer = Buffer.from(arrayBuffer);
+                                let buffer: Buffer;
+                                let mime = file.mimetype || file.type || "application/octet-stream";
+                                let name = file.filename || file.name || "unknown";
+                                let size = file.size || 0;
+                                let lastModified = file.lastModified || Date.now();
+
+                                if (typeof file.toBuffer === 'function') {
+                                    // Fastify / Busboy MultipartFile
+                                    buffer = await file.toBuffer();
+                                    size = buffer.length;
+                                } else if (typeof file.arrayBuffer === 'function') {
+                                    // Standard Blob/File
+                                    const arrayBuffer = await file.arrayBuffer();
+                                    buffer = Buffer.from(arrayBuffer);
+                                } else if (file.data && Buffer.isBuffer(file.data)) {
+                                    // Fastify / Busboy
+                                    buffer = file.data;
+                                    if (file.mimetype) mime = file.mimetype;
+                                    if (file.filename) name = file.filename;
+                                    size = buffer.length;
+                                } else if (Buffer.isBuffer(file)) {
+                                    // Raw Buffer
+                                    buffer = file;
+                                    size = buffer.length;
+                                } else {
+                                    // Unknown or invalid file format
+                                    return null;
+                                }
+
 								const base64 = buffer.toString("base64");
-								const mime = file.type || "application/octet-stream";
 
 								return {
-									name: file.name,
-									size: file.size,
+									name: name,
+									size: size,
 									type: mime,
-									lastModified: file.lastModified,
+									lastModified: lastModified,
 									content: `data:${mime};base64,${base64}`,
 								};
 							}

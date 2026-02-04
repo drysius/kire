@@ -3,7 +3,6 @@ import { WireComponent } from "@kirejs/wire";
 export default class Receiver extends WireComponent {
 	public message = "Waiting...";
 
-	// Listen for 'hello' event and call 'updateMessage'
 	public listeners = {
 		hello: "updateMessage",
 	};

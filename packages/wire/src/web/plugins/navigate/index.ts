@@ -40,13 +40,13 @@ import {
 	unPackPersistedTeleports,
 } from "./teleport";
 
-const enablePersist = true;
+let enablePersist = true;
 let showProgressBar = true;
-const restoreScroll = true;
-const autofocus = false;
+let restoreScroll = true;
+let autofocus = false;
 
 export default function (Alpine: any) {
-	(Alpine as any).navigate = (url: string, options: any = {}) => {
+	Alpine.navigate = (url: string, options: any = {}) => {
 		const { preserveScroll = false } = options;
 
 		const destination = createUrlObjectFromString(url);
@@ -62,7 +62,7 @@ export default function (Alpine: any) {
 		if (destination) navigateTo(destination, { preserveScroll });
 	};
 
-	(Alpine as any).navigate.disableProgressBar = () => {
+	Alpine.navigate.disableProgressBar = () => {
 		showProgressBar = false;
 	};
 
@@ -86,67 +86,44 @@ export default function (Alpine: any) {
 		}),
 	);
 
-	Alpine.directive("navigate", (el: HTMLElement, { modifiers }: any) => {
-		const shouldPrefetchOnHover = modifiers.includes("hover");
+    Alpine.directive('navigate', (el: HTMLElement, { modifiers }: any) => {
+        const shouldPrefetchOnHover = modifiers.includes('hover');
+        const preserveScroll = modifiers.includes('preserve-scroll');
 
-		const preserveScroll = modifiers.includes("preserve-scroll");
+        shouldPrefetchOnHover && whenThisLinkIsHoveredFor(el, 60, () => {
+            const destination = extractDestinationFromLink(el);
 
-		shouldPrefetchOnHover &&
-			whenThisLinkIsHoveredFor(el, 60, () => {
-				const destination = extractDestinationFromLink(el);
+            if (! destination) return;
 
-				if (!destination) return;
+            prefetchHtml(destination, (html, finalDestination) => {
+                storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination!, finalDestination);
+            }, () => {
+                showProgressBar && finishAndHideProgressBar();
+            });
+        });
 
-				prefetchHtml(
-					destination,
-					(html, finalDestination) => {
-						storeThePrefetchedHtmlForWhenALinkIsClicked(
-							html,
-							destination!,
-							finalDestination,
-						);
-					},
-					() => {
-						showProgressBar && finishAndHideProgressBar();
-					},
-				);
-			});
+        whenThisLinkIsPressed(el, (whenItIsReleased) => {
+            const destination = extractDestinationFromLink(el);
 
-		whenThisLinkIsPressed(el, (whenItIsReleased) => {
-			const destination = extractDestinationFromLink(el);
+            if (! destination) return;
 
-			if (!destination) return;
+            prefetchHtml(destination, (html, finalDestination) => {
+                storeThePrefetchedHtmlForWhenALinkIsClicked(html, destination!, finalDestination);
+            }, () => {
+                showProgressBar && finishAndHideProgressBar();
+            });
 
-			prefetchHtml(
-				destination,
-				(html, finalDestination) => {
-					storeThePrefetchedHtmlForWhenALinkIsClicked(
-						html,
-						destination!,
-						finalDestination,
-					);
-				},
-				() => {
-					showProgressBar && finishAndHideProgressBar();
-				},
-			);
+            whenItIsReleased(() => {
+                const prevented = fireEventForOtherLibrariesToHookInto('alpine:navigate', {
+                    url: destination, history: false, cached: false,
+                 });
 
-			whenItIsReleased(() => {
-				const prevented = fireEventForOtherLibrariesToHookInto(
-					"alpine:navigate",
-					{
-						url: destination,
-						history: false,
-						cached: false,
-					},
-				);
+                if (prevented) return;
 
-				if (prevented) return;
-
-				navigateTo(destination, { preserveScroll });
-			});
-		});
-	});
+                navigateTo(destination!, { preserveScroll });
+            });
+        });
+    });
 
 	function navigateTo(
 		destination: URL,
@@ -157,7 +134,7 @@ export default function (Alpine: any) {
 		fetchHtmlOrUsePrefetchedHtml(
 			destination,
 			(html, finalDestination) => {
-				const swapCallbacks: Function[] = [];
+				const swapCallbacks: any[] = [];
 
 				fireEventForOtherLibrariesToHookInto("alpine:navigating", {
 					onSwap: (callback: Function) => swapCallbacks.push(callback),
@@ -165,7 +142,7 @@ export default function (Alpine: any) {
 
 				restoreScroll && storeScrollInformationInHtmlBeforeNavigatingAway();
 
-				cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement();
+				cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement(Alpine);
 
 				updateCurrentPageHtmlInHistoryStateForLaterBackButtonClicks();
 
@@ -221,8 +198,8 @@ export default function (Alpine: any) {
 
 	whenTheBackOrForwardButtonIsClicked(
 		(ifThePageBeingVisitedHasntBeenCached) => {
-			ifThePageBeingVisitedHasntBeenCached((url: URL) => {
-				const destination = createUrlObjectFromString(url.toString());
+			ifThePageBeingVisitedHasntBeenCached((url: string) => {
+				const destination = createUrlObjectFromString(url);
 
 				const prevented = fireEventForOtherLibrariesToHookInto(
 					"alpine:navigate",
@@ -255,7 +232,7 @@ export default function (Alpine: any) {
 
 			storeScrollInformationInHtmlBeforeNavigatingAway();
 
-			const swapCallbacks: Function[] = [];
+			const swapCallbacks: any[] = [];
 
 			fireEventForOtherLibrariesToHookInto("alpine:navigating", {
 				onSwap: (callback: Function) => swapCallbacks.push(callback),
@@ -350,18 +327,18 @@ function nowInitializeAlpineOnTheNewPage(Alpine: any) {
 }
 
 function autofocusElementsWithTheAutofocusAttribute() {
-	(document.querySelector("[autofocus]") as HTMLElement)?.focus();
+	const el = document.querySelector("[autofocus]") as HTMLElement;
+    if (el) el.focus();
 }
 
-function cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement() {
-	const Alpine = (window as any).Alpine;
+function cleanupAlpineElementsOnThePageThatArentInsideAPersistedElement(Alpine: any) {
+    const walker = function (root: HTMLElement, callback: Function) {
+        Alpine.walk(root, (el: any, skip: Function) => {
+            if (isPersistedElement(el)) skip();
+            if (isTeleportTarget(el)) skip();
+            else callback(el, skip);
+        });
+    };
 
-	Alpine.walk(document.body, (el: any, skip: Function) => {
-		if (isPersistedElement(el)) return skip();
-		if (isTeleportTarget(el)) return skip();
-
-		if (el._x_cleanups) {
-			while (el._x_cleanups.length) el._x_cleanups.pop()();
-		}
-	});
+    Alpine.destroyTree(document.body, walker);
 }

@@ -1,5 +1,14 @@
+import collapse from '@alpinejs/collapse';
+import focus from '@alpinejs/focus';
+import persist from '@alpinejs/persist';
+import intersect from '@alpinejs/intersect';
+import sort from '@alpinejs/sort';
+import resize from '@alpinejs/resize';
+import anchor from '@alpinejs/anchor';
+import mask from '@alpinejs/mask';
 import morph from "@alpinejs/morph";
 import Alpine from "alpinejs";
+import { dispatchGlobal, dispatchTo } from './core/events';
 import { on, trigger, triggerAsync } from "./core/hooks";
 import {
 	interceptAction,
@@ -10,34 +19,11 @@ import { directive } from "./core/registry";
 import { allComponents, findComponent, first, getByName } from "./core/store";
 import WiredAlpinePlugin from "./lifecycle";
 import navigate from "./plugins/navigate";
+import history from "./plugins/history";
+import historyCoordinator from "./plugins/history/coordinator";
 
 //@ts-expect-error ignore
 window.Alpine = Alpine;
-
-function dispatch(name: string, params: any) {
-	window.dispatchEvent(
-		new CustomEvent(name, {
-			detail: params,
-			bubbles: true,
-			composed: true,
-			cancelable: true,
-		}),
-	);
-}
-
-function dispatchTo(componentName: string, name: string, params: any) {
-	const components = getByName(componentName);
-	components.forEach((component) => {
-		component.el.dispatchEvent(
-			new CustomEvent(name, {
-				detail: params,
-				bubbles: false,
-				composed: true,
-				cancelable: true,
-			}),
-		);
-	});
-}
 
 function fireAction(component: any, method: string, params: any[] = []) {
 	if (typeof component === "string") component = findComponent(component);
@@ -51,7 +37,7 @@ const Kirewire = {
 	find: findComponent,
 	getByName,
 	all: allComponents,
-	dispatch,
+	dispatch: dispatchGlobal,
 	dispatchTo,
 	fireAction,
 	on,
@@ -61,6 +47,7 @@ const Kirewire = {
 	interceptAction,
 	interceptMessage,
 	interceptRequest,
+    history: historyCoordinator, // Ponto central de histórico
 	get navigate() {
 		return (Alpine as any).navigate;
 	},
@@ -75,7 +62,17 @@ const Kirewire = {
 //@ts-expect-error ignore
 window.Kirewire = Kirewire;
 
+// Plugins
+Alpine.plugin(collapse);
+Alpine.plugin(focus);
+Alpine.plugin(persist);
+Alpine.plugin(intersect);
+Alpine.plugin(sort);
+Alpine.plugin(resize);
+Alpine.plugin(anchor);
+Alpine.plugin(mask);
 Alpine.plugin(morph);
+Alpine.plugin(history);
 Alpine.plugin(navigate);
 Alpine.plugin(WiredAlpinePlugin);
 

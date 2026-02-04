@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import type { Kire } from "kire";
 import type { WireContext } from "./types";
+import { WireFile } from "./core/file";
+import { Rule, validateRule } from "./core/rule";
+import type { TSchema } from "@sinclair/typebox";
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 export abstract class WireComponent {
 	public __id: string = randomUUID();
@@ -45,23 +49,61 @@ export abstract class WireComponent {
 	public async hydrated(): Promise<void> {}
 	public async rendered(): Promise<void> {}
 
+    public rule(rules: string, message?: string) {
+        return { _is_rule_helper: true, rules, message };
+    }
+
 	/**
 	 * Simple validation helper.
 	 * In a real app, use Zod or similar.
 	 * @param rules Object where key is property and value is a validation function or regex
 	 */
 	public validate(
-		rules: Record<string, (val: any) => string | boolean | undefined>,
+		rules: Record<string, ((val: any) => string | boolean | undefined) | Rule | string | TSchema | { _is_rule_helper: boolean; rules: string; message?: string }>,
 	) {
 		this.clearErrors();
 		let isValid = true;
 		for (const [prop, validator] of Object.entries(rules)) {
 			const val = (this as any)[prop];
-			const result = validator(val);
-			if (result === false || typeof result === "string") {
-				this.addError(prop, typeof result === "string" ? result : "Invalid");
-				isValid = false;
-			}
+            
+            if (typeof validator === 'string') {
+                const result = validateRule(val, validator);
+                if (!result.success) {
+                    this.addError(prop, result.error || "Invalid");
+                    isValid = false;
+                }
+            } else if (validator instanceof Rule) {
+                const result = validator.validate(val);
+                if (!result.success) {
+                    this.addError(prop, result.errors[0] || "Invalid");
+                    isValid = false;
+                }
+            } else if (typeof validator === 'object' && validator !== null) {
+                // Handle TypeBox Schema directly
+                if ('kind' in validator || 'type' in validator) {
+                     const C = TypeCompiler.Compile(validator as TSchema);
+                     if (!C.Check(val)) {
+                         const error = [...C.Errors(val)][0];
+                         this.addError(prop, error?.message || "Invalid");
+                         isValid = false;
+                     }
+                }
+                // Handle this.rule() helper object
+                else if ('_is_rule_helper' in validator && (validator as any)._is_rule_helper) {
+                    const helper = validator as any;
+                    const result = validateRule(val, helper.rules, helper.message);
+                    if (!result.success) {
+                        this.addError(prop, result.error || "Invalid");
+                        isValid = false;
+                    }
+                }
+            } else if (typeof validator === 'function') {
+			    const result = validator(val);
+			    if (result === false || typeof result === "string") {
+				    this.addError(prop, typeof result === "string" ? result : "Invalid");
+				    isValid = false;
+			    }
+            }
 		}
 		return isValid;
 	}
@@ -282,7 +324,12 @@ export abstract class WireComponent {
 				key !== "iat" &&
 				key !== "exp"
 			) {
-				(this as any)[key] = value;
+                if ((this as any)[key] instanceof WireFile && value && typeof value === 'object' && (value as any)._wire_type === 'WireFile') {
+                    (this as any)[key].options = (value as any).options;
+                    (this as any)[key].files = (value as any).files;
+                } else {
+				    (this as any)[key] = value;
+                }
 			}
 		}
 	}

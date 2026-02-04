@@ -10,6 +10,9 @@ declare module 'kire' {
 export * from "./component";
 export * from "./page-component";
 export * from "./traits/pagination";
+export * from "./core/file";
+export * from "./core/rule";
+export * from "./core/cache";
 export * from "./types";
 export * from "./wired";
 

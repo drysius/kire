@@ -18,6 +18,17 @@ export interface WireOptions {
 	csrf?: string;
 	expire?: string; // e.g. "10m"
 	onPayload?: (wired: WiredRequest) => void;
+    cache?: WireCacheDriver;
+}
+
+export interface WireCacheDriver {
+    get(key: string): Promise<{ stream: ReadableStream | NodeJS.ReadableStream | Buffer; mime: string } | null>;
+    set(key: string, value: ReadableStream | NodeJS.ReadableStream | Buffer | string, mime: string): Promise<void>;
+    del(key: string): Promise<void>;
+
+    put(key: string, value: any, ttl?: number): Promise<void>;
+    retrieve<T>(key: string): Promise<T | null>;
+    forget(key: string): Promise<void>;
 }
 
 export interface WirePayload {

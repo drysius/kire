@@ -197,5 +197,8 @@ function ignoreAttributes(subject: string, attributesToRemove: string[]) {
 		const regex = new RegExp(`${attr}="[^"]*"|${attr}='[^']*'`, "g");
 		result = result.replace(regex, "");
 	});
-	return result.replace(/\s/g, "").trim(); // simplified replaceAll ' '
+	// Remove all whitespace to make things less flaky...
+    result = result.replaceAll(' ', '');
+
+	return result.trim();
 }

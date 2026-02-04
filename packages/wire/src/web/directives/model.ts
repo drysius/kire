@@ -28,9 +28,40 @@ directive("model", (el, dir, component) => {
 			let val: any = null;
 
 			if (input.files && input.files.length > 0) {
-				// Pass raw File objects. The HttpAdapter will handle FormData conversion.
-				val = input.multiple ? Array.from(input.files) : input.files[0];
+                // Helper to wrap file with progress state
+                const wrapFile = (file: File) => {
+                    // Create a reactive proxy if Alpine is available to ensure UI updates
+                    const wrapper = {
+                        _is_upload_wrapper: true,
+                        rawFile: file,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        lastModified: file.lastModified,
+                        uploading: {
+                            progress: 0,
+                            loaded: 0,
+                            total: file.size,
+                            percent: 0 // Alias for convenience
+                        }
+                    };
+                    
+                    const Alpine = (window as any).Alpine;
+                    return Alpine ? Alpine.reactive(wrapper) : wrapper;
+                };
+
+				val = input.multiple 
+                    ? Array.from(input.files).map(wrapFile) 
+                    : wrapFile(input.files[0]);
 			}
+
+            // Immediately set the property on the component to trigger Alpine UI updates
+            // (optimistic UI for "file selected")
+            if (val) {
+                if (component.data) {
+                    component.data[prop] = val;
+                }
+            }
 
 			if (isDefer) {
 				component.deferUpdate({ [prop]: val });
@@ -52,6 +83,4 @@ directive("model", (el, dir, component) => {
 			component.update({ [prop]: val });
 		}, debounce);
 	});
-
-	// Initial Sync
 });

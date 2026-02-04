@@ -32,7 +32,6 @@ export default function history(Alpine: any) {
 
 					pop(async (newValue: any) => {
 						setter(newValue);
-						// ...so that we preserve the internal lock...
 						await Promise.resolve();
 					});
 				}
@@ -40,21 +39,20 @@ export default function history(Alpine: any) {
 				return initial;
 			},
 			(func: any) => {
-				func.alwaysShow = () => {
-					alwaysShow = true;
-					return func;
-				};
-				func.usePush = () => {
-					usePush = true;
-					return func;
-				};
-				func.as = (key: string) => {
-					alias = key;
-					return func;
-				};
+				func.alwaysShow = () => { alwaysShow = true; return func; };
+				func.usePush = () => { usePush = true; return func; };
+				func.as = (key: string) => { alias = key; return func; };
 			},
 		);
-	})(Alpine as any).history = { track };
+	});
+    
+    // Expõe no Alpine estilo Livewire
+    Alpine.history = { track };
+    
+    // Garante que o coordenador use o Alpine para efeitos se necessário
+    historyCoordinator.addErrorHandler('alpine', (err: any) => {
+        // console.warn('Alpine History Error:', err);
+    });
 }
 
 export function track(
@@ -108,30 +106,18 @@ export function track(
 
 	return {
 		initial: initialValue,
-
-		replace(newValue: any) {
-			// Update via replaceState...
-			update(replace, newValue);
-		},
-
-		push(newValue: any) {
-			// Update via pushState...
-			update(push, newValue);
-		},
-
+		replace(newValue: any) { update(replace, newValue); },
+		push(newValue: any) { update(push, newValue); },
 		pop(receiver: Function) {
-			// "popstate" handler...
 			const handler = (e: PopStateEvent) => {
-				if (!e.state || !e.state.alpine) return;
+                const state = e.state || (historyCoordinator as any).state;
+				if (!state || !state.alpine) return;
 
-				Object.entries(e.state.alpine).forEach(
+				Object.entries(state.alpine).forEach(
 					([iName, { value: newValue }]: any) => {
 						if (iName !== name) return;
-
 						lock = true;
-
 						const result = receiver(newValue);
-
 						if (result instanceof Promise) {
 							result.finally(() => (lock = false));
 						} else {
@@ -142,7 +128,6 @@ export function track(
 			};
 
 			window.addEventListener("popstate", handler);
-
 			return () => window.removeEventListener("popstate", handler);
 		},
 	};

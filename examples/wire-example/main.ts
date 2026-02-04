@@ -180,10 +180,14 @@ void (async () => {
 			const isValid = Wired.validate(context.body);
 			if (isValid) {
 				// 2. Process the request
-				console.log("Validation passed. Processing payload...");
+                const payload = context.body as any;
+                const comp = payload.component || (payload.snapshot ? JSON.parse(payload.snapshot).memo.name : 'unknown');
+                const method = payload.method || '$refresh';
+				console.log(`[Wired] Processing ${comp}@${method}`);
+                
 				const result = await Wired.payload(
 					context.wireKey,
-					context.body as any,
+					payload,
                     {}, // context overrides
                     context.kire // Pass the request-scoped kire instance
 				);

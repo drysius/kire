@@ -4,9 +4,6 @@ import { Kire } from "kire";
 import Wired from "../src/index";
 import { WireComponent } from "../src/component";
 
-// Mock component registry since we are not using the full Wired setup with file scanning
-import { registry } from "../src/core/registry";
-
 class ExampleComponent extends WireComponent {
     async render() {
         return this.view('example');

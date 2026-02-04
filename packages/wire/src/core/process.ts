@@ -1,5 +1,6 @@
 import type { Kire } from "kire";
 import type { WireComponent } from "../component";
+import { WireFile } from "./file";
 import type {
 	WireContext,
 	WirePayload,
@@ -218,7 +219,11 @@ export function initializeComponent(
 ) {
 	instance.context = { kire: kire, ...overrides };
 	if (memo.id) instance.__id = memo.id;
-	instance.listeners = memo.listeners || {};
+    
+    // Merge: start with class listeners, overwrite with snapshot if any
+    const classListeners = instance.listeners || {};
+    const memoListeners = memo.listeners || {};
+	instance.listeners = { ...classListeners, ...memoListeners };
 }
 
 export async function applyUpdates(
@@ -229,10 +234,37 @@ export async function applyUpdates(
 		if (isReservedProperty(prop)) continue;
 
 		if (prop in instance) {
-			await instance.updating(prop, value);
-			(instance as any)[prop] = value;
-			instance.clearErrors(prop);
-			await instance.updated(prop, value);
+            const currentVal = (instance as any)[prop];
+            
+            if (currentVal instanceof WireFile) {
+                await instance.updating(prop, value);
+                currentVal.populate(Array.isArray(value) ? value : [value], instance, prop);
+                
+                // Only clear errors if NO new errors were added during populate
+                // But populate adds errors. 
+                // instance.clearErrors(prop) clears ALL errors for prop.
+                // We should clear BEFORE populate?
+                // Livewire clears before validation usually.
+                
+                // instance.clearErrors(prop); // Let's clear before populate? 
+                // But populate is synchronous here (in my impl).
+                // If I clear after, I wipe the errors I just added.
+                // So clear FIRST.
+                
+                // Wait, if I clear first, I clear previous errors.
+                // Re-populating implies new input, so clearing old errors is correct.
+                
+                // Let's modify the order:
+                instance.clearErrors(prop);
+                currentVal.populate(Array.isArray(value) ? value : [value], instance, prop);
+                
+                await instance.updated(prop, value);
+            } else {
+			    await instance.updating(prop, value);
+			    (instance as any)[prop] = value;
+			    instance.clearErrors(prop);
+			    await instance.updated(prop, value);
+            }
 		}
 	}
 }
@@ -359,11 +391,12 @@ export function createResponse(
 		dirty: updates ? Object.keys(updates) : [],
 	};
 
-	if (instance.__events.length > 0)
+	if (instance.__events.length > 0) {
 		effects.emits = instance.__events.map((e) => ({
 			event: e.name,
 			params: e.params,
 		}));
+    }
 
 	if (instance.__streams.length > 0)
 		(effects as any).streams = instance.__streams;
