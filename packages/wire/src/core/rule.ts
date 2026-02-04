@@ -13,8 +13,7 @@ import {
     Type,
     FormatRegistry
 } from "@sinclair/typebox";
-import { TypeCompiler } from "@sinclair/typebox/compiler";
-// @ts-expect-error Node.js 20+ feature
+import { TypeCompiler, type ValueError } from "@sinclair/typebox/compiler";
 import { MIMEType } from "node:util";
 
 // Setup standard formats
@@ -109,8 +108,7 @@ type BaseSchema<TRules extends string> =
 
 type WithOptional<
     TRules extends string,
-    S extends TSchema,
- Lark extends TSchema,
+    S extends TSchema
 > = IsOptional<TRules> extends true ? TOptional<S> : S;
 
 /** Schema inferido (quando TRules é literal). */
@@ -356,12 +354,12 @@ export class Rule<T extends TSchema = TSchema> {
 
         if (firstError) {
             const schema = firstError.schema as any;
-            if (firstError.keyword === 'minLength') message = `The field must be at least ${schema.minLength} characters.`;
-            if (firstError.keyword === 'maxLength') message = `The field may not be greater than ${schema.maxLength} characters.`;
-            if (firstError.keyword === 'minimum') message = `The field must be at least ${schema.minimum}.`;
-            if (firstError.keyword === 'maximum') message = `The field may not be greater than ${schema.maximum}.`;
-            if (firstError.keyword === 'minItems') message = `Please select at least ${schema.minItems} file(s).`;
-            if (firstError.keyword === 'maxItems') message = `You may not select more than ${schema.maxItems} file(s).`;
+            if (firstError.path === 'minLength') message = `The field must be at least ${schema.minLength} characters.`;
+            if (firstError.path === 'maxLength') message = `The field may not be greater than ${schema.maxLength} characters.`;
+            if (firstError.path === 'minimum') message = `The field must be at least ${schema.minimum}.`;
+            if (firstError.path === 'maximum') message = `The field may not be greater than ${schema.maximum}.`;
+            if (firstError.path === 'minItems') message = `Please select at least ${schema.minItems} file(s).`;
+            if (firstError.path === 'maxItems') message = `You may not select more than ${schema.maxItems} file(s).`;
         }
 
         return { success: false, errors: [message] };
@@ -462,14 +460,24 @@ export function validateRule(value: any, rules: string, customMessage?: string):
     const firstError = errors[0];
     let message = firstError ? firstError.message : "Validation failed";
     
-    //@ts-expect-error ignore
-    if (firstError && "keyword" in firstError) {
-        if (firstError.keyword === 'minLength') message = `The field must be at least ${firstError.schema.minLength} characters.`;
-        if (firstError.keyword === 'maxLength') message = `The field may not be greater than ${firstError.schema.maxLength} characters.`;
-        if (firstError.keyword === 'minimum') message = `The field must be at least ${firstError.schema.minimum}.`;
-        if (firstError.keyword === 'maximum') message = `The field may not be greater than ${firstError.schema.maximum}.`;
-        if (firstError.keyword === 'format') message = `The field format is invalid (${firstError.schema.format}).`;
-        if (firstError.keyword === 'pattern') message = `The field format is invalid.`;
+    // Use type-safe access to error properties
+    if (firstError) {
+        const errorSchema = firstError.schema as any;
+        const errorPath = firstError.path;
+        
+        if (errorPath === 'minLength' || errorPath === 'minLength?') {
+            message = `The field must be at least ${errorSchema.minLength} characters.`;
+        } else if (errorPath === 'maxLength' || errorPath === 'maxLength?') {
+            message = `The field may not be greater than ${errorSchema.maxLength} characters.`;
+        } else if (errorPath === 'minimum' || errorPath === 'minimum?') {
+            message = `The field must be at least ${errorSchema.minimum}.`;
+        } else if (errorPath === 'maximum' || errorPath === 'maximum?') {
+            message = `The field may not be greater than ${errorSchema.maximum}.`;
+        } else if (errorPath === 'format' || errorPath === 'format?') {
+            message = `The field format is invalid (${errorSchema.format}).`;
+        } else if (errorPath === 'pattern' || errorPath === 'pattern?') {
+            message = `The field format is invalid.`;
+        }
     }
 
     return { success: false, error: message };

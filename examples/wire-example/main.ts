@@ -132,7 +132,7 @@ void (async () => {
 
 	app.get("/stream", async (context) => {
 		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.todo", {
+		return await context.kire.view("pages.stream", {
 			$wireToken: context.wireKey,
 			user: context.user,
 		});

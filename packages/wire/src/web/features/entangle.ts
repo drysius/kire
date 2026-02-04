@@ -6,11 +6,11 @@ export function generateEntangleFunction(component: any, Alpine: any) {
 			(initial: any, getter: any, setter: any) => {
 				let externalUpdate = false;
 
-				// 1. Wire -> Alpine
+				// 1. Wire -> Alpine (Event Listener - "Old Logic")
 				const handler = (e: any) => {
 					if (name in e.detail) {
 						const newValue = e.detail[name];
-						if (newValue !== getter()) {
+						if (JSON.stringify(newValue) !== JSON.stringify(getter())) {
 							externalUpdate = true;
 							setter(newValue);
 							externalUpdate = false;
@@ -19,17 +19,17 @@ export function generateEntangleFunction(component: any, Alpine: any) {
 				};
 				window.addEventListener(`wire:update:${component.id}`, handler);
 
-				// 2. Alpine -> Wire
+				// 2. Alpine -> Wire (Reactive)
 				Alpine.effect(() => {
-					const value = getter();
+					const alpineValue = getter();
 
 					if (externalUpdate) return; // Skip if triggered by Wire update
 
-					if (JSON.stringify(value) !== JSON.stringify(component.data[name])) {
+					if (JSON.stringify(alpineValue) !== JSON.stringify(component.data[name])) {
 						if (live) {
-							component.update({ [name]: value });
+							component.update({ [name]: alpineValue });
 						} else {
-							component.deferUpdate({ [name]: value });
+							component.deferUpdate({ [name]: alpineValue });
 						}
 					}
 				});
@@ -50,4 +50,10 @@ export function generateEntangleFunction(component: any, Alpine: any) {
 			},
 		)(initialValue);
 	};
+}
+
+function cloneIfObject(value: any) {
+    return typeof value === 'object' && value !== null
+        ? JSON.parse(JSON.stringify(value))
+        : value;
 }

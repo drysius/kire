@@ -163,26 +163,17 @@ export class Component {
 		const updates = { ...this.pendingUpdates, ...payload.updates };
 		this.pendingUpdates = {};
 
-        // Find all objects with 'uploading' property recursively
         const uploadStateObjects: any[] = [];
         const findUploading = (obj: any) => {
             if (!obj || typeof obj !== 'object') return;
-            if (obj.uploading) {
-                uploadStateObjects.push(obj.uploading);
-            }
-            if (Array.isArray(obj)) {
-                obj.forEach(findUploading);
-            } else {
-                Object.values(obj).forEach(findUploading);
-            }
+            if (obj.uploading) uploadStateObjects.push(obj.uploading);
+            if (Array.isArray(obj)) obj.forEach(findUploading);
+            else Object.values(obj).forEach(findUploading);
         };
         findUploading(updates);
 
-        // Find uploads wrapper for Multipart check
-        // We define findUploads here so it's in scope
         const findUploads = (obj: any) => {
             if (obj && obj._is_upload_wrapper) {
-                // Logic handled in adapter, but we might need tracking here if needed
             } else if (Array.isArray(obj)) {
                 obj.forEach(findUploads);
             } else if (obj && typeof obj === 'object') {
@@ -237,7 +228,6 @@ export class Component {
                 state.percent = rounded;
                 if (state.total) state.loaded = (state.total * percent) / 100;
             });
-            // Use internal trigger for progress
             trigger("upload.progress", { component: this, progress: percent });
         };
 
@@ -283,7 +273,6 @@ export class Component {
 				this.morph(comp.effects.html, comp.snapshot);
 			}
 
-            // Internal event for update
 			trigger("component.updated", { component: this, data: this.data });
 			window.dispatchEvent(new CustomEvent(`wire:update:${this.id}`, { detail: this.data }));
 
@@ -295,6 +284,10 @@ export class Component {
 				(comp.effects as any).streams.forEach((stream: any) => this.processStream(stream));
 			}
 		});
+
+        // Use microtask to ensure Alpine data updates (from event above) have processed
+        // before forcing the DOM update.
+        queueMicrotask(() => this.forceModelSync());
 	}
 
     private mergeNewState(newData: any) {
@@ -307,6 +300,19 @@ export class Component {
             }
         }
         this.canonical = JSON.parse(JSON.stringify(newData));
+    }
+
+    private forceModelSync() {
+        this.el.querySelectorAll('input, textarea, select').forEach((el: any) => {
+            if (el._x_forceModelUpdate && el._x_model) {
+                // Tells Alpine to force-refresh the element value from its model
+                try {
+                    el._x_forceModelUpdate(el._x_model.get());
+                } catch (e) {
+                    // Ignore if model getter fails (e.g. invalid path)
+                }
+            }
+        });
     }
 
 	private processStream(stream: any) {
@@ -341,14 +347,12 @@ export class Component {
 					if (el.hasAttribute('open') && !toEl.hasAttribute('open')) toEl.setAttribute('open', '');
 				}
 				if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
-					if (el === document.activeElement) return skip();
-					if (el.hasAttribute("wire:model.defer")) return skip();
-					if (toEl instanceof Element && el.hasAttribute("wire:model")) {
-						let newValue = (el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) ? (toEl as any).value : toEl.getAttribute("value");
-						if (newValue === el.value) return skip();
-						el.value = (toEl as any).value;
-						return;
-					}
+					// If focused, skip the morph update for this element.
+                    // This prevents the input from jumping or clearing while typing.
+                    // Alpine reactivity (x-model + entangle + forceModelSync) handles resets.
+                    if (el === document.activeElement) return skip();
+                    
+                    if (el.hasAttribute("wire:model.defer")) return skip();
 				}
 			},
 			key: (el: any) => {
@@ -378,7 +382,6 @@ export class Component {
 			}
 		}
 
-        // Use internal hook instead of window event
         trigger("loading", { component: this, loading, target, anyLoading: this.activeRequests.size > 0 });
 	}
 
