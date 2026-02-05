@@ -11,7 +11,7 @@ const kire = new Kire({
 
 const app = new Elysia({
 	serve: {
-		maxRequestBodySize: 600 * 1024 * 1024, // 600MB
+		maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB
 	},
 }).derive(() => ({ wireKey: "", user: {}, kire:kire.fork() }));
 void (async () => {
@@ -146,6 +146,14 @@ void (async () => {
 		});
 	});
 
+    app.get("/features", async (context) => {
+        context.set.headers["Content-Type"] = "text/html";
+        return await context.kire.view("pages.features", {
+            $wireToken: context.wireKey,
+            user: context.user,
+        });
+    });
+
     app.get("/stress", async (context) => {
         context.set.headers["Content-Type"] = "text/html";
         return await context.kire.view("pages.stress", {
@@ -162,49 +170,29 @@ void (async () => {
         });
     });
 
-	// Wired Endpoint
-	app.post(Wired.options.route, async (context) => {
-		console.log(`[POST] ${Wired.options.route} - Incoming Request`);
-		try {
-			// Debug logs
-			// console.log("Headers:", context.request.headers);
-			// console.log("Body Type:", typeof context.body);
-			// if (typeof context.body === 'object') {
-			//     console.log("Body Keys:", Object.keys(context.body || {}));
-			//     if ((context.body as any)._wired_payload) {
-			//         console.log("Multipart Payload found");
-			//     }
-			// }
+	// Unified Wired Handler
+	app.all(`${Wired.options.route}*`, async (context) => {
+		const url = new URL(context.request.url);
+        const res = await context.kire.WireRequest({
+            path: url.pathname,
+            method: context.request.method,
+            query: context.query,
+            body: context.body,
+            token: context.wireKey
+        });
 
-			// 1. Basic Payload Validation
-			const isValid = Wired.validate(context.body);
-			if (isValid) {
-				// 2. Process the request
-                const payload = context.body as any;
-                const comp = payload.component || (payload.snapshot ? JSON.parse(payload.snapshot).memo.name : 'unknown');
-                const method = payload.method || '$refresh';
-				console.log(`[Wired] Processing ${comp}@${method}`);
-                
-				const result = await Wired.payload(
-					context.wireKey,
-					payload,
-                    {}, // context overrides
-                    context.kire // Pass the request-scoped kire instance
-				);
+        if (res.code === "not_wired") {
+            context.set.status = 404;
+            return "Not Found";
+        }
 
-				console.log("Payload processed. Code:", result.code);
-				context.set.status = result.code;
-				return result.data;
-			} else {
-				console.warn("Validation failed for body:", context.body);
-				context.set.status = 400;
-				return Wired.invalid;
-			}
-		} catch (e) {
-			console.error("[Server Error] Exception in /_wired handler:", e);
-			context.set.status = 500;
-			return { error: "Internal Server Error" };
-		}
+        if (res.headers) {
+            Object.entries(res.headers).forEach(([k, v]) => {
+                context.set.headers[k] = v;
+            });
+        }
+        context.set.status = res.status || 200;
+        return res.body;
 	});
 
 	app.listen(3000);

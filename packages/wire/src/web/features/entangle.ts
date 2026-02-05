@@ -1,59 +1,92 @@
+
 export function generateEntangleFunction(component: any, Alpine: any) {
-	return (name: string, live: boolean = false) => {
-		const initialValue = component.data[name];
+    return (name: string, live: boolean = false) => {
+        const isLive = live;
+        
+        // Initial check
+        if (component.data[name] === undefined) {
+            console.error(`KireWire Entangle Error: Property ['${name}'] cannot be found on component: ['${component.name}']`);
+            return;
+        }
 
-		return Alpine.interceptor(
-			(initial: any, getter: any, setter: any) => {
-				let externalUpdate = false;
+        return Alpine.interceptor((initialValue: any, getter: any, setter: any) => {
+            // Use Alpine's native entangle if available (it handles the loop prevention logic best)
+            if (Alpine.entangle) {
+                const release = Alpine.entangle(
+                    {
+                        // Outer scope (KireWire Component)
+                        get() {
+                            return component.data[name];
+                        },
+                        set(value: any) {
+                            component.data[name] = value;
+                            if (isLive) {
+                                component.update({ [name]: value });
+                            } else {
+                                component.deferUpdate({ [name]: value });
+                            }
+                        }
+                    },
+                    {
+                        // Inner scope (Alpine Data)
+                        get() {
+                            return getter();
+                        },
+                        set(value: any) {
+                            setter(value);
+                        }
+                    }
+                );
 
-				// 1. Wire -> Alpine (Event Listener - "Old Logic")
-				const handler = (e: any) => {
-					if (name in e.detail) {
-						const newValue = e.detail[name];
-						if (JSON.stringify(newValue) !== JSON.stringify(getter())) {
-							externalUpdate = true;
-							setter(newValue);
-							externalUpdate = false;
-						}
-					}
-				};
-				window.addEventListener(`wire:update:${component.id}`, handler);
+                // Cleanup when the element is removed
+                return () => {
+                    release();
+                };
+            }
 
-				// 2. Alpine -> Wire (Reactive)
-				Alpine.effect(() => {
-					const alpineValue = getter();
+            // Fallback if Alpine.entangle isn't exposed (unlikely in v3)
+            // But just in case, we keep a simplified robust version
+            let externalUpdate = false;
 
-					if (externalUpdate) return; // Skip if triggered by Wire update
+            const handler = (e: any) => {
+                // Ensure the event targets this component
+                if (e.detail && name in e.detail) {
+                    const newValue = e.detail[name];
+                    if (JSON.stringify(newValue) !== JSON.stringify(getter())) {
+                        externalUpdate = true;
+                        setter(newValue);
+                        externalUpdate = false;
+                    }
+                }
+            };
+            
+            // Listen for component-specific updates
+            window.addEventListener(`wire:update:${component.id}`, handler);
 
-					if (JSON.stringify(alpineValue) !== JSON.stringify(component.data[name])) {
-						if (live) {
-							component.update({ [name]: alpineValue });
-						} else {
-							component.deferUpdate({ [name]: alpineValue });
-						}
-					}
-				});
+            Alpine.effect(() => {
+                const alpineValue = getter();
+                if (externalUpdate) return;
 
-				// Cleanup
-				return () => {
-					window.removeEventListener(`wire:update:${component.id}`, handler);
-				};
-			},
-			(obj: any) => {
-				// Live modifier support: $wire.entangle('prop').live
-				Object.defineProperty(obj, "live", {
-					get() {
-						live = true;
-						return obj;
-					},
-				});
-			},
-		)(initialValue);
-	};
-}
+                if (JSON.stringify(alpineValue) !== JSON.stringify(component.data[name])) {
+                    if (isLive) {
+                        component.update({ [name]: alpineValue });
+                    } else {
+                        component.deferUpdate({ [name]: alpineValue });
+                    }
+                }
+            });
 
-function cloneIfObject(value: any) {
-    return typeof value === 'object' && value !== null
-        ? JSON.parse(JSON.stringify(value))
-        : value;
+            return () => {
+                window.removeEventListener(`wire:update:${component.id}`, handler);
+            };
+
+        }, (obj: any) => {
+            Object.defineProperty(obj, 'live', {
+                get() {
+                    live = true;
+                    return obj;
+                }
+            });
+        })(component.data[name]); // Pass initial value
+    };
 }

@@ -1,6 +1,5 @@
 import type { KireContext, KirePlugin } from "../types";
 import { md5 } from "../utils/md5";
-import { resolvePath } from "../utils/resolve";
 import componentDirectives from "./component";
 import importDirectives from "./import";
 import defineDirectives from "./layout";

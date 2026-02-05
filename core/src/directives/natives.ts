@@ -91,7 +91,7 @@ export default (kire: Kire) => {
 
 			// Flag to track if loop ran at least once
 			// We use 'let' so it is block-scoped and handles nesting correctly via shadowing
-			compiler.raw(`let $__empty = true;`);
+			compiler.raw(`{ let $__empty = true;`);
 
 			if (lhs && rhs && op) {
 				// Pattern matched: user of users / key in object
@@ -111,13 +111,14 @@ export default (kire: Kire) => {
 			if (compiler.parents) {
 				// Hijack 'else' nodes and treat them as 'empty'
 				// This avoids conflict with global @else directive used by @if
-				compiler.parents.forEach((p) => {
+				compiler.parents.forEach((p: any) => {
 					if (p.name === "else") p.name = "empty";
 				});
 				await compiler.set(compiler.parents);
 			}
 
 			// Close the block (matches either the for loop or the if($__empty))
+			compiler.raw(`}`);
 			compiler.raw(`}`);
 		},
 	});
@@ -149,7 +150,7 @@ export default (kire: Kire) => {
 			const rhs = compiler.param("rhs");
 			const op = compiler.param("op");
 
-			compiler.raw(`let $__empty = true;`);
+			compiler.raw(`{ let $__empty = true;`);
 
 			if (lhs && rhs && op) {
 				compiler.raw(`for (const ${lhs.trim()} ${op} ${rhs.trim()}) {`);
@@ -163,12 +164,13 @@ export default (kire: Kire) => {
 
 			if (compiler.parents) {
                 // Hijack 'else' nodes and treat them as 'empty'
-				compiler.parents.forEach((p) => {
+				compiler.parents.forEach((p: any) => {
 					if (p.name === "else") p.name = "empty";
 				});
 				await compiler.set(compiler.parents);
 			}
 
+			compiler.raw(`}`);
 			compiler.raw(`}`);
 		},
 	});

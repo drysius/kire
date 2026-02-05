@@ -200,6 +200,17 @@ export interface CompilerContext {
 	 * Kire instance
 	 */
 	kire: Kire;
+
+	/**
+	 * Generates a unique ID for the current compilation.
+	 */
+	count(name: string): string;
+
+	/**
+	 * The current node being compiled.
+	 */
+	node: Node;
+
 	/**
 	 * Retrieves a parameter passed to the directive.
 	 * @param name The name or index of the parameter.

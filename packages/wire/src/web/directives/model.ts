@@ -71,6 +71,8 @@ directive("model", (el, dir, component) => {
                         return component.data[prop];
                     },
                     set(value: any) {
+                        if ((component as any).isSyncingFromServer) return;
+                        
                         component.data[prop] = value;
 
                         if (isDefer) {

@@ -85,3 +85,27 @@ export interface WireContext {
 	socket?: unknown;
 	[key: string]: unknown;
 }
+
+export interface WireRequestOptions {
+    path: string;
+    method: string;
+    query?: any;
+    body?: any;
+    payload?: any;
+    locals?: any;
+    token?: string;
+}
+
+export interface WireRequestResponse {
+    status?: number;
+    headers?: Record<string, string>;
+    body?: any;
+    code?: string | number; // "not_wired" or http code
+}
+
+declare module 'kire' {
+    interface Kire {
+        WireRequest(options: WireRequestOptions): Promise<WireRequestResponse>;
+        Wired: any;
+    }
+}

@@ -1,0 +1,44 @@
+
+@layout('layouts.main', { title: 'New Features' })
+    <div class="max-w-4xl mx-auto py-8">
+        <h1 class="text-3xl font-bold mb-6">KireWire v3 Features</h1>
+
+        <!-- wire:current example -->
+        <nav class="flex gap-4 mb-8 bg-zinc-800 p-4 rounded">
+            <a href="/" wire:current="bg-blue-600 text-white" class="px-3 py-1 rounded">Home</a>
+            <a href="/chat" wire:current="bg-blue-600 text-white" class="px-3 py-1 rounded">Chat</a>
+            <a href="/features" wire:current="bg-blue-600 text-white" class="px-3 py-1 rounded">Features (Active)</a>
+        </nav>
+
+        <!-- wire:transition example -->
+        <div class="mb-12 p-6 bg-zinc-900 border border-zinc-800 rounded">
+            <h2 class="text-xl font-bold mb-4">View Transitions</h2>
+            @wire('counter')
+        </div>
+
+        <!-- Asset extraction example -->
+        <div class="mb-12 p-6 bg-zinc-900 border border-zinc-800 rounded">
+            <h2 class="text-xl font-bold mb-4">Inline Scripts & Styles</h2>
+            <div id="dynamic-content">
+                <p>This content was rendered with its own script:</p>
+                <script>
+                    console.log("KireWire: Inline script executed successfully!");
+                    document.getElementById('dynamic-content').style.border = '2px dashed #3b82f6';
+                </script>
+                <style>
+                    #dynamic-content { padding: 1rem; }
+                </style>
+            </div>
+        </div>
+
+        <!-- Batching visualization -->
+        <div class="mb-12 p-6 bg-zinc-900 border border-zinc-800 rounded">
+            <h2 class="text-xl font-bold mb-4">Batching & Request Optimization</h2>
+            <p class="text-zinc-400 mb-4">Multiple component updates are now batched into a single request.</p>
+            <div class="flex gap-4">
+                @wire('counter')
+                @wire('counter')
+            </div>
+        </div>
+    </div>
+@end

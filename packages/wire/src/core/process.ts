@@ -1,3 +1,4 @@
+
 import type { Kire } from "kire";
 import type { WireComponent } from "../component";
 import { WireFile } from "./file";
@@ -19,51 +20,59 @@ export async function processRequest(
 	checksum: ChecksumManager,
 	contextOverrides: Partial<WireContext> = {},
 ): Promise<{ code: number; data: WireResponse | { error: string } }> {
-	const payload = req.body as WirePayload;
+	const body = req.body;
+    const payloadList = body.components || [body];
 	const identifier = getIdentifier(req);
 
 	try {
-		const compName = resolveComponentName(payload);
-		const ComponentClass = resolveComponentClass(compName, registry);
-		if (!ComponentClass) {
-			return {
-				code: WireErrors.invalid_request.code,
-				data: { error: "Component not found" },
-			};
-		}
+        const responses: any[] = [];
 
-		const instance = new ComponentClass(kire);
-		if (payload.id) instance.__id = payload.id;
-		let memo = createInitialMemo(instance, compName!);
-		let state: Record<string, any> = {};
+        for (const payload of payloadList) {
+            const compName = resolveComponentName(payload);
+            const ComponentClass = resolveComponentClass(compName, registry);
+            if (!ComponentClass) {
+                responses.push({ error: "Component not found: " + compName });
+                continue;
+            }
 
-		if (payload.snapshot) {
-			const validation = validateSnapshot(payload.snapshot, checksum, identifier, kire.production);
-			if (validation.error) return validation.error;
-			state = validation.snapshot!.data;
-			memo = validation.snapshot!.memo;
-		}
+            const instance = new ComponentClass(kire);
+            instance.__name = compName!;
+            if (payload.id) instance.__id = payload.id;
+            
+            let memo = createInitialMemo(instance, compName!);
+            let state: Record<string, any> = {};
 
-		initializeComponent(instance, kire, contextOverrides, memo);
+            if (payload.snapshot) {
+                const validation = validateSnapshot(payload.snapshot, checksum, identifier, kire.production);
+                if (validation.error) return validation.error;
+                state = validation.snapshot!.data;
+                memo = validation.snapshot!.memo;
+            }
 
-		if (!payload.snapshot) {
-			if (instance.mount) await instance.mount(payload.updates || {});
-		}
+            initializeComponent(instance, kire, contextOverrides, memo);
 
-		instance.fill(state);
-		await instance.hydrated();
+            if (!payload.snapshot) {
+                if (instance.mount) await instance.mount(payload.updates || {});
+            }
 
-		if (payload.snapshot && payload.updates) {
-			await applyUpdates(instance, payload.updates);
-		}
+            instance.fill(state);
+            await instance.hydrated();
 
-		if (payload.method) {
-			const methodResult = await executeMethod(instance, payload.method, payload.params || []);
-			if (methodResult?.error) return methodResult.error;
-		}
+            if (payload.snapshot && payload.updates) {
+                await applyUpdates(instance, payload.updates);
+            }
 
-		const html = await renderComponent(instance);
-		return createResponse(instance, memo, html, payload.updates, checksum, identifier, compName!);
+            if (payload.method) {
+                const methodResult = await executeMethod(instance, payload.method, payload.params || []);
+                if (methodResult?.error) return methodResult.error;
+            }
+
+            const html = await renderComponent(instance);
+            const response = createResponse(instance, memo, html, payload.updates, checksum, identifier, compName!);
+            responses.push(response.data.components[0]);
+        }
+
+		return { code: 200, data: { components: responses } };
 	} catch (e: any) {
 		if (!kire.production) console.error("Error processing request:", e);
 		return { code: 500, data: { error: e.message } };
@@ -118,7 +127,6 @@ export async function applyUpdates(instance: WireComponent, updates: Record<stri
             if (currentVal instanceof WireFile) {
                 await instance.updating(prop, value);
                 
-                // Normalization: Extract file objects from client-side wrappers
                 let filesData = value;
                 if (value && typeof value === 'object' && (value as any)._wire_type === 'WireFile') {
                     filesData = (value as any).files;
@@ -161,17 +169,25 @@ export async function executeMethod(instance: WireComponent, method: string, par
 }
 
 export async function renderComponent(instance: WireComponent): Promise<string> {
-	let html = (instance as any).render();
-	if (typeof html === "string") {
+	let result = (instance as any).render();
+    let html = "";
+	if (typeof result === "string") {
 		const data = { ...instance.getDataForRender(), errors: instance.__errors };
 		const keys = Object.keys(data).filter((k) => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k));
 		const injection = keys.length ? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>` : "";
-		html = await instance.kire.render(injection + html, data);
+		html = await instance.kire.render(injection + result, data) as string;
 	} else {
-		html = await html;
+		html = await result;
 	}
 	await instance.rendered();
-	return html || `<div wire:id="${instance.__id}" style="display: none;"></div>`;
+
+    // Hydration Markers
+    const id = instance.__id;
+    const name = instance.__name;
+    const token = Math.random().toString(36).substring(2, 9);
+    const marker = `id=${id}|name=${name}|token=${token}`;
+
+	return `<!--[if FRAGMENT:${marker}]><![endif]-->${html || `<div wire:id="${id}" style="display: none;"></div>`}<!--[if ENDFRAGMENT:${marker}]><![endif]-->`;
 }
 
 export function createResponse(instance: WireComponent, memo: WireSnapshot["memo"], html: string, updates: Record<string, unknown> | undefined, checksum: ChecksumManager, identifier: string, compName: string) {
@@ -183,7 +199,12 @@ export function createResponse(instance: WireComponent, memo: WireSnapshot["memo
 	const finalSnapshot = { data: newData, memo, checksum: newChecksum };
 	const escapedSnapshot = JSON.stringify(finalSnapshot).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 	const style = !html || !html.trim() ? ' style="display: none;"' : "";
-	const wrappedHtml = `<div wire:id="${instance.__id}" wire:snapshot="${escapedSnapshot}" wire:component="${compName}"${style}>${html || ""}</div>`;
+    
+    // Extract inner HTML from fragment-wrapped HTML for the response effects
+    const innerHtmlMatch = html.match(/<!--\[if FRAGMENT:.*?\]><!\[endif\]-->([\s\S]*)<!--\[if ENDFRAGMENT:.*?\]><!\[endif\]-->/);
+    const innerHtml = innerHtmlMatch ? innerHtmlMatch[1] : html;
+
+	const wrappedHtml = `<div wire:id="${instance.__id}" wire:snapshot="${escapedSnapshot}" wire:component="${compName}"${style}>${innerHtml || ""}</div>`;
 
 	const effects: WireResponse["components"][0]["effects"] = {
 		html: wrappedHtml,

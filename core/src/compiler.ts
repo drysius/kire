@@ -10,6 +10,7 @@ export class Compiler {
 	private usedDirectives: Set<string> = new Set();
 	private generator: SourceMapGenerator;
 	private resMappings: { index: number; node: Node; col: number }[] = [];
+	private counters: Record<string, number> = {};
 
 	constructor(
 		private kire: Kire,
@@ -30,6 +31,7 @@ export class Compiler {
 		this.posBuffer = [];
 		this.resMappings = [];
 		this.usedDirectives.clear();
+		this.counters = {};
 
 		// 2. Define Locals Alias (default 'it')
 		const varLocals = this.kire.$var_locals || "it";
@@ -263,6 +265,11 @@ return $ctx;
 
 		return {
 			kire: this.kire,
+			node: node,
+			count: (name: string) => {
+				if (this.counters[name] === undefined) this.counters[name] = 0;
+				return `$${this.counters[name]++}${name}`;
+			},
 			param: (key: string | number) => {
 				if (typeof key === "number") {
 					return node.args?.[key];

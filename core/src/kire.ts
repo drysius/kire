@@ -140,6 +140,27 @@ export class Kire {
 	 */
 	protected $parent?: Kire;
 
+    /**
+     * Hooks to execute when a fork is created.
+     */
+    public $forkHooks: Set<(fork: Kire) => void> = new Set();
+
+    /**
+     * Registers a hook to execute when a fork is created.
+     * @param hook The function to execute.
+     */
+    public onFork(hook: (fork: Kire) => void) {
+        this.$forkHooks.add(hook);
+        return this;
+    }
+
+    public $errorHooks: Set<(err: any) => string | void> = new Set();
+
+    public onError(hook: (err: any) => string | void) {
+        this.$errorHooks.add(hook);
+        return this;
+    }
+
 	/**
 	 * Creates a forked instance of Kire.
 	 * The fork shares cache, compiled files, directives, elements, and configuration with the parent,
@@ -176,10 +197,23 @@ export class Kire {
 		fork.$elements = this.$elements;
 		fork.$schematics = this.$schematics;
 		fork.$namespaces = this.$namespaces;
+        fork.$forkHooks = this.$forkHooks; // Share hooks reference or copy? Better copy to allow fork-specific hooks if needed, but for plugins usually share.
+        // Actually sharing reference allows plugins registered on root to affect forks of forks.
+        // But if I want request-scoped hooks, maybe copy?
+        // Let's iterate parent hooks and add them to fork's list if we want isolation,
+        // or just execute parent hooks.
+        // Since `onFork` is usually called on the root instance by plugins, we should iterate the parent's hooks.
 
 		fork.$globals = new LayeredMap(this.$globals);
 		fork.$contexts = new LayeredMap(this.$contexts);
 		fork.$props = new LayeredMap(this.$props);
+
+        // Execute fork hooks
+        if (this.$forkHooks.size > 0) {
+            for (const hook of this.$forkHooks) {
+                hook(fork);
+            }
+        }
 
 		return fork;
 	}

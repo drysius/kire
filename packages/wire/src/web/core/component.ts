@@ -1,7 +1,10 @@
+
+import { transitionDomMutation } from "../directives/transition";
 import type { ClientAdapter } from "../../adapters/http";
 import type { WirePayload, WireResponse } from "../../types";
 import { dispatch, listen } from "./events";
 import { trigger } from "./hooks";
+import { messageBus } from "./message-bus";
 import {
 	actionInterceptors,
 	messageInterceptors,
@@ -16,8 +19,10 @@ export class Component {
 	public data: any;
     private canonical: any = {}; 
 	private cleanupFns: Function[] = [];
+    private listenerCleanups: Function[] = [];
 	public activeRequests = new Map<string, number>(); 
 	private pendingUpdates: Record<string, any> = {};
+    private isSyncingFromServer = false;
 
 	constructor(
 		public el: HTMLElement,
@@ -64,10 +69,40 @@ export class Component {
 			});
 		}
 
+        if (effects.download) {
+            this.handleDownload(effects.download);
+        }
+
 		if (effects.listeners) {
 			this.initListeners(effects.listeners);
 		}
 	}
+
+    private handleDownload(download: any) {
+        const byteCharacters = atob(download.content);
+        const byteArrays = [];
+        const sliceSize = 512;
+
+        for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+            const slice = byteCharacters.slice(offset, offset + sliceSize);
+            const byteNumbers = new Array(slice.length);
+            for (let i = 0; i < slice.length; i++) {
+                byteNumbers[i] = slice.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            byteArrays.push(byteArray);
+        }
+
+        const blob = new Blob(byteArrays, { type: download.contentType });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = download.name || 'download';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
 
 	public async loadLazy() {
 		const paramsJson = this.el.getAttribute("wire:init-params");
@@ -85,7 +120,7 @@ export class Component {
 		this.setLoading(true, "$lazy");
 
 		try {
-			const response: WireResponse = await this.adapter.request(fullPayload);
+			const response: WireResponse = await messageBus.enqueue(this, fullPayload);
 			this.handleResponse(response, "$refresh");
 		} catch (e) {
 			console.error(`[KireWire] loadLazy error for ${this.id}`, e);
@@ -95,6 +130,10 @@ export class Component {
 	}
 
 	private initListeners(listenersOverride?: Record<string, string>) {
+        // Clear previous listeners to avoid duplication
+        this.listenerCleanups.forEach(fn => fn());
+        this.listenerCleanups = [];
+
 		const listeners =
 			listenersOverride || (this.snapshot ? this.snapshot.memo.listeners : {});
 		if (!listeners) return;
@@ -106,13 +145,15 @@ export class Component {
 				this.call(method as string, args);
 			});
 
-			this.cleanupFns.push(cleanup);
+			this.listenerCleanups.push(cleanup);
 		});
 	}
 
 	public cleanup() {
 		this.cleanupFns.forEach((fn) => fn());
 		this.cleanupFns = [];
+        this.listenerCleanups.forEach((fn) => fn());
+        this.listenerCleanups = [];
 	}
 
 	public destroy() {
@@ -148,6 +189,7 @@ export class Component {
 	}
 
 	async update(updates: Record<string, any>) {
+        if (this.isSyncingFromServer) return;
 		return this.sendRequest({ method: "$set", params: [], updates });
 	}
 
@@ -163,80 +205,17 @@ export class Component {
 		const updates = { ...this.pendingUpdates, ...payload.updates };
 		this.pendingUpdates = {};
 
-        const uploadStateObjects: any[] = [];
-        const findUploading = (obj: any) => {
-            if (!obj || typeof obj !== 'object') return;
-            if (obj.uploading) uploadStateObjects.push(obj.uploading);
-            if (Array.isArray(obj)) obj.forEach(findUploading);
-            else Object.values(obj).forEach(findUploading);
-        };
-        findUploading(updates);
-
-        const findUploads = (obj: any) => {
-            if (obj && obj._is_upload_wrapper) {
-            } else if (Array.isArray(obj)) {
-                obj.forEach(findUploads);
-            } else if (obj && typeof obj === 'object') {
-                Object.values(obj).forEach(findUploads);
-            }
-        };
-        findUploads(updates);
-
-		const fullPayload: WirePayload = {
-			component: this.name,
-			snapshot: JSON.stringify(this.snapshot),
-			method: payload.method || "$refresh",
-			params: payload.params || [],
-			updates: Object.keys(updates).length > 0 ? updates : undefined,
-			_token: this.getCsrfToken(),
-		};
-
-		const messageLifecycle: any = {
-			onSend: [], onSuccess: [], onError: [], onFinish: [],
-		};
-		const messageCtx = {
-			message: { component: this, payload: fullPayload },
-			onSend: (cb: any) => messageLifecycle.onSend.push(cb),
-			onSuccess: (cb: any) => messageLifecycle.onSuccess.push(cb),
-			onError: (cb: any) => messageLifecycle.onError.push(cb),
-			onFinish: (cb: any) => messageLifecycle.onFinish.push(cb),
-		};
-		runInterceptors(messageInterceptors, messageCtx);
-
-		const requestLifecycle: any = {
-			onSend: [], onSuccess: [], onError: [], onFinish: [],
-		};
-		const requestCtx = {
-			request: { url: this.config.endpoint, payload: fullPayload },
-			onSend: (cb: any) => requestLifecycle.onSend.push(cb),
-			onSuccess: (cb: any) => requestLifecycle.onSuccess.push(cb),
-			onError: (cb: any) => requestLifecycle.onError.push(cb),
-			onFinish: (cb: any) => requestLifecycle.onFinish.push(cb),
-		};
-		runInterceptors(requestInterceptors, requestCtx);
-
 		const method = payload.method || "$refresh";
 		this.setLoading(true, method);
 
-		const lifecycles = [actionLifecycle, messageLifecycle, requestLifecycle];
+		const lifecycles = [actionLifecycle]; // Interceptors simplified here for now
 		lifecycles.forEach((l) => l?.onSend.forEach((cb: any) => cb()));
 
-        const onProgress = (percent: number) => {
-            const rounded = Math.round(percent);
-            uploadStateObjects.forEach(state => {
-                state.progress = percent;
-                state.percent = rounded;
-                if (state.total) state.loaded = (state.total * percent) / 100;
-            });
-            trigger("upload.progress", { component: this, progress: percent });
-        };
-
 		try {
-			const response: WireResponse = await this.adapter.request(
-				fullPayload,
-				requestOptions,
-                onProgress
-			);
+			const response: WireResponse = await messageBus.enqueue(this, {
+                ...payload,
+                updates: Object.keys(updates).length > 0 ? updates : undefined
+            });
 
 			lifecycles.forEach((l) => l?.onSuccess.forEach((cb: any) => cb(response)));
 			this.handleResponse(response, method);
@@ -256,37 +235,40 @@ export class Component {
 			const snapObj = JSON.parse(comp.snapshot);
 
 			if (snapObj.memo.id === this.id) {
-				this.snapshot = snapObj;
-                this.mergeNewState(snapObj.data);
-			}
+                this.isSyncingFromServer = true;
+                try {
+				    this.snapshot = snapObj;
+                    this.mergeNewState(snapObj.data);
+                    
+                    this.processEffects(comp.effects);
 
-			this.processEffects(comp.effects);
+                    if (comp.effects.redirect) window.location.href = comp.effects.redirect;
 
-			if (comp.effects.redirect) window.location.href = comp.effects.redirect;
+                    if (comp.effects.url) {
+                        const newParams = new URLSearchParams(comp.effects.url);
+                        window.history.pushState({}, "", "?" + newParams.toString());
+                    }
 
-			if (comp.effects.url) {
-				const newParams = new URLSearchParams(comp.effects.url);
-				window.history.pushState({}, "", "?" + newParams.toString());
-			}
+                    if (comp.effects.html) {
+                        this.morph(comp.effects.html, comp.snapshot);
+                    }
 
-			if (comp.effects.html) {
-				this.morph(comp.effects.html, comp.snapshot);
-			}
+                    trigger("component.updated", { component: this, data: this.data });
+                    window.dispatchEvent(new CustomEvent(`wire:update:${this.id}`, { detail: this.data }));
 
-			trigger("component.updated", { component: this, data: this.data });
-			window.dispatchEvent(new CustomEvent(`wire:update:${this.id}`, { detail: this.data }));
+                    if (comp.effects.emits) {
+                        comp.effects.emits.forEach((e: any) => dispatch(this, e.event, e.params));
+                    }
 
-			if (comp.effects.emits) {
-				comp.effects.emits.forEach((e: any) => dispatch(this, e.event, e.params));
-			}
-
-			if ((comp.effects as any).streams) {
-				(comp.effects as any).streams.forEach((stream: any) => this.processStream(stream));
+                    if ((comp.effects as any).streams) {
+                        (comp.effects as any).streams.forEach((stream: any) => this.processStream(stream));
+                    }
+                } finally {
+                    this.isSyncingFromServer = false;
+                }
 			}
 		});
 
-        // Use microtask to ensure Alpine data updates (from event above) have processed
-        // before forcing the DOM update.
         queueMicrotask(() => this.forceModelSync());
 	}
 
@@ -296,6 +278,8 @@ export class Component {
             const previousServerValue = this.canonical[key];
 
             if (JSON.stringify(serverValue) !== JSON.stringify(previousServerValue)) {
+                // Alpine proxy will catch this, but since isSyncingFromServer is true,
+                // our model directive should ignore this update if we add the check there.
                 this.data[key] = serverValue;
             }
         }
@@ -305,12 +289,9 @@ export class Component {
     private forceModelSync() {
         this.el.querySelectorAll('input, textarea, select').forEach((el: any) => {
             if (el._x_forceModelUpdate && el._x_model) {
-                // Tells Alpine to force-refresh the element value from its model
                 try {
                     el._x_forceModelUpdate(el._x_model.get());
-                } catch (e) {
-                    // Ignore if model getter fails (e.g. invalid path)
-                }
+                } catch (e) {}
             }
         });
     }
@@ -329,40 +310,67 @@ export class Component {
 		});
 	}
 
-	private morph(html: string, newSnapshot: string) {
+	private async morph(html: string, newSnapshot: string) {
+        // Extract and run assets before morphing if they are in the HTML
+        const cleanHtml = this.extractAndRunAssets(html);
+
 		const parser = new DOMParser();
-		const doc = parser.parseFromString(html, "text/html");
+		const doc = parser.parseFromString(cleanHtml, "text/html");
 		const newEl = doc.body.firstElementChild as HTMLElement;
 		if (!newEl) return;
 		newEl.setAttribute("wire:snapshot", newSnapshot);
 
 		trigger("morph", { el: this.el, component: this });
 
-		(window as any).Alpine.morph(this.el, newEl, {
-			updating: (el: any, toEl: any, childrenOnly: any, skip: any) => {
-				if (el === this.el) (toEl as any).__kirewire = this;
-				trigger("morph.updating", { el, toEl, component: this, skip, childrenOnly });
-				if (el instanceof Element && el.hasAttribute("wire:ignore")) return skip();
-				if (el instanceof HTMLDialogElement && toEl instanceof HTMLDialogElement) {
-					if (el.hasAttribute('open') && !toEl.hasAttribute('open')) toEl.setAttribute('open', '');
-				}
-				if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
-					// If focused, skip the morph update for this element.
-                    // This prevents the input from jumping or clearing while typing.
-                    // Alpine reactivity (x-model + entangle + forceModelSync) handles resets.
-                    if (el === document.activeElement) return skip();
-                    
-                    if (el.hasAttribute("wire:model.defer")) return skip();
-				}
-			},
-			key: (el: any) => {
-				if (typeof el.hasAttribute !== "function") return;
-				return el.hasAttribute(`wire:id`) ? el.getAttribute(`wire:id`) : el.hasAttribute(`wire:key`) ? el.getAttribute(`wire:key`) : el.id;
-			},
-		});
+        await transitionDomMutation(this.el, () => {
+            (window as any).Alpine.morph(this.el, newEl, {
+                updating: (el: any, toEl: any, childrenOnly: any, skip: any) => {
+                    if (el === this.el) (toEl as any).__kirewire = this;
+                    trigger("morph.updating", { el, toEl, component: this, skip, childrenOnly });
+                    if (el instanceof Element && el.hasAttribute("wire:ignore")) return skip();
+                    if (el instanceof HTMLDialogElement && toEl instanceof HTMLDialogElement) {
+                        if (el.hasAttribute('open') && !toEl.hasAttribute('open')) toEl.setAttribute('open', '');
+                    }
+                    if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+                        if (el === document.activeElement) return skip();
+                        if (el.hasAttribute("wire:model.defer")) return skip();
+                    }
+                },
+                key: (el: any) => {
+                    if (typeof el.hasAttribute !== "function") return;
+                    return el.hasAttribute(`wire:id`) ? el.getAttribute(`wire:id`) : el.hasAttribute(`wire:key`) ? el.getAttribute(`wire:key`) : el.id;
+                },
+            });
+        });
 
 		trigger("morphed", { el: this.el, component: this });
 	}
+
+    private extractAndRunAssets(html: string): string {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        
+        // Scripts
+        div.querySelectorAll('script').forEach(script => {
+            if (script.hasAttribute('data-wire-once') && document.querySelector(`script[data-wire-once="${script.getAttribute('data-wire-once')}"]`)) {
+                script.remove();
+                return;
+            }
+            const newScript = document.createElement('script');
+            Array.from(script.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+            newScript.textContent = script.textContent;
+            document.head.appendChild(newScript);
+            script.remove();
+        });
+
+        // Styles
+        div.querySelectorAll('style').forEach(style => {
+            document.head.appendChild(style);
+            style.remove();
+        });
+
+        return div.innerHTML;
+    }
 
 	public setLoading(loading: boolean, target?: string) {
 		const key = target || "global";
@@ -385,7 +393,7 @@ export class Component {
         trigger("loading", { component: this, loading, target, anyLoading: this.activeRequests.size > 0 });
 	}
 
-	private getCsrfToken() {
+	public getCsrfToken() {
 		return document.querySelector(`meta[name="${this.config.csrf || "csrf-token"}"]`)?.getAttribute("content") || undefined;
 	}
 }

@@ -12,13 +12,16 @@ export function createWireProxy(component: Component, Alpine: any): any {
 				// Magics
 				if (prop === "$el") return component.el;
 				if (prop === "$id") return component.id;
-				if (prop === "$parent") {
+				
+                if (prop === "$parent") {
+                    if (!component.el.parentElement) return null;
 					const parent = findComponentByEl(
 						component.el.parentElement as HTMLElement,
 					);
-					return parent ? createWireProxy(parent, Alpine) : null;
+					return parent && parent.id !== component.id ? createWireProxy(parent, Alpine) : null;
 				}
-				if (prop === "$refs") {
+				
+                if (prop === "$refs") {
 					const refs: Record<string, Element> = {};
 					component.el.querySelectorAll("[wire\\:ref]").forEach((refEl) => {
 						const name = refEl.getAttribute("wire:ref");
@@ -28,12 +31,27 @@ export function createWireProxy(component: Component, Alpine: any): any {
 				}
 
 				if (prop === "$refresh") return () => component.call("$refresh");
-				if (prop === "$set")
+				
+                if (prop === "$set")
 					return (property: string, value: any) =>
 						component.update({ [property]: value });
-				if (prop === "$dispatch")
+				
+                if (prop === "$toggle")
+                    return (property: string) => {
+                        const current = component.data[property];
+                        return component.update({ [property]: !current });
+                    };
+
+                if (prop === "$call")
+                    return (method: string, ...params: any[]) => component.call(method, params);
+
+                if (prop === "$dispatch")
 					return (event: string, params: any) =>
 						window.dispatchEvent(new CustomEvent(event, { detail: params }));
+
+                if (prop === "$dispatchTo")
+                    return (componentName: string, event: string, params: any) =>
+                        window.dispatchEvent(new CustomEvent(event, { detail: params })); // Needs better implementation for specific dispatching
 
 				// Entangle
 				if (prop === "$entangle" || prop === "entangle") {

@@ -1,3 +1,5 @@
+import { showHtmlModal } from "../web/utils/modal";
+
 export interface ClientAdapter {
 	request(payload: any, options?: RequestInit, onProgress?: (percent: number) => void): Promise<any>;
 }
@@ -85,6 +87,9 @@ export class HttpAdapter implements ClientAdapter {
                             reject(new Error("Invalid JSON response"));
                         }
                     } else {
+                        if (xhr.status === 500 || xhr.status === 404 || xhr.status === 419) {
+                            showHtmlModal(xhr.responseText);
+                        }
                         reject(new Error(`HTTP Error ${xhr.status}`));
                     }
                 };
@@ -113,6 +118,10 @@ export class HttpAdapter implements ClientAdapter {
 			});
 
 			if (!response.ok) {
+                if (response.status === 500 || response.status === 404 || response.status === 419) {
+                    const text = await response.text();
+                    showHtmlModal(text);
+                }
 				throw new Error(`HTTP Error ${response.status}`);
 			}
 

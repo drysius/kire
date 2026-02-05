@@ -21,6 +21,8 @@ import "./directives/offline";
 import "./directives/intersect";
 import "./directives/loading-progress";
 import "./directives/stream";
+import "./directives/transition";
+import "./directives/current";
 import { registerMagic } from "./core/magic";
 import { wildcardHandler } from "./directives/wildcard";
 

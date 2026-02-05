@@ -1,21 +1,26 @@
 <div class="card bg-base-100 shadow-xl w-full max-w-2xl mx-auto">
     <div class="card-body">
         <h2 class="card-title">File Upload with Validation</h2>
-        
+
         @if(message)
-            <div class="alert alert-success">
-                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span>{{ message }}</span>
-            </div>
+        <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{{ message }}</span>
+        </div>
         @end
 
         <div class="form-control w-full">
             <div class="label">
                 <span class="label-text">Description</span>
             </div>
-            <input type="text" wire:model.defer="description" class="input input-bordered w-full {{ errors.description ? 'input-error' : '' }}" />
+            <input type="text" wire:model.defer="description"
+                class="input input-bordered w-full {{ errors.description ? 'input-error' : '' }}" />
             @if(errors.description)
-                <span class="text-error text-sm mt-1">{{ errors.description }}</span>
+            <span class="text-error text-sm mt-1">{{ errors.description }}</span>
             @end
         </div>
 
@@ -23,35 +28,37 @@
             <div class="label">
                 <span class="label-text">Pick a file</span>
             </div>
-            <input type="file" wire:model.live="file" class="file-input file-input-bordered w-full {{ errors.file ? 'file-input-error' : '' }}" />
+            <input type="file" wire:model.live="file"
+                class="file-input file-input-bordered w-full {{ errors.file ? 'file-input-error' : '' }}" />
             @if(errors.file)
-                <span class="text-error text-sm mt-1">{{ errors.file }}</span>
+            <span class="text-error text-sm mt-1">{{ errors.file }}</span>
             @end
         </div>
 
-        <!-- Client-side Progress API -->
-        @if(file && file.uploading && file.uploading.progress < 100)
-            <div class="w-full mt-4">
-                <progress class="progress progress-primary w-full" value="{{ file.uploading.percent }}" max="100"></progress>
-                <div class="text-center text-xs mt-1 opacity-70">
-                    {{ file.uploading.percent }}% Uploaded
-                </div>
+        <div x-show="$wire.file && $wire.file.uploading && $wire.file.uploading.percent < 100" 
+            x-cloak
+            class="w-full mt-4">
+            <progress class="progress progress-primary w-full" 
+                    :value="$wire.file.uploading.percent" 
+                    max="100"></progress>
+            <div x-text="`${$wire.file.uploading.percent}% Uploaded`" 
+                class="text-center text-xs mt-1 opacity-70">
             </div>
-        @end
+        </div>
 
         @if(file && file.file)
-            <div class="stats shadow mt-4 w-full">
-                <div class="stat">
-                    <div class="stat-title">Selected File</div>
-                    <div class="stat-value text-lg">{{ file.file.name }}</div>
-                    <div class="stat-desc">{{ (file.file.size / 1024).toFixed(2) }} KB</div>
-                    @if(file.file.type && file.file.type.startsWith('image/'))
-                        <div class="mt-2">
-                            <img src="{{ file.file.content }}" class="max-h-32 rounded-lg border border-base-300" />
-                        </div>
-                    @end
+        <div class="stats shadow mt-4 w-full">
+            <div class="stat">
+                <div class="stat-title">Selected File</div>
+                <div class="stat-value text-lg">{{ file.file.name }}</div>
+                <div class="stat-desc">{{ (file.file.size / 1024).toFixed(2) }} KB</div>
+                @if(file.file.type && file.file.type.startsWith('image/'))
+                <div class="mt-2">
+                    <img src="{{ file.file.content }}" class="max-h-32 rounded-lg border border-base-300" />
                 </div>
+                @end
             </div>
+        </div>
         @end
 
         <div class="card-actions justify-end mt-4">
