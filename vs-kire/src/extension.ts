@@ -1,19 +1,12 @@
-import { randomBytes } from "node:crypto";
 import * as vscode from "vscode";
-import { loadSchemas } from "./analyzer";
-import { HtmlLanguageFeatures, registerHtmlCommands } from "./languages/html";
-import { KireLanguageFeatures } from "./languages/kire";
+import { loadSchemas } from "./core/scan";
 
 export async function activate(context: vscode.ExtensionContext) {
-	// console.log('Kire extension activated.');
-
 	// Load initial schemas
 	await loadSchemas();
 
-	// Watch for schema changes in workspace (ignoring node_modules usually)
-	const watcher = vscode.workspace.createFileSystemWatcher(
-		"**/kire-schema.json",
-	);
+	// Watch for schema changes
+	const watcher = vscode.workspace.createFileSystemWatcher("**/kire-schema.json");
 	watcher.onDidChange(() => loadSchemas());
 	watcher.onDidCreate(() => loadSchemas());
 	watcher.onDidDelete(() => loadSchemas());
@@ -26,11 +19,16 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	);
 
-	context.subscriptions.push(KireLanguageFeatures.register(context));
-	context.subscriptions.push(HtmlLanguageFeatures.register(context));
-
-	registerHtmlCommands(context);
+    // Activate Languages
+    await Promise.all([
+        import("./languages/kire").then(m => m.activate(context)),
+        import("./languages/html").then(m => m.activate(context)),
+        import("./languages/typescript").then(m => m.activate(context)),
+    ]);
 }
 
-randomBytes(12).toString();
-export function deactivate() {}
+export function deactivate() {
+    import("./languages/kire").then(m => m.deactivate());
+    import("./languages/html").then(m => m.deactivate());
+    import("./languages/typescript").then(m => m.deactivate());
+}

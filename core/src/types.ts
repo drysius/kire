@@ -278,7 +278,7 @@ export interface CompilerContext {
 	children?: Node[];
 
 	/**
-	 * Related nodes, such as chained directives (e.g., elseif, else).
+	 * Related nodes, such as chained directives (e.g., elseif, else for @if).
 	 */
 	parents?: Node[];
 
@@ -362,7 +362,7 @@ export interface ElementDefinition {
 	void?: boolean;
 	type?: "html" | "javascript" | "css";
 	attributes?: Record<string, AttributeDefinition | string>;
-	onCall?: KireElementHandler; // Optional because schematic-only elements don't have handlers
+	onCall?: KireElementHandler;
 }
 
 /**
@@ -413,17 +413,6 @@ export interface AttributeDefinition {
 	example?: string;
 }
 
-export interface KireSchematic {
-	package: string;
-	$schema: string;
-	repository?: string | { type: string; url: string };
-	version?: string;
-	directives?: DirectiveDefinition[];
-	elements?: ElementDefinition[];
-	globals?: Record<string, any>;
-	attributes?: Record<string, Record<string, AttributeDefinition | string>>;
-}
-
 export interface KirePlugin<Options extends object | undefined = {}> {
 	name: string;
 	sort?: number;
@@ -453,4 +442,19 @@ export interface Node {
 	children?: Node[]; // Inner content
 	related?: Node[]; // For 'parents' (elseif, etc)
 	raw?: boolean;
+}
+
+export interface TypeDefinition {
+	variable: string;
+	type: "global" | "context" | "element" | "directive";
+	comment?: string;
+	example?: string;
+	tstype?: string | string[];
+}
+
+export interface KireSchemaDefinition {
+    name: string;
+    author?: string;
+    version?: string;
+    repository?: string;
 }

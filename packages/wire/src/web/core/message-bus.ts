@@ -62,8 +62,10 @@ export class MessageBus {
 
             queue.push({ component, payload, resolve, reject });
 
+            const delay = component.config.bus_delay || 10;
+
             if (this.timeout) clearTimeout(this.timeout);
-            this.timeout = setTimeout(() => this.flush(), 10); // Slightly larger buffer for better squashing
+            this.timeout = setTimeout(() => this.flush(), delay);
         });
     }
 

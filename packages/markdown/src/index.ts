@@ -14,9 +14,15 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 	name: "@kirejs/markdown",
 	options: {},
 	load(kire: Kire, _opts) {
+        kire.kireSchema({
+            name: "@kirejs/markdown",
+            author: "Drysius",
+            repository: "https://github.com/drysius/kire",
+            version: "0.1.0"
+        });
+
 		const _fnCache = kire.cached<Function>("@kirejs/markdown");
 
-		// 1. mdrender: Render string content
 		kire.mdrender = async (
 			content: string,
 			locals: Record<string, any> = {},
@@ -25,11 +31,9 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			return await kire.render(html, locals);
 		};
 
-		// 2. mdview: Render file content
 		kire.mdview = async (path: string, locals: Record<string, any> = {}) => {
 			const cacheKey = `file:${path}`;
 
-			// Check if we have a compiled function cached
 			if (kire.production && _fnCache.has(cacheKey)) {
 				return kire.run(_fnCache.get(cacheKey)!, locals);
 			}
@@ -37,15 +41,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			try {
 				const resolved = kire.resolvePath(path, locals, "md");
 				const content = await kire.$resolver(resolved);
-
-				// Convert MD to HTML
-				// We replace {{ var }} with {{ it.var }} ? No, that's unsafe regex.
-				// The user must write {{ it.var }} in their markdown if they want locals.
-				// Or we can try to support legacy by destructuring locals? No, "locals keys are unknown at compile time".
-
 				const htmlTemplate = (await marked.parse(content)) as string;
-
-				// Compile HTML as Kire template
 				const fn = await kire.compileFn(htmlTemplate);
 
 				if (kire.production) _fnCache.set(cacheKey, fn);
@@ -57,7 +53,6 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 			}
 		};
 
-		// Expose helpers
 		kire.$ctx("$readdir", async (pattern: string) => {
 			if (kire.$readdir) {
 				return kire.$readdir(pattern);
@@ -78,7 +73,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 
 		kire.directive({
 			name: "markdown",
-			params: ["source:string"],
+			params: ["source:filepath"],
 			description: "Renders Markdown content from a string or file path.",
 			example: "@markdown('path/to/file.md')",
 			async onCall(ctx) {
@@ -104,7 +99,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 
 		kire.directive({
 			name: "mdslots",
-			params: ["pattern:string", "name:string"],
+			params: ["pattern:filepath", "name:string"],
 			description:
 				"Loads Markdown files matching a glob pattern into a context variable.",
 			example: "@mdslots('posts/*.md', 'posts')",

@@ -1,20 +1,16 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "@kirejs/assets",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "version": "0.1.2",
+    "package": "kire-app",
+    "version": "0.0.0",
     "directives": [
         {
             "name": "svg",
+            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
+            "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })",
             "params": [
                 "path:string",
                 "attrs:object"
-            ],
-            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
-            "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })"
+            ]
         },
         {
             "name": "assets",
@@ -24,24 +20,45 @@
     ],
     "elements": [
         {
-            "name": "style",
+            "variable": "style",
             "description": "Captures inline styles to be injected via @assets.",
-            "example": "<style>body { color: red; }</style>"
+            "comment": "Captures inline styles to be injected via @assets.",
+            "example": "<style>body { color: red; }</style>",
+            "type": "element"
         },
         {
-            "name": "script",
+            "variable": "script",
             "description": "Captures inline scripts to be injected via @assets.",
-            "example": "<script>console.log('hello');</script>"
+            "comment": "Captures inline scripts to be injected via @assets.",
+            "example": "<script>console.log('hello');</script>",
+            "type": "element"
         },
         {
-            "name": "kire-assets-injection-point",
+            "variable": "kire-assets-injection-point",
             "description": "Internal placeholder for assets injection.",
-            "example": "<!-- Internal Use -->"
+            "comment": "Internal placeholder for assets injection.",
+            "example": "<!-- Internal Use -->",
+            "type": "element"
         }
     ],
-    "globals": {
-        "$addAsset": "function",
-        "$loadSVGAsset": "function"
-    },
-    "attributes": {}
+    "globals": [
+        {
+            "variable": "$ctx",
+            "separator": ".",
+            "extends": [
+                {
+                    "variable": "$addAsset",
+                    "description": "Global Variable of Kire $ctx.$addAsset with type function",
+                    "comment": "Global Variable of Kire $ctx.$addAsset with type function",
+                    "type": "function"
+                },
+                {
+                    "variable": "$loadSVGAsset",
+                    "description": "Global Variable of Kire $ctx.$loadSVGAsset with type function",
+                    "comment": "Global Variable of Kire $ctx.$loadSVGAsset with type function",
+                    "type": "function"
+                }
+            ]
+        }
+    ]
 }

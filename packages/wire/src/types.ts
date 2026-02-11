@@ -1,4 +1,5 @@
 import type { Kire } from "kire";
+import type { Wired } from "./wired";
 
 export interface WiredRequest {
 	identifiers: string[];
@@ -17,6 +18,9 @@ export interface WireOptions {
 	secret?: string;
 	csrf?: string;
 	expire?: string; // e.g. "10m"
+    live_debounce?: number; // default debounce for wire:model.live
+    bus_delay?: number; // default delay for message bus flushing
+    wire_model?: "live" | "defer"; // default behavior for wire:model
 	onPayload?: (wired: WiredRequest) => void;
     cache?: WireCacheDriver;
 }
@@ -106,6 +110,7 @@ export interface WireRequestResponse {
 declare module 'kire' {
     interface Kire {
         WireRequest(options: WireRequestOptions): Promise<WireRequestResponse>;
-        Wired: any;
+        Wired: Wired;
+		wired(path: string): Promise<void>;
     }
 }

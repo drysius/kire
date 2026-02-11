@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { kireStore } from "../../store";
+import { kireStore } from "../../core/store";
 import { HtmlDiagnosticProvider } from "../html";
 
 export class TagAutoCloseProvider {

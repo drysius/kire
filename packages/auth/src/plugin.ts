@@ -8,6 +8,13 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 		getUser: async () => null,
 	} as AuthOptions,
 	load(kire, opts) {
+        kire.kireSchema({
+            name: "@kirejs/auth",
+            author: "Drysius",
+            repository: "https://github.com/drysius/kire",
+            version: "0.1.0"
+        });
+
 		const options = { ...KireAuth.options, ...opts } as AuthOptions;
 
 		// Register global helpers
@@ -95,8 +102,6 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			parents: [elseDirective],
 			async onCall(c) {
 				const perm = c.param("perm");
-				// Note: Currently force converts param to string.
-				// To support variables, core parser needs update or user must pass quoted strings manually.
 				c.raw(
 					`if (await $ctx.$auth_can(${JSON.stringify(perm)}, await $ctx.$auth_getUser($ctx))) {
 `,
@@ -135,7 +140,6 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 			example: "@canany(['edit', 'delete'])\n  <button>Manage</button>\n@end",
 			async onCall(c) {
 				const perms = c.param("perms");
-				// canany supports variables/arrays because parseArgs preserves array structure
 				c.raw(`
 						await (async () => {
 							const perms = ${perms};

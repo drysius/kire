@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { kireStore } from "../../store";
+import { kireStore } from "../../core/store";
 
 export class KireDocumentSymbolProvider
 	implements vscode.DocumentSymbolProvider
@@ -18,7 +18,7 @@ export class KireDocumentSymbolProvider
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i] as string;
-			const dirMatch = /@([a-zA-Z0-9_\\.\\/:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
+			const dirMatch = /@([a-zA-Z0-9_\.\/:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
 
 			if (dirMatch) {
 				const fullMatch = dirMatch[0];
@@ -46,7 +46,7 @@ export class KireDocumentSymbolProvider
 				}
 
 				// Check if it's a "Section" directive (file path)
-				const isSection = dirName.includes("/") || dirName.includes("\\");
+				const isSection = dirName.includes("/") || dirName.includes("");
 
 				// Check definition for standard blocks
 				const def = kireStore.getState().directives.get(dirName);

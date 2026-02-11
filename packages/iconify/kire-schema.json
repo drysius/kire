@@ -1,32 +1,41 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
     "package": "@kirejs/iconify",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "version": "0.1.2",
+    "version": "0.1.0",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
     "directives": [
         {
             "name": "icon",
+            "description": "Renders an Iconify icon SVG.",
+            "example": "@icon('mdi:home', 'text-blue-500', { width: '24' })",
             "params": [
                 "name:string",
                 "className:string",
                 "attrs:object"
-            ],
-            "description": "Renders an Iconify icon SVG.",
-            "example": "@icon('mdi:home', 'text-blue-500', { width: '24' })"
+            ]
         }
     ],
     "elements": [
         {
-            "name": "iconify",
+            "variable": "iconify",
             "description": "Renders an Iconify icon.",
-            "void": true
+            "comment": "Renders an Iconify icon.",
+            "type": "element"
         }
     ],
-    "globals": {
-        "fetchIcon": "function"
-    },
-    "attributes": {}
+    "globals": [
+        {
+            "variable": "$ctx",
+            "separator": ".",
+            "extends": [
+                {
+                    "variable": "fetchIcon",
+                    "description": "Global Variable of @kirejs/iconify $ctx.fetchIcon with type function",
+                    "comment": "Global Variable of @kirejs/iconify $ctx.fetchIcon with type function",
+                    "type": "function"
+                }
+            ]
+        }
+    ]
 }

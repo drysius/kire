@@ -1,86 +1,73 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "kire",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
+    "package": "kire-core",
     "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
     "directives": [
         {
             "name": "define",
+            "description": "Defines a named, reusable section of content.",
+            "example": "@define('header')\n  <h1>My Website</h1>\n@end",
             "params": [
                 "name:string"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Defines a named, reusable section of content.",
-            "example": "@define('header')\n  <h1>My Website</h1>\n@end"
+            "children": true
         },
         {
             "name": "defined",
+            "description": "Renders defined content or fallback.",
+            "example": "@defined('header')\n  Conteúdo não encontrado\n@end",
             "params": [
                 "name:string"
             ],
-            "children": "auto",
-            "type": "html",
-            "description": "Renders defined content or fallback.",
-            "example": "@defined('header')\n  Conteúdo não encontrado\n@end"
+            "children": "auto"
         },
         {
             "name": "stack",
+            "description": "Creates a placeholder where content pushed to a named stack will be rendered.",
+            "example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>",
             "params": [
                 "name:string"
             ],
-            "type": "html",
-            "description": "Creates a placeholder where content pushed to a named stack will be rendered.",
-            "example": "<html>\n<head>\n  @stack('scripts')\n</head>\n</html>",
             "children": false
         },
         {
             "name": "push",
+            "description": "Pushes a block of content onto a named stack.",
+            "example": "@push('scripts')\n  <script src=\"app.js\"></script>\n@end",
             "params": [
                 "name:string"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Pushes a block of content onto a named stack.",
-            "example": "@push('scripts')\n  <script src=\"app.js\"></script>\n@end"
+            "children": true
         },
         {
             "name": "if",
+            "description": "Conditionally renders a block of content if the expression is true.",
+            "example": "@if(user.isLoggedIn)\n  Welcome, {{ user.name }}!\n@end",
             "params": [
                 "cond:any"
             ],
             "children": true,
-            "type": "html",
-            "description": "Conditionally renders a block of content if the expression is true.",
-            "example": "@if(user.isLoggedIn)\n  Welcome, {{ user.name }}!\n@end",
             "parents": [
                 {
                     "name": "elseif",
+                    "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
+                    "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end",
                     "params": [
                         "cond:any"
-                    ],
-                    "children": true,
-                    "type": "html",
-                    "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
-                    "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
+                    ]
                 },
                 {
                     "name": "elif",
+                    "description": "Alias for @elseif.",
+                    "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end",
                     "params": [
                         "cond:any"
-                    ],
-                    "children": true,
-                    "type": "html",
-                    "description": "Alias for @elseif.",
-                    "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
+                    ]
                 },
                 {
                     "name": "else",
-                    "children": true,
-                    "type": "html",
                     "description": "Renders a block of content if the preceding condition is false.",
                     "example": "@else\n  Alternative content.\n@end"
                 }
@@ -88,51 +75,43 @@
         },
         {
             "name": "elseif",
+            "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
+            "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end",
             "params": [
                 "cond:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Renders a block of content if the preceding @if/@elseif is false and the current expression is true.",
-            "example": "@elseif(user.isAdmin)\n  Admin access granted.\n@end"
+            "children": true
         },
         {
             "name": "elif",
+            "description": "Alias for @elseif.",
+            "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end",
             "params": [
                 "cond:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Alias for @elseif.",
-            "example": "@elif(user.isAdmin)\n  Admin access granted.\n@end"
+            "children": true
         },
         {
             "name": "else",
-            "children": true,
-            "type": "html",
             "description": "Renders a block of content if the preceding condition is false.",
-            "example": "@else\n  Alternative content.\n@end"
+            "example": "@else\n  Alternative content.\n@end",
+            "children": true
         },
         {
             "name": "for",
+            "description": "Iterates over an array or object. Supports @empty block if no iterations occur.",
+            "example": "@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end",
             "params": [
                 "loop:$lhs {op:in/of} $rhs|statement:string"
             ],
             "children": true,
-            "type": "html",
-            "description": "Iterates over an array or object. Supports @empty block if no iterations occur.",
-            "example": "@for(user of users)\n  {{ user.name }}\n@empty\n  No users found\n@end",
             "parents": [
                 {
                     "name": "empty",
-                    "children": true,
-                    "type": "html",
                     "description": "Renders if the loop had no iterations."
                 },
                 {
                     "name": "else",
-                    "children": true,
-                    "type": "html",
                     "description": "Renders a block of content if the preceding condition is false.",
                     "example": "@else\n  Alternative content.\n@end"
                 }
@@ -140,30 +119,24 @@
         },
         {
             "name": "empty",
-            "children": true,
-            "type": "html",
-            "description": "Renders if the loop had no iterations."
+            "description": "Renders if the loop had no iterations.",
+            "children": true
         },
         {
             "name": "each",
+            "description": "Iterates over an array or object. Alias for @for but focused on iteration. Supports @else block if no iterations occur.",
+            "example": "@each(user in users)\n  {{ user.name }}\n@else\n  No users found\n@end",
             "params": [
                 "loop:$lhs {op:in/of} $rhs"
             ],
             "children": true,
-            "type": "html",
-            "description": "Iterates over an array or object. Alias for @for but focused on iteration. Supports @else block if no iterations occur.",
-            "example": "@each(user in users)\n  {{ user.name }}\n@else\n  No users found\n@end",
             "parents": [
                 {
                     "name": "empty",
-                    "children": true,
-                    "type": "html",
                     "description": "Renders if the loop had no iterations."
                 },
                 {
                     "name": "else",
-                    "children": true,
-                    "type": "html",
                     "description": "Renders a block of content if the preceding condition is false.",
                     "example": "@else\n  Alternative content.\n@end"
                 }
@@ -171,151 +144,193 @@
         },
         {
             "name": "const",
+            "description": "Declares a block-scoped constant, similar to JavaScript `const`.",
+            "example": "@const(myVar = 'hello world')",
             "params": [
                 "expr:string"
-            ],
-            "type": "html",
-            "description": "Declares a block-scoped constant, similar to JavaScript `const`.",
-            "example": "@const(myVar = 'hello world')"
+            ]
         },
         {
             "name": "let",
+            "description": "Declares a block-scoped local variable, similar to JavaScript `let`.",
+            "example": "@let(counter = 0)",
             "params": [
                 "expr:string"
-            ],
-            "type": "html",
-            "description": "Declares a block-scoped local variable, similar to JavaScript `let`.",
-            "example": "@let(counter = 0)"
+            ]
         },
         {
             "name": "case",
+            "description": "A case clause for a @switch statement.",
+            "example": "@case('A')\n  <p>Value is A</p>\n@end",
             "params": [
                 "val:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "A case clause for a @switch statement.",
-            "example": "@case('A')\n  <p>Value is A</p>\n@end"
+            "children": true
         },
         {
             "name": "default",
-            "children": true,
-            "type": "html",
             "description": "The default clause for a @switch statement.",
-            "example": "@default\n  <p>Value is something else</p>\n@end"
+            "example": "@default\n  <p>Value is something else</p>\n@end",
+            "children": true
         },
         {
             "name": "switch",
+            "description": "Provides a control flow statement similar to a JavaScript switch block.",
+            "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end",
             "params": [
                 "expr:string"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Provides a control flow statement similar to a JavaScript switch block.",
-            "example": "@switch(value)\n  @case(1) ... @end\n  @default ... @end\n@end"
+            "children": true
         },
         {
             "name": "csrf",
-            "type": "html",
             "description": "Renders a CSRF token input field."
         },
         {
             "name": "method",
+            "description": "Spoofs an HTTP method using a hidden input.",
             "params": [
                 "method:string"
-            ],
-            "type": "html",
-            "description": "Spoofs an HTTP method using a hidden input."
+            ]
         },
         {
             "name": "defer",
-            "children": true,
-            "type": "html",
-            "description": "Defers rendering of a block until the main content is loaded (Out-of-Order Streaming). Falls back to immediate rendering if streaming is disabled."
+            "description": "Defers rendering of a block until the main content is loaded (Out-of-Order Streaming). Falls back to immediate rendering if streaming is disabled.",
+            "children": true
         },
         {
             "name": "include",
+            "description": "Includes and renders a template from a given path, optionally passing local variables.",
+            "example": "@include('partials/card')",
             "params": [
-                "path:string",
+                "path:filepath",
                 "locals?:object"
             ],
-            "children": false,
-            "type": "html",
-            "description": "Includes and renders a template from a given path, optionally passing local variables.",
-            "example": "@include('partials/card')"
+            "children": false
         },
         {
             "name": "slot",
+            "description": "Defines a named content slot within a component.",
+            "example": "@slot('header')\n  <h1>This is the header</h1>\n@end",
             "params": [
                 "name:string"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Defines a named content slot within a component.",
-            "example": "@slot('header')\n  <h1>This is the header</h1>\n@end"
+            "children": true
         },
         {
             "name": "section",
+            "description": "Alias for @slot, commonly used in Laravel Blade.",
+            "example": "@section('header')\n  <h1>Header</h1>\n@end",
             "params": [
                 "name:string"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Alias for @slot, commonly used in Laravel Blade.",
-            "example": "@section('header')\n  <h1>Header</h1>\n@end"
+            "children": true
         },
         {
             "name": "yield",
+            "description": "Renders the content of a named slot.",
+            "example": "@yield('header')",
             "params": [
                 "name:string",
                 "default?:string"
-            ],
-            "type": "html",
-            "description": "Renders the content of a named slot.",
-            "example": "@yield('header')"
+            ]
         },
         {
             "name": "component",
+            "description": "Loads a template as a reusable component, allowing content to be passed into named slots.",
+            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end",
             "params": [
-                "path:string",
+                "path:filepath",
                 "variables:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Loads a template as a reusable component, allowing content to be passed into named slots.",
-            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+            "children": true
         },
         {
             "name": "layout",
+            "description": "Alias for @component, typically used for wrapping content.",
+            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end",
             "params": [
-                "path:string",
+                "path:filepath",
                 "variables:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Alias for @component, typically used for wrapping content.",
-            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+            "children": true
         },
         {
             "name": "extends",
+            "description": "Alias for @component/layout, used for inheritance.",
+            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end",
             "params": [
-                "path:string",
+                "path:filepath",
                 "variables:any"
             ],
-            "children": true,
-            "type": "html",
-            "description": "Alias for @component/layout, used for inheritance.",
-            "example": "@component('card', { title: 'My Card' })\n  @slot('header')\n    <h1>Card Header</h1>\n  @end\n  <p>Default content.</p>\n@end"
+            "children": true
         }
     ],
     "elements": [
         {
-            "name": "kire:defined",
-            "void": false
+            "variable": "kire",
+            "separator": ":",
+            "extends": [
+                {
+                    "variable": "defined",
+                    "description": "Custom element",
+                    "comment": "Custom element",
+                    "type": "element"
+                }
+            ]
         }
     ],
-    "globals": {
-        "$require": "function"
-    },
-    "attributes": {}
+    "globals": [
+        {
+            "variable": "kire",
+            "description": "The Kire template engine instance.",
+            "comment": "The Kire template engine instance.",
+            "type": "import('kire').Kire"
+        },
+        {
+            "variable": "$ctx",
+            "description": "The runtime context object ($ctx) used during template execution. Contains helpers like $add, $resolve, $require, etc.",
+            "comment": "The runtime context object ($ctx) used during template execution. Contains helpers like $add, $resolve, $require, etc.",
+            "type": "import('kire').KireContext",
+            "separator": ".",
+            "extends": [
+                {
+                    "variable": "$props",
+                    "description": "Local variables passed to the template.",
+                    "comment": "Local variables passed to the template.",
+                    "type": "Record<string, any>"
+                },
+                {
+                    "variable": "$globals",
+                    "description": "Global variables accessible in all templates.",
+                    "comment": "Global variables accessible in all templates.",
+                    "type": "Record<string, any>"
+                },
+                {
+                    "variable": "$add",
+                    "description": "Appends a string to the output buffer.",
+                    "comment": "Appends a string to the output buffer.",
+                    "type": "(content: string) => void"
+                },
+                {
+                    "variable": "$require",
+                    "description": "Global Variable of kire $ctx.$require with type function",
+                    "comment": "Global Variable of kire $ctx.$require with type function",
+                    "type": "function"
+                },
+                {
+                    "variable": "$resolve",
+                    "description": "Resolves a template path using namespaces and aliases.",
+                    "comment": "Resolves a template path using namespaces and aliases.",
+                    "type": "['path:filepath']"
+                }
+            ]
+        },
+        {
+            "variable": "it",
+            "description": "Reference to the local variables (props) passed to the template. Alias for $props.",
+            "comment": "Reference to the local variables (props) passed to the template. Alias for $props.",
+            "type": "Record<string, any>"
+        }
+    ]
 }

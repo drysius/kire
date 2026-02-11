@@ -1,34 +1,47 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
     "package": "@kirejs/markdown",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "version": "0.1.2",
+    "version": "0.1.0",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
     "directives": [
         {
             "name": "markdown",
-            "params": [
-                "source:string"
-            ],
             "description": "Renders Markdown content from a string or file path.",
-            "example": "@markdown('path/to/file.md')"
+            "example": "@markdown('path/to/file.md')",
+            "params": [
+                "source:filepath"
+            ]
         },
         {
             "name": "mdslots",
-            "params": [
-                "pattern:string",
-                "name:string"
-            ],
             "description": "Loads Markdown files matching a glob pattern into a context variable.",
-            "example": "@mdslots('posts/*.md', 'posts')"
+            "example": "@mdslots('posts/*.md', 'posts')",
+            "params": [
+                "pattern:filepath",
+                "name:string"
+            ]
         }
     ],
     "elements": [],
-    "globals": {
-        "$readdir": "function",
-        "$mdrender": "function"
-    },
-    "attributes": {}
+    "globals": [
+        {
+            "variable": "$ctx",
+            "separator": ".",
+            "extends": [
+                {
+                    "variable": "$readdir",
+                    "description": "Global Variable of @kirejs/markdown $ctx.$readdir with type function",
+                    "comment": "Global Variable of @kirejs/markdown $ctx.$readdir with type function",
+                    "type": "function"
+                },
+                {
+                    "variable": "$mdrender",
+                    "description": "Global Variable of @kirejs/markdown $ctx.$mdrender with type function",
+                    "comment": "Global Variable of @kirejs/markdown $ctx.$mdrender with type function",
+                    "type": "function"
+                }
+            ]
+        }
+    ]
 }

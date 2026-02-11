@@ -1,8 +1,9 @@
+@include('../chat.kire', ${{2:locals}})
 <div class="card bg-base-200 shadow-sm">
     <div class="card-body p-4">
         <h3 class="card-title text-sm">Sender</h3>
         <div class="join w-full">
-            <input wire:model.defer="text" type="text" placeholder="Type..." value="{{ text }}" class="input input-sm input-bordered join-item w-full" />
+            <input wire: wire:model.defer="text" type="text" placeholder="Type..." value="{{ text }}" class="input input-sm input-bordered join-item w-full" />
             <button wire:click="send" class="btn btn-sm btn-primary join-item">Send</button>
         </div>
     </div>

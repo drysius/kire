@@ -1,6 +1,7 @@
 import { createHmac, randomUUID } from "node:crypto";
 import { existsSync, readdirSync, statSync } from "node:fs";
-import { join, parse, resolve } from "node:path";
+import { dirname, join, parse, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Kire } from "kire";
 import { WireAttributes } from "./core/attrs-declarations";
 import { ChecksumManager } from "./core/checksum";
@@ -44,6 +45,29 @@ export class Wired {
         return await Wired.cache.get(id);
     }
 
+    private static async getAssetContent(filename: string): Promise<string | null> {
+        const pathsToTry = [
+            resolve(dirname(fileURLToPath(import.meta.url)), "../../client", filename),
+            resolve(dirname(fileURLToPath(import.meta.url)), "../../dist/client", filename),
+            resolve(dirname(fileURLToPath(import.meta.url)), "../../../dist/client", filename),
+            join(process.cwd(), "packages/wire/dist/client", filename),
+            join(process.cwd(), "../../packages/wire/dist/client", filename),
+            join(process.cwd(), "node_modules/@kirejs/wire/dist/client", filename),
+        ];
+
+        for (const p of pathsToTry) {
+            if (existsSync(p)) {
+                try {
+                    const { readFileSync } = await import("node:fs");
+                    return readFileSync(p, "utf-8");
+                } catch (e) {
+                    console.error(`[Wired] Failed to read asset ${filename} from ${p}`, e);
+                }
+            }
+        }
+        return null;
+    }
+
 	public static plugin = {
 		name: "@kirejs/wire",
 		options: {},
@@ -73,17 +97,44 @@ export class Wired {
                 fork.WireRequest = (opts: WireRequestOptions) => Wired.handleRequest(fork, opts);
             });
 
-			kire.schematic("attributes.global", WireAttributes);
+            kire.kireSchema({
+                name: "@kirejs/wire",
+                author: "Drysius",
+                repository: "https://github.com/drysius/kire",
+                version: "0.1.2"
+            });
 
-			kire.schematic("elements", {
-				template: {
-					description: "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
-					attributes: {
-						"x-for": { type: "string", comment: "Iterates over an array or object.", example: 'x-for="item in items"' },
-						"x-if": { type: "string", comment: "Conditionally renders content.", example: 'x-if="open"' },
-					},
-				},
-			});
+            // Register Attributes
+            for (const [key, value] of Object.entries(WireAttributes)) {
+                kire.type({
+                    variable: key,
+                    type: "element",
+                    comment: value.comment,
+                    example: value.example,
+                    tstype: "string"
+                });
+            }
+
+            // Register Template Element
+            kire.element({
+                name: "template",
+                description: "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
+            });
+            // Register template attributes manually as kire.element() strictly registers the element tag now
+            kire.type({
+                variable: "x-for",
+                type: "element",
+                comment: "Iterates over an array or object.",
+                example: 'x-for="item in items"',
+                tstype: "string"
+            });
+            kire.type({
+                variable: "x-if",
+                type: "element",
+                comment: "Conditionally renders content.",
+                example: 'x-if="open"',
+                tstype: "string"
+            });
 
 			registerDirectives(kire, Wired.options);
 
@@ -103,18 +154,23 @@ export class Wired {
 
         // Assets
         if (method === "GET") {
-            if (subPath === "/kirewire.js" || subPath === "/kirewire.min.js") {
-                const script = getClientScript({
-                    route: Wired.options.route,
-                    adapter: Wired.options.adapter,
-                    csrf: Wired.options.csrf,
-                }, kire.production);
+            const assetMatch = subPath.match(/^\/(kirewire\.(?:min\.)?(?:js|css))$/);
+            if (assetMatch) {
+                const filename = assetMatch[1];
+                const extension = filename!.split('.').pop();
+                const contentType = extension === 'js' ? 'application/javascript' : 'text/css';
                 
-                return {
-                    status: 200,
-                    headers: { "Content-Type": "application/javascript" },
-                    body: script,
-                };
+                const fileContent = await Wired.getAssetContent(filename!);
+                if (fileContent) {
+                    return {
+                        status: 200,
+                        headers: { 
+                            "Content-Type": contentType,
+                            "Cache-Control": "public, max-age=604800, immutable" // 7 days
+                        },
+                        body: fileContent,
+                    };
+                }
             }
 
             if (subPath === "/preview") {
@@ -169,7 +225,10 @@ export class Wired {
         }
 
         // Extract identifiers/keys
-        const wireKey = token || contextOverrides.wireToken || processedBody.fingerprint?.name || processedBody.component || (isBatch ? processedBody.components[0].component : "unknown");
+        const wireProp = (kire as any).$props;
+        const autoToken = wireProp?.get ? wireProp.get('$wireToken') : wireProp?.$wireToken;
+        
+        const wireKey = token || contextOverrides.wireToken || autoToken || processedBody.fingerprint?.name || processedBody.component || (isBatch ? processedBody.components[0].component : "unknown");
 
         // Setup Request Context
         const now = Math.floor(Date.now() / 1000);

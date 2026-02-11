@@ -352,7 +352,8 @@ export class Component {
         
         // Scripts
         div.querySelectorAll('script').forEach(script => {
-            if (script.hasAttribute('data-wire-once') && document.querySelector(`script[data-wire-once="${script.getAttribute('data-wire-once')}"]`)) {
+            const onceKey = script.getAttribute('data-wire-once');
+            if (onceKey && document.querySelector(`script[data-wire-once="${onceKey}"]`)) {
                 script.remove();
                 return;
             }

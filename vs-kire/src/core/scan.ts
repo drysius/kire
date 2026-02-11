@@ -53,17 +53,30 @@ async function loadSchemaFile(uri: vscode.Uri): Promise<void> {
 
 		const state = kireStore.getState();
 
-		if (json.directives?.length) {
-			state.addDirectives(json.directives as DirectiveDefinition[]);
+		if (json.directives) {
+			state.addDirectives(json.directives);
 		}
 
-		if (json.elements?.length) {
-			state.addElements(json.elements as ElementDefinition[]);
+		if (json.elements) {
+			state.addElements(json.elements);
 		}
 
 		if (json.attributes) {
 			state.addAttributes(json.attributes);
 		}
+
+        if (json.globals) {
+            state.addGlobals(json.globals);
+        }
+
+        if (json.package || json.version) {
+            state.setMetadata({
+                name: json.package,
+                version: json.version,
+                author: json.author,
+                repository: typeof json.repository === 'string' ? json.repository : json.repository?.url
+            });
+        }
 	} catch (error) {
 		console.warn(
 			`Failed to load schema from ${uri.fsPath}:`,

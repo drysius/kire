@@ -1,25 +1,29 @@
 {
     "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "@kirejs/utils",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/drysius/kire.git"
-    },
-    "version": "0.1.2",
+    "package": "kire-app",
+    "version": "0.0.0",
     "directives": [
         {
             "name": "error",
             "params": [
                 "name:string"
             ],
-            "children": true,
-            "type": "html"
+            "children": true
         }
     ],
     "elements": [],
-    "globals": {
-        "Str": {},
-        "Arr": {}
-    },
-    "attributes": {}
+    "globals": [
+        {
+            "variable": "Str",
+            "description": "Global Variable of Kire Str with type object",
+            "comment": "Global Variable of Kire Str with type object",
+            "type": "object"
+        },
+        {
+            "variable": "Arr",
+            "description": "Global Variable of Kire Arr with type object",
+            "comment": "Global Variable of Kire Arr with type object",
+            "type": "object"
+        }
+    ]
 }

@@ -60,7 +60,7 @@ export default (kire: Kire) => {
 
 	const componentDirective = {
 		name: "component",
-		params: ["path:string", "variables:any"],
+		params: ["path:filepath", "variables:any"],
 		children: true,
 		type: "html",
 		description:

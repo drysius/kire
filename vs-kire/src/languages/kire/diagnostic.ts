@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { type DirectiveDefinition, kireStore } from "../../store";
+import { type DirectiveDefinition, kireStore } from "../../core/store";
 import { parseParamDefinition } from "../../utils/params";
 import { HtmlDiagnosticProvider } from "../html";
 
@@ -296,7 +296,7 @@ export class KireDiagnosticProvider {
 			// Handle quotes
 			if (
 				(char === '"' || char === "'") &&
-				(i === 0 || argsStr[i - 1] !== "\\")
+				(i === 0 || argsStr[i - 1] !== "")
 			) {
 				if (inQuote && char === quoteChar) {
 					inQuote = false;
@@ -589,12 +589,14 @@ export class KireDiagnosticProvider {
 	) {
 		// Simple HTML tag validation (ignores Kire elements and directives)
 		const stack: Array<{ tag: string; line: number; char: number }> = [];
-		const tagRegex = /<(\/?)(\w+)(?:\s|>|\/)/g;
+        // Improved regex to capture attributes and self-closing slash
+		const tagRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9_-]*)([^>]*?)(\/?)>/g;
 
 		let match: RegExpExecArray | null;
 		while ((match = tagRegex.exec(text)) !== null) {
 			const isClosing = match[1] === "/";
 			const tagName = match[2] as string;
+            const isSelfClosing = match[4] === "/";
 			const position = document.positionAt(match.index);
 
 			const isKireElement = Array.from(
@@ -616,7 +618,7 @@ export class KireDiagnosticProvider {
 				tagName.toLowerCase(),
 			);
 
-			if (!isClosing && !isVoid) {
+			if (!isClosing && !isVoid && !isSelfClosing) {
 				stack.push({
 					tag: tagName,
 					line: position.line,
@@ -624,6 +626,10 @@ export class KireDiagnosticProvider {
 				});
 			} else if (isClosing) {
 				if (stack.length === 0) {
+					// Ignore closing tags for void elements if they are allowed (like in SVG)
+                    // But if it's strictly HTML void, it shouldn't have closing.
+                    // However, we removed SVG from void list in html.ts, so they are not isVoid here.
+                    // So unexpected closing tag is an error.
 					diagnostics.push(
 						new vscode.Diagnostic(
 							new vscode.Range(
@@ -655,15 +661,16 @@ export class KireDiagnosticProvider {
 			}
 
 			// Check for void elements with separate closing tag
-			if (isVoid && !isClosing) {
+			if (isVoid && !isClosing && !isSelfClosing) {
 				const nextChars = text.substring(
 					match.index,
 					Math.min(match.index + 200, text.length),
 				);
-				const closingTagPattern = new RegExp(`</${tagName}s*>`, "i");
+				const closingTagPattern = new RegExp(`</${tagName}\s*>`, "i");
 				const closingMatch = closingTagPattern.exec(nextChars);
 
 				if (closingMatch) {
+                    // It has a closing tag, so it's not being treated as void here, but we flagged it.
 					const closingPos = document.positionAt(
 						match.index + closingMatch.index,
 					);

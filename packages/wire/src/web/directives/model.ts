@@ -4,9 +4,17 @@ import { getValueFromElement } from "../core/value";
 directive("model", (el, dir, component) => {
 	const prop = dir.value;
 	const isFile = el instanceof HTMLInputElement && el.type === "file";
-	const isDefer = dir.modifiers.includes("defer");
-    // Livewire 3 style: default is NOT live (updates on change/blur). Use .live for input events.
-    const isLive = dir.modifiers.includes("live");
+    const config = component.config || {};
+    const defaultMode = config.wire_model || 'live'; // Keeping 'live' as default for KireWire legacy compat unless configured
+
+	let isDefer = dir.modifiers.includes("defer");
+    let isLive = dir.modifiers.includes("live");
+
+    // Apply defaults if no modifier specified
+    if (!isDefer && !isLive) {
+        if (defaultMode === 'defer') isDefer = true;
+        else isLive = true;
+    }
 	
     const Alpine = (window as any).Alpine;
 
@@ -52,7 +60,7 @@ directive("model", (el, dir, component) => {
     }
 
     if (Alpine) {
-        let debounce = 150;
+        let debounce = config.live_debounce || 150;
         const debounceMod = dir.modifiers.find((m: string) => m.startsWith("debounce"));
         if (debounceMod) {
             const parts = dir.name.split(".");
@@ -83,9 +91,7 @@ directive("model", (el, dir, component) => {
                                 component.update({ [prop]: value });
                             }, debounce);
                         } else {
-                            // Default: update on change (handled by x-model automatically usually, 
-                            // but we trigger a component update to sync with server)
-                            // We use a small delay to ensure Alpine finished updating the data
+                            // Should not happen given logic above, but fallback to immediate
                             clearTimeout(timeout);
                             timeout = setTimeout(() => {
                                 component.update({ [prop]: value });

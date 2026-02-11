@@ -1,12 +1,6 @@
 // Export types and core classes
 import 'kire';
 
-declare module 'kire' {
-    interface Kire {
-        wired(path: string): Promise<void>;
-    }
-}
-
 export * from "./component";
 export * from "./page-component";
 export * from "./traits/pagination";

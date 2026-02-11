@@ -32,6 +32,7 @@ const TYPE_VALIDATORS: Record<string, TypeChecker> = {
 	null: (value) => value === null,
 	undefined: (value) => value === undefined,
 	function: (value) => typeof value === "function",
+    filepath: (value) => typeof value === "string",
 };
 
 /**

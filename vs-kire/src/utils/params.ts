@@ -4,6 +4,7 @@
 
 export interface ParamDefinition {
 	name: string;
+    type: string;
 	rawDefinition: string;
 	validate: (value: any) => ValidationResult;
 }
@@ -216,6 +217,7 @@ export function parseParamDefinition(def: string): ParamDefinition {
 
 		return {
 			name: validators[0]!.name,
+            type: validators.map(v => v.type).join("|"),
 			rawDefinition: def,
 			validate: (value: any) => {
 				const errors: string[] = [];
@@ -266,6 +268,7 @@ export function parseParamDefinition(def: string): ParamDefinition {
 
 		return {
 			name,
+            type: 'pattern',
 			rawDefinition: def,
 			validate: (value: any) => {
 				if (typeof value !== "string") {
@@ -299,6 +302,7 @@ export function parseParamDefinition(def: string): ParamDefinition {
 
 	return {
 		name: name,
+        type: typeDef.trim(),
 		rawDefinition: def,
 		validate: (value: any) => {
 			if (validator(value)) {

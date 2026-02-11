@@ -3,11 +3,17 @@
 	"title": "Kire Configuration",
 	"description": "Configuration file for Kire directives to provide IntelliSense in editors.",
 	"type": "object",
-	"required": ["package", "directives"],
+	"required": ["package"],
 	"properties": {
 		"package": {
 			"type": "string",
 			"description": "Name of the package providing these directives."
+		},
+		"version": {
+			"type": "string"
+		},
+		"author": {
+			"type": "string"
 		},
 		"repository": {
 			"type": ["string", "object"],
@@ -16,42 +22,20 @@
 				"url": { "type": "string" }
 			}
 		},
-		"version": {
-			"type": "string"
-		},
-		"globals": {
-			"type": "object",
-			"additionalProperties": true
-		},
-		"elements": {
-			"type": "array",
-			"items": {
-				"type": "object",
-				"required": ["name"],
-				"properties": {
-					"name": { "type": "string" },
-					"void": { "type": "boolean" }
-				}
-			}
-		},
-		"attributes": {
-			"type": "object",
-			"additionalProperties": {
-				"type": "object",
-				"additionalProperties": {
-					"type": "object",
-					"properties": {
-						"type": { "type": ["string", "boolean"] },
-						"comment": { "type": "string" },
-						"example": { "type": "string" }
-					}
-				}
-			}
-		},
 		"directives": {
 			"type": "array",
 			"description": "A list of directive definitions.",
 			"items": { "$ref": "#/definitions/directive" }
+		},
+		"elements": {
+			"type": "array",
+			"description": "A list of elements/attributes tree nodes.",
+			"items": { "$ref": "#/definitions/node" }
+		},
+		"globals": {
+			"type": "array",
+			"description": "A list of global/context tree nodes.",
+			"items": { "$ref": "#/definitions/node" }
 		}
 	},
 	"definitions": {
@@ -84,12 +68,49 @@
 				"description": {
 					"type": "string"
 				},
+				"comment": {
+					"type": "string"
+				},
 				"example": {
 					"type": "string"
 				},
 				"type": {
 					"type": "string",
 					"enum": ["css", "js", "html"]
+				}
+			}
+		},
+		"node": {
+			"type": "object",
+			"required": ["variable"],
+			"properties": {
+				"variable": {
+					"type": "string",
+					"description": "The key/name of the variable or element part."
+				},
+				"separator": {
+					"type": "string",
+					"description": "The separator used between this node and its children (e.g. ':' or '.')."
+				},
+				"description": {
+					"type": "string"
+				},
+				"comment": {
+					"type": "string"
+				},
+				"example": {
+					"type": "string"
+				},
+				"type": {
+					"description": "The TypeScript type or special feature type (e.g. filepath).",
+					"oneOf": [
+						{ "type": "string" },
+						{ "type": "array", "items": { "type": "string" } }
+					]
+				},
+				"extends": {
+					"type": "array",
+					"items": { "$ref": "#/definitions/node" }
 				}
 			}
 		}

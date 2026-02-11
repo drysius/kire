@@ -31,6 +31,16 @@ Handles click events and calls a component method.
 `,
 		example: 'wire:click="increment"',
 	},
+    "wire:live": {
+        type: "string",
+        comment: "Alias for wire:model.live. Updates the property in real-time.",
+        example: 'wire:live="search"',
+    },
+    "wire:defer": {
+        type: "string",
+        comment: "Alias for wire:model.defer. Updates the property only on action.",
+        example: 'wire:defer="search"',
+    },
 	"wire:model": {
 		type: "string",
 		comment: `

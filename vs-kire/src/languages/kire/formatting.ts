@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { kireStore } from "../../store";
+import { kireStore } from "../../core/store";
 
 type LineType =
 	| "html-opening"
@@ -455,7 +455,7 @@ export class FeatureFormatting
 
 	private isSingleLineHtmlElement(line: string, tag: string): boolean {
 		const re = new RegExp(
-			`^<\\s*${this.escapeRegExp(tag)}\\b[^>]*>.*<\\/\\s*${this.escapeRegExp(tag)}\\s*>\\s*$`,
+			`^<\s*${this.escapeRegExp(tag)}\b[^>]*>.*<\/\s*${this.escapeRegExp(tag)}\s*>\s*$`,
 			"i",
 		);
 		return re.test(line);

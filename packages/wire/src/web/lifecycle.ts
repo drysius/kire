@@ -154,6 +154,15 @@ function handleDirective(
 	directive: any,
 	component: Component,
 ) {
+    if (directive.type === 'live') {
+        directive.type = 'model';
+        if (!directive.modifiers.includes('live')) directive.modifiers.push('live');
+    }
+    if (directive.type === 'defer') {
+        directive.type = 'model';
+        if (!directive.modifiers.includes('defer')) directive.modifiers.push('defer');
+    }
+
 	const handler = getDirectiveHandler(directive.type);
 	if (handler) {
 		handler(el, directive, component);

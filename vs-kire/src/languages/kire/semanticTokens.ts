@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { kireStore } from "../../store";
+import { kireStore } from "../../core/store";
 
 // Semantic Tokens Legend
 const tokenTypes = [
@@ -64,6 +64,27 @@ export class KireSemanticTokensProvider
 				);
 			}
 		}
+
+        // Find JS Objects in Attributes (Simple heuristic for Alpine/Kire props)
+        // Matches: =" { ... } " or =' { ... } '
+        const jsObjectRegex = /=\s*(["'])(\{[^{}]*\})\1/g;
+        while ((match = jsObjectRegex.exec(text)) !== null) {
+            const fullMatch = match[0];
+            const objectContent = match[2] as string;
+            // Calculate start position of the object content (skipping = " )
+            const quoteIndex = fullMatch.indexOf(match[1] as string);
+            const objectIndex = fullMatch.indexOf(objectContent, quoteIndex);
+            const startOffset = match.index + objectIndex;
+            const startPos = document.positionAt(startOffset);
+
+            builder.push(
+                startPos.line,
+                startPos.character,
+                objectContent.length,
+                4, // index of 'variable' in tokenTypes
+                0
+            );
+        }
 
 		return builder.build();
 	}

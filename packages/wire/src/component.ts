@@ -26,6 +26,12 @@ export abstract class WireComponent {
 	public context: WireContext = { kire: undefined as any };
 	public params: Record<string, any> = {};
 
+    /**
+     * Map of property names to class constructors for automatic hydration.
+     * Example: { editingFlow: Flow }
+     */
+    public casts: Record<string, any> = {};
+
     public $globals: Record<string, any> = {};
     public $props: Record<string, any> = {};
     public $ctx: Record<string, any> = {};
@@ -330,12 +336,30 @@ export abstract class WireComponent {
 				!key.startsWith("_") &&
 				key !== "jti" &&
 				key !== "iat" &&
-				key !== "exp"
+				key !== "exp" &&
+                key !== "casts"
 			) {
+                // 1. Handle WireFile (Internal cast)
                 if ((this as any)[key] instanceof WireFile && value && typeof value === 'object' && (value as any)._wire_type === 'WireFile') {
                     (this as any)[key].options = (value as any).options;
                     (this as any)[key].files = (value as any).files;
-                } else {
+                } 
+                // 2. Handle User Defined Casts (e.g. TypeORM Entities)
+                else if (this.casts[key] && value && typeof value === 'object' && !Array.isArray(value)) {
+                    const TargetClass = this.casts[key];
+                    const instance = new TargetClass();
+                    
+                    // If class has a fill method, use it, otherwise Object.assign
+                    if (typeof instance.fill === 'function') {
+                        instance.fill(value);
+                    } else {
+                        Object.assign(instance, value);
+                    }
+                    
+                    (this as any)[key] = instance;
+                }
+                // 3. Standard assignment
+                else {
 				    (this as any)[key] = value;
                 }
 			}
