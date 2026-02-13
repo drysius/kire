@@ -105,7 +105,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 	const injectScripts = (compiler: any) => {
 		const script = getClientScript(
 			{
-				endpoint: options.route || "/_wired",
+				route: options.route || "/_wired",
 				adapter: options.adapter || "http",
 				csrf: options.csrf,
                 live_debounce: options.live_debounce,

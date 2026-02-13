@@ -71,7 +71,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 			description: "Processes CSS content within the block using Tailwind CSS.",
 			example:
 				"<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>",
-			async onCall(ctx) {
+			async run(ctx) {
 				// _assets should be initialized by the @assets() directive
 
 				try {
@@ -80,11 +80,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 					// Use cached CSS if available and caching is enabled
 					if (kire.production && id && cache.has(id)) {
 						const cachedCss = cache.get(id) ?? "";
-						const newHtml = ctx.content.replace(
-							ctx.element.outer,
-							`<style>${cachedCss}</style>`,
-						);
-						ctx.update(newHtml);
+						ctx.replace(`<style>${cachedCss}</style>`);
 						return;
 					}
 
@@ -100,11 +96,11 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 					// Extract CSS classes from the entire HTML content
 					const candidates = new Set<string>();
 					const classRegex = /\bclass(?:Name)?\s*=\s*(["'])(.*?)\1/g;
-					let match: RegExpExecArray;
+					let match: any;
 
 					while ((match = classRegex.exec(ctx.content)!) !== null) {
 						const cls = match[2]?.split(/\s+/);
-						cls?.forEach((c) => {
+						cls?.forEach((c: string) => {
 							if (c) candidates.add(c);
 						});
 					}
@@ -140,23 +136,15 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 
 						(ctx as any)._assets.styles.push(hash);
 						// Remove the element as the link will be injected by @assets
-						ctx.update(ctx.content.replace(ctx.element.outer, ""));
+						ctx.replace("");
 						return;
 					}
 
-					const newHtml = ctx.content.replace(
-						ctx.element.outer,
-						`<style>${processedCSS}</style>`,
-					);
-					ctx.update(newHtml);
+					ctx.replace(`<style>${processedCSS}</style>`);
 				} catch (error) {
 					console.warn("Tailwind compilation error:", error);
 					// Fallback: use original content without processing
-					const newHtml = ctx.content.replace(
-						ctx.element.outer,
-						`<style>${ctx.element.inner || ""}</style>`,
-					);
-					ctx.update(newHtml);
+					ctx.replace(`<style>${ctx.element.inner || ""}</style>`);
 				}
 			},
 		});

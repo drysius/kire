@@ -3,15 +3,15 @@
  */
 
 export interface ParamDefinition {
-	name: string;
-	rawDefinition: string;
-	validate: (value: any) => ValidationResult;
+    name: string;
+    rawDefinition: string;
+    validate: (value: any) => ValidationResult;
 }
 
 export interface ValidationResult {
-	valid: boolean;
-	extracted?: Record<string, any>;
-	error?: string;
+    valid: boolean;
+    extracted?: Record<string, any>;
+    error?: string;
 }
 
 type TypeChecker = (value: any) => boolean;
@@ -20,295 +20,217 @@ type TypeChecker = (value: any) => boolean;
  * Basic type validators
  */
 const TYPE_VALIDATORS: Record<string, TypeChecker> = {
-	string: (value) => typeof value === "string",
-	number: (value) =>
-		typeof value === "number" && !Number.isNaN(value) && Number.isFinite(value),
-	boolean: (value) => typeof value === "boolean",
-	any: () => true,
-	object: (value) =>
-		(typeof value === "object" && value !== null && !Array.isArray(value)) ||
-		typeof value === "string",
-	array: (value) => Array.isArray(value) || typeof value === "string",
-	null: (value) => value === null,
-	undefined: (value) => value === undefined,
-	function: (value) => typeof value === "function",
+    string: (value) => typeof value === "string",
+    number: (value) => typeof value === "number" && !Number.isNaN(value) && Number.isFinite(value),
+    boolean: (value) => typeof value === "boolean",
+    any: () => true,
+    object: (value) => (typeof value === "object" && value !== null && !Array.isArray(value)) || typeof value === "string",
+    array: (value) => Array.isArray(value) || typeof value === "string",
+    null: (value) => value === null,
+    undefined: (value) => value === undefined,
+    function: (value) => typeof value === "function",
     filepath: (value) => typeof value === "string",
 };
 
-/**
- * Registry for custom validators
- */
 export const validators = {
-	register(type: string, validator: TypeChecker) {
-		TYPE_VALIDATORS[type] = validator;
-	},
-	list() {
-		return Object.keys(TYPE_VALIDATORS);
-	},
+    register(type: string, validator: TypeChecker) {
+        TYPE_VALIDATORS[type] = validator;
+    },
+    list() {
+        return Object.keys(TYPE_VALIDATORS);
+    },
 };
 
 /**
- * Helper to escape regex special characters
+ * matches a simple pattern like "$var {op:in/of} $rest"
+ * against a string input "item in items"
  */
-function escapeRegex(text: string): string {
-	return text.replace(/[.*+?^${}()|[\\]/g, "\\$&");
-}
+function matchPattern(pattern: string, input: string): Record<string, any> | null {
+    if (!input || typeof input !== 'string') return null;
+    
+    // Tokenize pattern
+    // Tokens: 
+    //   $var -> { type: 'var', name: 'var' }
+    //   $...rest -> { type: 'rest', name: 'rest' }
+    //   {op:a/b} -> { type: 'choice', name: 'op', options: ['a','b'] }
+    //   text -> { type: 'text', value: 'text' }
+    
+    const tokens: any[] = [];
+    const pParts = pattern.split(/\s+/);
+    
+    for (const part of pParts) {
+        if (part.startsWith('$...')) {
+            tokens.push({ type: 'rest', name: part.slice(4) || 'rest' });
+        } else if (part.startsWith('$')) {
+            tokens.push({ type: 'var', name: part.slice(1) });
+        } else if (part.startsWith('{') && part.endsWith('}')) {
+            const inner = part.slice(1, -1);
+            const [name, opts] = inner.includes(':') ? inner.split(':') : [null, inner];
+            const options = (opts || name)!.split('/');
+            tokens.push({ type: 'choice', name: name || 'choice', options });
+        } else {
+            tokens.push({ type: 'text', value: part });
+        }
+    }
 
-/**
- * Creates a pattern matcher function with syntax:
- * - `$var` - Captures a variable
- * - `$...` - Captures the rest
- * - `{op1/op2}` - Choice (non-capturing)
- * - `{name:op1/op2}` - Named choice (capturing)
- */
-function createPatternMatcher(
-	pattern: string,
-): (input: string) => Record<string, string> | null {
-	let regex = "^";
-	let i = 0;
-
-	while (i < pattern.length) {
-		// Rest parameter: $...
-		if (pattern.startsWith("$...", i)) {
-			regex += "(?<rest>.*)";
-			i += 4;
-			continue;
-		}
-
-		// Variable: $var
-		if (pattern[i] === "$") {
-			const varStart = i + 1;
-			let varEnd = varStart;
-			while (varEnd < pattern.length && /\w/.test(pattern[varEnd]!)) {
-				varEnd++;
-			}
-
-			if (varEnd === varStart) {
-				// Not a variable, treat as literal $
-				regex += "\\$";
-				i++;
-				continue;
-			}
-
-			const varName = pattern.slice(varStart, varEnd);
-			let capturePattern = "[^\\s]+";
-
-			if (varEnd < pattern.length) {
-				const nextChar = pattern[varEnd];
-				if (nextChar === " ") {
-					capturePattern = ".*?";
-				} else if (nextChar !== "$" && nextChar !== "{") {
-					let literalEnd = varEnd;
-					while (
-						literalEnd < pattern.length &&
-						pattern[literalEnd] !== " " &&
-						pattern[literalEnd] !== "$" &&
-						pattern[literalEnd] !== "{"
-					) {
-						literalEnd++;
-					}
-					const nextLiteral = pattern.slice(varEnd, literalEnd);
-					if (nextLiteral) {
-						const firstChar = escapeRegex(nextLiteral[0]!);
-						capturePattern = `.*?(?=\\s|${firstChar}|$)'`;
-					}
-				}
-			}
-
-			regex += `(?<${varName}>${capturePattern})`;
-			i = varEnd;
-			continue;
-		}
-
-		// Choices: {name:op1/op2} or {op1/op2}
-		if (pattern[i] === "{") {
-			const end = pattern.indexOf("}", i);
-			if (end !== -1) {
-				const content = pattern.slice(i + 1, end);
-				const colon = content.indexOf(":");
-
-				if (colon !== -1) {
-					const name = content.slice(0, colon);
-					const choices = content
-						.slice(colon + 1)
-						.split("/")
-						.map(escapeRegex)
-						.join("|");
-					regex += `(?<${name}>${choices})`;
-				} else {
-					const choices = content.split("/").map(escapeRegex).join("|");
-					regex += `(?:${choices})`;
-				}
-
-				i = end + 1;
-				continue;
-			}
-		}
-
-		// Literal text
-		const literalStart = i;
-		while (
-			i < pattern.length &&
-			pattern[i] !== " " &&
-			pattern[i] !== "$" &&
-			pattern[i] !== "{"
-		) {
-			i++;
-		}
-
-		if (literalStart < i) {
-			const literal = pattern.slice(literalStart, i);
-			regex += escapeRegex(literal);
-		}
-
-		// Spaces
-		if (i < pattern.length && pattern[i] === " ") {
-			regex += "\\s+";
-			i++;
-			while (i < pattern.length && pattern[i] === " ") i++;
-		} else if (literalStart === i) {
-			i++;
-		}
-	}
-
-	regex += "$";
-	const compiled = new RegExp(regex);
-
-	return (input: string) => {
-		if (typeof input !== "string") return null;
-		const match = compiled.exec(input.trim());
-		if (!match) return null;
-
-		const result: Record<string, string> = {};
-		for (const [key, value] of Object.entries(match.groups || {})) {
-			if (value !== undefined) {
-				result[key] = value;
-			}
-		}
-		return result;
-	};
+    // Attempt to match input
+    // We scan the input string. 
+    // For $var, we scan until we hit the *next* token's requirement (e.g. a specific word or choice).
+    
+    const result: Record<string, any> = {};
+    let cursor = 0;
+    const len = input.length;
+    
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        
+        // Skip whitespace in input
+        while (cursor < len && /\s/.test(input[cursor]!)) cursor++;
+        
+        if (cursor >= len && token.type !== 'rest') return null; // Unexpected end
+        
+        if (token.type === 'text') {
+            if (!input.startsWith(token.value, cursor)) return null;
+            cursor += token.value.length;
+        } else if (token.type === 'choice') {
+            let matched = false;
+            for (const opt of token.options) {
+                if (input.startsWith(opt, cursor)) {
+                    // Ensure word boundary if possible, or just take it
+                    // Check if next char is space or end
+                    const end = cursor + opt.length;
+                    if (end === len || /\s/.test(input[end]!)) {
+                        result[token.name] = opt;
+                        cursor = end;
+                        matched = true;
+                        break;
+                    }
+                }
+            }
+            if (!matched) return null;
+        } else if (token.type === 'var') {
+            // Read until next token matches
+            const nextToken = tokens[i + 1];
+            let value = "";
+            
+            if (!nextToken) {
+                // Consume all
+                value = input.slice(cursor);
+                cursor = len;
+            } else if (nextToken.type === 'text') {
+                const idx = input.indexOf(nextToken.value, cursor);
+                if (idx === -1) return null;
+                value = input.slice(cursor, idx);
+                cursor = idx; // Don't advance past next token yet
+            } else if (nextToken.type === 'choice') {
+                // Harder: find the first occurrence of ANY choice
+                let bestIdx = -1;
+                for (const opt of nextToken.options) {
+                    const idx = input.indexOf(opt, cursor);
+                    // Must ensure the choice is surrounded by spaces or bounds to be safe? 
+                    // Usually yes.
+                    if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) {
+                         // Verify boundary? 
+                         // "item in list" -> var="item", choice="in"
+                         // "iteminside" -> shouldn't match "in"
+                         bestIdx = idx;
+                    }
+                }
+                if (bestIdx === -1) return null;
+                value = input.slice(cursor, bestIdx);
+                cursor = bestIdx;
+            } else {
+                // consecutive vars? Ambiguous. Read one word.
+                const match = input.slice(cursor).match(/^\S+/);
+                if (match) {
+                    value = match[0];
+                    cursor += value.length;
+                }
+            }
+            result[token.name] = value.trim();
+        } else if (token.type === 'rest') {
+             result[token.name] = input.slice(cursor).trim();
+             cursor = len;
+        }
+    }
+    
+    return result;
 }
 
 /**
  * Check if definition is a pattern
  */
 export function isPatternDefinition(def: string): boolean {
-	return (
-		def.includes(" ") ||
-		def.includes("$") ||
-		(def.includes("{") && def.includes("}"))
-	);
+    return (
+        def.includes(" ") ||
+        def.includes("$") ||
+        (def.includes("{") && def.includes("}"))
+    );
 }
 
-/**
- * Parse parameter definition
- */
 export function parseParamDefinition(def: string): ParamDefinition {
-	// 1. Handle Unions
-	if (def.includes("|")) {
-		// If it looks like a pattern, don't split by pipe immediately unless we are sure.
-		// But our simple pattern syntax doesn't use pipe except inside choice {} blocks.
-		// So safe to split by top-level pipe?
-		// Wait, {op1/op2} uses slash.
-		// So pipe is reserved for Union Types.
+    // Union types: type1|type2
+    if (def.includes('|')) {
+        const parts = def.split('|').map(p => p.trim());
+        const validators = parts.map(parseParamDefinition);
+        
+        return {
+            name: validators[0]!.name,
+            rawDefinition: def,
+            validate: (value) => {
+                const combined = {};
+                for (const v of validators) {
+                    const res = v.validate(value);
+                    if (res.valid) {
+                         if (res.extracted) Object.assign(combined, res.extracted);
+                         // If one matched, we treat it as valid. 
+                         // But we want to capture variables if any.
+                         return { valid: true, extracted: combined };
+                    }
+                }
+                return { valid: false, error: `Does not match any of: ${def}` };
+            }
+        };
+    }
 
-		const parts = def.split("|").map((p) => p.trim());
-		const validators = parts.map((p) => parseParamDefinition(p));
+    // Pattern: "loop:$var in $list"
+    if (def.includes(' ') || def.includes('$')) {
+        let name = "pattern";
+        let pattern = def;
+        
+        const col = def.indexOf(':');
+        // Heuristic: "name:pattern..."
+        if (col !== -1 && !def.slice(0, col).includes(' ')) {
+            name = def.slice(0, col);
+            pattern = def.slice(col + 1);
+        }
 
-		return {
-			name: validators[0]!.name,
-			rawDefinition: def,
-			validate: (value: any) => {
-				const errors: string[] = [];
-				const combinedExtracted: Record<string, any> = {};
+        return {
+            name, 
+            rawDefinition: def,
+            validate: (value) => {
+                const extracted = matchPattern(pattern, value);
+                if (!extracted) return { valid: false, error: `Value does not match pattern "${pattern}"` };
+                return { valid: true, extracted };
+            }
+        };
+    }
 
-				for (const validator of validators) {
-					const result = validator.validate(value);
-					if (result.valid) {
-						if (validator.name && validator.name !== "pattern_match") {
-							combinedExtracted[validator.name] = value;
-						}
-						if (result.extracted) {
-							Object.assign(combinedExtracted, result.extracted);
-						}
-						return { valid: true, extracted: combinedExtracted };
-					}
-					errors.push(result.error || "Invalid");
-				}
-
-				return {
-					valid: false,
-					error: `Value didn't match: ${errors.join(" OR ")}`,
-				};
-			},
-		};
-	}
-
-	// 2. Handle Patterns
-	if (isPatternDefinition(def)) {
-		// Check for name prefix "name:pattern"
-		let name = "pattern_match";
-		let pattern = def;
-
-		// Simple heuristic: if it starts with "word:" and rest is pattern
-		const colonIndex = def.indexOf(":");
-		if (colonIndex !== -1) {
-			const possibleName = def.slice(0, colonIndex);
-			// Ensure name is a valid identifier and not part of the pattern structure like {name:opt}
-			// Actually {name:opt} is inside braces.
-			// If we have "loop:$lhs...", "loop" is name.
-			if (/^[a-zA-Z_]\w*$/.test(possibleName)) {
-				name = possibleName;
-				pattern = def.slice(colonIndex + 1);
-			}
-		}
-
-		const matcher = createPatternMatcher(pattern);
-
-		return {
-			name,
-			rawDefinition: def,
-			validate: (value: any) => {
-				if (typeof value !== "string") {
-					return {
-						valid: false,
-						error: "Expected string for pattern matching",
-					};
-				}
-				const extracted = matcher(value);
-				if (!extracted) {
-					return {
-						valid: false,
-						error: `Value does not match pattern: ${pattern}`,
-					};
-				}
-				return { valid: true, extracted };
-			},
-		};
-	}
-
-	// 3. Handle Simple Types "name:type"
-	const [namePart, typeDef = "any"] = def.split(":");
-	let name = namePart!.trim();
-
-	// Handle optional indicator '?' in name (e.g., "param?:type")
-	if (name.endsWith("?")) {
-		name = name.slice(0, -1);
-	}
-
-	const validator = TYPE_VALIDATORS[typeDef.trim()] || TYPE_VALIDATORS.any!;
-
-	return {
-		name: name,
-		rawDefinition: def,
-		validate: (value: any) => {
-			if (validator(value)) {
-				return { valid: true };
-			}
-			return {
-				valid: false,
-				error: `Expected ${typeDef}, got ${typeof value}`,
-			};
-		},
-	};
+    // Simple: "name:type" or "name"
+    const [n, t] = def.includes(':') ? def.split(':') : [def, 'any'];
+    let name = n!.trim();
+    const type = t!.trim();
+    
+    if (name.endsWith('?')) name = name.slice(0, -1);
+    
+    const validator = TYPE_VALIDATORS[type] || TYPE_VALIDATORS.any!;
+    
+    return {
+        name,
+        rawDefinition: def,
+        validate: (value) => {
+            if (validator(value)) return { valid: true };
+            return { valid: false, error: `Expected ${type}, got ${typeof value}` };
+        }
+    };
 }

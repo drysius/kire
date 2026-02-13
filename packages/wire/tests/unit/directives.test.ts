@@ -20,24 +20,19 @@ describe("Wire Directives", () => {
 		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_custom_wire" });
 
-		// Mock resolver to avoid FS check in tests if possible,
-		// but getClientScript uses fs.existsSync.
-		// We rely on the fact that we are in the monorepo and paths usually resolve.
-
 		const output = await kire.render("@wired");
 
-		expect(output).toContain("<script>");
-		expect(output).toContain("window.Alpine"); // Checks if script content is somewhat there
-		expect(output).toContain("<style>");
-		// Note: The actual script content depends on the build, but the tag structure is static
+		expect(output).toContain("<script src=\"/_custom_wire/kirewire.min.js\"></script>");
+		expect(output).toContain("<link rel=\"stylesheet\" href=\"/_custom_wire/kirewire.min.css\">");
 	});
 
-	test("attributes schema should be registered", () => {
-		const kire = new Kire({ silent: true });
-		registerDirectives(kire, { route: "/_wire" });
+	test("attributes schema should be registered", async () => {
+		const kire = new Kire({ silent: true, directives:false });
+        const { Wired } = await import("../../src/wired");
+		kire.plugin(Wired.plugin, { route: "/_wire" });
 
 		const schema = kire.pkgSchema("test-app");
-		const attrs = schema.attributes?.global;
+		const attrs = schema.attributes;
 
 		expect(attrs).toBeDefined();
 		expect(attrs["wire:click"]).toBeDefined();

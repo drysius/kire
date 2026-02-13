@@ -1,8 +1,7 @@
 import type { Kire } from "./kire";
-import type { LayeredMap } from "./utils/layered-map";
 import type { Attributes } from "./utils/attributes";
 
-export type KireCache<T = any> = Map<string, T>;
+export type KireCache<T = any> = Record<string, T>;
 
 export interface IParser {
 	parse(): Node[];
@@ -19,6 +18,7 @@ export type ICompilerConstructor = new (
 ) => ICompiler;
 
 export type KireExecutor = (code: string, params: string[]) => Function;
+
 /**
  * Options for configuring the Kire instance.
  */
@@ -36,9 +36,9 @@ export interface KireOptions {
 	 */
 	stream?: boolean;
 	/**
-	 * Custom file resolver function.
+	 * Root directory for resolving templates. Defaults to process.cwd().
 	 */
-	resolver?: (filename: string) => Promise<string>;
+	root?: string;
 	/**
 	 * Default file extension for templates. Defaults to "kire".
 	 */
@@ -72,17 +72,24 @@ export interface KireOptions {
 	parent?: Kire;
 }
 
-export type KireHook = "before" | "after" | "end";
+export type KireHookName = "before" | "rendered" | "after" | "end";
+export type KireHookCallback = (ctx: KireContext) => Promise<void> | void;
+
+export class KireHooks {
+    before: KireHookCallback[] = [];
+    rendered: KireHookCallback[] = [];
+    after: KireHookCallback[] = [];
+    end: KireHookCallback[] = [];
+}
 
 /**
  * The runtime context object ($ctx) used during template execution.
  */
 export interface KireContext {
 	/**
-	 * The LayeredMap containing global variables.
-	 * Can be destructured at the start of the template.
+	 * Global variables accessible in all templates.
 	 */
-	$globals: LayeredMap<string, any> | Map<string, any>;
+	$globals: Record<string, any>;
 
 	/**
 	 * The local variables passed to the render function.
@@ -117,15 +124,15 @@ export interface KireContext {
 	 * @param callback The function to execute.
 	 */
 	$on(
-		event: KireHook,
-		callback: (ctx: KireContext) => Promise<void> | void,
+		event: KireHookName,
+		callback: KireHookCallback,
 	): void;
 
 	/**
 	 * Emits a lifecycle event.
 	 * @param event The event name.
 	 */
-	$emit(event: KireHook): Promise<void>;
+	$emit(event: KireHookName): Promise<void>;
 
 	/**
 	 * Resolves a file path relative to the project root and aliases.
@@ -163,7 +170,7 @@ export interface KireContext {
 	 * Runtime hooks
 	 * @param key
 	 */
-	$hooks: Map<KireHook, ((ctx: KireContext) => Promise<void> | void)[]>;
+	$hooks: KireHooks;
 
 	/**
 	 * Arbitrary locals and globals access (fallback).

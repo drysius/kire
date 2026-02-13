@@ -1,6 +1,6 @@
 import { KireError } from "./utils/error";
 import type { Kire } from "./kire";
-import type { KireContext, KireFileMeta } from "./types";
+import type { KireContext, KireFileMeta, KireHookName } from "./types";
 import { processElements } from "./utils/elements-runner";
 import { escapeHtml } from "./utils/html";
 import { md5 } from "./utils/md5";
@@ -10,122 +10,117 @@ export default function (
 	locals: Record<string, any>,
 	meta: KireFileMeta,
 ): Promise<string | ReadableStream> | ReadableStream | string {
-	// 1. Setup Base Context
-	const $ctx = {
-		...$kire.$contexts.toObject(),
-		$response: "",
-		get $res() {
-			return $ctx.$response;
-		},
-	} as KireContext;
+	
+    // 1. Setup Context with Prototype Inheritance for Speed
+    // $ctx inherits from $kire.$contexts (if exists) or just plain object
+    // But typically $ctx is fresh per request.
+    // $globals and $props inherit from Kire instance to allow shadowing without mutation.
+    
+    const $ctx: KireContext = {
+        $kire,
+        $file: meta,
+        $response: "",
+        $deferred: [],
+        
+        // Inherit globals/props from Kire instance
+        $globals: Object.create($kire.$globals),
+        $props: Object.create($kire.$props),
+        
+        // Methods
+        $add: (str: string) => ($ctx.$response += str),
+        $md5: md5,
+        $escape: escapeHtml,
+        $resolve: (path: string) => $kire.resolvePath(path),
+        $typed: (key: string) => $ctx[key],
+        
+        // Optimized Hooks: Copy references from Kire instance
+        // We create a new object for runtime hooks so we don't mutate the global definition
+        $hooks: {
+            before: [...$kire.$hooks.before],
+            rendered: [...$kire.$hooks.rendered],
+            after: [...$kire.$hooks.after],
+            end: [...$kire.$hooks.end],
+        },
 
-	$ctx.$kire = $kire;
-	$ctx.$props = { ...$kire.$props.toObject(), ...locals };
-	$ctx.$globals = $kire.$globals.toObject();
-	$ctx.$file = meta;
-	$ctx.$typed = (key) => $ctx[key];
+        $on: (ev: KireHookName, cb) => {
+            $ctx.$hooks[ev].push(cb);
+        },
 
-	$ctx.$hooks = new Map();
-	$ctx.$hooks.set("before", []);
-	$ctx.$hooks.set("after", []);
-	$ctx.$hooks.set("end", []);
-	$ctx.$deferred = [];
-	$ctx.$on = (ev, cb) => {
-		const hooks = $ctx.$hooks.get(ev);
-		if (hooks) {
-			hooks.push(cb);
-			$ctx.$hooks.set(ev, hooks);
-		}
-	};
-	$ctx.$emit = async (ev) => {
-		const hooks = $ctx.$hooks.get(ev);
-		if (hooks && hooks.length > 0) {
-			for (const hook of hooks) {
-				await hook($ctx);
-			}
-		}
-	};
+        $emit: async (ev: KireHookName) => {
+            const hooks = $ctx.$hooks[ev];
+            if (hooks.length > 0) {
+                for (let i = 0; i < hooks.length; i++) {
+                    await hooks[i]!($ctx);
+                }
+            }
+        },
 
-	// Default buffering implementation
-	$ctx.$add = (str) => ($ctx.$response += str);
+        $merge: async (fn) => {
+            const prevRes = $ctx.$response;
+            $ctx.$response = "";
+            await fn($ctx);
+            // $ctx.$response now contains the inner content
+            const inner = $ctx.$response;
+            $ctx.$response = prevRes + inner;
+        },
+        
+        $fork: () => {
+            // Shallow clone context
+            const newCtx = { ...$ctx };
+            // Re-bind specific methods if needed, but simple clone is usually enough for data
+            // For $merge in fork, we need to be careful about buffer
+            newCtx.$merge = async (fn) => {
+                const prevRes = newCtx.$response;
+                newCtx.$response = "";
+                await fn(newCtx);
+                const inner = newCtx.$response;
+                newCtx.$response = prevRes + inner;
+            };
+            return newCtx;
+        },
 
-	// Utils
-	//@ts-expect-error ignore typed
-	if (typeof $ctx.$require === "undefined") $ctx.$require = (path, locals) => {
-			// If we are streaming, we need to pass the controller
-			if (meta.controller) {
-				return $kire.view(path, locals, meta.controller);
-			}
-			return $kire.view(path, locals);
-		};
-	if (typeof $ctx.$escape === "undefined")
-		$ctx.$escape = (unsafe) => escapeHtml(unsafe);
-	if (typeof $ctx.$md5 === "undefined") $ctx.$md5 = (str) => md5(str);
-	if (typeof $ctx.$resolve === "undefined")
-		$ctx.$resolve = (path) => $kire.resolvePath(path);
+        // Helper for dynamic requirements
+        $require: async (path, locals) => {
+             return $kire.view(path, locals, meta.controller) as Promise<string>;
+        }
+    } as any;
 
-	// Default $merge (buffering)
-	if (typeof $ctx.$merge === "undefined")
-		$ctx.$merge = async (fn) => {
-			const $pres = $ctx.$response;
-			$ctx.$response = "";
-			await fn($ctx);
-			$ctx.$response = $pres + $ctx.$response;
-		};
-
-	$ctx.$fork = () => {
-		const newCtx = { ...$ctx };
-		newCtx.$merge = async (fn) => {
-			const originalAdd = newCtx.$add;
-			let buffer = "";
-			newCtx.$add = (str) => {
-				buffer += str;
-				newCtx.$response = (newCtx.$response || "") + str;
-			};
-			const prevRes = newCtx.$response;
-			newCtx.$response = "";
-
-			await fn(newCtx);
-
-			newCtx.$add = originalAdd;
-			newCtx.$response = prevRes + buffer;
-		};
-		newCtx.$fork = $ctx.$fork;
-		return newCtx;
-	};
+    // Apply locals to props (shadowing global props)
+    if (locals) {
+        Object.assign($ctx.$props, locals);
+    }
 
 	// 2. Define Execution Logic
 	const execute = async () => {
-		// Only run inits if strictly necessary.
-		if ($ctx.$kire.$directives.size > 0) {
-			for (const directive of $ctx.$kire.$directives.values()) {
-				if (directive.onInit) {
-					await directive.onInit($ctx);
-				}
-			}
-		}
+        // Directives Init
+        if ($kire.$directives.size > 0) {
+            for (const directive of $kire.$directives.values()) {
+                if (directive.onInit) {
+                    await directive.onInit($ctx);
+                }
+            }
+        }
 
 		await $ctx.$emit("before");
 
 		try {
-			// use $props do bind and $ctx value
 			await $ctx.$file.execute.call($ctx.$props, $ctx);
 		} catch (e: any) {
 			const kireError = new KireError(e, $ctx.$file);
 			console.error(kireError.stack);
-			// In sync mode, return error HTML. In stream mode, this will be handled by wrapper.
 			return $kire.renderError(kireError, $ctx);
+		}
+
+		await $ctx.$emit("rendered");
+
+		if (!meta.controller && $kire.$elements.size > 0) {
+			$ctx.$response = await processElements($ctx);
 		}
 
 		await $ctx.$emit("after");
 		await $ctx.$emit("end");
 
-		// Post-process only if not streaming directly (handled in wrapper)
-		let resultHtml = $ctx.$response;
-		if (!meta.controller && $ctx.$kire.$elements.size > 0) {
-			resultHtml = await processElements($ctx);
-		}
-		return resultHtml;
+		return $ctx.$response;
 	};
 
 	// 3. Handle Streaming vs Buffering
@@ -135,79 +130,68 @@ export default function (
 		const encoder = new TextEncoder();
 		return new ReadableStream({
 			async start(controller) {
-				// Setup streaming $add
 				$ctx.$add = (str) => controller.enqueue(encoder.encode(str));
-
-				// Override $merge to buffer temporarily during stream
+                
+                // Override merge for streaming: buffer locally then flush
 				$ctx.$merge = async (fn) => {
-					const originalAdd = $ctx.$add;
-					let buffer = "";
-					$ctx.$add = (str) => {
-						buffer += str;
-						$ctx.$response += str;
-					};
-					// Preserve $response abstraction for directives that use it
-					const prevRes = $ctx.$response;
-					$ctx.$response = "";
-
-					await fn($ctx);
-
-					$ctx.$add = originalAdd;
-					$ctx.$response = prevRes + buffer;
+                    const originalAdd = $ctx.$add;
+                    let buffer = "";
+                    $ctx.$add = (str) => { buffer += str; };
+                    
+                    await fn($ctx);
+                    
+                    $ctx.$add = originalAdd;
+                    // Flush buffer to stream
+                    $ctx.$add(buffer);
 				};
-
-				// We need to update $require to pass THIS controller
-				// Override the previously set $require
-				//@ts-expect-error need to renderize context
-				$ctx.$require = (path, locals) => $kire.view(path, locals, controller as any);
 
 				try {
 					const result = await execute();
-					// If execute returns an error string (caught exception), write it
-					if (
-						typeof result === "string" &&
-						result.includes("Kire Runtime Error")
-					) {
+					if (typeof result === "string" && result.includes("Error")) {
+                        // If error returned as string during streaming
 						controller.enqueue(encoder.encode(result));
 					}
 
-					// Handle deferred tasks
 					if ($ctx.$deferred && $ctx.$deferred.length > 0) {
 						await Promise.all($ctx.$deferred.map((t) => t()));
 					}
 
 					controller.close();
 				} catch (e) {
-					// Fallback for unexpected errors
 					controller.error(e);
 				}
 			},
 		});
 	} else if (meta.controller) {
-		// We are a child in a stream
+        // We are a child in a stream
 		const encoder = new TextEncoder();
 		$ctx.$add = (str) => meta.controller!.enqueue(encoder.encode(str));
-
-		// Override $merge to buffer temporarily (same as above)
+        
+        // Merge in child stream: buffer locally (don't write to parent stream immediately if capturing)
+        // But wait, $merge is used for capturing slots. Slots should NOT write to stream immediately.
+        // So $merge must buffer.
 		$ctx.$merge = async (fn) => {
 			const originalAdd = $ctx.$add;
-			let buffer = "";
-			$ctx.$add = (str) => {
-				buffer += str;
-				$ctx.$response += str;
-			};
-			const prevRes = $ctx.$response;
-			$ctx.$response = "";
+            let buffer = "";
+            $ctx.$add = (str) => { 
+                buffer += str; 
+                // We also update $response for directives that read it
+                $ctx.$response += str; 
+            };
+            const prevRes = $ctx.$response;
+            $ctx.$response = "";
 
 			await fn($ctx);
 
 			$ctx.$add = originalAdd;
-			$ctx.$response = prevRes + buffer;
+            // We do NOT flush buffer to stream here, because $merge implies capturing logic (like @slot).
+            // The caller of $merge will decide what to do with $ctx.$response.
+            // Restore response
+            $ctx.$response = prevRes + buffer;
 		};
 
-		return execute().then(() => ""); // Return empty string promise as content is streamed
+		return execute().then(() => ""); 
 	} else {
-		// Standard buffering
 		return execute();
 	}
 }

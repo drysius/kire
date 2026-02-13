@@ -284,7 +284,8 @@ export abstract class WireComponent {
 				key === "$ctx" ||
 				key === "kire" ||
 				key === "context" ||
-				key === "queryString"
+				key === "queryString" ||
+                key === "casts"
 			)
 				continue;
 

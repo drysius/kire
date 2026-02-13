@@ -93,12 +93,12 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 			name: "iconify",
 			description: "Renders an Iconify icon.",
 			void: true,
-			async onCall(ctx) {
+			async run(ctx) {
 				const attrs = { ...ctx.element.attributes };
 				const iconName = attrs.i || attrs.icon;
 
 				if (!iconName) {
-					ctx.update('<!-- <iconify> missing "i" or "icon" attribute -->');
+					ctx.replace('<!-- <iconify> missing "i" or "icon" attribute -->');
 					return;
 				}
 
@@ -127,9 +127,13 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 					}
 				}
 
-				const svg = await fetchIcon(iconName, apiUrl, apiParams, iconCache);
-				const finalSvg = processSvgAttributes(svg, className, htmlAttrs);
-				ctx.replace(finalSvg);
+				try {
+                    const svg = await fetchIcon(iconName, apiUrl, apiParams, iconCache);
+                    const finalSvg = processSvgAttributes(svg, className, htmlAttrs);
+                    ctx.replace(finalSvg);
+                } catch (e: any) {
+                    ctx.replace(`<!-- Iconify error: ${e.message} -->`);
+                }
 			},
 		});
 	},

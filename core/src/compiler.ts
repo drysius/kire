@@ -25,7 +25,7 @@ export class Compiler {
 	 * @param nodes The root nodes of the AST.
 	 * @returns The compiled JavaScript code as a string.
 	 */
-	public async compile(nodes: Node[]): Promise<string> {
+	public async compile(nodes: Node[], extraGlobals: string[] = []): Promise<string> {
 		this.preBuffer = [];
 		this.resBuffer = [];
 		this.posBuffer = [];
@@ -43,16 +43,26 @@ export class Compiler {
 		const pos = this.posBuffer.join("\n");
 
 		// Filter keys to ensure they are valid JS identifiers
-		const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
+		const sanitizedGlobals = Object.keys(this.kire.$globals).filter((key) =>
 			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
 		);
-		const destructuring =
-			sanitizedKeys.length > 0
-				? `var { ${sanitizedKeys.join(", ")} } = $ctx.$globals;`
+        const sanitizedLocals = extraGlobals.filter((key) =>
+			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
+		);
+
+		const globalDestructuring =
+			sanitizedGlobals.length > 0
+				? `var { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;`
 				: "";
+        
+        const localDestructuring =
+            sanitizedLocals.length > 0
+                ? `var { ${sanitizedLocals.join(", ")} } = $ctx.$props;`
+                : "";
 
 		const startCode = `
-${destructuring}
+${globalDestructuring}
+${localDestructuring}
 let ${varLocals} = $ctx.$props;
 ${pre}
 `;
@@ -65,13 +75,6 @@ ${pre}
 			for (let i = 0; i < this.resBuffer.length; i++) {
 				bufferLineOffsets.set(i, currentGenLine);
 				const entry = this.resBuffer[i]!;
-				// Calculate lines occupied by this entry
-				// join('\n') adds a newline after each entry (except last, but we account for next start)
-				// Each entry occupies (newlines + 1) lines.
-				// The join adds 1 newline, moving start of next entry by 1 line.
-				// Wait. "a" -> 1 line. Next starts at +1.
-				// "a\nb" -> 2 lines. Next starts at +2.
-				// So increment = (newlines in entry) + 1.
 				currentGenLine += (entry.match(/\n/g) || []).length + 1;
 			}
 
@@ -90,9 +93,7 @@ ${pre}
 
 		// Main function body code
 		let code = `
-${destructuring}
-let ${varLocals} = $ctx.$props;
-${pre}
+${startCode}
 ${res}
 ${pos}
 return $ctx;
@@ -131,13 +132,9 @@ return $ctx;
 		}
 	}
 
-	/**
-	 * Compiles a text node, appending it to the result buffer.
-	 * @param node The text node.
-	 */
 	private compileText(node: Node) {
 		if (node.content) {
-			if (node.loc) {
+			if (node.loc && !this.kire.production) {
                 const currentLine = node.loc.start.line;
                 this.resMappings.push({
                     index: this.resBuffer.length + 1,
@@ -150,13 +147,9 @@ return $ctx;
 		}
 	}
 
-	/**
-	 * Compiles a variable node, dealing with raw vs escaped output.
-	 * @param node The variable node.
-	 */
 	private compileVariable(node: Node) {
 		if (node.content) {
-			if (node.loc) {
+			if (node.loc && !this.kire.production) {
                 const currentLine = node.loc.start.line;
                 this.resMappings.push({
                     index: this.resBuffer.length + 1,
@@ -173,25 +166,21 @@ return $ctx;
 		}
 	}
 
-	/**
-	 * Compiles a server-side JS node, injecting code directly into the buffer.
-	 * @param node The javascript node.
-	 */
 	private compileJavascript(node: Node) {
 		if (node.content) {
 			const lines = node.content.split("\n");
 			for (let i = 0; i < lines.length; i++) {
 				const lineContent = lines[i]!;
-				if (node.loc) {
+				if (node.loc && !this.kire.production) {
                     const currentLine = node.loc.start.line + i;
 					this.resMappings.push({
-						index: this.resBuffer.length + 1, // +1 because we will push the comment first
+						index: this.resBuffer.length + 1,
 						node: {
 							...node,
 							loc: {
 								start: {
 									line: currentLine,
-									column: i === 0 ? node.loc.start.column + 4 : 1, // +4 for <?js
+									column: i === 0 ? node.loc.start.column + 4 : 1,
 								},
 								end: node.loc.end,
 							},
@@ -205,10 +194,6 @@ return $ctx;
 		}
 	}
 
-	/**
-	 * Processes a directive node, executing its 'onCall' handler with a specific context.
-	 * @param node The directive node.
-	 */
 	private async processDirective(node: Node) {
 		const name = node.name;
 		if (!name) return;
@@ -220,7 +205,7 @@ return $ctx;
 			return;
 		}
 
-		if (node.loc) this.resMappings.push({ index: this.resBuffer.length, node, col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 });
+		if (node.loc && !this.kire.production) this.resMappings.push({ index: this.resBuffer.length, node, col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 });
 		const compiler = this.createCompilerContext(node, directive);
 		await directive.onCall(compiler);
 	}
@@ -241,7 +226,7 @@ return $ctx;
 		if (directive.params && node.args) {
 			directive.params.forEach((paramDefStr, index) => {
 				const argValue = node.args![index];
-				// Skip if argument is missing (optional params handling could be improved here)
+				// Skip if argument is missing
 				if (argValue === undefined) return;
 
 				const definition = parseParamDefinition(paramDefStr);
@@ -253,10 +238,10 @@ return $ctx;
 					);
 				}
 
-				// Store the main parameter value by its name (e.g., 'expr' in 'expr:string')
+				// Store the main parameter value by its name
 				paramsMap[definition.name] = argValue;
 
-				// Store any extracted variables from patterns (e.g., 'item' and 'list' from '{item} in {list}')
+				// Store any extracted variables from patterns
 				if (validation.extracted) {
 					Object.assign(paramsMap, validation.extracted);
 				}
@@ -278,7 +263,7 @@ return $ctx;
 				if (paramsMap[key] !== undefined) {
 					return paramsMap[key];
 				}
-				// Fallback to legacy index-based lookup if not found in map (e.g. if definition didn't match perfectly or wasn't provided)
+				// Fallback to legacy index-based lookup
 				if (directive.params && node.args) {
 					const index = directive.params.findIndex(
 						(p) => p.split(":")[0] === key,

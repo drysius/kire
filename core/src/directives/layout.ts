@@ -2,12 +2,14 @@ import type { Kire } from "../kire";
 
 export default (kire: Kire) => {
 	kire.directive({
-		name: "define",
-		params: ["name:string"],
+		name: `define`,
+		params: [`name:string`],
 		children: true,
-		type: "html",
-		description: "Defines a named, reusable section of content.",
-		example: `@define('header')\n  <h1>My Website</h1>\n@end`,
+		type: `html`,
+		description: `Defines a named, reusable section of content.`,
+		example: `@define('header')
+  <h1>My Website</h1>
+@enddefine`,
 		async onCall(ctx) {
 			const name = ctx.param("name");
 
@@ -24,12 +26,14 @@ export default (kire: Kire) => {
 	});
 
 	kire.directive({
-		name: "defined",
-		params: ["name:string"],
-		children: "auto",
-		type: "html",
-		description: "Renders defined content or fallback.",
-		example: `@defined('header')\n  Conteúdo não encontrado\n@end`,
+		name: `defined`,
+		params: [`name:string`],
+		children: `auto`,
+		type: `html`,
+		description: `Renders defined content or fallback.`,
+		example: `@defined('header')
+  Conteúdo não encontrado
+@enddefined`,
 		onInit(ctx) {
 			ctx["~defines"] = ctx["~defines"] || {};
 		},
@@ -47,12 +51,15 @@ export default (kire: Kire) => {
 	});
 
 	kire.directive({
-		name: "stack",
-		params: ["name:string"],
-		type: "html",
-		description:
-			"Creates a placeholder where content pushed to a named stack will be rendered.",
-		example: `<html>\n<head>\n  @stack('scripts')\n</head>\n</html>`,
+		name: `stack`,
+		params: [`name:string`],
+		type: `html`,
+		description: `Creates a placeholder where content pushed to a named stack will be rendered.`,
+		example: `<html>
+<head>
+  @stack('scripts')
+</head>
+</html>`,
 		children: false,
 		onCall(compiler) {
 			const name = compiler.param("name");
@@ -83,12 +90,14 @@ export default (kire: Kire) => {
 	});
 
 	kire.directive({
-		name: "push",
-		params: ["name:string"],
+		name: `push`,
+		params: [`name:string`],
 		children: true,
-		type: "html",
-		description: "Pushes a block of content onto a named stack.",
-		example: `@push('scripts')\n  <script src="app.js"></script>\n@end`,
+		type: `html`,
+		description: `Pushes a block of content onto a named stack.`,
+		example: `@push('scripts')
+  <script src="app.js"></script>
+@endpush`,
 		async onCall(compiler) {
 			const name = compiler.param("name");
 			compiler.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = {};`);
@@ -102,7 +111,6 @@ export default (kire: Kire) => {
 			compiler.raw(
 				`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`,
 			);
-			compiler.raw(`  $ctx.$response = '';`);
 			compiler.raw(`});`);
 		},
 	});

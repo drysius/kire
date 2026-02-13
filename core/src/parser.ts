@@ -25,6 +25,7 @@ export class Parser {
 		const len = this.template.length;
 
 		while (this.cursor < len) {
+			if (this.checkComment()) continue;
 			if (this.checkRawInterpolation()) continue;
 			if (this.checkJavascript()) continue;
 			if (this.checkInterpolation()) continue;
@@ -35,6 +36,22 @@ export class Parser {
 		}
 
 		return this.rootChildren;
+	}
+
+	/**
+	 * Checks for and parses Blade-style comments {{-- ... --}}.
+	 * Comments are stripped from the output.
+	 */
+	private checkComment(): boolean {
+		if (this.template.startsWith("{{--", this.cursor)) {
+			const end = this.template.indexOf("--}}", this.cursor + 4);
+			if (end !== -1) {
+				const content = this.template.slice(this.cursor, end + 4);
+				this.advance(content);
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -218,8 +235,9 @@ export class Parser {
 			}
 		}
 
-		if (name === "end") {
-			this.handleEndDirective();
+		if (name === "end" || name.startsWith("end")) {
+			const targetName = name === "end" ? undefined : name.slice(3);
+			this.handleEndDirective(targetName);
 			this.advance(
 				this.template.slice(this.cursor, this.cursor + argsEndIndex),
 			);
@@ -520,9 +538,38 @@ export class Parser {
 
 	/**
 	 * Handles the @end directive, closing the current block and potentially parent blocks (e.g. closing @if when @else ends).
+	 * Supports named end directives like @endif.
 	 */
-	private handleEndDirective() {
+	private handleEndDirective(name?: string) {
 		if (this.stack.length > 0) {
+			const current = this.stack[this.stack.length - 1];
+			
+			// If a name is provided (e.g. @endif), try to find that specific directive
+			if (name) {
+				let foundIndex = -1;
+				for (let i = this.stack.length - 1; i >= 0; i--) {
+					if (this.stack[i]?.name?.toLowerCase() === name.toLowerCase()) {
+						foundIndex = i;
+						break;
+					}
+				}
+				
+				if (foundIndex !== -1) {
+					while (this.stack.length > foundIndex) {
+						this.stack.pop();
+					}
+                    // Handle parent relations (like @else associated with @if)
+                    if (this.stack.length > 0) {
+                        const parent = this.stack[this.stack.length - 1];
+                        if (parent?.related?.includes(current!)) {
+                            this.stack.pop();
+                        }
+                    }
+				}
+				return;
+			}
+
+			// Standard @end logic
 			const popped = this.stack.pop();
 			if (this.stack.length > 0) {
 				const parent = this.stack[this.stack.length - 1];
