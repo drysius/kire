@@ -10,3 +10,11 @@
 [wire\:dirty]:not([wire\:dirty\.class]):not([wire\:dirty\.attr]) {
     display: none;
 }
+
+/* Transitions support */
+.wire-transition-fade {
+    transition: opacity 0.15s linear;
+}
+.wire-transition-fade.wire-loading {
+    opacity: 0.5;
+}

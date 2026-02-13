@@ -1,8 +1,0 @@
-{
-    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "kire-app",
-    "version": "0.0.0",
-    "directives": [],
-    "elements": [],
-    "globals": []
-}

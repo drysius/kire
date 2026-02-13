@@ -65,4 +65,11 @@ export default (kire: Kire) => {
         comment: "Resolves a template path using namespaces and aliases.",
         tstype: "['path:filepath']",
     });
+
+    kire.type({
+        variable: "$ctx.$att",
+        type: "context",
+        comment: "Attribute management helper. Allows merging and outputting HTML attributes.",
+        tstype: "import('kire').Attributes",
+    });
 };

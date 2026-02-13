@@ -1,7 +1,7 @@
 import { WirePageComponent } from "@kirejs/wire";
 
 // Mock data
-const ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
+let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
 	id: i + 1,
 	name: `User ${i + 1}`,
 }));
@@ -11,6 +11,10 @@ export default class Users extends WirePageComponent {
 
 	// Sync 'search' and 'page' with URL
 	public queryString = ["search", "page"];
+
+	public delete(id: number) {
+		ALL_USERS = ALL_USERS.filter(u => u.id !== id);
+	}
 
 	get users() {
 		const filtered = ALL_USERS.filter((u) =>

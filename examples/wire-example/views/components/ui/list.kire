@@ -1,0 +1,17 @@
+<div class="border rounded-lg overflow-hidden bg-white shadow-sm">
+    @if(slots.header)
+        <div class="px-4 py-3 border-b bg-gray-50">
+            @yield('header')
+        </div>
+    @end
+
+    <ul class="divide-y">
+        @yield('default')
+    </ul>
+
+    @if(slots.footer)
+        <div class="px-4 py-3 border-t bg-gray-50">
+            @yield('footer')
+        </div>
+    @end
+</div>

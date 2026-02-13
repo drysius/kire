@@ -49,9 +49,10 @@ export class Wired {
         const pathsToTry = [
             resolve(dirname(fileURLToPath(import.meta.url)), "../../client", filename),
             resolve(dirname(fileURLToPath(import.meta.url)), "../../dist/client", filename),
+            resolve(dirname(fileURLToPath(import.meta.url)), "../web", filename),
             resolve(dirname(fileURLToPath(import.meta.url)), "../../../dist/client", filename),
             join(process.cwd(), "packages/wire/dist/client", filename),
-            join(process.cwd(), "../../packages/wire/dist/client", filename),
+            join(process.cwd(), "../packages/wire/dist/client", filename),
             join(process.cwd(), "node_modules/@kirejs/wire/dist/client", filename),
         ];
 

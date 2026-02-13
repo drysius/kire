@@ -1,5 +1,6 @@
 import type { Kire } from "./kire";
 import type { LayeredMap } from "./utils/layered-map";
+import type { Attributes } from "./utils/attributes";
 
 export type KireCache<T = any> = Map<string, T>;
 
@@ -298,6 +299,11 @@ export interface KireElementContext extends KireContext {
 	content: string;
 
 	/**
+	 * The Attribute helper instance ($att).
+	 */
+	$att: Attributes;
+
+	/**
 	 * Details about the specific HTML element being processed.
 	 */
 	element: {
@@ -306,7 +312,7 @@ export interface KireElementContext extends KireContext {
 		 */
 		tagName: string;
 		/**
-		 * A map of the element's attributes.
+		 * The raw attribute values as map
 		 */
 		attributes: Record<string, string>;
 		/**
@@ -317,6 +323,10 @@ export interface KireElementContext extends KireContext {
 		 * The full outer HTML of the element (including tags).
 		 */
 		outer: string;
+		/**
+		 * The parent part of the element name if defined (e.g. 'kire' in 'kire:if')
+		 */
+		parent?: string;
 	};
 
 	/**
@@ -360,9 +370,11 @@ export interface ElementDefinition {
 	description?: string;
 	example?: string;
 	void?: boolean;
+	parent?: string; // e.g. ":" or "-"
+	declare?: Record<string, any>;
 	type?: "html" | "javascript" | "css";
 	attributes?: Record<string, AttributeDefinition | string>;
-	onCall?: KireElementHandler;
+	run?: KireElementHandler;
 }
 
 /**

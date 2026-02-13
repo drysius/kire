@@ -22,6 +22,7 @@ import { LayeredMap } from "./utils/layered-map";
 import { resolvePath } from "./utils/resolve";
 import { AsyncFunction, scoped } from "./utils/scoped";
 import { resolveSourceLocation } from "./utils/source-map";
+import nativeElements from "./elements/natives";
 
 export class Kire {
 	public $scoped = scoped;
@@ -143,6 +144,7 @@ export class Kire {
 			options.directives === true
 		) {
 			pluginsToLoad.push({ p: KireDirectives });
+            nativeElements(this);
 		}
 
 		if (options.plugins) {
@@ -317,6 +319,18 @@ export class Kire {
                     example: def.example,
                     tstype: 'element'
                 });
+
+                if (def.declare) {
+                    for (const [key, value] of Object.entries(def.declare)) {
+                         this.type({
+                            variable: key,
+                            type: 'element',
+                            comment: (value as any).description,
+                            example: (value as any).example,
+                            tstype: 'element'
+                        });
+                    }
+                }
             }
 		} else {
 			if (!handler) throw new Error("Handler is required for legacy element()");
@@ -324,7 +338,7 @@ export class Kire {
 			this.$elements.add({
 				name: name,
 				void: opts?.void ?? false,
-				onCall: handler,
+				run: handler,
 			});
             if (typeof name === 'string') {
                 this.type({
