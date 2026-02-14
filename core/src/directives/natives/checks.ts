@@ -11,10 +11,10 @@ export default (kire: Kire) => {
         example: `@isset($user)
   User is set.
 @endisset`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const expr = compiler.param("expr");
             compiler.raw(`if (typeof ${expr} !== 'undefined' && ${expr} !== null) {`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`}`);
         },
     });
@@ -28,10 +28,10 @@ export default (kire: Kire) => {
         example: `@empty($records)
   No records found.
 @endempty`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const expr = compiler.param("expr");
             compiler.raw(`if (!${expr} || (Array.isArray(${expr}) && ${expr}.length === 0)) {`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`}`);
         },
     });

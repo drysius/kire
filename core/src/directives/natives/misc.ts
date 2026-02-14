@@ -9,12 +9,12 @@ export default (kire: Kire) => {
         example: `@once
   <script src="one-time-script.js"></script>
 @endonce`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const id = compiler.count("once");
             compiler.raw(`if (!$ctx['~once']) $ctx['~once'] = new Set();`);
             compiler.raw(`if (!$ctx['~once'].has('${id}')) { 
                 $ctx['~once'].add('${id}');`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`}`);
         },
     });
@@ -25,7 +25,7 @@ export default (kire: Kire) => {
         type: `js`,
         description: `Injects a module or service into the template.`,
         example: `@inject('metrics', './services/metrics')`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const varName = compiler.param("varName");
             const path = compiler.param("modulePath");
             compiler.raw(`const ${varName} = await import('${path}');`);
@@ -41,11 +41,11 @@ export default (kire: Kire) => {
         example: `@error('email')
   <span class="error">{{ $message }}</span>
 @enderror`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const field = compiler.param("field");
             compiler.raw(`if ($ctx.$props.errors && $ctx.$props.errors[${JSON.stringify(field)}]) {
                 const $message = $ctx.$props.errors[${JSON.stringify(field)}];`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`}`);
         },
     });
@@ -107,10 +107,10 @@ export default (kire: Kire) => {
         example: `@defer
   <p>Loading slow content...</p>
 @enddefer`,
-        async onCall(compiler) {
+        onCall(compiler) {
             compiler.raw(`{
                 const deferredRender = async ($ctx) => {`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`};
                 if ($ctx.$kire.$stream) {
                     const deferId = 'defer-' + Math.random().toString(36).substr(2, 9);
@@ -119,9 +119,10 @@ export default (kire: Kire) => {
                     $ctx.$deferred.push(async () => {
                         const $parentCtx = $ctx;
                         {
-                            const $ctx = $parentCtx.$fork();
-                            await $ctx.$merge(deferredRender);
+                            const $ctx = $parentCtx.$fork().$emptyResponse();
+                            await deferredRender($ctx);
                             const content = $ctx.$response;
+                            $ctx.$emptyResponse();
                             const templateId = 'tpl-' + deferId;
                             $ctx.$add(\`
                                 <template id="\${templateId}">\${content}</template>

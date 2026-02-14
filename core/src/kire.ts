@@ -96,7 +96,11 @@ export class Kire {
             this.$globals = {};
             this.$props = {};
 
-            this.$executor = options.executor ?? ((code, params) => new AsyncFunction(...params, code));
+            this.$executor = options.executor ?? ((code, params) => {
+                const isAsync = code.includes("await");
+                if (isAsync) return new AsyncFunction(...params, code);
+                return new Function(...params, code);
+            });
             this.$parser = options.engine?.parser ?? Parser;
             this.$compiler = options.engine?.compiler ?? Compiler;
             
@@ -194,52 +198,97 @@ export class Kire {
         const nodes = parser.parse();
         const compiler = new this.$compiler(this, filename);
         // We might want to pass globals to compiler to allow better destructuring
-        return (compiler as any).compile(nodes, globals);
+        return (compiler as any).compile(nodes, globals, parser.usedElements);
     }
 
-    public async compileFn(content: string, filename = "template.kire", globals: string[] = []): Promise<Function> {
+    public compileFn(content: string, filename = "template.kire", globals: string[] = []): Function | Promise<Function> {
         if (this.production) {
             const key = `fn:${filename}:${globals.join(',')}:${content}`;
             if (this.$files.has(key)) return this.$files.get(key)!;
             
-            const code = await this.compile(content, filename, globals);
-            try {
-                const mainFn = this.$executor(code, ["$ctx"]);
-                (mainFn as any)._code = code;
-                (mainFn as any)._source = content;
-                (mainFn as any)._path = filename;
-                this.$files.set(key, mainFn);
-                return mainFn;
-            } catch (e) {
-                console.error("Error creating function from code:", code);
-                throw e;
+            const parser = new this.$parser(content, this);
+            const nodes = parser.parse();
+            const compiler = new this.$compiler(this, filename);
+            const codePromise = compiler.compile(nodes, globals, parser.usedElements);
+            
+            if (codePromise instanceof Promise) {
+                return codePromise.then(code => {
+                    const mainFn = this.$executor(code, ["$ctx"]);
+                    (mainFn as any)._code = code;
+                    (mainFn as any)._isAsync = code.includes("await");
+                    (mainFn as any)._usedElements = parser.usedElements;
+                    (mainFn as any)._source = content;
+                    (mainFn as any)._path = filename;
+                    this.$files.set(key, mainFn);
+                    return mainFn;
+                });
             }
-        }
 
-        const code = await this.compile(content, filename, globals);
-        try {
+            const code = codePromise;
             const mainFn = this.$executor(code, ["$ctx"]);
             (mainFn as any)._code = code;
+            (mainFn as any)._isAsync = code.includes("await");
+            (mainFn as any)._usedElements = parser.usedElements;
             (mainFn as any)._source = content;
             (mainFn as any)._path = filename;
+            this.$files.set(key, mainFn);
             return mainFn;
-        } catch (e) {
-            console.error("Error creating function from code:", code);
-            throw e;
         }
+
+        const parser = new this.$parser(content, this);
+        const nodes = parser.parse();
+        const compiler = new this.$compiler(this, filename);
+        const codePromise = compiler.compile(nodes, globals, parser.usedElements);
+
+        if (codePromise instanceof Promise) {
+            return codePromise.then(code => {
+                const mainFn = this.$executor(code, ["$ctx"]);
+                (mainFn as any)._code = code;
+                (mainFn as any)._isAsync = code.includes("await");
+                (mainFn as any)._usedElements = parser.usedElements;
+                (mainFn as any)._source = content;
+                (mainFn as any)._path = filename;
+                return mainFn;
+            });
+        }
+
+        const code = codePromise;
+        const mainFn = this.$executor(code, ["$ctx"]);
+        (mainFn as any)._code = code;
+        (mainFn as any)._isAsync = code.includes("await");
+        (mainFn as any)._usedElements = parser.usedElements;
+        (mainFn as any)._source = content;
+        (mainFn as any)._path = filename;
+        return mainFn;
     }
 
-    public async render(
+    public render(
         template: string,
         locals: Record<string, any> = {},
         controller?: ReadableStreamDefaultController,
         filename = "template.kire",
-    ): Promise<string | ReadableStream> {
+    ): string | Promise<string | ReadableStream> | ReadableStream {
         if (!this.$parent && !this.$silent) {
             // console.warn("[Kire] Warning: Global render.");
         }
         
-        const fn = await this.compileFn(template, filename, Object.keys(locals));
+        const fnPromise = this.compileFn(template, filename, Object.keys(locals));
+        
+        if (fnPromise instanceof Promise) {
+            return fnPromise.then(fn => KireRuntime(this, locals, {
+                children: false,
+                code: (fn as any)._code,
+                execute: fn,
+                name: fn.name,
+                source: (fn as any)._source,
+                path: (fn as any)._path,
+                map: (fn as any)._map,
+                usedElements: (fn as any)._usedElements,
+                controller,
+            }));
+        }
+
+        const fn = fnPromise;
         return KireRuntime(this, locals, {
             children: false,
             code: (fn as any)._code,
@@ -248,23 +297,47 @@ export class Kire {
             source: (fn as any)._source,
             path: (fn as any)._path,
             map: (fn as any)._map,
+            usedElements: (fn as any)._usedElements,
             controller,
         });
     }
 
-    public async view(
+    public view(
         path: string,
         locals: Record<string, any> = {},
         controller?: ReadableStreamDefaultController,
-    ): Promise<string | ReadableStream> {
+    ): string | Promise<string | ReadableStream> | ReadableStream {
         const resolvedPath = this.resolvePath(path);
         let compiled: Function | undefined;
 
         if (this.production && this.$files.has(resolvedPath)) {
             compiled = this.$files.get(resolvedPath);
         } else {
-            const content = await this.readFile(resolvedPath);
-            compiled = await this.compileFn(content, resolvedPath, Object.keys(locals));
+            const contentPromise = this.readFile(resolvedPath);
+            
+            if (contentPromise instanceof Promise) {
+                return contentPromise.then(async content => {
+                    const fn = await this.compileFn(content, resolvedPath, Object.keys(locals));
+                    if (this.production) {
+                        this.$files.set(resolvedPath, fn!);
+                    }
+                    return this.run(fn, locals, false, controller);
+                });
+            }
+            
+            const content = contentPromise;
+            const fnPromise = this.compileFn(content, resolvedPath, Object.keys(locals));
+            
+            if (fnPromise instanceof Promise) {
+                return fnPromise.then(fn => {
+                    if (this.production) {
+                        this.$files.set(resolvedPath, fn!);
+                    }
+                    return this.run(fn, locals, false, controller);
+                });
+            }
+            
+            compiled = fnPromise;
             if (this.production) {
                 this.$files.set(resolvedPath, compiled!);
             }
@@ -274,12 +347,12 @@ export class Kire {
         return this.run(compiled, locals, false, controller);
     }
 
-    public async run(
+    public run(
         mainFn: Function & { [key: string]: any },
         locals: Record<string, any>,
         children = false,
         controller?: ReadableStreamDefaultController,
-    ) {
+    ): string | Promise<string | ReadableStream> | ReadableStream {
         return KireRuntime(this, locals, {
             children,
             code: mainFn._code,
@@ -288,6 +361,7 @@ export class Kire {
             source: mainFn._source,
             path: mainFn._path,
             map: mainFn._map,
+            usedElements: mainFn._usedElements,
             controller,
         });
     }
@@ -341,6 +415,14 @@ export class Kire {
     }
 
     // --- Definitions ---
+
+    public isAsync(path: string): boolean {
+        const resolved = this.resolvePath(path);
+        if (this.$files.has(resolved)) {
+            return (this.$files.get(resolved) as any)._isAsync !== false;
+        }
+        return true;
+    }
 
     public directive(def: DirectiveDefinition) {
         this.$directives.set(def.name, def);

@@ -8,6 +8,7 @@ export class Parser {
 	public rootChildren: Node[] = [];
 	public line = 1;
 	public column = 1;
+	public usedElements: Set<string> = new Set();
 
 	constructor(
 		public template: string,
@@ -235,8 +236,8 @@ export class Parser {
 			}
 		}
 
-		if (name === "end" || name.startsWith("end")) {
-			const targetName = name === "end" ? undefined : name.slice(3);
+		if (name === "end" || name!.startsWith("end")) {
+			const targetName = name === "end" ? undefined : name!.slice(3);
 			this.handleEndDirective(targetName);
 			this.advance(
 				this.template.slice(this.cursor, this.cursor + argsEndIndex),
@@ -502,6 +503,7 @@ export class Parser {
 
 		if (nextIndex === -1) {
 			const text = this.template.slice(this.cursor);
+			this.checkUsedElements(text);
 			this.addNode({
 				type: "text",
 				content: text,
@@ -523,6 +525,7 @@ export class Parser {
 				this.advance(char!);
 			} else {
 				const text = this.template.slice(this.cursor, nextIndex);
+				this.checkUsedElements(text);
 				this.addNode({
 					type: "text",
 					content: text,
@@ -532,6 +535,29 @@ export class Parser {
 					raw: false,
 				});
 				this.advance(text);
+			}
+		}
+	}
+
+	private checkUsedElements(text: string) {
+		if (this.kire.$elements.size === 0) return;
+		const tagRegex = /<([a-zA-Z0-9_\-:]+)/g;
+		let match: RegExpExecArray | null;
+		while ((match = tagRegex.exec(text)) !== null) {
+			const tagName = match[1]!;
+			for (const def of this.kire.$elements) {
+				if (def.name instanceof RegExp) {
+					if (def.name.test(tagName)) {
+						this.usedElements.add(tagName);
+						break;
+					}
+				} else {
+					const prefix = def.parent ? `${def.name}${def.parent}` : def.name;
+					if (tagName === prefix || (def.parent && tagName.startsWith(prefix))) {
+						this.usedElements.add(tagName);
+						break;
+					}
+				}
 			}
 		}
 	}

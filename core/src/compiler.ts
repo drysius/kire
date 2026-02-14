@@ -25,7 +25,7 @@ export class Compiler {
 	 * @param nodes The root nodes of the AST.
 	 * @returns The compiled JavaScript code as a string.
 	 */
-	public async compile(nodes: Node[], extraGlobals: string[] = []): Promise<string> {
+	public compile(nodes: Node[], extraGlobals: string[] = [], usedElements?: Set<string>): string {
 		this.preBuffer = [];
 		this.resBuffer = [];
 		this.posBuffer = [];
@@ -36,7 +36,7 @@ export class Compiler {
 		// 2. Define Locals Alias (default 'it')
 		const varLocals = this.kire.$var_locals || "it";
 
-		await this.compileNodes(nodes);
+		this.compileNodesSync(nodes);
 
 		const pre = this.preBuffer.join("\n");
 		const res = this.resBuffer.join("\n");
@@ -60,10 +60,15 @@ export class Compiler {
                 ? `var { ${sanitizedLocals.join(", ")} } = $ctx.$props;`
                 : "";
 
+        const elementsMeta = usedElements && usedElements.size > 0 
+            ? `// kire-elements: ${Array.from(usedElements).join(",")}`
+            : "";
+
 		const startCode = `
 ${globalDestructuring}
 ${localDestructuring}
 let ${varLocals} = $ctx.$props;
+${elementsMeta}
 ${pre}
 `;
 		const startCodeLines = startCode.split("\n");
@@ -96,7 +101,7 @@ ${pre}
 ${startCode}
 ${res}
 ${pos}
-return $ctx;
+return $ctx.$response;
 //# sourceURL=${this.filename}`;
 
 		if (!this.kire.production) {
@@ -110,26 +115,88 @@ return $ctx;
 	 * Iterates over AST nodes and delegates compilation based on node type.
 	 * @param nodes List of nodes to compile.
 	 */
-	private async compileNodes(nodes: Node[]) {
+	private compileNodesSync(nodes: Node[]) {
+		let pending: string[] = [];
+
+		const flush = () => {
+			if (pending.length === 0) return;
+			this.resBuffer.push(`$ctx.$add(${pending.join(" + ")});`);
+			pending = [];
+		};
+
 		let i = 0;
 		while (i < nodes.length) {
 			const node = nodes[i]!;
+
+			if (node.type === "text") {
+				let content = node.content || "";
+				let j = i + 1;
+				while (j < nodes.length && nodes[j]!.type === "text") {
+					content += nodes[j]!.content || "";
+					j++;
+				}
+				
+                if (this.kire.production) {
+                    pending.push(JSON.stringify(content));
+                } else {
+                    this.compileText({ ...node, content });
+                }
+				i = j;
+				continue;
+			}
+
+            if (node.type === "variable") {
+                if (this.kire.production && node.content) {
+                    const expr = node.raw ? `(${node.content})` : `$ctx.$escape(${node.content})`;
+                    pending.push(expr);
+                } else {
+                    this.compileVariable(node);
+                }
+                i++;
+                continue;
+            }
+
+            flush();
+
 			switch (node.type) {
-				case "text":
-					this.compileText(node);
-					break;
-				case "variable":
-					this.compileVariable(node);
-					break;
 				case "javascript":
 					this.compileJavascript(node);
 					break;
 				case "directive":
-					await this.processDirective(node);
+					this.processDirective(node);
 					break;
 			}
 			i++;
 		}
+        flush();
+	}
+
+	private isAsyncNodes(nodes: Node[]): boolean {
+		return nodes.some((node) => this.isAsyncNode(node));
+	}
+
+	private isAsyncNode(node: Node): boolean {
+		if (node.type === "javascript" || node.type === "variable") {
+			return node.content?.includes("await") ?? false;
+		}
+		if (node.type === "directive") {
+			if (
+				node.name === "require" ||
+				node.name === "include" ||
+				node.name === "layout" ||
+				node.name === "extends" ||
+				node.name === "component"
+			) {
+				return true;
+			}
+			if (node.children && this.isAsyncNodes(node.children)) {
+				return true;
+			}
+			if (node.related && this.isAsyncNodes(node.related)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private compileText(node: Node) {
@@ -194,7 +261,7 @@ return $ctx;
 		}
 	}
 
-	private async processDirective(node: Node) {
+	private processDirective(node: Node) {
 		const name = node.name;
 		if (!name) return;
 
@@ -207,7 +274,7 @@ return $ctx;
 
 		if (node.loc && !this.kire.production) this.resMappings.push({ index: this.resBuffer.length, node, col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 });
 		const compiler = this.createCompilerContext(node, directive);
-		await directive.onCall(compiler);
+		directive.onCall(compiler);
 	}
 
 	/**
@@ -248,7 +315,7 @@ return $ctx;
 			});
 		}
 
-		return {
+		const compiler: CompilerContext = {
 			kire: this.kire,
 			node: node,
 			count: (name: string) => {
@@ -274,18 +341,32 @@ return $ctx;
 			},
 			children: node.children,
 			parents: node.related,
-			set: async (nodes: Node[]) => {
+			set: (nodes: Node[]) => {
 				if (!nodes) return;
-				await this.compileNodes(nodes);
+				this.compileNodesSync(nodes);
 			},
-			render: async (content: string) => {
-				return await this.kire.compile(content);
+			render: (content: string) => {
+				return this.kire.compile(content);
 			},
 			resolve: (path: string) => {
 				return this.kire.resolvePath(path);
 			},
 			func: (code: string) => {
-				return `async function($ctx) { ${code} }`;
+				const isAsync = code.includes("await");
+				return `${isAsync ? "async " : ""}function($ctx) { ${code}; return $ctx.$response; }`;
+			},
+			merge: (
+				callback: (ctx: CompilerContext) => void | Promise<void>,
+			) => {
+				const isAsync = node.children ? this.isAsyncNodes(node.children) : false;
+				this.resBuffer.push(
+					`$ctx.$response += ${isAsync ? "await " : ""}(${
+						isAsync ? "async " : ""
+					}($ctx) => {`,
+				);
+				callback(compiler);
+				this.resBuffer.push(`  return $ctx.$response;`);
+				this.resBuffer.push(`})($ctx.$emptyResponse());`);
 			},
 			error: (msg: string) => {
 				throw new Error(`Error in directive @${node.name}: ${msg}`);
@@ -310,5 +391,7 @@ return $ctx;
 				this.resBuffer.push(`$ctx.$on('after', async ($ctx) => { ${code} });`);
 			},
 		};
+
+		return compiler;
 	}
 }

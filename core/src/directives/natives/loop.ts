@@ -19,13 +19,13 @@ export default (kire: Kire) => {
                 children: true,
                 type: `html`,
                 description: `Renders if the loop had no iterations.`,
-                async onCall(compiler) {
+                onCall(compiler) {
                     compiler.raw(`} if ($__empty) {`);
-                    if (compiler.children) await compiler.set(compiler.children);
+                    if (compiler.children) compiler.set(compiler.children);
                 },
             }
         ],
-        async onCall(compiler) {
+        onCall(compiler) {
             const lhs = compiler.param("lhs");
             const rhs = compiler.param("rhs");
             const op = compiler.param("op");
@@ -62,14 +62,14 @@ export default (kire: Kire) => {
             }
 
             compiler.raw(`$__empty_${id} = false;`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
             compiler.raw(`}`);
             
             if (compiler.parents) {
                 for (const p of compiler.parents) {
                     if (p.name === 'empty' || p.name === 'else') {
                         compiler.raw(`if ($__empty_${id}) {`);
-                        if (p.children) await compiler.set(p.children);
+                        if (p.children) compiler.set(p.children);
                         compiler.raw(`}`);
                     }
                 }
@@ -87,9 +87,9 @@ export default (kire: Kire) => {
         example: `@each(item of items)
   <li>{{ item }}</li>
 @endeach`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const directive = kire.getDirective("for");
-            if (directive) await directive.onCall(compiler);
+            if (directive) directive.onCall(compiler);
         }
     });
 
@@ -104,9 +104,9 @@ export default (kire: Kire) => {
 @empty
   No users.
 @endforelse`,
-        async onCall(compiler) {
+        onCall(compiler) {
             const directive = kire.getDirective("for");
-            if (directive) await directive.onCall(compiler);
+            if (directive) directive.onCall(compiler);
         }
     });
 };

@@ -10,17 +10,17 @@ export default (kire: Kire) => {
 		example: `@define('header')
   <h1>My Website</h1>
 @enddefine`,
-		async onCall(ctx) {
+		onCall(ctx) {
 			const name = ctx.param("name");
 
 			if (ctx.children) {
-				ctx.raw(`await $ctx.$merge(async ($ctx) => {`);
-				await ctx.set(ctx.children);
-				ctx.raw(
-					`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx.$response;`,
-				);
-				ctx.raw(`  $ctx.$response = '';`);
-				ctx.raw(`});`);
+				ctx.merge((c) => {
+					c.set(c.children!);
+					c.raw(
+						`  $ctx['~defines'][${JSON.stringify(name)}] = $ctx.$response;`,
+					);
+					c.raw(`  $ctx.$response = '';`);
+				});
 			}
 		},
 	});
@@ -37,12 +37,12 @@ export default (kire: Kire) => {
 		onInit(ctx) {
 			ctx["~defines"] = ctx["~defines"] || {};
 		},
-		async onCall(ctx) {
+		onCall(ctx) {
 			const name = ctx.param("name");
 
 			if (ctx.children?.length) {
 				ctx.res(`<kire:defined id=${JSON.stringify(name)}>`);
-				await ctx.set(ctx.children);
+				ctx.set(ctx.children);
 				ctx.res(`</kire:defined>`);
 			} else {
 				ctx.res(`<kire:defined id=${JSON.stringify(name)}></kire:defined>`);
@@ -98,20 +98,19 @@ export default (kire: Kire) => {
 		example: `@push('scripts')
   <script src="app.js"></script>
 @endpush`,
-		async onCall(compiler) {
+		onCall(compiler) {
 			const name = compiler.param("name");
 			compiler.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = {};`);
 			compiler.raw(
 				`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`,
 			);
-			compiler.raw(`await $ctx.$merge(async ($ctx) => {`);
-
-			if (compiler.children) await compiler.set(compiler.children);
-
-			compiler.raw(
-				`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`,
-			);
-			compiler.raw(`});`);
+			compiler.merge((c) => {
+				if (c.children) c.set(c.children);
+				c.raw(
+					`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`,
+				);
+				c.raw(`  $ctx.$response = '';`);
+			});
 		},
 	});
 };

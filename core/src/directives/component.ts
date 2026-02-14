@@ -12,11 +12,11 @@ export default (kire: Kire) => {
 @endslot`,
 		onCall(compiler: any) {
 			const name = compiler.param("name");
-			compiler.raw(`await $ctx.$merge(async ($ctx) => {`);
-			if (compiler.children) compiler.set(compiler.children);
-			compiler.raw(`  $slots[${JSON.stringify(name)}] = $ctx.$response;`);
-			compiler.raw(`  $ctx.$response = '';`);
-			compiler.raw(`});`);
+			compiler.merge((c) => {
+				if (c.children) c.set(c.children);
+				c.raw(`  $slots[${JSON.stringify(name)}] = $ctx.$response;`);
+				c.raw(`  $ctx.$response = '';`);
+			});
 		},
 	};
 
@@ -69,7 +69,7 @@ export default (kire: Kire) => {
   @endslot
   <p>Default content.</p>
 @endcomponent`,
-		async onCall(compiler: any) {
+		onCall(compiler: any) {
 			const pathExpr = compiler.param("path");
 			const varsExpr = compiler.param("variables") || "{}";
 
@@ -79,15 +79,15 @@ export default (kire: Kire) => {
 			if (kire.$stream) {
 				compiler.raw(`  $slots.default = async () => {`);
 				compiler.raw(`    $ctx.slots = $slots;`);
-				if (compiler.children) await compiler.set(compiler.children);
+				if (compiler.children) compiler.set(compiler.children);
 				compiler.raw(`  };`);
 			} else {
-				compiler.raw(`  await $ctx.$merge(async ($ctx) => {`);
-				compiler.raw(`    $ctx.slots = $slots;`);
-				if (compiler.children) await compiler.set(compiler.children);
-				compiler.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
-				compiler.raw(`    $ctx.$response = '';`);
-				compiler.raw(`  });`);
+				compiler.merge((c) => {
+					c.raw(`    $ctx.slots = $slots;`);
+					if (c.children) c.set(c.children);
+					c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
+					c.raw(`    $ctx.$response = '';`);
+				});
 			}
 
 			compiler.raw(`  const path = ${JSON.stringify(pathExpr)};`);
@@ -97,10 +97,12 @@ export default (kire: Kire) => {
 				`  if (typeof finalLocals === 'object' && finalLocals !== null) finalLocals.slots = $slots;`,
 			);
 
-			compiler.raw(`  const html = await $ctx.$require(path, finalLocals);`);
-			compiler.raw(`  if (html !== null) {`);
-			compiler.raw(`    $ctx.$add(html);`);
-			compiler.raw(`  }`);
+			const isAsync = kire.isAsync(pathExpr);
+			compiler.raw(
+				`  $ctx.$response += ${
+					isAsync ? "await " : ""
+				}$ctx.$require(path, finalLocals) || "";`,
+			);
 
 			compiler.raw(`})();`);
 		},

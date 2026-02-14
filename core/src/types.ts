@@ -5,12 +5,13 @@ export type KireCache<T = any> = Record<string, T>;
 
 export interface IParser {
 	parse(): Node[];
+	usedElements: Set<string>;
 }
 
 export type IParserConstructor = new (template: string, kire: Kire) => IParser;
 
 export interface ICompiler {
-	compile(nodes: Node[]): Promise<string>;
+	compile(nodes: Node[], extraGlobals?: string[], usedElements?: Set<string>): Promise<string> | string;
 }
 export type ICompilerConstructor = new (
 	kire: Kire,
@@ -167,6 +168,12 @@ export interface KireContext {
 	$typed<T>(key: string): T;
 
 	/**
+	 * Clears the current response buffer and returns the context.
+	 * Used for optimized merging.
+	 */
+	$emptyResponse(): KireContext;
+
+	/**
 	 * Runtime hooks
 	 * @param key
 	 */
@@ -197,6 +204,7 @@ export interface KireFileMeta {
 	map?: any; // Source Map
 	children?: boolean;
 	controller?: ReadableStreamDefaultController;
+	usedElements?: Set<string>;
 }
 
 /**
@@ -289,6 +297,11 @@ export interface CompilerContext {
 	 * Related nodes, such as chained directives (e.g., elseif, else for @if).
 	 */
 	parents?: Node[];
+
+	/**
+	 * Compiles nodes and wraps them in an optimized merge block.
+	 */
+	merge(callback: (ctx: CompilerContext) => void | Promise<void>): Promise<void>;
 
 	/**
 	 * Compiles and processes a set of nodes, appending their logic to the current flow.
@@ -412,7 +425,7 @@ export interface DirectiveDefinition {
 	/**
 	 * Function called when the directive is encountered during compilation.
 	 */
-	onCall: (compiler: CompilerContext) => void | Promise<void>;
+	onCall: (compiler: CompilerContext) => void;
 	/**
 	 * Function called once per compilation when the directive is first used.
 	 */

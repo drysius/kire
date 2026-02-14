@@ -12,9 +12,9 @@ export default (kire: Kire) => {
 @else
   User Dashboard
 @endif`,
-        async onCall(compiler) {
+        onCall(compiler) {
             compiler.raw(`} else {`);
-            if (compiler.children) await compiler.set(compiler.children);
+            if (compiler.children) compiler.set(compiler.children);
         },
     };
 
@@ -37,34 +37,34 @@ export default (kire: Kire) => {
                 example: `@elseif($user.isGuest)
   Please sign in.
 @endif`,
-                async onCall(compiler) {
-                    compiler.raw(`} else if (${compiler.param("cond")}) {`);
-                    if (compiler.children) await compiler.set(compiler.children);
-                },
-            },
-            elseDirective,
-        ],
-        async onCall(compiler) {
-            compiler.raw(`if (${compiler.param("cond")}) {`);
-            if (compiler.children) await compiler.set(compiler.children);
-            if (compiler.parents) await compiler.set(compiler.parents);
-            compiler.raw(`}`);
+        onCall(compiler) {
+            compiler.raw(`} else if (${compiler.param("cond")}) {`);
+            if (compiler.children) compiler.set(compiler.children);
         },
-    });
+    },
+    elseDirective,
+],
+onCall(compiler) {
+    compiler.raw(`if (${compiler.param("cond")}) {`);
+    if (compiler.children) compiler.set(compiler.children);
+    if (compiler.parents) compiler.set(compiler.parents);
+    compiler.raw(`}`);
+},
+});
 
-    kire.directive({
-        name: `unless`,
-        params: [`cond:any`],
-        children: true,
-        type: `html`,
-        description: `Renders the content unless the condition is true (opposite of @if).`,
-        example: `@unless($user.isSubscribed)
-  Please subscribe to our newsletter.
+kire.directive({
+name: `unless`,
+params: [`cond:any`],
+children: true,
+type: `html`,
+description: `Renders the content unless the condition is true (opposite of @if).`,
+example: `@unless($user.isSubscribed)
+Please subscribe to our newsletter.
 @endunless`,
-        async onCall(compiler) {
-            compiler.raw(`if (!(${compiler.param("cond")})) {`);
-            if (compiler.children) await compiler.set(compiler.children);
-            compiler.raw(`}`);
-        },
-    });
+onCall(compiler) {
+    compiler.raw(`if (!(${compiler.param("cond")})) {`);
+    if (compiler.children) compiler.set(compiler.children);
+    compiler.raw(`}`);
+},
+});
 };

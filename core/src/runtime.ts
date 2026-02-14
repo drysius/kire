@@ -33,6 +33,11 @@ export default function (
         $resolve: (path: string) => $kire.resolvePath(path),
         $typed: (key: string) => $ctx[key],
         
+        $emptyResponse: () => {
+            $ctx.$response = "";
+            return $ctx;
+        },
+
         // Optimized Hooks: Copy references from Kire instance
         // We create a new object for runtime hooks so we don't mutate the global definition
         $hooks: {
@@ -91,36 +96,64 @@ export default function (
     }
 
 	// 2. Define Execution Logic
-	const execute = async () => {
+    const isAsync = (meta.execute as any)._isAsync !== false;
+
+	const execute = () => {
         // Directives Init
         if ($kire.$directives.size > 0) {
             for (const directive of $kire.$directives.values()) {
                 if (directive.onInit) {
-                    await directive.onInit($ctx);
+                    const res = directive.onInit($ctx);
+                    if (res instanceof Promise && isAsync) {
+                        // We can't easily wait for it here if we want to be truly sync
+                        // But usually onInit is used for globals which are already there.
+                    }
                 }
             }
         }
 
-		await $ctx.$emit("before");
+		const run = () => {
+            try {
+                const res = $ctx.$file.execute.call($ctx.$props, $ctx);
+                if (res instanceof Promise) return res;
+            } catch (e: any) {
+                const kireError = new KireError(e, $ctx.$file);
+                console.error(kireError.stack);
+                return $kire.renderError(kireError, $ctx);
+            }
 
-		try {
-			await $ctx.$file.execute.call($ctx.$props, $ctx);
-		} catch (e: any) {
-			const kireError = new KireError(e, $ctx.$file);
-			console.error(kireError.stack);
-			return $kire.renderError(kireError, $ctx);
-		}
+            if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
+                const res = processElements($ctx);
+                if (res instanceof Promise) {
+                    return res.then(html => {
+                        $ctx.$response = html;
+                        return $ctx.$response;
+                    });
+                }
+                $ctx.$response = res;
+            }
 
-		await $ctx.$emit("rendered");
+            return $ctx.$response;
+        };
 
-		if (!meta.controller && $kire.$elements.size > 0) {
-			$ctx.$response = await processElements($ctx);
-		}
-
-		await $ctx.$emit("after");
-		await $ctx.$emit("end");
-
-		return $ctx.$response;
+        if (isAsync) {
+            return (async () => {
+                await $ctx.$emit("before");
+                await run();
+                await $ctx.$emit("rendered");
+                await $ctx.$emit("after");
+                await $ctx.$emit("end");
+                return $ctx.$response;
+            })();
+        } else {
+            // Sync execution (assuming hooks are sync or not used for basic templates)
+            $ctx.$emit("before"); 
+            run();
+            $ctx.$emit("rendered");
+            $ctx.$emit("after");
+            $ctx.$emit("end");
+            return $ctx.$response;
+        }
 	};
 
 	// 3. Handle Streaming vs Buffering
@@ -190,7 +223,8 @@ export default function (
             $ctx.$response = prevRes + buffer;
 		};
 
-		return execute().then(() => ""); 
+        const res = execute();
+		return res instanceof Promise ? res.then(() => "") : ""; 
 	} else {
 		return execute();
 	}

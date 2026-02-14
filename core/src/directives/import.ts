@@ -11,13 +11,13 @@ export default (kire: Kire) => {
 		onCall(compiler) {
 			const pathExpr = compiler.param("path");
 			const localsExpr = compiler.param("locals") || "{}";
+			const isAsync = kire.isAsync(pathExpr);
 
-			compiler.raw(`await $ctx.$merge(async ($ctx) => {
-    const html = await $ctx.$require(${JSON.stringify(pathExpr)}, ${localsExpr});
-    if (html !== null) {
-        $ctx.$add(html);
-    }
-});`);
+			compiler.raw(
+				`$ctx.$response += ${
+					isAsync ? "await " : ""
+				}$ctx.$require(${JSON.stringify(pathExpr)}, ${localsExpr}) || "";`,
+			);
 		},
 	});
 };

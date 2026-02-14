@@ -14,13 +14,13 @@ export default (kire: Kire) => {
   @default
     Other
 @endswitch`,
-        async onCall(compiler) {
+        onCall(compiler) {
             compiler.raw(`switch (${compiler.param("expr")}) {`);
             if (compiler.children) {
                 const cases = compiler.children.filter(
                     (n) => n.name === "case" || n.name === "default",
                 );
-                await compiler.set(cases);
+                compiler.set(cases);
             }
             compiler.raw(`}`);
         },
@@ -35,9 +35,9 @@ export default (kire: Kire) => {
         example: `@case('A')
   Value is A
 @endcase`,
-        async onCall(c) {
+        onCall(c) {
             c.raw(`case ${JSON.stringify(c.param("val"))}: {`);
-            if (c.children) await c.set(c.children);
+            if (c.children) c.set(c.children);
             c.raw(`break; }`);
         },
     });
@@ -50,9 +50,9 @@ export default (kire: Kire) => {
         example: `@default
   Value is something else
 @enddefault`,
-        async onCall(c) {
+        onCall(c) {
             c.raw(`default: {`);
-            if (c.children) await c.set(c.children);
+            if (c.children) c.set(c.children);
             c.raw(`}`);
         },
     });
