@@ -8,11 +8,7 @@ export default (kire: Kire) => {
         children: true,
         type: `html`,
         description: `Iterates over an array or object. Supports @empty block if no iterations occur. Provides a $loop helper.`,
-        example: `@for(user of users)
-  {{ $loop.index }}: {{ user.name }}
-@empty
-  No users found
-@endfor`,
+        example: `@for(user of users)\n  {{ $loop.index }}: {{ user.name }}\n@empty\n  No users found\n@endfor`,
         parents: [
             {
                 name: `empty`,
@@ -32,44 +28,38 @@ export default (kire: Kire) => {
             const statement = compiler.param("statement");
             const id = compiler.count("i");
 
+            compiler.raw(`{`);
+            compiler.raw(`  let $__empty = true;`);
+
             if (lhs && rhs && op) {
                 const needsLoop = compiler.node.children?.some(c => c.content?.includes('$loop'));
-                compiler.raw(`{ 
-                    const _r${id} = ${rhs || "[]"};
-                    const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});
-                    const _len${id} = _it${id}.length;
-                    for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
-                        const _e${id} = _it${id}[${id}];
-                        const ${lhs.trim()} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];`);
+                compiler.raw(`  const _r${id} = ${rhs || "[]"};`);
+                compiler.raw(`  const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});`);
+                compiler.raw(`  const _len${id} = _it${id}.length;`);
+                compiler.raw(`  if (_len${id} > 0) $__empty = false;`);
+                
+                compiler.raw(`  for (let ${id} = 0; ${id} < _len${id}; ${id}++) {`);
+                compiler.raw(`    const _e${id} = _it${id}[${id}];`);
+                compiler.raw(`    const ${lhs.trim()} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];`);
                 
                 if (needsLoop) {
-                    compiler.raw(`
-                        const $loop = {
-                            index: ${id},
-                            iteration: ${id} + 1,
-                            count: _len${id},
-                            first: ${id} === 0,
-                            last: ${id} === _len${id} - 1
-                        };`);
+                    compiler.raw(`    const $loop = { index: ${id}, iteration: ${id} + 1, count: _len${id}, first: ${id} === 0, last: ${id} === _len${id} - 1 };`);
                 }
             } else if (statement) {
-                compiler.raw(`for (${statement}) {`);
+                compiler.raw(`  for (${statement}) {`);
+                compiler.raw(`    $__empty = false;`);
             } else {
                 compiler.error(`Invalid for loop syntax`);
             }
 
             if (compiler.children) compiler.set(compiler.children);
-            compiler.raw(`}`); // Fecha o for
             
-            if (compiler.parents) {
-                const emptyNode = compiler.parents.find(p => p.name === 'empty' || p.name === 'else');
-                if (emptyNode) {
-                    compiler.raw(`if (!${rhs || "[]"} || (Array.isArray(${rhs || "[]"}) ? ${rhs || "[]"}.length === 0 : Object.keys(${rhs || "[]"}).length === 0)) {`);
-                    if (emptyNode.children) compiler.set(emptyNode.children);
-                    compiler.raw(`}`);
-                }
+            if (compiler.parents && compiler.parents.length > 0) {
+                compiler.set(compiler.parents);
             }
-            compiler.raw(`}`); // Fecha o bloco externo
+            
+            compiler.raw(`  }`);
+            compiler.raw(`}`);
         },
     });
 

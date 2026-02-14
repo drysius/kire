@@ -1,5 +1,11 @@
 import type { KireContext, KireFileMeta } from "../types";
 import { resolveSourceLocation } from "./source-map";
+import { 
+    STACK_LINE_REGEX, 
+    STACK_GEN_JS_REGEX, 
+    STACK_EVAL_REGEX, 
+    STACK_ANON_REGEX 
+} from "./regex";
 
 export class KireError extends Error {
 	public originalError: Error;
@@ -40,7 +46,7 @@ export class KireError extends Error {
 	}
 
 	private mapStackLine(line: string): string {
-		const match = line.match(/^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/);
+		const match = line.match(STACK_LINE_REGEX);
 
 		if (match) {
 			const functionName = match[1];
@@ -107,9 +113,9 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 		const safePath = ctx.$file.path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const match =
 			e.stack.match(new RegExp(`${safePath}:(\\d+):(\\d+)`)) ||
-			e.stack.match(/kire-generated\.js:(\d+):(\d+)/) ||
-			e.stack.match(/eval:(\d+):(\d+)/) ||
-			e.stack.match(/<anonymous>:(\d+):(\d+)/);
+			e.stack.match(STACK_GEN_JS_REGEX) ||
+			e.stack.match(STACK_EVAL_REGEX) ||
+			e.stack.match(STACK_ANON_REGEX);
 
 		if (match) {
 			const rawLine = parseInt(match[1]!);
@@ -171,7 +177,7 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 	const stack = (e.stack || "")
 		.split("\n")
 		.filter((l: string) => !l.includes("kire-generated.js") && !l.includes("new AsyncFunction"))
-		.map(l => `<div class="kire-stack-line">${l.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`)
+		.map((l: string) => `<div class="kire-stack-line">${l.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`)
 		.join("");
 
 	const styles = `

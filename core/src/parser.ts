@@ -1,6 +1,12 @@
 import type { Kire } from "./kire";
 import type { DirectiveDefinition, Node } from "./types";
 import { isPatternDefinition } from "./utils/params";
+import { 
+    TAG_NAME_REGEX, 
+    DIRECTIVE_NAME_REGEX, 
+    DIRECTIVE_TAG_REGEX, 
+    DIRECTIVE_END_REGEX 
+} from "./utils/regex";
 
 export class Parser {
 	public cursor = 0;
@@ -30,7 +36,7 @@ export class Parser {
 			}
 		}
 		if (parts.length === 0) return null;
-		return new RegExp(`^(${parts.join("|")})`);
+		return new RegExp(`(${parts.join("|")})`);
 	}
 
 	/**
@@ -44,17 +50,53 @@ export class Parser {
 		const len = this.template.length;
 
 		while (this.cursor < len) {
-			if (this.checkComment()) continue;
-			if (this.checkRawInterpolation()) continue;
-			if (this.checkJavascript()) continue;
-			if (this.checkInterpolation()) continue;
-			if (this.checkEscapedDirective()) continue;
-			if (this.checkDirective()) continue;
+            const char = this.template[this.cursor];
+
+            if (char === "{") {
+                if (this.checkComment()) continue;
+                if (this.checkRawInterpolation()) continue;
+                if (this.checkInterpolation()) continue;
+            } else if (char === "<") {
+                if (this.checkJavascript()) continue;
+            } else if (char === "@") {
+                if (this.checkEscapedDirective()) continue;
+                if (this.checkEscapedInterpolation()) continue;
+                if (this.checkDirective()) continue;
+            }
 
 			this.parseText();
 		}
 
 		return this.rootChildren;
+	}
+
+	/**
+	 * Checks for and parses escaped interpolation markers @{{ or @{{{.
+	 */
+	private checkEscapedInterpolation(): boolean {
+		if (this.template.startsWith("@{{{", this.cursor)) {
+			this.addNode({
+				type: "text",
+				content: "{{{",
+				start: this.cursor,
+				end: this.cursor + 4,
+				loc: this.getLoc("@{{{"),
+			});
+			this.advance("@{{{");
+			return true;
+		}
+		if (this.template.startsWith("@{{", this.cursor)) {
+			this.addNode({
+				type: "text",
+				content: "{{",
+				start: this.cursor,
+				end: this.cursor + 3,
+				loc: this.getLoc("@{{"),
+			});
+			this.advance("@{{");
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -181,7 +223,7 @@ export class Parser {
 
 		const identifierMatch = this.template
 			.slice(this.cursor)
-			.match(/^@([a-zA-Z0-9_]+)/);
+			.match(DIRECTIVE_NAME_REGEX);
 		if (!identifierMatch) return false;
 
 		let [fullMatch, name] = identifierMatch;
@@ -404,20 +446,19 @@ export class Parser {
 			const lookaheadCursor = this.cursor + argsEndIndex;
 			let foundEnd = false;
 
-			const tagRegex = /@([a-zA-Z0-9_]+)/g;
-			tagRegex.lastIndex = lookaheadCursor;
+			DIRECTIVE_TAG_REGEX.lastIndex = lookaheadCursor;
 
 			let match: RegExpExecArray | null;
-			while ((match = tagRegex.exec(this.template)) !== null) {
-				const tagName = match[1];
-				if (tagName === "end") {
+			while ((match = DIRECTIVE_TAG_REGEX.exec(this.template)) !== null) {
+				const tagName = match[1]!;
+				if (tagName === "end" || tagName.startsWith("end")) {
 					balance--;
 					if (balance === 0) {
 						foundEnd = true;
 						break;
 					}
 				} else {
-					const d = this.kire.getDirective(tagName!);
+					const d = this.kire.getDirective(tagName);
 					if (d?.children) {
 						balance++;
 					}
@@ -451,9 +492,8 @@ export class Parser {
 	): boolean {
 		this.stack.push(node);
 		const contentStart = this.cursor + argsEndIndex;
-		const endRegex = /@end(?![a-zA-Z0-9_])/g;
-		endRegex.lastIndex = contentStart;
-		const endMatch = endRegex.exec(this.template);
+		DIRECTIVE_END_REGEX.lastIndex = contentStart;
+		const endMatch = DIRECTIVE_END_REGEX.exec(this.template);
 
 		if (endMatch) {
 			const content = this.template.slice(contentStart, endMatch.index);
@@ -504,51 +544,54 @@ export class Parser {
 	 * Parses plain text content until the next interpolation or directive is found.
 	 */
 	private parseText() {
-		const nextInterpolation = this.template.indexOf("{{", this.cursor);
-		const nextDirective = this.template.indexOf("@", this.cursor);
-		const nextJs = this.template.indexOf("<?js", this.cursor);
-		const nextRaw = this.template.indexOf("{{{", this.cursor);
+		const template = this.template;
+        const start = this.cursor;
+        let next = -1;
 
-		// Find the closest marker
-		const indices = [nextInterpolation, nextDirective, nextJs, nextRaw].filter(
-			(i) => i !== -1,
-		);
-		let nextIndex = -1;
+        // Efficiently find next marker
+        for (let i = start; i < template.length; i++) {
+            const c = template[i];
+            if (c === "{" && (template[i+1] === "{" || template[i+1] === "{")) {
+                next = i; break;
+            }
+            if (c === "@") {
+                next = i; break;
+            }
+            if (c === "<" && template[i+1] === "?" && template[i+2] === "j" && template[i+3] === "s") {
+                next = i; break;
+            }
+        }
 
-		if (indices.length > 0) {
-			nextIndex = Math.min(...indices);
-		}
-
-		if (nextIndex === -1) {
-			const text = this.template.slice(this.cursor);
+		if (next === -1) {
+			const text = template.slice(start);
 			this.checkUsedElements(text);
 			this.addNode({
 				type: "text",
 				content: text,
-				start: this.cursor,
-				end: this.template.length,
+				start,
+				end: template.length,
 				loc: this.getLoc(text),
 			});
 			this.advance(text);
 		} else {
-			if (nextIndex === this.cursor) {
-				const char = this.template[this.cursor];
+			if (next === start) {
+				const char = template[start]!;
 				this.addNode({
 					type: "text",
 					content: char,
-					start: this.cursor,
-					end: this.cursor + 1,
-					loc: this.getLoc(char!),
+					start,
+					end: start + 1,
+					loc: this.getLoc(char),
 				});
-				this.advance(char!);
+				this.advance(char);
 			} else {
-				const text = this.template.slice(this.cursor, nextIndex);
+				const text = template.slice(start, next);
 				this.checkUsedElements(text);
 				this.addNode({
 					type: "text",
 					content: text,
-					start: this.cursor,
-					end: this.cursor + text.length,
+					start,
+					end: next,
 					loc: this.getLoc(text),
 					raw: false,
 				});
@@ -558,10 +601,13 @@ export class Parser {
 	}
 
 	private checkUsedElements(text: string) {
+        this.elementRegex = this.buildElementRegex();
 		if (!this.elementRegex) return;
-		const tagRegex = /<([a-zA-Z0-9_\-:]+)/g;
-		let match: RegExpExecArray | null;
-		while ((match = tagRegex.exec(text)) !== null) {
+		
+        // Improved detection: scan for all potential tags in the text
+        const regex = new RegExp(TAG_NAME_REGEX.source, 'g');
+		let match;
+		while ((match = regex.exec(text)) !== null) {
 			const tagName = match[1]!;
 			if (this.elementRegex.test(tagName)) {
 				this.usedElements.add(tagName);
@@ -686,6 +732,9 @@ export class Parser {
 	 * @param node The node to add.
 	 */
 	private addNode(node: Node) {
+        if (node.type === "text" && node.content) {
+            this.checkUsedElements(node.content);
+        }
 		if (this.stack.length > 0) {
 			const current = this.stack[this.stack.length - 1];
 			if (current && !current.children) current.children = [];

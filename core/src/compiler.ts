@@ -2,6 +2,7 @@ import type { Kire } from "./kire";
 import type { CompilerContext, DirectiveDefinition, Node } from "./types";
 import { parseParamDefinition } from "./utils/params";
 import { SourceMapGenerator } from "./utils/source-map";
+import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX } from "./utils/regex";
 
 export class Compiler {
 	private preBuffer: string[] = [];
@@ -15,6 +16,7 @@ export class Compiler {
 	constructor(
 		private kire: Kire,
 		private filename = "template.kire",
+        private usedElements: Set<string> = new Set()
 	) {
 		this.generator = new SourceMapGenerator(filename);
 		this.generator.addSource(filename);
@@ -32,60 +34,49 @@ export class Compiler {
 		this.resMappings = [];
 		this.usedDirectives.clear();
 		this.counters = {};
+        if (usedElements) this.usedElements = usedElements;
 
-		// 2. Define Locals Alias (default 'it')
 		const varLocals = this.kire.$var_locals || "it";
-
 		this.compileNodesSync(nodes);
 
-		const pre = this.preBuffer.join("\n");
-		const res = this.resBuffer.join("\n");
-		const pos = this.posBuffer.join("\n");
-
-		// Filter keys to ensure they are valid JS identifiers
-		const sanitizedGlobals = Object.keys(this.kire.$globals).filter((key) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
-		);
-        const sanitizedLocals = extraGlobals.filter((key) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
-		);
-
-		const globalDestructuring =
-			sanitizedGlobals.length > 0
-				? `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;`
-				: "";
+		// Optimized destructuring
+		let startCode = "";
         
-        const localDestructuring =
-            sanitizedLocals.length > 0
-                ? `const { ${sanitizedLocals.join(", ")} } = $ctx.$props;`
-                : "";
+        // 1. Destructure Locals first (highest priority for shadowing)
+        const localSet = new Set<string>();
+        const sanitizedLocals = extraGlobals.filter(k => {
+            if (JS_IDENTIFIER_REGEX.test(k) && k !== varLocals && k !== "$ctx") {
+                localSet.add(k);
+                return true;
+            }
+            return false;
+        });
+        if (sanitizedLocals.length > 0) startCode += `const { ${sanitizedLocals.join(", ")} } = $ctx.$props;\n`;
 
-        const elementsMeta = usedElements && usedElements.size > 0 
-            ? `// kire-elements: ${Array.from(usedElements).join(",")}`
-            : "";
-
-		const startCode = `${globalDestructuring}
-${localDestructuring}
-const ${varLocals} = $ctx.$props;
-${elementsMeta}
-${pre}`;
-		const startCodeLines = startCode.split("\n");
-        let currentGenLine = startCodeLines.length;
+		// 2. Destructure Globals (only those not already in locals)
+		const sanitizedGlobals = Object.keys(this.kire.$globals).filter(k => 
+            JS_IDENTIFIER_REGEX.test(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx"
+        );
+        if (sanitizedGlobals.length > 0) startCode += `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;\n`;
+        
+        if (varLocals !== "none") startCode += `const ${varLocals} = $ctx.$props;\n`;
+        if (usedElements?.size) startCode += `// kire-elements: ${Array.from(usedElements).join(",")}\n`;
+		
+        if (this.preBuffer.length > 0) startCode += this.preBuffer.join("\n") + "\n";
 
 		if (!this.kire.production) {
-			// Map buffer index to line number
+            let currentGenLine = startCode.split("\n").length;
 			const bufferLineOffsets = new Map<number, number>();
 			for (let i = 0; i < this.resBuffer.length; i++) {
 				bufferLineOffsets.set(i, currentGenLine);
-				const entry = this.resBuffer[i]!;
-				currentGenLine += (entry.match(/\n/g) || []).length + 1;
+				currentGenLine += (this.resBuffer[i]!.match(/\n/g) || []).length + 1;
 			}
 
 			for (const mapping of this.resMappings) {
 				const genLine = bufferLineOffsets.get(mapping.index);
 				if (genLine !== undefined) {
 					this.generator.addMapping({
-						genLine: genLine,
+						genLine,
 						genCol: mapping.col,
 						sourceLine: mapping.node.loc!.start.line,
 						sourceCol: mapping.node.loc!.start.column,
@@ -94,13 +85,7 @@ ${pre}`;
 			}
 		}
 
-		// Main function body code
-		let code = `
-${startCode}
-${res}
-${pos}
-return $ctx.$response;
-//# sourceURL=${this.filename}`;
+		let code = `\n${startCode}\n${this.resBuffer.join("\n")}\n${this.posBuffer.join("\n")}\nreturn $ctx.$response;\n//# sourceURL=${this.filename}`;
 
 		if (!this.kire.production) {
 			code += `\n//# sourceMappingURL=${this.generator.toDataUri()}`;
@@ -364,7 +349,7 @@ return $ctx.$response;
 				);
 				callback(compiler);
 				this.resBuffer.push(`  return $ctx.$response;`);
-				this.resBuffer.push(`})($ctx.$emptyResponse());`);
+				this.resBuffer.push(`})($ctx.$fork());`);
 			},
 			error: (msg: string) => {
 				throw new Error(`Error in directive @${node.name}: ${msg}`);
@@ -374,6 +359,17 @@ return $ctx.$response;
 				this.preBuffer.push(code);
 			},
 			res: (content: string) => {
+                // Detect elements in dynamic content
+                if (this.kire.$elements.size > 0) {
+                    TAG_NAME_REGEX.lastIndex = 0;
+                    const tagMatch = content.match(TAG_NAME_REGEX);
+                    if (tagMatch) {
+                        for (const m of tagMatch) {
+                            const tagName = m.slice(1);
+                            this.usedElements.add(tagName);
+                        }
+                    }
+                }
 				this.resBuffer.push(`$ctx.$add(${JSON.stringify(content)});`);
 			},
 			raw: (code: string) => {

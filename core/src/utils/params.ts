@@ -1,3 +1,5 @@
+import { WHITESPACE_REGEX } from "./regex";
+
 export function isPatternDefinition(def: string): boolean {
     return def.includes(" ") || def.includes("$") || def.includes("{");
 }
@@ -35,7 +37,7 @@ export function parseParamDefinition(def: string): any {
     }
 
     let [name, type] = def.includes(':') ? def.split(':') : [def, 'any'];
-    if (name.endsWith('?')) name = name.slice(0, -1);
+    if (name && name.endsWith('?')) name = name.slice(0, -1);
     
     return {
         name,
@@ -45,8 +47,8 @@ export function parseParamDefinition(def: string): any {
 
 function matchPattern(pattern: string, input: string): Record<string, any> | null {
     if (!input || typeof input !== 'string') return null;
-    const pTokens = pattern.split(/\s+/);
-    const iTokens = input.trim().split(/\s+/);
+    const pTokens = pattern.split(WHITESPACE_REGEX);
+    const iTokens = input.trim().split(WHITESPACE_REGEX);
     const result: Record<string, any> = {};
     
     let i = 0;

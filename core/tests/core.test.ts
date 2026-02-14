@@ -24,10 +24,10 @@ describe("Kire Core (Bun)", () => {
             @endif
         `.trim();
         
-        const res1 = await kire.render(template, { show: true });
+        const res1 = await consumeStream(await kire.render(template, { show: true }));
         expect(res1.trim()).toBe("Visible");
         
-        const res2 = await kire.render(template, { show: false });
+        const res2 = await consumeStream(await kire.render(template, { show: false }));
         expect(res2.trim()).toBe("Hidden");
     });
 

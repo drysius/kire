@@ -13,10 +13,22 @@ export default (kire: Kire) => {
             const attrs = ctx.element.attributes;
             const kire = ctx.$kire;
 
+            const evaluate = (expr: string) => {
+                try {
+                    const scope = { ...ctx.$globals, ...ctx.$props };
+                    const keys = Object.keys(scope);
+                    const values = Object.values(scope);
+                    return new Function(...keys, `return ${expr}`).apply(ctx.$props, values);
+                } catch (e) {
+                    // console.error(`[Kire] Evaluation error for "${expr}":`, e);
+                    return false;
+                }
+            };
+
             switch (name) {
                 case "if": {
-                    const condition = attrs.cond ?? attrs.condition ?? attrs.value;
-                    if (condition) {
+                    const expr = attrs.cond ?? attrs.condition ?? attrs.value;
+                    if (expr && evaluate(expr)) {
                         ctx.replace(ctx.element.inner);
                     } else {
                         ctx.replace(""); 
@@ -24,8 +36,8 @@ export default (kire: Kire) => {
                     break;
                 }
                 case "unless": {
-                    const condition = attrs.cond ?? attrs.condition ?? attrs.value;
-                    if (!condition) {
+                    const expr = attrs.cond ?? attrs.condition ?? attrs.value;
+                    if (!expr || !evaluate(expr)) {
                         ctx.replace(ctx.element.inner);
                     } else {
                         ctx.replace(""); 
@@ -34,15 +46,18 @@ export default (kire: Kire) => {
                 }
                 case "for":
                 case "each": {
-                    const items = attrs.loop || attrs.each || attrs.items || [];
+                    const expr = attrs.loop || attrs.each || attrs.items;
+                    let items = expr ? evaluate(expr) : [];
+                    
+                    if (typeof items === 'string' && items.startsWith('[')) {
+                        try { items = JSON.parse(items); } catch { /* ignore */ }
+                    }
                     const as = attrs.as || 'item';
                     const indexAs = attrs.index || 'index';
                     
                     let result = "";
                     if (Array.isArray(items)) {
                         for (let i = 0; i < items.length; i++) {
-                            // Re-render inner content with new scope
-                            // Note: This assumes the inner content wasn't already destroyed by pre-interpolation
                             const rendered = await kire.render(ctx.element.inner, { 
                                 ...ctx.$props,
                                 [as]: items[i],
@@ -56,15 +71,12 @@ export default (kire: Kire) => {
                 }
                 case "switch": {
                     const value = attrs.value || attrs.on || attrs.expr;
-                    // Store switch state in context for children (case/default) to find
-                    // We use a symbol or internal key
                     const switchKey = Symbol.for('kire:switch');
                     (ctx as any)[switchKey] = value;
                     (ctx as any)[Symbol.for('kire:switch_matched')] = false;
                     
-                    // The children will be processed in the next re-scans of processElements
-                    // but we need them to be rendered now.
-                    ctx.replace(ctx.element.inner);
+                    const rendered = kire.render(ctx.element.inner, ctx.$props);
+                    ctx.replace(await consumeStream(rendered));
                     break;
                 }
                 case "case": {
@@ -92,8 +104,9 @@ export default (kire: Kire) => {
                 }
                 case "define": {
                     const name = attrs.name || attrs.value;
-                    if (!ctx["~defines"]) ctx["~defines"] = {};
-                    ctx["~defines"][name!] = ctx.element.inner;
+                    const defines = ctx.$typed<Record<string, string>>("~defines") || {};
+                    defines[name!] = ctx.element.inner;
+                    (ctx as any)["~defines"] = defines;
                     ctx.replace("");
                     break;
                 }
@@ -130,7 +143,7 @@ export default (kire: Kire) => {
                     break;
                 }
                 case "csrf": {
-                    //@ts-expect-error ignore
+                    //@ts-ignore
                     const token = ctx.$globals.csrf || "";
                     ctx.replace(`<input type="hidden" name="_token" value="${token}">`);
                     break;

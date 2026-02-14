@@ -38,7 +38,7 @@ export default (kire: Kire) => {
                 if (Array.isArray($s)) {
                     $res = $s.filter(Boolean).join("; ");
                 } else if (typeof $s === 'object' && $s !== null) {
-                    $res = Object.entries($s).filter(([_, v]) => v).map(([k]) => k).join("; ");
+                    $res = Object.entries($s).filter(([_, v]) => v).map(([k, v]) => v === true ? k : \`\${k}: \${v}\`).join("; ");
                 } else {
                     $res = String($s || "");
                 }

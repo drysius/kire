@@ -68,9 +68,9 @@ export interface KireOptions {
 	 */
 	files?: Record<string, string>;
 	/**
-	 * Map of pre-compiled JavaScript functions.
+	 * Map of pre-compiled JavaScript functions or templates.
 	 */
-	bundled?: Record<string, Function>;
+	bundled?: Record<string, Function | CompiledTemplate>;
 	/**
 	 * Name of the variable exposing locals in the template. Defaults to "it".
 	 */
@@ -203,16 +203,20 @@ export interface KireContext {
     $fork(): KireContext;
 }
 
-export interface KireFileMeta {
-	path: string;
-	name: string;
+export interface CompiledTemplate {
 	execute: Function;
+	isAsync: boolean;
+	usedElements?: Set<string>;
+	path: string;
 	code: string;
 	source: string;
-	map?: any; // Source Map
+	map?: any;
+}
+
+export interface KireFileMeta extends CompiledTemplate {
+	name: string;
 	children?: boolean;
 	controller?: ReadableStreamDefaultController;
-	usedElements?: Set<string>;
 }
 
 /**
@@ -246,7 +250,7 @@ export interface CompilerContext {
 	 * @param content The template string to compile.
 	 * @returns The compiled function code as a string.
 	 */
-	render(content: string): Promise<string>;
+	render(content: string): Promise<string> | string;
 
 	/**
 	 * Wraps the provided code in an async function definition.
@@ -309,12 +313,12 @@ export interface CompilerContext {
 	/**
 	 * Compiles nodes and wraps them in an optimized merge block.
 	 */
-	merge(callback: (ctx: CompilerContext) => void | Promise<void>): Promise<void>;
+	merge(callback: (ctx: CompilerContext) => void | Promise<void>): Promise<void> | void;
 
 	/**
 	 * Compiles and processes a set of nodes, appending their logic to the current flow.
 	 */
-	set(nodes: Node[]): Promise<void>;
+	set(nodes: Node[]): Promise<void> | void;
 }
 
 /**

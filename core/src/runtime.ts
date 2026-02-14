@@ -11,18 +11,16 @@ export default function (
 	meta: KireFileMeta,
 ): Promise<string | ReadableStream> | ReadableStream | string {
 	
-    // 1. Setup Context with Prototype Inheritance for Speed
+    // 1. Setup Context
     const $ctx: any = {
         $kire,
         $file: meta,
         $response: "",
         $deferred: [],
         
-        // Inherit globals/props from Kire instance
         $globals: Object.create($kire.$globals),
         $props: Object.create($kire.$props),
         
-        // Methods
         $add: (str: string) => ($ctx.$response += str),
         $md5: (str: string) => createHash("md5").update(str).digest("hex"),
         $escape: escapeHtml,
@@ -50,8 +48,7 @@ export default function (
             const hooks = ($ctx.$hooks || $kire.$hooks)[ev];
             if (hooks.length === 0) return;
             
-            // Check if any hook is async
-            const hasAsync = hooks.some(h => (h as any).constructor.name === 'AsyncFunction');
+            const hasAsync = hooks.some((h: any) => (h as any).constructor.name === 'AsyncFunction');
             if (hasAsync) {
                 return (async () => {
                     for (let i = 0; i < hooks.length; i++) {
@@ -66,34 +63,29 @@ export default function (
             }
         },
 
-        $merge: ($kire.$stream || meta.controller) ? async (fn: any) => {
+        $merge: async (fn: any) => {
             const originalAdd = $ctx.$add;
             let buffer = "";
-            $ctx.$add = (str: any) => { buffer += str; $ctx.$response += str; };
+            $ctx.$add = (str: string) => { buffer += str; };
             const prevRes = $ctx.$response;
             $ctx.$response = "";
+            
             const res = fn($ctx);
             if (res instanceof Promise) await res;
+            
             $ctx.$add = originalAdd;
             $ctx.$response = prevRes + buffer;
-        } : (fn: any) => {
-            const prevRes = $ctx.$response;
-            $ctx.$response = "";
-            const res = fn($ctx);
-            if (res instanceof Promise) {
-                return res.then(() => {
-                    const inner = $ctx.$response;
-                    $ctx.$response = prevRes + inner;
-                });
-            }
-            const inner = $ctx.$response;
-            $ctx.$response = prevRes + inner;
+            if (meta.controller) originalAdd(buffer);
         },
         
         $fork: () => {
-            const newCtx = { ...$ctx };
-            newCtx.$merge = $ctx.$merge;
-            return newCtx;
+            const fork = { ...$ctx, $response: "" };
+            fork.$add = (str: string) => (fork.$response += str);
+            fork.$emptyResponse = () => {
+                fork.$response = "";
+                return fork;
+            };
+            return fork;
         },
 
         $require: (path: any, locals: any) => {
@@ -101,115 +93,95 @@ export default function (
         }
     };
 
-    // Apply locals to props (shadowing global props)
-    if (locals) {
-        for (const key in locals) {
-            $ctx.$props[key] = locals[key];
-        }
-    }
-
-    const mainFn = meta.execute as any;
-    const isAsync = mainFn._isAsync !== false;
+    if (locals) Object.assign($ctx.$props, locals);
 
 	const execute = () => {
         if ($kire.$directives.size > 0 && !meta.children) {
             for (const directive of $kire.$directives.values()) {
-                if (directive.onInit) directive.onInit($ctx);
+                if (directive.onInit) {
+                    const res = directive.onInit($ctx);
+                    if (res instanceof Promise) return res.then(() => executeFlow());
+                }
             }
         }
+        return executeFlow();
+    };
 
-		const run = () => {
+    const executeFlow = () => {
+        let hasError = false;
+        const run = () => {
             try {
-                const res = mainFn.call($ctx.$props, $ctx);
+                const res = meta.execute.call($ctx.$props, $ctx);
                 if (res instanceof Promise) {
-                    return res.then((r: any) => {
-                        if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
+                    return res.then(async () => {
+                        if (!hasError && !meta.controller && meta.usedElements?.size) {
                             const pel = processElements($ctx);
-                            if (pel instanceof Promise) return pel.then(h => $ctx.$response = h);
-                            $ctx.$response = pel;
+                            $ctx.$response = pel instanceof Promise ? await pel : pel;
                         }
-                        return $ctx.$response;
-                    }).catch((e: any) => {
-                        const kireError = new KireError(e, $ctx.$file);
-                        console.error(kireError.stack);
-                        return $ctx.$response = $kire.renderError(kireError, $ctx);
                     });
+                }
+                if (!hasError && !meta.controller && meta.usedElements?.size) {
+                    const pel = processElements($ctx);
+                    if (pel instanceof Promise) return pel.then((h: string) => $ctx.$response = h);
+                    $ctx.$response = pel;
                 }
             } catch (e: any) {
-                const kireError = new KireError(e, $ctx.$file);
-                console.error(kireError.stack);
-                return $ctx.$response = $kire.renderError(kireError, $ctx);
+                hasError = true;
+                const kireError = new KireError(e, meta);
+                if (!$kire.$silent) console.error(kireError.stack);
+                $ctx.$response = $kire.renderError(kireError, $ctx);
             }
-
-            if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
-                const res = processElements($ctx);
-                if (res instanceof Promise) {
-                    return res.then(html => {
-                        $ctx.$response = html;
-                        return $ctx.$response;
-                    });
-                }
-                $ctx.$response = res;
-            }
-
-            return $ctx.$response;
         };
 
-        if (isAsync) {
-            return (async () => {
-                const b = $ctx.$emit("before");
-                if (b instanceof Promise) await b;
-                const r = run();
-                if (r instanceof Promise) await r;
+        const b = $ctx.$emit("before");
+        if (b instanceof Promise) {
+            return b.then(async () => {
+                await run();
+                await $ctx.$emit("rendered");
+                await $ctx.$emit("after");
+                await $ctx.$emit("end");
+                return $ctx.$response;
+            });
+        }
+
+        const r = run();
+        if (r instanceof Promise) {
+            return r.then(async () => {
                 const re = $ctx.$emit("rendered");
                 if (re instanceof Promise) await re;
-                const a = $ctx.$emit("after");
-                if (a instanceof Promise) await a;
-                const e = $ctx.$emit("end");
-                if (e instanceof Promise) await e;
+                const af = $ctx.$emit("after");
+                if (af instanceof Promise) await af;
+                const en = $ctx.$emit("end");
+                if (en instanceof Promise) await en;
                 return $ctx.$response;
-            })();
-        } else {
-            $ctx.$emit("before"); 
-            const r = run();
-            if (r instanceof Promise) {
-                return r.then(async () => {
-                    await $ctx.$emit("rendered");
-                    await $ctx.$emit("after");
-                    await $ctx.$emit("end");
-                    return $ctx.$response;
-                });
-            }
-            $ctx.$emit("rendered");
-            $ctx.$emit("after");
-            $ctx.$emit("end");
-            return $ctx.$response;
+            });
         }
+
+        const re = $ctx.$emit("rendered");
+        if (re instanceof Promise) {
+            return re.then(async () => {
+                await $ctx.$emit("after");
+                await $ctx.$emit("end");
+                return $ctx.$response;
+            });
+        }
+
+        $ctx.$emit("after");
+        $ctx.$emit("end");
+        return $ctx.$response;
 	};
 
-	// 3. Handle Streaming vs Buffering
+	// 3. Handle Streaming
 	const isStreamRoot = $kire.$stream && !meta.children && !meta.controller;
 
 	if (isStreamRoot) {
 		const encoder = new TextEncoder();
 		return new ReadableStream({
 			async start(controller) {
-				$ctx.$add = (str) => controller.enqueue(encoder.encode(str));
-                $ctx.$merge = async (fn: any) => {
-                    const originalAdd = $ctx.$add;
-                    let buffer = "";
-                    $ctx.$add = (str: any) => { buffer += str; };
-                    await fn($ctx);
-                    $ctx.$add = originalAdd;
-                    $ctx.$add(buffer);
-				};
-
+				$ctx.$add = (str: string) => controller.enqueue(encoder.encode(str));
 				try {
-					const result = await execute();
-					if (typeof result === "string" && result.includes("Error")) {
-						controller.enqueue(encoder.encode(result));
-					}
-					if ($ctx.$deferred && $ctx.$deferred.length > 0) {
+					await execute();
+					if ($ctx.$deferred?.length) {
 						await Promise.all($ctx.$deferred.map((t: any) => t()));
 					}
 					controller.close();
@@ -218,10 +190,7 @@ export default function (
 				}
 			},
 		});
-	} else if (meta.controller) {
-        const res = execute();
-		return res instanceof Promise ? res.then(() => "") : ""; 
-	} else {
-		return execute();
 	}
+    
+    return execute();
 }

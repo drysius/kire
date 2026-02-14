@@ -1,4 +1,5 @@
 import type { Kire } from "../kire";
+import type { CompilerContext } from "../types";
 
 export default (kire: Kire) => {
 	const slotDirective = {
@@ -12,7 +13,7 @@ export default (kire: Kire) => {
 @endslot`,
 		onCall(compiler: any) {
 			const name = compiler.param("name");
-			compiler.merge((c) => {
+			compiler.merge((c: CompilerContext) => {
 				if (c.children) c.set(c.children);
 				c.raw(`  $slots[${JSON.stringify(name)}] = $ctx.$response;`);
 				c.raw(`  $ctx.$response = '';`);
@@ -82,7 +83,7 @@ export default (kire: Kire) => {
 				if (compiler.children) compiler.set(compiler.children);
 				compiler.raw(`  };`);
 			} else {
-				compiler.merge((c) => {
+				compiler.merge((c: CompilerContext) => {
 					c.raw(`    $ctx.slots = $slots;`);
 					if (c.children) c.set(c.children);
 					c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
