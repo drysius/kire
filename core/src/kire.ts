@@ -59,6 +59,7 @@ export class Kire {
 
     public $types: Map<string, TypeDefinition> = new Map();
     public $schemaDefinition?: KireSchemaDefinition;
+    public $virtualFiles: Record<string, string> = {};
 
     constructor(options: KireOptions = {}) {
         this.production = options.production ?? process.env.NODE_ENV === 'production';
@@ -68,6 +69,18 @@ export class Kire {
         this.$var_locals = options.varLocals ?? "it";
         this.$parent = options.parent;
         this.$root = options.root ? resolve(options.root) : process.cwd();
+        
+        if (options.files) {
+            for (const key in options.files) {
+                this.$virtualFiles[this.resolvePath(key)] = options.files[key]!;
+            }
+        }
+
+        if (options.bundled) {
+            for (const key in options.bundled) {
+                this.$files.set(this.resolvePath(key), options.bundled[key]!);
+            }
+        }
 
         // Optimized Hooks
         this.$hooks = new KireHooks();
@@ -193,11 +206,11 @@ export class Kire {
         return parser.parse();
     }
 
-    public async compile(template: string, filename?: string, globals: string[] = []): Promise<string> {
+    public compile(template: string, filename?: string, globals: string[] = []): string {
         const parser = new this.$parser(template, this);
         const nodes = parser.parse();
         const compiler = new this.$compiler(this, filename);
-        return (compiler as any).compile(nodes, globals, parser.usedElements);
+        return compiler.compile(nodes, globals, parser.usedElements) as string;
     }
 
     public compileFn(content: string, filename = "template.kire", globals: string[] = []): Function | Promise<Function> {
@@ -208,55 +221,21 @@ export class Kire {
             
             if (this.$files.has(key)) return this.$files.get(key)!;
             
-            const parser = new this.$parser(content, this);
-            const nodes = parser.parse();
-            const compiler = new this.$compiler(this, filename);
-            const code = compiler.compile(nodes, globals, parser.usedElements);
-            
-            if (code instanceof Promise) {
-                return code.then(c => {
-                    const mainFn = this.$executor(c, ["$ctx"]);
-                    (mainFn as any)._code = c;
-                    (mainFn as any)._isAsync = c.includes("await");
-                    (mainFn as any)._usedElements = parser.usedElements;
-                    (mainFn as any)._source = content;
-                    (mainFn as any)._path = filename;
-                    this.$files.set(key, mainFn);
-                    return mainFn;
-                });
-            }
-
+            const code = this.compile(content, filename, globals);
             const mainFn = this.$executor(code, ["$ctx"]);
             (mainFn as any)._code = code;
             (mainFn as any)._isAsync = code.includes("await");
-            (mainFn as any)._usedElements = parser.usedElements;
             (mainFn as any)._source = content;
             (mainFn as any)._path = filename;
+            
             this.$files.set(key, mainFn);
             return mainFn;
         }
 
-        const parser = new this.$parser(content, this);
-        const nodes = parser.parse();
-        const compiler = new this.$compiler(this, filename);
-        const code = compiler.compile(nodes, globals, parser.usedElements);
-
-        if (code instanceof Promise) {
-            return code.then(c => {
-                const mainFn = this.$executor(c, ["$ctx"]);
-                (mainFn as any)._code = c;
-                (mainFn as any)._isAsync = c.includes("await");
-                (mainFn as any)._usedElements = parser.usedElements;
-                (mainFn as any)._source = content;
-                (mainFn as any)._path = filename;
-                return mainFn;
-            });
-        }
-
+        const code = this.compile(content, filename, globals);
         const mainFn = this.$executor(code, ["$ctx"]);
         (mainFn as any)._code = code;
         (mainFn as any)._isAsync = code.includes("await");
-        (mainFn as any)._usedElements = parser.usedElements;
         (mainFn as any)._source = content;
         (mainFn as any)._path = filename;
         return mainFn;
@@ -395,7 +374,9 @@ export class Kire {
         return filepath;
     }
 
-    public readFile(path: string): Promise<string> {
+    public readFile(path: string): Promise<string> | string {
+        if (this.$virtualFiles[path]) return this.$virtualFiles[path]!;
+
         return new Promise((resolve, reject) => {
             readFile(path, 'utf-8', (err, data) => {
                 if (err) reject(err);

@@ -64,6 +64,14 @@ export interface KireOptions {
 		compiler?: ICompilerConstructor;
 	};
 	/**
+	 * Map of pre-loaded template files.
+	 */
+	files?: Record<string, string>;
+	/**
+	 * Map of pre-compiled JavaScript functions.
+	 */
+	bundled?: Record<string, Function>;
+	/**
 	 * Name of the variable exposing locals in the template. Defaults to "it".
 	 */
 	varLocals?: string;

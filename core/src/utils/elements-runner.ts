@@ -14,9 +14,10 @@ export const processElements = ($ctx: KireContext): Promise<string> | string => 
         hasParent: boolean;
     }[] = [];
 
+    const patternParts: string[] = [];
+
     for (const def of $ctx.$kire.$elements) {
         if (def.name instanceof RegExp) {
-            // Check if any used element matches the regex
             let isUsed = false;
             for (const tagName of used) {
                 if (def.name.test(tagName)) {
@@ -26,13 +27,13 @@ export const processElements = ($ctx: KireContext): Promise<string> | string => 
             }
             if (isUsed) {
                 elementMatchers.push({ prefix: "", def, isRegex: true, hasParent: false });
+                patternParts.push(def.name.source);
             }
         } else {
             const name = def.name;
             const parent = def.parent || "";
             const prefix = parent ? `${name}${parent}` : name;
             
-            // Check if this prefix is used
             let isUsed = false;
             for (const tagName of used) {
                 if (tagName === prefix || (parent && tagName.startsWith(prefix))) {
@@ -43,6 +44,7 @@ export const processElements = ($ctx: KireContext): Promise<string> | string => 
 
             if (isUsed) {
                 elementMatchers.push({ prefix, def, isRegex: false, hasParent: !!parent });
+                patternParts.push(prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
             }
         }
     }
@@ -50,20 +52,21 @@ export const processElements = ($ctx: KireContext): Promise<string> | string => 
     if (elementMatchers.length === 0) return $ctx.$response;
 
     elementMatchers.sort((a, b) => b.prefix.length - a.prefix.length);
+    const combinedRegex = new RegExp(`^(${patternParts.join("|")})`);
 
     const hasAsyncRun = elementMatchers.some(m => {
         const run = m.def.run || (m.def as any).onCall;
-        return run && run.constructor.name === 'AsyncFunction';
+        return run && (run.constructor.name === 'AsyncFunction' || run instanceof Promise);
     });
 
     if (hasAsyncRun) {
-        return scanHtmlAsync($ctx.$response, $ctx, elementMatchers);
+        return scanHtmlAsync($ctx.$response, $ctx, elementMatchers, combinedRegex);
     } else {
-        return scanHtmlSync($ctx.$response, $ctx, elementMatchers);
+        return scanHtmlSync($ctx.$response, $ctx, elementMatchers, combinedRegex);
     }
 };
 
-function scanHtmlSync(html: string, ctx: KireContext, matchers: any[]): string {
+function scanHtmlSync(html: string, ctx: KireContext, matchers: any[], combinedRegex: RegExp): string {
     let buffer = "";
     let i = 0;
     const len = html.length;
@@ -87,6 +90,12 @@ function scanHtmlSync(html: string, ctx: KireContext, matchers: any[]): string {
         let j = i + 1;
         while (j < len && !/\s|\/|>/.test(html[j]!)) j++;
         const tagName = html.slice(i + 1, j);
+
+        if (!combinedRegex.test(tagName)) {
+            buffer += '<';
+            i++;
+            continue;
+        }
 
         let matchedDef: ElementDefinition | null = null;
         let matchedRef: any = null;
@@ -183,7 +192,7 @@ function scanHtmlSync(html: string, ctx: KireContext, matchers: any[]): string {
             }
 
             if (replaced) {
-                buffer += scanHtmlSync(output, ctx, matchers);
+                buffer += scanHtmlSync(output, ctx, matchers, combinedRegex);
             } else {
                 buffer += outer;
             }
@@ -198,7 +207,7 @@ function scanHtmlSync(html: string, ctx: KireContext, matchers: any[]): string {
     return buffer;
 }
 
-async function scanHtmlAsync(html: string, ctx: KireContext, matchers: any[]): Promise<string> {
+async function scanHtmlAsync(html: string, ctx: KireContext, matchers: any[], combinedRegex: RegExp): Promise<string> {
     let buffer = "";
     let i = 0;
     const len = html.length;
@@ -222,6 +231,12 @@ async function scanHtmlAsync(html: string, ctx: KireContext, matchers: any[]): P
         let j = i + 1;
         while (j < len && !/\s|\/|>/.test(html[j]!)) j++;
         const tagName = html.slice(i + 1, j);
+
+        if (!combinedRegex.test(tagName)) {
+            buffer += '<';
+            i++;
+            continue;
+        }
 
         let matchedDef: ElementDefinition | null = null;
         let matchedRef: any = null;
@@ -318,7 +333,7 @@ async function scanHtmlAsync(html: string, ctx: KireContext, matchers: any[]): P
             }
 
             if (replaced) {
-                buffer += await scanHtmlAsync(output, ctx, matchers);
+                buffer += await scanHtmlAsync(output, ctx, matchers, combinedRegex);
             } else {
                 buffer += outer;
             }

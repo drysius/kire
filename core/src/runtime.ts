@@ -92,22 +92,19 @@ export default function (
         }
     }
 
-	// 2. Define Execution Logic
-    const isAsync = (meta.execute as any)._isAsync !== false;
+    const mainFn = meta.execute as any;
+    const isAsync = mainFn._isAsync !== false;
 
 	const execute = () => {
-        // Directives Init
-        if ($kire.$directives.size > 0) {
+        if ($kire.$directives.size > 0 && !meta.children) {
             for (const directive of $kire.$directives.values()) {
-                if (directive.onInit) {
-                    directive.onInit($ctx);
-                }
+                if (directive.onInit) directive.onInit($ctx);
             }
         }
 
 		const run = () => {
             try {
-                const res = $ctx.$file.execute.call($ctx.$props, $ctx);
+                const res = mainFn.call($ctx.$props, $ctx);
                 if (res instanceof Promise) {
                     return res.then((r: any) => {
                         if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
@@ -116,12 +113,16 @@ export default function (
                             $ctx.$response = pel;
                         }
                         return $ctx.$response;
+                    }).catch((e: any) => {
+                        const kireError = new KireError(e, $ctx.$file);
+                        console.error(kireError.stack);
+                        return $ctx.$response = $kire.renderError(kireError, $ctx);
                     });
                 }
             } catch (e: any) {
                 const kireError = new KireError(e, $ctx.$file);
                 console.error(kireError.stack);
-                return $kire.renderError(kireError, $ctx);
+                return $ctx.$response = $kire.renderError(kireError, $ctx);
             }
 
             if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
@@ -142,19 +143,14 @@ export default function (
             return (async () => {
                 const b = $ctx.$emit("before");
                 if (b instanceof Promise) await b;
-                
                 const r = run();
                 if (r instanceof Promise) await r;
-                
                 const re = $ctx.$emit("rendered");
                 if (re instanceof Promise) await re;
-                
                 const a = $ctx.$emit("after");
                 if (a instanceof Promise) await a;
-                
                 const e = $ctx.$emit("end");
                 if (e instanceof Promise) await e;
-                
                 return $ctx.$response;
             })();
         } else {

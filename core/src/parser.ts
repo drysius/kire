@@ -9,11 +9,29 @@ export class Parser {
 	public line = 1;
 	public column = 1;
 	public usedElements: Set<string> = new Set();
+	private elementRegex: RegExp | null = null;
 
 	constructor(
 		public template: string,
 		public kire: Kire,
-	) {}
+	) {
+		this.elementRegex = this.buildElementRegex();
+	}
+
+	private buildElementRegex(): RegExp | null {
+		if (this.kire.$elements.size === 0) return null;
+		const parts: string[] = [];
+		for (const def of this.kire.$elements) {
+			if (typeof def.name === "string") {
+				const prefix = def.parent ? `${def.name}${def.parent}` : def.name;
+				parts.push(prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+			} else if (def.name instanceof RegExp) {
+				parts.push(def.name.source);
+			}
+		}
+		if (parts.length === 0) return null;
+		return new RegExp(`^(${parts.join("|")})`);
+	}
 
 	/**
 	 * Main parsing loop. Iterates through the template string and delegates parsing to specific methods.
@@ -540,24 +558,13 @@ export class Parser {
 	}
 
 	private checkUsedElements(text: string) {
-		if (this.kire.$elements.size === 0) return;
+		if (!this.elementRegex) return;
 		const tagRegex = /<([a-zA-Z0-9_\-:]+)/g;
 		let match: RegExpExecArray | null;
 		while ((match = tagRegex.exec(text)) !== null) {
 			const tagName = match[1]!;
-			for (const def of this.kire.$elements) {
-				if (def.name instanceof RegExp) {
-					if (def.name.test(tagName)) {
-						this.usedElements.add(tagName);
-						break;
-					}
-				} else {
-					const prefix = def.parent ? `${def.name}${def.parent}` : def.name;
-					if (tagName === prefix || (def.parent && tagName.startsWith(prefix))) {
-						this.usedElements.add(tagName);
-						break;
-					}
-				}
+			if (this.elementRegex.test(tagName)) {
+				this.usedElements.add(tagName);
 			}
 		}
 	}

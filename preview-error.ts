@@ -3,9 +3,8 @@ import { Kire } from "./core/src/kire";
 const kire = new Kire({
     production: false,
     silent: true,
-    resolver: async (path) => {
-        if (path === "test.kire") {
-            return `
+    files: {
+        "test.kire": `
 <html>
 <body>
     <h1>Hello World</h1>
@@ -14,9 +13,7 @@ const kire = new Kire({
         const x = it.user.nested.property; 
     ?>
 </body>
-</html>`;
-        }
-        return "";
+</html>`
     }
 });
 
