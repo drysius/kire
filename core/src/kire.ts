@@ -197,25 +197,27 @@ export class Kire {
         const parser = new this.$parser(template, this);
         const nodes = parser.parse();
         const compiler = new this.$compiler(this, filename);
-        // We might want to pass globals to compiler to allow better destructuring
         return (compiler as any).compile(nodes, globals, parser.usedElements);
     }
 
     public compileFn(content: string, filename = "template.kire", globals: string[] = []): Function | Promise<Function> {
         if (this.production) {
-            const key = `fn:${filename}:${globals.join(',')}:${content}`;
+            const key = filename !== "template.kire" 
+                ? `${filename}:${globals.sort().join(",")}` 
+                : `tpl:${content.length}:${content.slice(0, 100)}:${globals.sort().join(",")}`;
+            
             if (this.$files.has(key)) return this.$files.get(key)!;
             
             const parser = new this.$parser(content, this);
             const nodes = parser.parse();
             const compiler = new this.$compiler(this, filename);
-            const codePromise = compiler.compile(nodes, globals, parser.usedElements);
+            const code = compiler.compile(nodes, globals, parser.usedElements);
             
-            if (codePromise instanceof Promise) {
-                return codePromise.then(code => {
-                    const mainFn = this.$executor(code, ["$ctx"]);
-                    (mainFn as any)._code = code;
-                    (mainFn as any)._isAsync = code.includes("await");
+            if (code instanceof Promise) {
+                return code.then(c => {
+                    const mainFn = this.$executor(c, ["$ctx"]);
+                    (mainFn as any)._code = c;
+                    (mainFn as any)._isAsync = c.includes("await");
                     (mainFn as any)._usedElements = parser.usedElements;
                     (mainFn as any)._source = content;
                     (mainFn as any)._path = filename;
@@ -224,7 +226,6 @@ export class Kire {
                 });
             }
 
-            const code = codePromise;
             const mainFn = this.$executor(code, ["$ctx"]);
             (mainFn as any)._code = code;
             (mainFn as any)._isAsync = code.includes("await");
@@ -238,13 +239,13 @@ export class Kire {
         const parser = new this.$parser(content, this);
         const nodes = parser.parse();
         const compiler = new this.$compiler(this, filename);
-        const codePromise = compiler.compile(nodes, globals, parser.usedElements);
+        const code = compiler.compile(nodes, globals, parser.usedElements);
 
-        if (codePromise instanceof Promise) {
-            return codePromise.then(code => {
-                const mainFn = this.$executor(code, ["$ctx"]);
-                (mainFn as any)._code = code;
-                (mainFn as any)._isAsync = code.includes("await");
+        if (code instanceof Promise) {
+            return code.then(c => {
+                const mainFn = this.$executor(c, ["$ctx"]);
+                (mainFn as any)._code = c;
+                (mainFn as any)._isAsync = c.includes("await");
                 (mainFn as any)._usedElements = parser.usedElements;
                 (mainFn as any)._source = content;
                 (mainFn as any)._path = filename;
@@ -252,7 +253,6 @@ export class Kire {
             });
         }
 
-        const code = codePromise;
         const mainFn = this.$executor(code, ["$ctx"]);
         (mainFn as any)._code = code;
         (mainFn as any)._isAsync = code.includes("await");
@@ -268,27 +268,22 @@ export class Kire {
         controller?: ReadableStreamDefaultController,
         filename = "template.kire",
     ): string | Promise<string | ReadableStream> | ReadableStream {
-        if (!this.$parent && !this.$silent) {
-            // console.warn("[Kire] Warning: Global render.");
-        }
+        const fn = this.compileFn(template, filename, Object.keys(locals));
         
-        const fnPromise = this.compileFn(template, filename, Object.keys(locals));
-        
-        if (fnPromise instanceof Promise) {
-            return fnPromise.then(fn => KireRuntime(this, locals, {
+        if (fn instanceof Promise) {
+            return fn.then(f => KireRuntime(this, locals, {
                 children: false,
-                code: (fn as any)._code,
-                execute: fn,
-                name: fn.name,
-                source: (fn as any)._source,
-                path: (fn as any)._path,
-                map: (fn as any)._map,
-                usedElements: (fn as any)._usedElements,
+                code: (f as any)._code,
+                execute: f,
+                name: f.name,
+                source: (f as any)._source,
+                path: (f as any)._path,
+                map: (f as any)._map,
+                usedElements: (f as any)._usedElements,
                 controller,
             }));
         }
 
-        const fn = fnPromise;
         return KireRuntime(this, locals, {
             children: false,
             code: (fn as any)._code,

@@ -5,7 +5,7 @@ async function runBenchmark() {
     const kire = new Kire({ production: true });
     const edge = new Edge();
 
-    const users = Array.from({ length: 500 }, (_, i) => ({
+    const users = Array.from({ length: 5000 }, (_, i) => ({
         name: `User ${i}`,
         email: `user${i}@example.com`,
         active: i % 2 === 0,

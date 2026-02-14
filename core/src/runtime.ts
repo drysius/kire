@@ -12,11 +12,7 @@ export default function (
 ): Promise<string | ReadableStream> | ReadableStream | string {
 	
     // 1. Setup Context with Prototype Inheritance for Speed
-    // $ctx inherits from $kire.$contexts (if exists) or just plain object
-    // But typically $ctx is fresh per request.
-    // $globals and $props inherit from Kire instance to allow shadowing without mutation.
-    
-    const $ctx: KireContext = {
+    const $ctx: any = {
         $kire,
         $file: meta,
         $response: "",
@@ -38,61 +34,62 @@ export default function (
             return $ctx;
         },
 
-        // Optimized Hooks: Copy references from Kire instance
-        // We create a new object for runtime hooks so we don't mutate the global definition
-        $hooks: {
-            before: [...$kire.$hooks.before],
-            rendered: [...$kire.$hooks.rendered],
-            after: [...$kire.$hooks.after],
-            end: [...$kire.$hooks.end],
-        },
-
-        $on: (ev: KireHookName, cb) => {
+        $on: (ev: KireHookName, cb: any) => {
+            if (!$ctx.$hooks) {
+                $ctx.$hooks = {
+                    before: [...$kire.$hooks.before],
+                    rendered: [...$kire.$hooks.rendered],
+                    after: [...$kire.$hooks.after],
+                    end: [...$kire.$hooks.end],
+                };
+            }
             $ctx.$hooks[ev].push(cb);
         },
 
-        $emit: async (ev: KireHookName) => {
-            const hooks = $ctx.$hooks[ev];
+        $emit: (ev: KireHookName) => {
+            const hooks = ($ctx.$hooks || $kire.$hooks)[ev];
             if (hooks.length > 0) {
-                for (let i = 0; i < hooks.length; i++) {
-                    await hooks[i]!($ctx);
-                }
+                return (async () => {
+                    for (let i = 0; i < hooks.length; i++) {
+                        const res = hooks[i]!($ctx);
+                        if (res instanceof Promise) await res;
+                    }
+                })();
             }
         },
 
-        $merge: async (fn) => {
+        $merge: async (fn: any) => {
             const prevRes = $ctx.$response;
             $ctx.$response = "";
-            await fn($ctx);
-            // $ctx.$response now contains the inner content
+            const res = fn($ctx);
+            if (res instanceof Promise) await res;
             const inner = $ctx.$response;
             $ctx.$response = prevRes + inner;
         },
         
         $fork: () => {
-            // Shallow clone context
             const newCtx = { ...$ctx };
-            // Re-bind specific methods if needed, but simple clone is usually enough for data
-            // For $merge in fork, we need to be careful about buffer
-            newCtx.$merge = async (fn) => {
+            newCtx.$merge = async (fn: any) => {
                 const prevRes = newCtx.$response;
                 newCtx.$response = "";
-                await fn(newCtx);
+                const res = fn(newCtx);
+                if (res instanceof Promise) await res;
                 const inner = newCtx.$response;
                 newCtx.$response = prevRes + inner;
             };
             return newCtx;
         },
 
-        // Helper for dynamic requirements
-        $require: async (path, locals) => {
+        $require: (path: any, locals: any) => {
              return $kire.view(path, locals, meta.controller) as Promise<string>;
         }
-    } as any;
+    };
 
     // Apply locals to props (shadowing global props)
     if (locals) {
-        Object.assign($ctx.$props, locals);
+        for (const key in locals) {
+            $ctx.$props[key] = locals[key];
+        }
     }
 
 	// 2. Define Execution Logic
@@ -103,11 +100,7 @@ export default function (
         if ($kire.$directives.size > 0) {
             for (const directive of $kire.$directives.values()) {
                 if (directive.onInit) {
-                    const res = directive.onInit($ctx);
-                    if (res instanceof Promise && isAsync) {
-                        // We can't easily wait for it here if we want to be truly sync
-                        // But usually onInit is used for globals which are already there.
-                    }
+                    directive.onInit($ctx);
                 }
             }
         }
@@ -115,7 +108,16 @@ export default function (
 		const run = () => {
             try {
                 const res = $ctx.$file.execute.call($ctx.$props, $ctx);
-                if (res instanceof Promise) return res;
+                if (res instanceof Promise) {
+                    return res.then((r: any) => {
+                        if (!meta.controller && meta.usedElements && meta.usedElements.size > 0) {
+                            const pel = processElements($ctx);
+                            if (pel instanceof Promise) return pel.then(h => $ctx.$response = h);
+                            $ctx.$response = pel;
+                        }
+                        return $ctx.$response;
+                    });
+                }
             } catch (e: any) {
                 const kireError = new KireError(e, $ctx.$file);
                 console.error(kireError.stack);
@@ -138,15 +140,24 @@ export default function (
 
         if (isAsync) {
             return (async () => {
-                await $ctx.$emit("before");
-                await run();
-                await $ctx.$emit("rendered");
-                await $ctx.$emit("after");
-                await $ctx.$emit("end");
+                const b = $ctx.$emit("before");
+                if (b instanceof Promise) await b;
+                
+                const r = run();
+                if (r instanceof Promise) await r;
+                
+                const re = $ctx.$emit("rendered");
+                if (re instanceof Promise) await re;
+                
+                const a = $ctx.$emit("after");
+                if (a instanceof Promise) await a;
+                
+                const e = $ctx.$emit("end");
+                if (e instanceof Promise) await e;
+                
                 return $ctx.$response;
             })();
         } else {
-            // Sync execution (assuming hooks are sync or not used for basic templates)
             $ctx.$emit("before"); 
             run();
             $ctx.$emit("rendered");
