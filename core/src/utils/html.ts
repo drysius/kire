@@ -4,18 +4,15 @@ const ESCAPE_MAP: Record<string, string> = {
 	">": "&gt;",
 	'"': "&quot;",
 	"'": "&#039;",
-	"`": "&#96;",
 };
 
-/**
- * Escapes HTML special characters in a string to prevent XSS.
- * @param unsafe The string to escape.
- * @returns The escaped string.
- */
 export function escapeHtml(unsafe: any): string {
 	if (unsafe === null || unsafe === undefined) return "";
-	if (typeof unsafe === "number" || typeof unsafe === "boolean") return String(unsafe);
+	const type = typeof unsafe;
+	if (type === "number" || type === "boolean") return String(unsafe);
+    if (type !== "string") unsafe = String(unsafe);
 	
-	const str = String(unsafe);
-	return str.replace(/[&<>"'`]/g, (m) => ESCAPE_MAP[m]!);
+	if (!/[&<>"']/.test(unsafe)) return unsafe;
+
+	return unsafe.replace(/[&<>"']/g, (m: string) => ESCAPE_MAP[m]!);
 }

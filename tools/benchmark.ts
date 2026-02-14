@@ -39,7 +39,6 @@ async function runBenchmark() {
             "bundled.kire": await bkire.compileFn(tpl, "bundled.kire", Object.keys(data))
         }
     });
-
     const iterations = 5000;
 
     console.log(`\n--- BENCHMARK: KIRE vs EDGE.JS ---`);

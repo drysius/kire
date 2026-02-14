@@ -221,23 +221,39 @@ export class Kire {
             
             if (this.$files.has(key)) return this.$files.get(key)!;
             
-            const code = this.compile(content, filename, globals);
+            const parser = new this.$parser(content, this);
+            const nodes = parser.parse();
+            const compiler = new this.$compiler(this, filename);
+            const code = compiler.compile(nodes, globals, parser.usedElements) as string;
+
             const mainFn = this.$executor(code, ["$ctx"]);
-            (mainFn as any)._code = code;
             (mainFn as any)._isAsync = code.includes("await");
-            (mainFn as any)._source = content;
-            (mainFn as any)._path = filename;
+            (mainFn as any)._usedElements = parser.usedElements;
+            
+            if (!this.production) {
+                (mainFn as any)._code = code;
+                (mainFn as any)._source = content;
+                (mainFn as any)._path = filename;
+            }
             
             this.$files.set(key, mainFn);
             return mainFn;
         }
 
-        const code = this.compile(content, filename, globals);
+        const parser = new this.$parser(content, this);
+        const nodes = parser.parse();
+        const compiler = new this.$compiler(this, filename);
+        const code = compiler.compile(nodes, globals, parser.usedElements) as string;
+
         const mainFn = this.$executor(code, ["$ctx"]);
-        (mainFn as any)._code = code;
         (mainFn as any)._isAsync = code.includes("await");
-        (mainFn as any)._source = content;
-        (mainFn as any)._path = filename;
+        (mainFn as any)._usedElements = parser.usedElements;
+
+        if (!this.production) {
+            (mainFn as any)._code = code;
+            (mainFn as any)._source = content;
+            (mainFn as any)._path = filename;
+        }
         return mainFn;
     }
 

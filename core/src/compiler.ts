@@ -52,25 +52,23 @@ export class Compiler {
 
 		const globalDestructuring =
 			sanitizedGlobals.length > 0
-				? `var { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;`
+				? `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;`
 				: "";
         
         const localDestructuring =
             sanitizedLocals.length > 0
-                ? `var { ${sanitizedLocals.join(", ")} } = $ctx.$props;`
+                ? `const { ${sanitizedLocals.join(", ")} } = $ctx.$props;`
                 : "";
 
         const elementsMeta = usedElements && usedElements.size > 0 
             ? `// kire-elements: ${Array.from(usedElements).join(",")}`
             : "";
 
-		const startCode = `
-${globalDestructuring}
+		const startCode = `${globalDestructuring}
 ${localDestructuring}
-let ${varLocals} = $ctx.$props;
+const ${varLocals} = $ctx.$props;
 ${elementsMeta}
-${pre}
-`;
+${pre}`;
 		const startCodeLines = startCode.split("\n");
         let currentGenLine = startCodeLines.length;
 

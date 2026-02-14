@@ -1,9 +1,9 @@
+import { createHash } from "node:crypto";
 import { KireError } from "./utils/error";
 import type { Kire } from "./kire";
 import type { KireContext, KireFileMeta, KireHookName } from "./types";
 import { processElements } from "./utils/elements-runner";
 import { escapeHtml } from "./utils/html";
-import { md5 } from "./utils/md5";
 
 export default function (
 	$kire: Kire,
@@ -24,7 +24,7 @@ export default function (
         
         // Methods
         $add: (str: string) => ($ctx.$response += str),
-        $md5: md5,
+        $md5: (str: string) => createHash("md5").update(str).digest("hex"),
         $escape: escapeHtml,
         $resolve: (path: string) => $kire.resolvePath(path),
         $typed: (key: string) => $ctx[key],
@@ -48,35 +48,51 @@ export default function (
 
         $emit: (ev: KireHookName) => {
             const hooks = ($ctx.$hooks || $kire.$hooks)[ev];
-            if (hooks.length > 0) {
+            if (hooks.length === 0) return;
+            
+            // Check if any hook is async
+            const hasAsync = hooks.some(h => (h as any).constructor.name === 'AsyncFunction');
+            if (hasAsync) {
                 return (async () => {
                     for (let i = 0; i < hooks.length; i++) {
                         const res = hooks[i]!($ctx);
                         if (res instanceof Promise) await res;
                     }
                 })();
+            } else {
+                for (let i = 0; i < hooks.length; i++) {
+                    hooks[i]!($ctx);
+                }
             }
         },
 
-        $merge: async (fn: any) => {
+        $merge: ($kire.$stream || meta.controller) ? async (fn: any) => {
+            const originalAdd = $ctx.$add;
+            let buffer = "";
+            $ctx.$add = (str: any) => { buffer += str; $ctx.$response += str; };
             const prevRes = $ctx.$response;
             $ctx.$response = "";
             const res = fn($ctx);
             if (res instanceof Promise) await res;
+            $ctx.$add = originalAdd;
+            $ctx.$response = prevRes + buffer;
+        } : (fn: any) => {
+            const prevRes = $ctx.$response;
+            $ctx.$response = "";
+            const res = fn($ctx);
+            if (res instanceof Promise) {
+                return res.then(() => {
+                    const inner = $ctx.$response;
+                    $ctx.$response = prevRes + inner;
+                });
+            }
             const inner = $ctx.$response;
             $ctx.$response = prevRes + inner;
         },
         
         $fork: () => {
             const newCtx = { ...$ctx };
-            newCtx.$merge = async (fn: any) => {
-                const prevRes = newCtx.$response;
-                newCtx.$response = "";
-                const res = fn(newCtx);
-                if (res instanceof Promise) await res;
-                const inner = newCtx.$response;
-                newCtx.$response = prevRes + inner;
-            };
+            newCtx.$merge = $ctx.$merge;
             return newCtx;
         },
 
@@ -155,7 +171,15 @@ export default function (
             })();
         } else {
             $ctx.$emit("before"); 
-            run();
+            const r = run();
+            if (r instanceof Promise) {
+                return r.then(async () => {
+                    await $ctx.$emit("rendered");
+                    await $ctx.$emit("after");
+                    await $ctx.$emit("end");
+                    return $ctx.$response;
+                });
+            }
             $ctx.$emit("rendered");
             $ctx.$emit("after");
             $ctx.$emit("end");
@@ -171,31 +195,23 @@ export default function (
 		return new ReadableStream({
 			async start(controller) {
 				$ctx.$add = (str) => controller.enqueue(encoder.encode(str));
-                
-                // Override merge for streaming: buffer locally then flush
-				$ctx.$merge = async (fn) => {
+                $ctx.$merge = async (fn: any) => {
                     const originalAdd = $ctx.$add;
                     let buffer = "";
-                    $ctx.$add = (str) => { buffer += str; };
-                    
+                    $ctx.$add = (str: any) => { buffer += str; };
                     await fn($ctx);
-                    
                     $ctx.$add = originalAdd;
-                    // Flush buffer to stream
                     $ctx.$add(buffer);
 				};
 
 				try {
 					const result = await execute();
 					if (typeof result === "string" && result.includes("Error")) {
-                        // If error returned as string during streaming
 						controller.enqueue(encoder.encode(result));
 					}
-
 					if ($ctx.$deferred && $ctx.$deferred.length > 0) {
-						await Promise.all($ctx.$deferred.map((t) => t()));
+						await Promise.all($ctx.$deferred.map((t: any) => t()));
 					}
-
 					controller.close();
 				} catch (e) {
 					controller.error(e);
@@ -203,33 +219,6 @@ export default function (
 			},
 		});
 	} else if (meta.controller) {
-        // We are a child in a stream
-		const encoder = new TextEncoder();
-		$ctx.$add = (str) => meta.controller!.enqueue(encoder.encode(str));
-        
-        // Merge in child stream: buffer locally (don't write to parent stream immediately if capturing)
-        // But wait, $merge is used for capturing slots. Slots should NOT write to stream immediately.
-        // So $merge must buffer.
-		$ctx.$merge = async (fn) => {
-			const originalAdd = $ctx.$add;
-            let buffer = "";
-            $ctx.$add = (str) => { 
-                buffer += str; 
-                // We also update $response for directives that read it
-                $ctx.$response += str; 
-            };
-            const prevRes = $ctx.$response;
-            $ctx.$response = "";
-
-			await fn($ctx);
-
-			$ctx.$add = originalAdd;
-            // We do NOT flush buffer to stream here, because $merge implies capturing logic (like @slot).
-            // The caller of $merge will decide what to do with $ctx.$response.
-            // Restore response
-            $ctx.$response = prevRes + buffer;
-		};
-
         const res = execute();
 		return res instanceof Promise ? res.then(() => "") : ""; 
 	} else {

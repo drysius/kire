@@ -30,30 +30,27 @@ export default (kire: Kire) => {
             const rhs = compiler.param("rhs");
             const op = compiler.param("op");
             const statement = compiler.param("statement");
-            const id = compiler.count("loop");
-
-            compiler.raw(`{ 
-                const $__rhs_${id} = ${rhs || "[]"};
-                const $__items_${id} = Array.isArray($__rhs_${id}) ? $__rhs_${id} : Object.entries($__rhs_${id} || {});
-                const $__total_${id} = $__items_${id}.length;
-                let $__empty_${id} = $__total_${id} === 0;
-            `);
+            const id = compiler.count("i");
 
             if (lhs && rhs && op) {
                 const needsLoop = compiler.node.children?.some(c => c.content?.includes('$loop'));
-                compiler.raw(`for (let $__i_${id} = 0; $__i_${id} < $__total_${id}; $__i_${id}++) {
-                    const $__entry_${id} = $__items_${id}[$__i_${id}];
-                    const ${lhs.trim()} = Array.isArray($__rhs_${id}) ? $__entry_${id} : $__entry_${id}[0];
-                `);
+                compiler.raw(`{ 
+                    const _r${id} = ${rhs || "[]"};
+                    const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});
+                    const _len${id} = _it${id}.length;
+                    for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
+                        const _e${id} = _it${id}[${id}];
+                        const ${lhs.trim()} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];`);
+                
                 if (needsLoop) {
                     compiler.raw(`
-                    const $loop = {
-                        index: $__i_${id},
-                        iteration: $__i_${id} + 1,
-                        count: $__total_${id},
-                        first: $__i_${id} === 0,
-                        last: $__i_${id} === $__total_${id} - 1
-                    };`);
+                        const $loop = {
+                            index: ${id},
+                            iteration: ${id} + 1,
+                            count: _len${id},
+                            first: ${id} === 0,
+                            last: ${id} === _len${id} - 1
+                        };`);
                 }
             } else if (statement) {
                 compiler.raw(`for (${statement}) {`);
@@ -61,20 +58,18 @@ export default (kire: Kire) => {
                 compiler.error(`Invalid for loop syntax`);
             }
 
-            compiler.raw(`$__empty_${id} = false;`);
             if (compiler.children) compiler.set(compiler.children);
-            compiler.raw(`}`);
+            compiler.raw(`}`); // Fecha o for
             
             if (compiler.parents) {
-                for (const p of compiler.parents) {
-                    if (p.name === 'empty' || p.name === 'else') {
-                        compiler.raw(`if ($__empty_${id}) {`);
-                        if (p.children) compiler.set(p.children);
-                        compiler.raw(`}`);
-                    }
+                const emptyNode = compiler.parents.find(p => p.name === 'empty' || p.name === 'else');
+                if (emptyNode) {
+                    compiler.raw(`if (!${rhs || "[]"} || (Array.isArray(${rhs || "[]"}) ? ${rhs || "[]"}.length === 0 : Object.keys(${rhs || "[]"}).length === 0)) {`);
+                    if (emptyNode.children) compiler.set(emptyNode.children);
+                    compiler.raw(`}`);
                 }
             }
-            compiler.raw(`}`);
+            compiler.raw(`}`); // Fecha o bloco externo
         },
     });
 
