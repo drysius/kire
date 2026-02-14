@@ -244,14 +244,7 @@ export class Kire {
         const compiler = new this.$compiler(this, filename);
         const code = compiler.compile(nodes, globals, parser.usedElements) as string;
 
-        let mainFn;
-        try {
-            mainFn = this.$executor(code, ["$ctx"]);
-        } catch (e) {
-            console.error("Error compiling template function:");
-            console.error(code);
-            throw e;
-        }
+        const mainFn = this.$executor(code, ["$ctx"]);
         const template: CompiledTemplate = {
             execute: mainFn,
             isAsync: code.includes("await") || (mainFn as any).constructor.name === 'AsyncFunction',
@@ -417,6 +410,12 @@ export class Kire {
             this.type({ variable: def.name, type: 'element', comment: def.description, tstype: 'element' });
         }
         
+        if (def.parents) {
+            for (const p of def.parents) {
+                this.element(p);
+            }
+        }
+
         this.rebuildElements();
         return this;
     }
