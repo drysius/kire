@@ -9,7 +9,8 @@ export const NullProtoObj = /* @__PURE__ */ (()=>{const e=function(){};return e.
 
 // Tag and Attribute detection
 export const TAG_NAME_REGEX = /<([a-zA-Z0-9_\-:]+)/g;
-export const ATTR_SCANNER_REGEX = /([^\s=]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+// thanks https://stackoverflow.com/questions/317053/regular-expression-for-extracting-tag-attributes
+export const ATTR_SCANNER_REGEX = /([^\r\n\t\f\v= '"]+)(?:=(["'])?((?:.(?!\2?\s+(?:\S+)=|\2))+.)\2?)?/g;
 export const ELEMENT_SCANNER_REGEX = /<([a-zA-Z0-9_\-:]+)([^>]*?)\/>|<([a-zA-Z0-9_\-:]+)([^>]*?)>([\s\S]*?)<\/\3>/g;
 
 // Directive parsing

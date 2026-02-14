@@ -13,7 +13,6 @@ import type {
     ICompilerConstructor,
     IParserConstructor,
     KireCache,
-    KireElementHandler,
     KireElementOptions,
     KireOptions,
     KirePlugin,
@@ -31,7 +30,6 @@ import nativeElements from "./elements/natives";
 
 export interface ElementMatcher {
     def: ElementDefinition;
-    prefix: string | null;
 }
 
 export class Kire {
@@ -43,7 +41,6 @@ export class Kire {
     
     // Elements Cache
     public $elementMatchers: ElementMatcher[] = [];
-    public $elementRegex: RegExp | null = null;
 
     // Optimized: Use objects instead of Maps for performance
     public $globals: Record<string, any>;
@@ -247,7 +244,14 @@ export class Kire {
         const compiler = new this.$compiler(this, filename);
         const code = compiler.compile(nodes, globals, parser.usedElements) as string;
 
-        const mainFn = this.$executor(code, ["$ctx"]);
+        let mainFn;
+        try {
+            mainFn = this.$executor(code, ["$ctx"]);
+        } catch (e) {
+            console.error("Error compiling template function:");
+            console.error(code);
+            throw e;
+        }
         const template: CompiledTemplate = {
             execute: mainFn,
             isAsync: code.includes("await") || (mainFn as any).constructor.name === 'AsyncFunction',
@@ -405,16 +409,7 @@ export class Kire {
         return this.$directives.get(name);
     }
 
-    public element(nameOrDef: string | RegExp | ElementDefinition, handler?: KireElementHandler, opts?: KireElementOptions) {
-        let def: ElementDefinition;
-        if (typeof nameOrDef === "object" && !("source" in nameOrDef)) {
-            def = nameOrDef as ElementDefinition;
-        } else {
-            if (!handler) throw new Error("Handler required");
-            const name = nameOrDef as string | RegExp;
-            def = { name, void: opts?.void ?? false, run: handler };
-        }
-
+    public element(def: ElementDefinition) {
         // Add to the beginning to ensure precedence over previous/native elements
         this.$elements = new Set([def, ...this.$elements]);
         
@@ -430,37 +425,7 @@ export class Kire {
         const allElements = Array.from(this.$elements);
         if (allElements.length === 0) return;
 
-        this.$elementMatchers = allElements.map(def => {
-            let prefix: string | null = null;
-            if (typeof def.name === 'string') {
-                prefix = def.parent ? `${def.name}${def.parent}` : def.name;
-            }
-            return { def, prefix };
-        }).sort((a, b) => {
-            // Sort by prefix length descending
-            const lenA = a.prefix?.length || 0;
-            const lenB = b.prefix?.length || 0;
-            if (lenB !== lenA) return lenB - lenA;
-            
-            // If same length or no prefix (regex), preserve registration order (newer first)
-            return 0; 
-        });
-
-        const parts: string[] = [];
-        for (const m of this.$elementMatchers) {
-            if (m.prefix) {
-                parts.push(m.prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-            } else if (m.def.name instanceof RegExp) {
-                parts.push(m.def.name.source);
-            }
-        }
-        
-        if (parts.length > 0) {
-            const source = parts.join("|");
-            // Group 1,2: self-closing. Group 3,4,5: paired.
-            // Using [a-zA-Z0-9_\\-:]* to allow matching the rest of the tag name after prefix
-            this.$elementRegex = new RegExp(`<(?:((?:${source})[a-zA-Z0-9_:\\\\-]*)([^>]*?)\\/>|((?:${source})[a-zA-Z0-9_:\\\\-]*)([^>]*?)>([\\s\\S]*?)<\\/\\3>)`, 'g');
-        }
+        this.$elementMatchers = allElements.map(def => ({ def }));
     }
 
     public type(def: TypeDefinition) {

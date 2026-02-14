@@ -5,7 +5,8 @@ import {
     TAG_NAME_REGEX, 
     DIRECTIVE_NAME_REGEX, 
     DIRECTIVE_TAG_REGEX, 
-    DIRECTIVE_END_REGEX 
+    DIRECTIVE_END_REGEX,
+    ATTR_SCANNER_REGEX
 } from "./utils/regex";
 
 export class Parser {
@@ -57,6 +58,8 @@ export class Parser {
                 if (this.checkInterpolation()) continue;
             } else if (char === "<") {
                 if (this.checkJavascript()) continue;
+                if (this.checkClosingTag()) continue;
+                if (this.checkElement()) continue;
             } else if (char === "@") {
                 if (this.checkEscapedDirective()) continue;
                 if (this.checkEscapedInterpolation()) continue;
@@ -68,6 +71,167 @@ export class Parser {
 
 		return this.rootChildren;
 	}
+
+    /**
+     * Checks for and parses custom element start tags.
+     */
+    private checkElement(): boolean {
+        if (this.template[this.cursor] !== "<") return false;
+
+        const matchers = this.kire.$elementMatchers;
+        if (matchers.length === 0) return false;
+
+        const tagMatch = this.template.slice(this.cursor).match(/^<([a-zA-Z0-9_\-:]+)([^>]*?)(\/?)>/);
+        if (!tagMatch) return false;
+
+        const [fullMatch, tagName, attrRaw, selfClosing] = tagMatch;
+        
+        let foundMatcher = null;
+        let isSubElement = false;
+        let parentNode: Node | undefined;
+        let subDef: ElementDefinition | undefined;
+        let wildcardValue: string | undefined;
+
+        // 1. Check if it's a sub-element of something in the stack
+        if (this.stack.length > 0) {
+            for (let i = this.stack.length - 1; i >= 0; i--) {
+                const currentParent = this.stack[i]!;
+                if (currentParent.type !== "element") continue;
+
+                const parentMatcher = matchers.find(m => m.def.name === currentParent.name);
+
+                if (parentMatcher?.def.parents) {
+                    const candidate = parentMatcher.def.parents.find(p => {
+                        if (typeof p.name === "string") {
+                            // Sub-elements usually inherit the prefix/base of the parent
+                            // e.g. parent 'kire:if' -> sub 'kire:else'
+                            const parentBase = currentParent.tagName!.split(/[:\-]/)[0];
+                            const separator = currentParent.tagName!.includes(':') ? ':' : (currentParent.tagName!.includes('-') ? '-' : '');
+                            const fullSubName = `${parentBase}${separator}${p.name}`;
+                            return tagName === fullSubName;
+                        }
+                        return p.name instanceof RegExp && p.name.test(tagName);
+                    });
+
+                    if (candidate) {
+                        isSubElement = true;
+                        subDef = candidate;
+                        parentNode = currentParent;
+                        while (this.stack.length > i + 1) this.stack.pop();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Check for root element match
+        if (!isSubElement) {
+            for (const m of matchers) {
+                if (typeof m.def.name === 'string') {
+                    if (m.def.name.includes('*')) {
+                        const pattern = m.def.name.replace('*', '([a-zA-Z0-9_\\\\-]+)');
+                        const regex = new RegExp(`^${pattern}$`);
+                        const match = tagName.match(regex);
+                        if (match) {
+                            foundMatcher = m;
+                            wildcardValue = match[1];
+                            break;
+                        }
+                    } else if (tagName === m.def.name) {
+                        foundMatcher = m;
+                        break;
+                    }
+                } else if (m.def.name instanceof RegExp && m.def.name.test(tagName)) {
+                    foundMatcher = m;
+                    break;
+                }
+            }
+        }
+
+        if (!foundMatcher && !isSubElement) return false;
+
+        const attributes = this.parseAttributes(attrRaw || "");
+        const targetDef = isSubElement ? subDef! : foundMatcher!.def;
+
+        // Populate args if attribute definitions exist, allowing pattern matching
+        let args: any[] = [];
+        if (Array.isArray(targetDef.attributes)) {
+            args = targetDef.attributes.map(attrDef => {
+                const name = attrDef.split(':')[0]!.replace('?', '');
+                return attributes[name];
+            });
+        }
+
+        const node: Node = {
+            type: "element",
+            name: typeof targetDef.name === "string" ? targetDef.name : tagName,
+            tagName: tagName,
+            wildcard: wildcardValue,
+            attributes: attributes,
+            args: args, // Added args support
+            start: this.cursor,
+            end: this.cursor + fullMatch.length,
+            loc: this.getLoc(fullMatch),
+            children: [],
+            related: [],
+            void: !!selfClosing || targetDef.void
+        };
+
+        if (isSubElement && parentNode) {
+            if (!parentNode.related) parentNode.related = [];
+            parentNode.related.push(node);
+            const currentTop = this.stack[this.stack.length - 1];
+            if (currentTop && parentNode.related.includes(currentTop)) {
+                this.stack.pop();
+            }
+        } else {
+            this.addNode(node);
+        }
+
+        this.advance(fullMatch);
+        if (!node.void) this.stack.push(node);
+        return true;
+    }
+
+    /**
+     * Checks for and parses custom element closing tags.
+     */
+    private checkClosingTag(): boolean {
+        if (!this.template.startsWith("</", this.cursor)) return false;
+
+        const match = this.template.slice(this.cursor).match(/^<\/([a-zA-Z0-9_\-:]+)>/);
+        if (!match) return false;
+
+        const [fullMatch, tagName] = match;
+        
+        // Try to find the matching element in the stack
+        for (let i = this.stack.length - 1; i >= 0; i--) {
+            const node = this.stack[i]!;
+            if (node.type === "element" && node.tagName === tagName) {
+                // Pop until we find this element
+                while (this.stack.length > i) {
+                    this.stack.pop();
+                }
+                this.advance(fullMatch);
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Parses attributes from a raw string.
+     */
+    private parseAttributes(raw: string): Record<string, string> {
+        const attributes: Record<string, string> = {};
+        const regex = /([a-zA-Z0-9_\-:]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+        let m;
+        while ((m = regex.exec(raw))) {
+            attributes[m[1]!] = m[2] ?? m[3] ?? m[4] ?? "true";
+        }
+        return attributes;
+    }
 
 	/**
 	 * Checks for and parses escaped interpolation markers @{{ or @{{{.
@@ -550,13 +714,13 @@ export class Parser {
         // Efficiently find next marker
         for (let i = start; i < template.length; i++) {
             const c = template[i];
-            if (c === "{" && (template[i+1] === "{" || template[i+1] === "{")) {
+            if (c === "{" && (template[i+1] === "{" || (template[i+1] === "{" && template[i+2] === "{"))) {
                 next = i; break;
             }
             if (c === "@") {
                 next = i; break;
             }
-            if (c === "<" && template[i+1] === "?" && template[i+2] === "j" && template[i+3] === "s") {
+            if (c === "<") {
                 next = i; break;
             }
         }

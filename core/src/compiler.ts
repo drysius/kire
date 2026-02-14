@@ -4,6 +4,13 @@ import { parseParamDefinition } from "./utils/params";
 import { SourceMapGenerator } from "./utils/source-map";
 import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX, NullProtoObj } from "./utils/regex";
 
+const RESERVED_KEYWORDS = new Set([
+    "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", 
+    "export", "extends", "finally", "for", "function", "if", "import", "in", "instanceof", "new", "return", 
+    "super", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum", 
+    "await", "true", "false", "null"
+]);
+
 export class Compiler {
 	private preBuffer: string[] = [];
 	private resBuffer: string[] = [];
@@ -45,7 +52,7 @@ export class Compiler {
         // 1. Destructure Locals first (highest priority for shadowing)
         const localSet = new Set<string>();
         const sanitizedLocals = extraGlobals.filter(k => {
-            if (JS_IDENTIFIER_REGEX.test(k) && k !== varLocals && k !== "$ctx") {
+            if (JS_IDENTIFIER_REGEX.test(k) && !RESERVED_KEYWORDS.has(k) && k !== varLocals && k !== "$ctx") {
                 localSet.add(k);
                 return true;
             }
@@ -57,7 +64,7 @@ export class Compiler {
         // Also skip variables that are likely to be scoped by elements (like 'user', 'item', etc)
         const commonScoped = new Set(['user', 'item', 'index', 'key', 'value']);
 		const sanitizedGlobals = Object.keys(this.kire.$globals).filter(k => 
-            JS_IDENTIFIER_REGEX.test(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx" && !commonScoped.has(k)
+            JS_IDENTIFIER_REGEX.test(k) && !RESERVED_KEYWORDS.has(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx" && !commonScoped.has(k)
         );
         if (sanitizedGlobals.length > 0) startCode += `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;\n`;
         
@@ -150,11 +157,76 @@ export class Compiler {
 				case "directive":
 					this.processDirective(node);
 					break;
+                case "element":
+                    this.processElement(node);
+                    break;
 			}
 			i++;
 		}
         flush();
 	}
+
+    private processElement(node: Node) {
+        const name = node.name;
+        const tagName = node.tagName;
+        if (!name || !tagName) return;
+
+        let foundMatcher = null;
+        for (const m of this.kire.$elementMatchers) {
+            if (m.def.name === name) {
+                foundMatcher = m;
+                break;
+            }
+        }
+
+        if (!foundMatcher) {
+            // Fallback for unknown elements: compile children as if it was just text/nodes
+            if (node.children) this.compileNodesSync(node.children);
+            return;
+        }
+
+        if (node.loc && !this.kire.production) {
+            this.resMappings.push({ 
+                index: this.resBuffer.length, 
+                node, 
+                col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 
+            });
+        }
+
+        const compiler = this.createElementCompilerContext(node, foundMatcher.def);
+        if (foundMatcher.def.onCall) {
+            foundMatcher.def.onCall(compiler);
+        } else if (node.children) {
+            this.compileNodesSync(node.children);
+        }
+    }
+
+    private createElementCompilerContext(node: Node, def: ElementDefinition): ElementCompilerContext {
+        // Use an empty object for directive def since we are an element
+        const params = Array.isArray(def.attributes) ? def.attributes : undefined;
+        const base = this.createCompilerContext(node, { name: node.name, params } as any);
+        
+        const compiler: ElementCompilerContext = {
+            ...base,
+            tagName: node.tagName!,
+            attributes: node.attributes || {},
+            wildcard: node.wildcard,
+            attribute: (key: string) => {
+                // Try validated param first if definitions exist
+                if (params) {
+                    const p = base.param(key);
+                    if (p !== undefined) return p;
+                }
+                return node.attributes?.[key];
+            },
+            param: (key: string | number) => {
+                if (typeof key === "number") return undefined;
+                return compiler.attribute(key);
+            }
+        };
+
+        return compiler;
+    }
 
 	private isAsyncNodes(nodes: Node[]): boolean {
 		return nodes.some((node) => this.isAsyncNode(node));

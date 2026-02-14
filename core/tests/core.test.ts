@@ -37,23 +37,38 @@ describe("Kire Core (Bun)", () => {
         expect(result).toBe("123");
     });
 
-    test("should handle custom elements (processElements)", async () => {
+    test("should handle custom elements (compiler-based)", async () => {
         const k = new Kire();
-        k.element("my-tag", (ctx) => {
-            ctx.replace(`<span>${ctx.element.inner}</span>`);
+        k.element({
+            name: "my-tag",
+            onCall: (ctx) => {
+                ctx.raw('$ctx.$add("<span>");');
+                if (ctx.children) ctx.set(ctx.children);
+                ctx.raw('$ctx.$add("</span>");');
+            }
         });
 
         const result = await k.render("<my-tag>Hello</my-tag>");
         expect(result).toBe("<span>Hello</span>");
     });
 
-    test("should handle nested custom elements", async () => {
+    test("should handle nested custom elements (compiler-based)", async () => {
         const k = new Kire();
-        k.element("outer", (ctx) => {
-            ctx.replace(`<div>${ctx.element.inner}</div>`);
+        k.element({
+            name: "outer",
+            onCall: (ctx) => {
+                ctx.raw('$ctx.$add("<div>");');
+                if (ctx.children) ctx.set(ctx.children);
+                ctx.raw('$ctx.$add("</div>");');
+            }
         });
-        k.element("inner", (ctx) => {
-            ctx.replace(`<span>${ctx.element.inner}</span>`);
+        k.element({
+            name: "inner",
+            onCall: (ctx) => {
+                ctx.raw('$ctx.$add("<span>");');
+                if (ctx.children) ctx.set(ctx.children);
+                ctx.raw('$ctx.$add("</span>");');
+            }
         });
 
         const result = await k.render("<outer><inner>Text</inner></outer>");

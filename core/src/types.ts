@@ -1,5 +1,4 @@
 import type { Kire } from "./kire";
-import type { Attributes } from "./utils/attributes";
 
 export type KireCache<T = any> = Record<string, T>;
 
@@ -221,7 +220,6 @@ export interface KireFileMeta extends CompiledTemplate {
 
 /**
  * The context object passed to directives during compilation.
- * Renamed from KireContext to CompilerContext to avoid confusion with the runtime context.
  */
 export interface CompilerContext {
 	/**
@@ -322,72 +320,30 @@ export interface CompilerContext {
 }
 
 /**
- * Context provided to element handlers (middleware) for manipulating HTML output.
+ * Context provided to element handlers during compilation.
  */
-export interface KireElementContext extends KireContext {
-	/**
-	 * The current global HTML content string. This is mutable and represents the state of the document.
-	 */
-	content: string;
-
-	/**
-	 * The Attribute helper instance ($att).
-	 */
-	$att: Attributes;
-
-	/**
-	 * Details about the specific HTML element being processed.
-	 */
-	element: {
-		/**
-		 * The tag name of the element (e.g., "div", "custom-tag").
-		 */
-		tagName: string;
-		/**
-		 * The raw attribute values as map
-		 */
-		attributes: Record<string, string>;
-		/**
-		 * The inner HTML content of the element.
-		 */
-		inner: string;
-		/**
-		 * The full outer HTML of the element (including tags).
-		 */
-		outer: string;
-		/**
-		 * The parent part of the element name if defined (e.g. 'kire' in 'kire:if')
-		 */
-		parent?: string;
-	};
-
-	/**
-	 * Updates the entire global HTML content.
-	 * @param newContent The new HTML content string.
-	 */
-	update(newContent: string): void;
-
-	/**
-	 * Replaces the current element's outer HTML in the global content.
-	 * @param replacement The string to replace the element with.
-	 */
-	replace(replacement: string): void;
-
-	/**
-	 * Replaces the current element's outer HTML in the global content.
-	 * @param replacement The string to replace the element with.
-	 */
-	replaceElement(replacement: string): void;
-
-	/**
-	 * Replaces the current element's inner HTML in the global content.
-	 * @param replacement The string to replace the inner content with.
-	 */
-	replaceContent(replacement: string): void;
+export interface ElementCompilerContext extends CompilerContext {
+    /**
+     * The full tag name of the element (e.g., "kire:if").
+     */
+    tagName: string;
+    /**
+     * Map of raw attributes and their values.
+     */
+    attributes: Record<string, string>;
+    /**
+     * Retrieves an attribute value, validated and parsed if definitions were provided.
+     * @param name The name of the attribute.
+     */
+    attribute(name: string): any;
+    /**
+     * The part of the name matched by wildcard (e.g., "if" in "kire:*").
+     */
+    wildcard?: string;
 }
 
-export type KireElementHandler = (
-	ctx: KireElementContext,
+export type KireElementCompilerHandler = (
+	ctx: ElementCompilerContext,
 ) => Promise<void> | void;
 
 export interface KireElementOptions {
@@ -402,11 +358,11 @@ export interface ElementDefinition {
 	description?: string;
 	example?: string;
 	void?: boolean;
-	parent?: string; // e.g. ":" or "-"
 	declare?: Record<string, any>;
 	type?: "html" | "javascript" | "css";
-	attributes?: Record<string, AttributeDefinition | string>;
-	run?: KireElementHandler;
+	attributes?: string[] | Record<string, AttributeDefinition | string>;
+	onCall: KireElementCompilerHandler;
+	parents?: ElementDefinition[];
 }
 
 /**
@@ -465,7 +421,7 @@ export interface KirePlugin<Options extends object | undefined = {}> {
 }
 
 // AST Types
-export type NodeType = "text" | "variable" | "directive" | "javascript";
+export type NodeType = "text" | "variable" | "directive" | "javascript" | "element";
 
 export interface SourceLocation {
 	line: number;
@@ -475,8 +431,11 @@ export interface SourceLocation {
 export interface Node {
 	type: NodeType;
 	content?: string;
-	name?: string; // For directives
+	name?: string; // For directives / elements
 	args?: any[]; // For directives
+    attributes?: Record<string, string>; // For elements
+    tagName?: string; // For elements
+    wildcard?: string; // For elements
 	start?: number;
 	end?: number;
 	loc?: {
@@ -484,8 +443,9 @@ export interface Node {
 		end: SourceLocation;
 	};
 	children?: Node[]; // Inner content
-	related?: Node[]; // For 'parents' (elseif, etc)
+	related?: Node[]; // For sub-elements / sub-directives
 	raw?: boolean;
+    void?: boolean; // For elements
 }
 
 export interface TypeDefinition {

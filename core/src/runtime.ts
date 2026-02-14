@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { KireError } from "./utils/error";
 import type { Kire } from "./kire";
 import type { KireContext, KireFileMeta, KireHookName } from "./types";
-import { processElements } from "./utils/elements-runner";
 import { escapeHtml } from "./utils/html";
 
 export default function (
@@ -116,16 +115,8 @@ export default function (
                 const res = meta.execute.call($ctx.$props, $ctx);
                 if (res instanceof Promise) {
                     return res.then(async () => {
-                        if (!hasError && !meta.controller && meta.usedElements?.size) {
-                            const pel = processElements($ctx);
-                            $ctx.$response = pel instanceof Promise ? await pel : pel;
-                        }
+                        return $ctx.$response;
                     });
-                }
-                if (!hasError && !meta.controller && meta.usedElements?.size) {
-                    const pel = processElements($ctx);
-                    if (pel instanceof Promise) return pel.then((h: string) => $ctx.$response = h);
-                    $ctx.$response = pel;
                 }
             } catch (e: any) {
                 hasError = true;
