@@ -3,6 +3,10 @@
  * Moving these to constants helps V8 optimization and improves performance.
  */
 
+// Optimized Object with Null Prototype
+export type NullProtoObj<T = unknown> = InstanceType<new () => Record<PropertyKey, T>>;
+export const NullProtoObj = /* @__PURE__ */ (()=>{const e=function(){};return e.prototype=Object.create(null),Object.freeze(e.prototype),e})() as unknown as { new (): any };
+
 // Tag and Attribute detection
 export const TAG_NAME_REGEX = /<([a-zA-Z0-9_\-:]+)/g;
 export const ATTR_SCANNER_REGEX = /([^\s=]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;

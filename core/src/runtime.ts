@@ -80,6 +80,8 @@ export default function (
         
         $fork: () => {
             const fork = { ...$ctx, $response: "" };
+            fork.$globals = $ctx.$globals;
+            fork.$props = $ctx.$props;
             fork.$add = (str: string) => (fork.$response += str);
             fork.$emptyResponse = () => {
                 fork.$response = "";

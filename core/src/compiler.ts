@@ -2,7 +2,7 @@ import type { Kire } from "./kire";
 import type { CompilerContext, DirectiveDefinition, Node } from "./types";
 import { parseParamDefinition } from "./utils/params";
 import { SourceMapGenerator } from "./utils/source-map";
-import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX } from "./utils/regex";
+import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX, NullProtoObj } from "./utils/regex";
 
 export class Compiler {
 	private preBuffer: string[] = [];
@@ -11,7 +11,7 @@ export class Compiler {
 	private usedDirectives: Set<string> = new Set();
 	private generator: SourceMapGenerator;
 	private resMappings: { index: number; node: Node; col: number }[] = [];
-	private counters: Record<string, number> = {};
+	private counters: Record<string, number> = new NullProtoObj();
 
 	constructor(
 		private kire: Kire,
@@ -33,7 +33,7 @@ export class Compiler {
 		this.posBuffer = [];
 		this.resMappings = [];
 		this.usedDirectives.clear();
-		this.counters = {};
+		this.counters = new NullProtoObj();
         if (usedElements) this.usedElements = usedElements;
 
 		const varLocals = this.kire.$var_locals || "it";
@@ -54,8 +54,10 @@ export class Compiler {
         if (sanitizedLocals.length > 0) startCode += `const { ${sanitizedLocals.join(", ")} } = $ctx.$props;\n`;
 
 		// 2. Destructure Globals (only those not already in locals)
+        // Also skip variables that are likely to be scoped by elements (like 'user', 'item', etc)
+        const commonScoped = new Set(['user', 'item', 'index', 'key', 'value']);
 		const sanitizedGlobals = Object.keys(this.kire.$globals).filter(k => 
-            JS_IDENTIFIER_REGEX.test(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx"
+            JS_IDENTIFIER_REGEX.test(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx" && !commonScoped.has(k)
         );
         if (sanitizedGlobals.length > 0) startCode += `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;\n`;
         
@@ -270,7 +272,7 @@ export class Compiler {
 		node: Node,
 		directive: DirectiveDefinition,
 	): CompilerContext {
-		const paramsMap: Record<string, any> = {};
+		const paramsMap: Record<string, any> = new NullProtoObj();
 
 		// Process and validate parameters
 		if (directive.params && node.args) {
@@ -324,11 +326,11 @@ export class Compiler {
 			},
 			children: node.children,
 			parents: node.related,
-			set: (nodes: Node[]) => {
+			set: async (nodes: Node[]) => {
 				if (!nodes) return;
 				this.compileNodesSync(nodes);
 			},
-			render: (content: string) => {
+			render: async (content: string) => {
 				return this.kire.compile(content);
 			},
 			resolve: (path: string) => {
@@ -338,7 +340,7 @@ export class Compiler {
 				const isAsync = code.includes("await");
 				return `${isAsync ? "async " : ""}function($ctx) { ${code}; return $ctx.$response; }`;
 			},
-			merge: (
+			merge: async (
 				callback: (ctx: CompilerContext) => void | Promise<void>,
 			) => {
 				const isAsync = node.children ? this.isAsyncNodes(node.children) : false;
@@ -347,7 +349,8 @@ export class Compiler {
 						isAsync ? "async " : ""
 					}($ctx) => {`,
 				);
-				callback(compiler);
+				const res = callback(compiler);
+				if (res instanceof Promise) await res;
 				this.resBuffer.push(`  return $ctx.$response;`);
 				this.resBuffer.push(`})($ctx.$fork());`);
 			},

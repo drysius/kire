@@ -1,5 +1,6 @@
 import type { Kire } from "../kire";
 import { consumeStream } from "../utils/stream";
+import { NullProtoObj } from "../utils/regex";
 
 export default (kire: Kire) => {
     // 1. Kire Control Flow & Utility Elements (<kire:directive>)
@@ -15,12 +16,28 @@ export default (kire: Kire) => {
 
             const evaluate = (expr: string) => {
                 try {
-                    const scope = { ...ctx.$globals, ...ctx.$props };
-                    const keys = Object.keys(scope);
-                    const values = Object.values(scope);
+                    const scope = new NullProtoObj();
+                    // Include context helpers
+                    scope.$ctx = ctx;
+                    scope.ctx = ctx;
+                    scope.$kire = ctx.$kire;
+
+                    // Manually crawl prototype chain for NullProtoObj/Object.create based objects
+                    let g: any = ctx.$globals;
+                    while (g && g !== Object.prototype && g !== null) {
+                        for (const key in g) if (!(key in scope)) scope[key] = g[key];
+                        g = Object.getPrototypeOf(g);
+                    }
+                    let p: any = ctx.$props;
+                    while (p && p !== Object.prototype && p !== null) {
+                        for (const key in p) if (!(key in scope)) scope[key] = p[key];
+                        p = Object.getPrototypeOf(p);
+                    }
+                    
+                    const keys = Object.keys(scope).filter(k => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k));
+                    const values = keys.map(k => scope[k]);
                     return new Function(...keys, `return ${expr}`).apply(ctx.$props, values);
                 } catch (e) {
-                    // console.error(`[Kire] Evaluation error for "${expr}":`, e);
                     return false;
                 }
             };
@@ -104,14 +121,14 @@ export default (kire: Kire) => {
                 }
                 case "define": {
                     const name = attrs.name || attrs.value;
-                    const defines = ctx.$typed<Record<string, string>>("~defines") || {};
+                    const defines = ctx.$typed<Record<string, string>>("~defines") || new NullProtoObj();
                     defines[name!] = ctx.element.inner;
                     (ctx as any)["~defines"] = defines;
                     ctx.replace("");
                     break;
                 }
                 case "defined": {
-                    const defines = ctx.$typed<Record<string, string>>("~defines") || {};
+                    const defines = ctx.$typed<Record<string, string>>("~defines") || new NullProtoObj();
                     const id = attrs.id || attrs.name || attrs.value;
                     if (defines[id!] !== undefined) {
                         ctx.replace(defines[id!]!);
@@ -122,14 +139,14 @@ export default (kire: Kire) => {
                 }
                 case "stack": {
                     const name = (attrs.name || attrs.value);
-                    const stacks = ctx["~stacks"] || {};
+                    const stacks = ctx["~stacks"] || new NullProtoObj();
                     const content = (stacks[name!] || []).join('\n');
                     ctx.replace(content);
                     break;
                 }
                 case "push": {
                     const name = attrs.name || attrs.value || attrs.to;
-                    if (!ctx["~stacks"]) ctx["~stacks"] = {};
+                    if (!ctx["~stacks"]) ctx["~stacks"] = new NullProtoObj();
                     if (!ctx["~stacks"][name!]) ctx["~stacks"][name!] = [];
                     ctx["~stacks"][name!].push(ctx.element.inner);
                     ctx.replace("");
@@ -137,7 +154,7 @@ export default (kire: Kire) => {
                 }
                 case "yield": {
                     const name = attrs.name || attrs.value;
-                    const slots = ctx.$props.slots || {};
+                    const slots = ctx.$props.slots || new NullProtoObj();
                     const content = slots[name!] || attrs.default || "";
                     ctx.replace(content);
                     break;
@@ -167,7 +184,8 @@ export default (kire: Kire) => {
                     if (!path) return;
 
                     const props = { ...ctx.$props, ...attrs };
-                    const slots: Record<string, string> = { default: '' };
+                    const slots: Record<string, string> = new NullProtoObj();
+                    slots.default = '';
                     const innerHtml = ctx.element.inner;
                     const slotRegex = /<x-slot:([a-zA-Z0-9-_]+)(?:[^>]*)>([\s\S]*?)<\/x-slot:\1>/gi;
                     let match;
@@ -211,7 +229,8 @@ export default (kire: Kire) => {
             }
 
             const props = { ...ctx.$props, ...ctx.element.attributes };
-            const slots: Record<string, string> = { default: '' };
+            const slots: Record<string, string> = new NullProtoObj();
+            slots.default = '';
             const innerHtml = ctx.element.inner;
             
             const slotRegex = /<x-slot:([a-zA-Z0-9-_]+)(?:[^>]*)>([\s\S]*?)<\/x-slot:\1>/gi;
@@ -234,7 +253,7 @@ export default (kire: Kire) => {
                 const response = await ctx.$kire.view(viewPath, props);
                 ctx.replace(await consumeStream(response));
             } catch (e: any) {
-                console.error(`[x-${componentName}] Error:`, e);
+                // console.error(`[x-${componentName}] Error:`, e);
                 ctx.replace(`<!-- Error rendering ${componentName}: ${e.message} -->`);
             }
         }

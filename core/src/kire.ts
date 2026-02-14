@@ -6,6 +6,7 @@ import { KireDirectives } from "./directives";
 import { Parser } from "./parser";
 import KireRuntime from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
+import { NullProtoObj } from "./utils/regex";
 import type {
     DirectiveDefinition,
     ElementDefinition,
@@ -28,6 +29,11 @@ import { KireHooks } from "./types";
 import { AsyncFunction, scoped } from "./utils/scoped";
 import nativeElements from "./elements/natives";
 
+export interface ElementMatcher {
+    def: ElementDefinition;
+    prefix: string | null;
+}
+
 export class Kire {
     public $scoped = scoped;
     public $error = KireError;
@@ -35,6 +41,10 @@ export class Kire {
     public $directives: Map<string, DirectiveDefinition> = new Map();
     public $elements: Set<ElementDefinition> = new Set();
     
+    // Elements Cache
+    public $elementMatchers: ElementMatcher[] = [];
+    public $elementRegex: RegExp | null = null;
+
     // Optimized: Use objects instead of Maps for performance
     public $globals: Record<string, any>;
     public $props: Record<string, any>;
@@ -48,7 +58,7 @@ export class Kire {
     
     // Cache
     public $files: Map<string, CompiledTemplate> = new Map();
-    public $cache: Record<string, any> = {};
+    public $cache: Record<string, any> = new NullProtoObj();
 
     public $parser: IParserConstructor;
     public $compiler: ICompilerConstructor;
@@ -60,7 +70,7 @@ export class Kire {
 
     public $types: Map<string, TypeDefinition> = new Map();
     public $schemaDefinition?: KireSchemaDefinition;
-    public $virtualFiles: Record<string, string> = {};
+    public $virtualFiles: Record<string, string> = new NullProtoObj();
 
     constructor(options: KireOptions = {}) {
         this.production = options.production ?? process.env.NODE_ENV === 'production';
@@ -69,7 +79,7 @@ export class Kire {
         this.$silent = options.silent ?? false;
         this.$var_locals = options.varLocals ?? "it";
         this.$parent = options.parent;
-        this.$root = options.root ? resolve(options.root) : process.cwd();
+        this.$root = options.root ? resolve(options.root).replace(/\\/g, '/') : process.cwd().replace(/\\/g, '/');
         
         if (options.files) {
             for (const key in options.files) {
@@ -111,16 +121,14 @@ export class Kire {
             this.$cache = this.$parent.$cache;
             this.$directives = this.$parent.$directives;
             this.$elements = this.$parent.$elements;
+            this.$elementMatchers = this.$parent.$elementMatchers;
+            this.$elementRegex = this.$parent.$elementRegex;
             this.$namespaces = this.$parent.$namespaces;
             this.$types = this.$parent.$types;
             this.$schemaDefinition = this.$parent.$schemaDefinition;
-            
-            // Merge hooks? usually forks have their own lifecycle hooks
-            // But we might want to trigger parent hooks? 
-            // For now, fresh hooks for the fork.
         } else {
-            this.$globals = {};
-            this.$props = {};
+            this.$globals = new NullProtoObj();
+            this.$props = new NullProtoObj();
 
             this.$executor = options.executor ?? ((code, params) => {
                 const isAsync = code.includes("await");
@@ -142,6 +150,7 @@ export class Kire {
             }
         }
 
+        this.rebuildElements();
         (this.$error as any).html = (e: any, ctx?: KireContext) => this.renderError(e, ctx);
     }
 
@@ -151,7 +160,7 @@ export class Kire {
 
     public cacheClear() {
         this.$files.clear();
-        this.$cache = {};
+        this.$cache = new NullProtoObj();
     }
 
     public on(event: KireHookName, callback: KireHookCallback) {
@@ -177,7 +186,9 @@ export class Kire {
         if (typeof keyOrObj === "string") {
             this.$props[keyOrObj] = value;
         } else if (typeof keyOrObj === "object") {
-            Object.assign(this.$props, keyOrObj);
+            for (const key in keyOrObj) {
+                this.$props[key] = keyOrObj[key];
+            }
         }
         return this;
     }
@@ -196,10 +207,6 @@ export class Kire {
     }
 
     public $ctx(key: string, value: any) {
-        // Legacy support: $ctx was often used for globals or helpers
-        // We'll put it in globals for now, or create a specific context helper registry?
-        // Kire 1.0 logic puts it in $contexts layered map.
-        // We'll put it in $globals as that's the fastest access.
         this.$globals[key] = value;
         
         const typeName = typeof value;
@@ -233,6 +240,8 @@ export class Kire {
         
         if (this.production && this.$files.has(key)) return this.$files.get(key)!;
         
+        if (!this.$elementRegex) this.rebuildElements();
+
         const parser = new this.$parser(content, this);
         const nodes = parser.parse();
         const compiler = new this.$compiler(this, filename);
@@ -247,10 +256,6 @@ export class Kire {
             code: code,
             source: content
         };
-        
-        if (!this.production) {
-            // console.log(`[Kire Debug] Generated code for ${filename}:\n${code}`);
-        }
         
         if (this.production) {
             this.$files.set(key, template);
@@ -312,6 +317,7 @@ export class Kire {
             name: template.execute.name || 'anonymous',
             children,
             controller,
+            usedElements: template.usedElements
         });
     }
 
@@ -322,35 +328,42 @@ export class Kire {
     // --- File System & Resolution ---
 
     public resolvePath(filepath: string): string {
-        // 1. Check aliases/namespaces
-        if (filepath.includes('.')) {
-             // Handle "namespace.view" or "dir.file"
-             // Simplified resolution logic for speed
-             const parts = filepath.split('.');
-             if (this.$namespaces.has(parts[0]!)) {
-                 const ns = this.$namespaces.get(parts[0]!)!;
-                 const rest = parts.slice(1).join('/');
-                 filepath = join(ns, rest);
-             } else {
-                 filepath = filepath.replace(/\./g, '/');
-             }
+        if (!filepath) return filepath;
+        if (filepath.startsWith('http')) return filepath;
+
+        let path = filepath.replace(/\\/g, '/');
+        
+        // Handle namespaces
+        const firstSep = path.search(/[.\/]/);
+        const prefix = firstSep !== -1 ? path.slice(0, firstSep) : path;
+        
+        if (this.$namespaces.has(prefix)) {
+            const ns = this.$namespaces.get(prefix)!;
+            const rest = firstSep !== -1 ? path.slice(firstSep + 1).replace(/\./g, '/') : '';
+            path = join(ns, rest).replace(/\\/g, '/');
+        } else if (!path.includes('/') && path.includes('.')) {
+             path = path.replace(/\./g, '/');
         }
 
-        // 2. Add Extension
-        if (this.$extension && !filepath.endsWith(`.${this.$extension}`)) {
-            filepath += `.${this.$extension}`;
+        // Add Extension if missing
+        if (this.$extension) {
+            const lastSlash = path.lastIndexOf('/');
+            const lastDot = path.lastIndexOf('.');
+            if (lastDot === -1 || lastDot < lastSlash) {
+                path += `.${this.$extension}`;
+            }
         }
 
-        // 3. Resolve absolute
-        if (!isAbsolute(filepath)) {
-            filepath = join(this.$root, filepath);
+        if (!isAbsolute(path)) {
+            path = join(this.$root, path).replace(/\\/g, '/');
         }
 
-        return filepath;
+        return path.replace(/\\/g, '/');
     }
 
     public readFile(path: string): Promise<string> | string {
-        if (this.$virtualFiles[path]) return this.$virtualFiles[path]!;
+        const normalizedPath = path.replace(/\\/g, '/');
+        if (this.$virtualFiles[normalizedPath]) return this.$virtualFiles[normalizedPath]!;
 
         return new Promise((resolve, reject) => {
             readFile(path, 'utf-8', (err, data) => {
@@ -361,7 +374,7 @@ export class Kire {
     }
 
     public namespace(name: string, path: string) {
-        this.$namespaces.set(name, resolve(this.$root, path));
+        this.$namespaces.set(name, resolve(this.$root, path).replace(/\\/g, '/'));
         return this;
     }
 
@@ -393,18 +406,61 @@ export class Kire {
     }
 
     public element(nameOrDef: string | RegExp | ElementDefinition, handler?: KireElementHandler, opts?: KireElementOptions) {
+        let def: ElementDefinition;
         if (typeof nameOrDef === "object" && !("source" in nameOrDef)) {
-            const def = nameOrDef as ElementDefinition;
-            this.$elements.add(def);
-            if (typeof def.name === 'string') {
-                this.type({ variable: def.name, type: 'element', comment: def.description, tstype: 'element' });
-            }
+            def = nameOrDef as ElementDefinition;
         } else {
             if (!handler) throw new Error("Handler required");
             const name = nameOrDef as string | RegExp;
-            this.$elements.add({ name, void: opts?.void ?? false, run: handler });
+            def = { name, void: opts?.void ?? false, run: handler };
         }
+
+        // Add to the beginning to ensure precedence over previous/native elements
+        this.$elements = new Set([def, ...this.$elements]);
+        
+        if (typeof def.name === 'string') {
+            this.type({ variable: def.name, type: 'element', comment: def.description, tstype: 'element' });
+        }
+        
+        this.rebuildElements();
         return this;
+    }
+
+    private rebuildElements() {
+        const allElements = Array.from(this.$elements);
+        if (allElements.length === 0) return;
+
+        this.$elementMatchers = allElements.map(def => {
+            let prefix: string | null = null;
+            if (typeof def.name === 'string') {
+                prefix = def.parent ? `${def.name}${def.parent}` : def.name;
+            }
+            return { def, prefix };
+        }).sort((a, b) => {
+            // Sort by prefix length descending
+            const lenA = a.prefix?.length || 0;
+            const lenB = b.prefix?.length || 0;
+            if (lenB !== lenA) return lenB - lenA;
+            
+            // If same length or no prefix (regex), preserve registration order (newer first)
+            return 0; 
+        });
+
+        const parts: string[] = [];
+        for (const m of this.$elementMatchers) {
+            if (m.prefix) {
+                parts.push(m.prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+            } else if (m.def.name instanceof RegExp) {
+                parts.push(m.def.name.source);
+            }
+        }
+        
+        if (parts.length > 0) {
+            const source = parts.join("|");
+            // Group 1,2: self-closing. Group 3,4,5: paired.
+            // Using [a-zA-Z0-9_\\-:]* to allow matching the rest of the tag name after prefix
+            this.$elementRegex = new RegExp(`<(?:((?:${source})[a-zA-Z0-9_:\\\\-]*)([^>]*?)\\/>|((?:${source})[a-zA-Z0-9_:\\\\-]*)([^>]*?)>([\\s\\S]*?)<\\/\\3>)`, 'g');
+        }
     }
 
     public type(def: TypeDefinition) {
@@ -419,7 +475,7 @@ export class Kire {
 
     public cached<T = any>(namespace: string): KireCache<T> {
         if (!this.$cache[namespace]) {
-            this.$cache[namespace] = {};
+            this.$cache[namespace] = new NullProtoObj();
         }
         return this.$cache[namespace];
     }

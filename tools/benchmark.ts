@@ -1,6 +1,7 @@
 import { Kire } from "../core/src/kire";
 import { Edge } from "edge.js";
 import { consumeStream } from "../core/src/utils/stream";
+import { NullProtoObj } from "../core/src/utils/regex";
 
 async function runBenchmark() {
     const tpl = `
@@ -64,22 +65,27 @@ async function runBenchmark() {
         isAdmin: i % 10 === 0
     }));
 
-    const data = { users };
+    const data: any = new NullProtoObj();
+    data.users = users;
 
     const kire = new Kire({
         production: true,
-        files: {
-            "bench.kire": tpl,
-            "bench-elements.kire": tplElements,
-            "bench-components.kire": tplComponents,
-            "components/user.kire": userComponent
-        }
+        root: process.cwd().replace(/\\/g, '/')
     });
     
-    // Compile bundled template
-    const bundledTpl = await kire.compileFn(tpl, "bundled.kire", Object.keys(data));
-    
     kire.namespace("components", kire.$root + "/components");
+    kire.$global("users", users);
+    
+    console.log(`Diagnostic: Users in globals: ${!!kire.$globals.users}, Count: ${kire.$globals.users?.length}`);
+
+    // Register files with normalized paths
+    kire.$virtualFiles[kire.resolvePath("bench.kire")] = tpl;
+    kire.$virtualFiles[kire.resolvePath("bench-elements.kire")] = tplElements;
+    kire.$virtualFiles[kire.resolvePath("bench-components.kire")] = tplComponents;
+    kire.$virtualFiles[kire.resolvePath("components/user.kire")] = userComponent;
+    
+    // Compile bundled template using the instance that has elements/directives loaded
+    const bundledTpl = await kire.compileFn(tpl, "bundled.kire", Object.keys(data));
 
     const iterations = 500;
 
@@ -103,11 +109,6 @@ async function runBenchmark() {
     console.log(`- Bundled:    ${rBundled.length}`);
     console.log(`- Edge:       ${rEdge.length}\n`);
 
-    if (rElements.length < rStandard.length * 0.5) {
-        console.warn("⚠️ WARNING: Elements output seems incomplete!");
-        console.log("Elements sample:", rElements.substring(0, 500));
-    }
-
     // Kire Standard
     console.time("🚀 Kire (Standard)");
     for (let i = 0; i < iterations; i++) {
@@ -127,20 +128,19 @@ async function runBenchmark() {
     for (let i = 0; i < iterations; i++) {
         await consumeStream(await kire.view("bench-elements.kire", data));
     }
-    // console.log(await consumeStream(await kire.view("bench-elements.kire", data)))
     console.timeEnd("💎 Kire (Elements)");
 
     // Kire Components
     console.time("🧩 Kire (Components)");
     for (let i = 0; i < iterations; i++) {
-        //await consumeStream(await kire.view("bench-components.kire", data));
+        await consumeStream(await kire.view("bench-components.kire", data));
     }
     console.timeEnd("🧩 Kire (Components)");
 
     // Kire Bundled
     console.time("🔥 Kire (Bundled)");
     for (let i = 0; i < iterations; i++) {
-        //await consumeStream(await kire.run(bundledTpl as any, data));
+        await consumeStream(await kire.run(bundledTpl as any, data));
     }
     console.timeEnd("🔥 Kire (Bundled)");
 

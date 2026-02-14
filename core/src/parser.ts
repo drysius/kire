@@ -20,29 +20,28 @@ export class Parser {
 	constructor(
 		public template: string,
 		public kire: Kire,
-	) {
-		this.elementRegex = this.buildElementRegex();
-	}
+	) {}
 
-	private buildElementRegex(): RegExp | null {
-		if (this.kire.$elements.size === 0) return null;
-		const parts: string[] = [];
-		for (const def of this.kire.$elements) {
-			if (typeof def.name === "string") {
-				const prefix = def.parent ? `${def.name}${def.parent}` : def.name;
-				parts.push(prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-			} else if (def.name instanceof RegExp) {
-				parts.push(def.name.source);
-			}
+	private checkUsedElements(text: string) {
+        const matchers = this.kire.$elementMatchers;
+		if (matchers.length === 0) return;
+		
+        const regex = new RegExp(TAG_NAME_REGEX.source, 'g');
+		let match;
+		while ((match = regex.exec(text)) !== null) {
+			const tagName = match[1]!;
+            for (const m of matchers) {
+                if (m.prefix && tagName.startsWith(m.prefix)) {
+                    this.usedElements.add(tagName);
+                    break;
+                }
+                if (m.def.name instanceof RegExp && m.def.name.test(tagName)) {
+                    this.usedElements.add(tagName);
+                    break;
+                }
+            }
 		}
-		if (parts.length === 0) return null;
-		return new RegExp(`(${parts.join("|")})`);
 	}
-
-	/**
-	 * Main parsing loop. Iterates through the template string and delegates parsing to specific methods.
-	 * @returns The root nodes of the parsed AST.
-	 */
 	public parse(): Node[] {
 		this.cursor = 0;
 		this.stack = [];
@@ -596,21 +595,6 @@ export class Parser {
 					raw: false,
 				});
 				this.advance(text);
-			}
-		}
-	}
-
-	private checkUsedElements(text: string) {
-        this.elementRegex = this.buildElementRegex();
-		if (!this.elementRegex) return;
-		
-        // Improved detection: scan for all potential tags in the text
-        const regex = new RegExp(TAG_NAME_REGEX.source, 'g');
-		let match;
-		while ((match = regex.exec(text)) !== null) {
-			const tagName = match[1]!;
-			if (this.elementRegex.test(tagName)) {
-				this.usedElements.add(tagName);
 			}
 		}
 	}
