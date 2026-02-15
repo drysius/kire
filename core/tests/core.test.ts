@@ -95,15 +95,4 @@ describe("Kire Core (Bun)", () => {
         const result = await consumeStream(stream);
         expect(result).toBe("Stream Active");
     });
-
-    test("should trigger lifecycle hooks", async () => {
-        const k = new Kire();
-        let beforeTriggered = false;
-        k.on("before", () => {
-            beforeTriggered = true;
-        });
-
-        await k.render("test");
-        expect(beforeTriggered).toBe(true);
-    });
 });

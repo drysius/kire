@@ -2,274 +2,155 @@ import type { Kire } from "../kire";
 import type { ElementDefinition } from "../types";
 
 export default (kire: Kire<any>) => {
+    
     const elseElement: ElementDefinition = {
-        name: 'else',
-        onCall: (ctx) => {
-            ctx.raw(`} else {`);
-            if (ctx.children) ctx.set(ctx.children);
+        name: 'kire:else',
+        onCall: (api) => {
+            api.write(`} else {`);
+            api.renderChildren();
         }
     };
 
     const elseifElement: ElementDefinition = {
-        name: 'elseif',
-        attributes: [`cond:any`],
-        onCall: (ctx) => {
-            const cond = ctx.attribute("cond");
-            ctx.raw(`} else if (${cond}) {`);
-            if (ctx.children) ctx.set(ctx.children);
+        name: 'kire:elseif',
+        related: ['kire:elseif', 'kire:else'],
+        onCall: (api) => {
+            const cond = api.getAttribute("cond");
+            api.write(`} else if (${cond}) {`);
+            api.renderChildren();
         }
     };
 
-    // 1. Kire Control Flow & Utility Elements (<kire:if>, <kire:for>, etc.)
     kire.element({
         name: 'kire:if',
-        attributes: [`cond:any`],
-        parents: [elseifElement, elseElement],
-        onCall: (ctx) => {
-            const cond = ctx.attribute("cond");
-            ctx.raw(`if (${cond}) {`);
-            if (ctx.children) ctx.set(ctx.children);
-            if (ctx.node.related) ctx.set(ctx.node.related);
-            ctx.raw(`}`);
-        }
-    });
-
-    kire.element({
-        name: 'kire:unless',
-        attributes: [`cond:any`],
-        onCall: (ctx) => {
-            const cond = ctx.attribute("cond");
-            ctx.raw(`if (!(${cond})) {`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`}`);
+        related: ['kire:elseif', 'kire:else'],
+        onCall: (api) => {
+            const cond = api.getAttribute("cond");
+            api.write(`if (${cond}) {`);
+            api.renderChildren();
+            if (api.node.related) api.renderChildren(api.node.related);
+            api.write(`}`);
         }
     });
 
     kire.element({
         name: 'kire:for',
-        attributes: [`items:any`, `as:string`, `index:string`],
-        onCall: (ctx) => {
-            const expr = ctx.attribute("items") || ctx.attribute("loop") || ctx.attribute("each") || "[]";
-            const as = ctx.attribute("as") || 'item';
-            const indexAs = ctx.attribute("index") || 'index';
-            const id = ctx.count('i');
+        related: ['kire:empty'],
+        onCall: (api) => {
+            const items = api.getAttribute("items") || api.getAttribute("each") || "[]";
+            const as = api.getAttribute("as") || 'item';
+            const indexAs = api.getAttribute("index") || 'index';
+            const id = api.uid('i');
+            api.write(`{
+                const _r${id} = ${items};
+                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});
+                const _len${id} = _it${id}.length;
+                for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
+                    const _e${id} = _it${id}[${id}];
+                    ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
+                    ${indexAs} = ${id};
+                    $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
+            api.renderChildren();
+            api.write(`  }
+            }`);
+        }
+    });
 
-            ctx.raw(`{`);
-            ctx.raw(`  const _r${id} = ${expr};`);
-            ctx.raw(`  const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});`);
-            ctx.raw(`  const _len${id} = _it${id}.length;`);
-            ctx.raw(`  for (let ${id} = 0; ${id} < _len${id}; ${id}++) {`);
-            ctx.raw(`    const _e${id} = _it${id}[${id}];`);
-            ctx.raw(`    const ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];`);
-            ctx.raw(`    const ${indexAs} = ${id};`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`  }`);
-            ctx.raw(`}`);
+    kire.element({
+        name: 'kire:empty',
+        onCall: (api) => {
+            api.renderChildren();
         }
     });
 
     kire.element({
         name: 'kire:switch',
-        attributes: [`value:any`],
-        onCall: (ctx) => {
-            const value = ctx.attribute("value") || ctx.attribute("on") || ctx.attribute("expr");
-            ctx.raw(`switch (${value}) {`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`}`);
+        onCall: (api) => {
+            api.write(`switch (${api.getAttribute("value")}) {`);
+            if (api.node.children) {
+                const valid = api.node.children.filter((n: any) => n.type === "element" && (n.tagName === "kire:case" || n.tagName === "kire:default"));
+                api.renderChildren(valid);
+            }
+            api.write(`}`);
         }
     });
 
     kire.element({
         name: 'kire:case',
-        attributes: [`value:any`],
-        onCall: (ctx) => {
-            const value = ctx.attribute("value") || ctx.attribute("is");
-            ctx.raw(`case ${value}: {`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`  break; }`);
+        onCall: (api) => {
+            api.write(`case ${api.getAttribute("value")}: {`);
+            api.renderChildren();
+            api.write(`  break; }`);
         }
     });
 
     kire.element({
         name: 'kire:default',
-        onCall: (ctx) => {
-            ctx.raw(`default: {`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`}`);
+        onCall: (api) => {
+            api.write(`default: {`);
+            api.renderChildren();
+            api.write(`}`);
         }
     });
 
     kire.element({
-        name: 'kire:define',
-        attributes: [`name:string`],
-        onCall: (ctx) => {
-            const name = ctx.attribute("name") || ctx.attribute("value");
-            ctx.raw(`{`);
-            ctx.raw(`  const _origRes = $ctx.$response;`);
-            ctx.raw(`  $ctx.$response = "";`);
-            if (ctx.children) ctx.set(ctx.children);
-            ctx.raw(`  $ctx.$globals['~defines'][${JSON.stringify(name)}] = $ctx.$response;`);
-            ctx.raw(`  $ctx.$response = _origRes;`);
-            ctx.raw(`}`);
-        }
-    });
-
-    kire.element({
-        name: 'kire:defined',
-        attributes: [`name:string`],
-        onCall: (ctx) => {
-            const name = ctx.attribute("id") || ctx.attribute("name") || ctx.attribute("value");
-            ctx.raw(`if ($ctx.$globals['~defines'][${JSON.stringify(name)}] !== undefined) {`);
-            ctx.raw(`  $ctx.$add($ctx.$globals['~defines'][${JSON.stringify(name)}]);`);
-            if (ctx.children?.length) {
-                ctx.raw(`} else {`);
-                ctx.set(ctx.children);
+        name: /^x-/,
+        onCall: (api) => {
+            const tagName = api.node.tagName!;
+            if (tagName === "x-slot") {
+                const name = api.getAttribute("name") || "default";
+                const id = api.uid("slot");
+                api.write(`{
+                    const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+                api.renderChildren();
+                api.write(`
+                    if (typeof $slots !== 'undefined') $slots['${name}'] = $ctx.$response;
+                    $ctx.$response = _oldRes${id};
+                }`);
+                return;
             }
-            ctx.raw(`}`);
-        }
-    });
 
-    kire.element({
-        name: 'kire:stack',
-        attributes: [`name:string`],
-        onCall: (ctx) => {
-            const name = ctx.attribute("name") || ctx.attribute("value");
-            ctx.raw(`$ctx.$add("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`);
-        }
-    });
+            const componentName = tagName.slice(2);
+            const id = api.uid('comp');
+            const depId = api.depend(componentName);
+            
+            const attrs = api.node.attributes || {};
+            const propsStr = Object.keys(attrs)
+                .map(k => `'${k}': ${api.getAttribute(k)}`)
+                .join(',');
 
-    kire.element({
-        name: 'kire:push',
-        attributes: [`name:string`],
-        onCall: (ctx) => {
-            const name = ctx.attribute("name") || ctx.attribute("value") || ctx.attribute("to");
-            ctx.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = new $ctx.$kire.NullProtoObj();`);
-            ctx.raw(`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`);
-            ctx.merge((c) => {
-                if (c.children) c.set(c.children);
-                c.raw(`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`);
-                c.raw(`  $ctx.$response = '';`);
-            });
-        }
-    });
-
-    kire.element({
-        name: 'kire:yield',
-        attributes: [`name:string`, `default:string`],
-        onCall: (ctx) => {
-            const name = ctx.attribute("name") || ctx.attribute("value");
-            ctx.raw(`{`);
-            ctx.raw(`  const content = ($ctx.slots && $ctx.slots[${JSON.stringify(name)}]) || ($ctx.$props.slots && $ctx.$props.slots[${JSON.stringify(name)}]);`);
-            ctx.raw(`  if (typeof content === 'function') {`);
-            ctx.raw(`    await content();`);
-            ctx.raw(`  } else if (content) {`);
-            ctx.raw(`    $ctx.$add(content);`);
-            if (ctx.attribute("default")) {
-                ctx.raw(`  } else {`);
-                ctx.raw(`    $ctx.$add(${JSON.stringify(ctx.attribute("default"))});`);
-            }
-            ctx.raw(`  }`);
-            ctx.raw(`}`);
-        }
-    });
-
-    kire.element({
-        name: 'kire:csrf',
-        onCall: (ctx) => {
-            ctx.raw(`
-                if (typeof $ctx.$globals.csrf === 'undefined') {
-                    throw new Error("CSRF token not defined. Please define it using kire.$global('csrf', 'token')");
+            api.write(`{
+                const $slots = {};
+                const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+            
+            if (api.node.children) {
+                const slots = api.node.children.filter(c => c.tagName === "x-slot");
+                const defContent = api.node.children.filter(c => c.tagName !== "x-slot");
+                api.renderChildren(slots);
+                if (defContent.length > 0) {
+                    const defId = api.uid("def");
+                    api.write(`{ const _defRes${defId} = $ctx.$response; $ctx.$response = "";`);
+                    api.renderChildren(defContent);
+                    api.write(`$slots.default = $ctx.$response; $ctx.$response = _defRes${defId}; }`);
                 }
-                $ctx.$add(\`<input type="hidden" name="_token" value="\${$ctx.$globals.csrf}">\`);
-            `);
-        }
-    });
-
-    kire.element({
-        name: 'kire:method',
-        attributes: [`value:string`],
-        onCall: (ctx) => {
-            const m = ctx.attribute("value") || ctx.attribute("method") || "POST";
-            ctx.res(`<input type="hidden" name="_method" value="${m}">`);
-        }
-    });
-
-    kire.element({
-        name: 'kire:include',
-        attributes: [`path:string`],
-        onCall: (ctx) => {
-            const path = ctx.attribute("path") || ctx.attribute("view");
-            if (!path) return;
-
-            const extraGlobals = Object.keys(ctx.attributes).filter(k => k !== 'path' && k !== 'view');
-            const id = ctx.depend(path, extraGlobals);
-            const ctxId = ctx.count('ctx');
-            ctx.raw(`const ${ctxId} = $ctx;`);
-            ctx.raw(`{
-                const $ctx = ${ctxId}.$fork().$emptyResponse();
-                Object.assign($ctx.$props, { ...${ctxId}.$props, ...${JSON.stringify(ctx.attributes)} });
-                await ${id}.execute.call($ctx.$props, $ctx, ${id}.dependencies);
-                ${ctxId}.$response += $ctx.$response;
+            }
+            
+            api.write(`
+                $ctx.$response = _oldRes${id};
+                const _oldProps${id} = $ctx.$props;
+                $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps${id}, { ${propsStr} }, { slots: $slots });
+                const _oldCtxSlots${id} = $ctx.slots;
+                $ctx.slots = $slots;
+                // OTIMIZAÇÃO: Usa o metadado estático para decidir sobre o await
+                const _dep${id} = $deps['${depId}'];
+                const res${id} = _dep${id}.execute($ctx, {});
+                if (_dep${id} && _dep${id}.isAsync) await res${id};
+                $ctx.$props = _oldProps${id};
+                $ctx.slots = _oldCtxSlots${id};
             }`);
         }
     });
 
-    // 2. Generic Component System (<x-name>)
-    const xSlot: ElementDefinition = {
-        name: 'slot',
-        attributes: ['name:string'],
-        onCall: (ctx) => {
-            const slotName = ctx.attribute('name') || 'default';
-            ctx.merge((c) => {
-                if (c.children) c.set(c.children);
-                c.raw(`  if ($ctx.slots) $ctx.slots[${JSON.stringify(slotName)}] = $ctx.$response;`);
-                c.raw(`  $ctx.$response = '';`);
-            });
-        }
-    };
-
-    kire.element({
-        name: 'x-*',
-        parents: [xSlot],
-        onCall: (ctx) => {
-            const componentName = ctx.wildcard;
-            if (!componentName) return;
-
-            let viewPath = componentName;
-            if (kire.$namespaces.has('components') && kire.$existFile(`components.${componentName}`)) {
-                viewPath = `components.${componentName}`;
-            } else if (kire.$namespaces.has('layouts') && kire.$existFile(`layouts.${componentName}`)) {
-                viewPath = `layouts.${componentName}`;
-            }
-
-            const id = ctx.count('comp');
-            const hasContent = (ctx.children && ctx.children.length > 0) || (ctx.node.related && ctx.node.related.length > 0);
-            const extraGlobals = Object.keys(ctx.attributes);
-            const tplId = ctx.depend(viewPath, extraGlobals);
-            const ctxId = ctx.count('ctx');
-
-            ctx.raw(`const ${ctxId} = $ctx;`);
-            ctx.raw(`{`);
-            ctx.raw(`  const $ctx = ${ctxId}.$fork().$emptyResponse();`);
-            ctx.raw(`  const $slots = new ${ctxId}.$kire.NullProtoObj();`);
-            if (hasContent) {
-                ctx.raw(`  const $parentSlots${id} = ${ctxId}.slots;`);
-                ctx.raw(`${ctxId}.slots = $slots;`);
-                ctx.merge((c) => {
-                    if (c.children) c.set(c.children);
-                    if (c.node.related) c.set(c.node.related);
-                    c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
-                    c.raw(`    $ctx.$response = '';`);
-                });
-            }
-
-            ctx.raw(`  const props${id} = { ...${ctxId}.$props, ...${JSON.stringify(ctx.attributes)}, slots: $slots };`);
-            ctx.raw(`  $ctx.slots = $slots;`);
-            ctx.raw(`  Object.assign($ctx.$props, props${id});`);
-            ctx.raw(`  await ${tplId}.execute.call($ctx.$props, $ctx, ${tplId}.dependencies);`);
-            ctx.raw(`  ${ctxId}.$response += $ctx.$response;`);
-            if (hasContent) ctx.raw(`  ${ctxId}.slots = $parentSlots${id};`);
-            ctx.raw(`}`);
-        }
-    });
+    kire.element(elseElement);
+    kire.element(elseifElement);
 };

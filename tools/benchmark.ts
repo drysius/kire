@@ -1,156 +1,131 @@
-//import { Kire } from "../core/dist/index.js";
-import { Kire } from "../core/src";
+//import { Kire } from "../core/src/kire";
+import { Kire } from "../core/dist/index.js";
 import { Edge } from "edge.js";
-import { consumeStream } from "../core/src/utils/stream.ts";
-import { NullProtoObj } from "../core/src/utils/regex.ts";
+import { Eta } from "eta";
+import ejs from "ejs";
 
 async function runBenchmark() {
-    const tpl = `
-        <div class="container">
-            <h1>Users List</h1>
-            <ul>
-                @each(user in users)
-                    <li class="{{ user.active ? 'active' : '' }}">
-                        {{ user.name }} ({{ user.email }})
-                        @if(user.isAdmin)
-                            <x-user name="user.name" email="user.email" active="user.active" isAdmin="user.isAdmin" />
-                        @endif
-                    </li>
-                @endeach
-            </ul>
-        </div>
-    `.trim();
-
-    const tplElements = `
-        <div class="container">
-            <h1>Users List</h1>
-            <ul>
-                <kire:for loop="users" as="user">
-                    <li class="@{{ user.active ? 'active' : '' }}">
-                        @{{ user.name }} (@{{ user.email }})
-                        <kire:if cond="user.isAdmin">
-                            <x-user name="user.name" email="user.email" active="user.active" isAdmin="user.isAdmin" />
-                        </kire:if>
-                    </li>
-                </kire:for>
-            </ul>
-        </div>
-    `.trim();
-
-    const tplComponents = `
-        <div class="container">
-            <h1>Users List</h1>
-            <ul>
-                @each(user in users)
-                    <x-user name="{{ user.name }}" email="{{ user.email }}" active="{{ user.active }}" isAdmin="{{ user.isAdmin }}" />
-                @endeach
-            </ul>
-        </div>
-    `.trim();
-
-    const userComponent = `
-        <li class="{{ active ? 'active' : '' }}">
-            {{ name }} ({{ email }})
-            @if(isAdmin)
-                <span class="badge">Admin</span>
-            @endif
-        </li>
-    `.trim();
-
-    const edge = new Edge({ cache:false });
-
-    const users = Array.from({ length: 500 }, (_, i) => ({
+    const users = Array.from({ length: 100 }, (_, i) => ({
         name: `User ${i}`,
         email: `user${i}@example.com`,
         active: i % 2 === 0,
         isAdmin: i % 10 === 0
     }));
 
-    const data: any = new NullProtoObj();
-    data.users = users;
+    const data = { users };
 
-    const kire = new Kire({
-        production: true,
-        root: process.cwd().replace(/\\/g, '/')
-    });
+    // --- KIRE SETUP ---
+    const kire = new Kire({ production: true });
+    const kireTpl = `
+<div class="container">
+    <h1>Users List</h1>
+    <ul>
+        @for(user of users)
+            <li class="{{ user.active ? 'active' : '' }}">
+                {{ user.name }} ({{ user.email }})
+                @if(user.isAdmin)
+                    <span class="badge">Admin</span>
+                @endif
+            </li>
+        @endfor
+    </ul>
+</div>`.trim();
     
-    kire.namespace("components", kire.$root + "/components");
-    kire.$global("users", users);
-    
-    console.log(`Diagnostic: Users in globals: ${!!kire.$globals.users}, Count: ${kire.$globals.users?.length}`);
+    const kireCompiled = await kire.compile(kireTpl, "bench.kire");
 
-    // Register files with normalized paths - using $sources for caching
-    kire.$sources[kire.resolve("bench.kire")] = tpl;
-    kire.$sources[kire.resolve("bench-elements.kire")] = tplElements;
-    kire.$sources[kire.resolve("bench-components.kire")] = tplComponents;
-    kire.$sources[kire.resolve("components/user.kire")] = userComponent;
-    
-    // Compile bundled template using the instance that has elements/directives loaded
-    const bundledTpl = await kire.compileFn(tpl, "bundled.kire", Object.keys(data));
+    // --- EDGE SETUP ---
+    const edge = new Edge({ cache: true });
+    const edgeTpl = `
+<div class="container">
+    <h1>Users List</h1>
+    <ul>
+        @each(user in users)
+            <li class="{{ user.active ? 'active' : '' }}">
+                {{ user.name }} ({{ user.email }})
+                @if(user.isAdmin)
+                    <span class="badge">Admin</span>
+                @endif
+            </li>
+        @endeach
+    </ul>
+</div>`.trim();
 
-    const iterations = 500;
+    // --- ETA SETUP ---
+    const eta = new Eta({ cache: true });
+    const etaTpl = `
+<div class="container">
+    <h1>Users List</h1>
+    <ul>
+        <% it.users.forEach(function(user){ %>
+            <li class="<%= user.active ? 'active' : '' %>">
+                <%= user.name %> (<%= user.email %>)
+                <% if(user.isAdmin) { %>
+                    <span class="badge">Admin</span>
+                <% } %>
+            </li>
+        <% }) %>
+    </ul>
+</div>`.trim();
 
-    console.log(`\n--- BENCHMARK: KIRE vs EDGE.JS ---`);
+    // --- EJS SETUP ---
+    const ejsTpl = `
+<div class="container">
+    <h1>Users List</h1>
+    <ul>
+        <% users.forEach(function(user){ %>
+            <li class="<%= user.active ? 'active' : '' %>">
+                <%= user.name %> (<%= user.email %>)
+                <% if(user.isAdmin) { %>
+                    <span class="badge">Admin</span>
+                <% } %>
+            </li>
+        <% }) %>
+    </ul>
+</div>`.trim();
+    const ejsOpts = { cache: true, filename: 'bench.ejs' };
+    // Pre-compile EJS
+    const ejsCompiled = ejs.compile(ejsTpl, ejsOpts);
+
+    const iterations = 5000;
+
+    console.log(`\n--- BENCHMARK: KIRE vs OTHERS ---`);
     console.log(`Iterations: ${iterations}`);
-    console.log(`Items per loop: ${data.users.length}\n`);
+    console.log(`Users per loop: ${users.length}\n`);
 
-    // Warmup & Verify
-    const rStandard = await consumeStream(await kire.render(tpl, data));
-    const rVirtual = await consumeStream(await kire.view("bench.kire", data));
-    const rElements = await consumeStream(await kire.view("bench-elements.kire", data));
-    const rComponents = await consumeStream(await kire.view("bench-components.kire", data));
-    const rBundled = await consumeStream(await kire.run(bundledTpl as any, data));
-    const rEdge = await edge.renderRaw(tpl, data);
+    // Warmup
+    console.log("Warming up...");
+    await kire.run(kireCompiled, data);
+    await edge.renderRaw(edgeTpl, data);
+    await eta.renderString(etaTpl, data);
+    await ejsCompiled(data);
 
-    console.log(`\nVerification (Result Lengths):`);
-    console.log(`- Standard:   ${rStandard.length}`);
-    console.log(`- Virtual:    ${rVirtual.length}`);
-    console.log(`- Elements:   ${rElements.length}`);
-    console.log(`- Components: ${rComponents.length}`);
-    console.log(`- Bundled:    ${rBundled.length}`);
-    console.log(`- Edge:       ${rEdge.length}\n`);
-
-    // Kire Standard
-    console.time("🚀 Kire (Standard)");
+    // Kire (Pre-compiled)
+    console.time("🚀 Kire (Pre-compiled)");
     for (let i = 0; i < iterations; i++) {
-        await consumeStream(await kire.render(tpl, data));
+        await kire.run(kireCompiled, data);
     }
-    console.timeEnd("🚀 Kire (Standard)");
+    console.timeEnd("🚀 Kire (Pre-compiled)");
 
-    // Virtual File
-    console.time("⚡ Kire (Virtual File)");
+    // Eta
+    console.time("⚡ Eta");
     for (let i = 0; i < iterations; i++) {
-        await consumeStream(await kire.view("bench.kire", data));
+        eta.renderString(etaTpl, data);
     }
-    console.timeEnd("⚡ Kire (Virtual File)");
+    console.timeEnd("⚡ Eta");
 
-    // Kire Elements
-    console.time("💎 Kire (Elements)");
+    // EJS
+    console.time("📦 EJS (Pre-compiled)");
     for (let i = 0; i < iterations; i++) {
-        await consumeStream(await kire.view("bench-elements.kire", data));
+        ejsCompiled(data);
     }
-    console.timeEnd("💎 Kire (Elements)");
-
-    // Kire Components
-    console.time("🧩 Kire (Components)");
-    for (let i = 0; i < iterations; i++) {
-        await consumeStream(await kire.view("bench-components.kire", data));
-    }
-    console.timeEnd("🧩 Kire (Components)");
-
-    // Kire Bundled
-    console.time("🔥 Kire (Bundled)");
-    for (let i = 0; i < iterations; i++) {
-        await consumeStream(await kire.run(bundledTpl as any, data));
-    }
-    console.timeEnd("🔥 Kire (Bundled)");
+    console.timeEnd("📦 EJS (Pre-compiled)");
 
     // Edge
-    console.time("📦 Edge.js");
+    console.time("🌊 Edge.js");
     for (let i = 0; i < iterations; i++) {
-        await edge.renderRaw(tpl, data);
+        await edge.renderRaw(edgeTpl, data);
     }
-    console.timeEnd("📦 Edge.js");
+    console.timeEnd("🌊 Edge.js");
 
     console.log("\n----------------------------------\n");
 }

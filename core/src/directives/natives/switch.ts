@@ -5,24 +5,14 @@ export default (kire: Kire<any>) => {
         name: `switch`,
         params: [`expr:any`],
         children: true,
-        type: `html`,
-        description: `Provides a control flow statement similar to a JavaScript switch block.`,
-        example: `@switch($value)
-  @case(1)
-    One
-  @endcase
-  @default
-    Other
-@endswitch`,
-        onCall: (compiler) => {
-            compiler.raw(`switch (${compiler.param("expr")}) {`);
-            if (compiler.children) {
-                const cases = compiler.children.filter(
-                    (n) => n.name === "case" || n.name === "default",
-                );
-                compiler.set(cases);
+        onCall: (api) => {
+            const expr = api.getAttribute("expr");
+            api.write(`switch (${api.transform(expr)}) {`);
+            if (api.node.children) {
+                const valid = api.node.children.filter((n: any) => n.type === "directive" && (n.name === "case" || n.name === "default"));
+                api.renderChildren(valid);
             }
-            compiler.raw(`}`);
+            api.write(`}`);
         },
     });
 
@@ -30,30 +20,21 @@ export default (kire: Kire<any>) => {
         name: `case`,
         params: [`val:any`],
         children: true,
-        type: `html`,
-        description: `A case clause for a @switch statement.`,
-        example: `@case('A')
-  Value is A
-@endcase`,
-        onCall: (c) => {
-            c.raw(`case ${JSON.stringify(c.param("val"))}: {`);
-            if (c.children) c.set(c.children);
-            c.raw(`break; }`);
+        onCall: (api) => {
+            const val = api.getAttribute("val");
+            api.write(`case ${api.transform(val)}: {`);
+            api.renderChildren();
+            api.write(`  break; }`);
         },
     });
 
     kire.directive({
         name: `default`,
         children: true,
-        type: `html`,
-        description: `The default clause for a @switch statement.`,
-        example: `@default
-  Value is something else
-@enddefault`,
-        onCall: (c) => {
-            c.raw(`default: {`);
-            if (c.children) c.set(c.children);
-            c.raw(`}`);
+        onCall: (api) => {
+            api.write(`default: {`);
+            api.renderChildren();
+            api.write(`}`);
         },
     });
 };

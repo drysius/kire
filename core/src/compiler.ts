@@ -1,480 +1,260 @@
 import type { Kire } from "./kire";
-import type { CompilerContext, DirectiveDefinition, ElementDefinition, Node } from "./types";
-import { parseParamDefinition } from "./utils/params";
-import { SourceMapGenerator } from "./utils/source-map";
-import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX, NullProtoObj, RESERVED_KEYWORDS } from "./utils/regex";
+import type { CompilerApi, Node } from "./types";
+import { 
+    NullProtoObj, 
+    JS_IDENTIFIER_REGEX, 
+    RESERVED_KEYWORDS,
+    JS_EXTRACT_IDENTS_REGEX,
+    FOR_VAR_EXTRACT_REGEX,
+    INTERPOLATION_PURE_REGEX,
+    INTERPOLATION_GLOBAL_REGEX
+} from "./utils/regex";
 
 export class Compiler {
-	private preBuffer: string[] = [];
-	private resBuffer: string[] = [];
-	private posBuffer: string[] = [];
-	private usedDirectives: Set<string> = new Set();
-	private generator: SourceMapGenerator;
-	private resMappings: { index: number; node: Node; col: number }[] = [];
-	private counters: Record<string, number> = new NullProtoObj();
-    private dependencies: Map<string, { id: string, globals: string[] }> = new Map();
+    private body: string[] = [];
+    private header: string[] = [];
+    private footer: string[] = [];
+    private dependencies: Map<string, string> = new Map();
+    private uidCounter: Record<string, number> = new NullProtoObj();
+    private _isAsync: boolean = false;
+    private textBuffer: string = "";
 
-	constructor(
-		private kire: Kire<any>,
-		private filename = "template.kire",
-        private usedElements: Set<string> = new Set()
-	) {
-		this.generator = new SourceMapGenerator(filename);
-		this.generator.addSource(filename);
-	}
+    constructor(public kire: Kire<any>, private filename = "template.kire") {}
 
-	/**
-	 * Compiles a list of AST nodes into a JavaScript function body string.
-	 * @param nodes The root nodes of the AST.
-	 * @returns The compiled JavaScript code as a string.
-	 */
-	public compile(nodes: Node[], extraGlobals: string[] = [], usedElements?: Set<string>): string {
-		this.preBuffer = [];
-		this.resBuffer = [];
-		this.posBuffer = [];
-		this.resMappings = [];
-		this.usedDirectives.clear();
-		this.counters = new NullProtoObj();
-        this.dependencies.clear();
-        if (usedElements) this.usedElements = usedElements;
+    public get isAsync(): boolean { return this._isAsync; }
+    public getDependencies(): Map<string, string> { return this.dependencies; }
+    private markAsync() { this._isAsync = true; }
 
-		const varLocals = this.kire.$var_locals || "it";
-		this.compileNodes(nodes);
+    private esc(str: string): string {
+        return "'" + str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "\\r") + "'";
+    }
 
-		// Optimized destructuring
-		let startCode = "";
+    private flushText() {
+        if (this.textBuffer) {
+            this.body.push(`$ctx.$response += ${this.esc(this.textBuffer)};`);
+            this.textBuffer = "";
+        }
+    }
+
+    /** Converte valor de atributo HTML (possivelmente com {{}}) em expressão JS */
+    private parseAttrCode(val: string): string {
+        if (!val.includes("{{")) return val;
+        // Se for puramente uma interpolação, extrai o miolo
+        const pureMatch = val.match(INTERPOLATION_PURE_REGEX);
+        if (pureMatch) return pureMatch[1]!;
         
-        // 1. Destructure Locals first (highest priority for shadowing)
-        const localSet = new Set<string>();
-        const sanitizedLocals = extraGlobals.filter(k => {
-            if (JS_IDENTIFIER_REGEX.test(k) && !RESERVED_KEYWORDS.has(k) && k !== varLocals && k !== "$ctx") {
-                localSet.add(k);
-                return true;
-            }
-            return false;
-        });
-        if (sanitizedLocals.length > 0) startCode += `const { ${sanitizedLocals.join(", ")} } = $ctx.$props;\n`;
+        // Se for texto misto, transforma em template literal ou concatenação
+        let res = val.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${$ctx.$escape(${expr})}`);
+        return "`" + res + "`";
+    }
 
-		// 2. Destructure Globals (only those not already in locals)
-        // Also skip variables that are likely to be scoped by elements (like 'user', 'item', etc)
-        const commonScoped = new Set(['user', 'item', 'index', 'key', 'value']);
-		const sanitizedGlobals = Object.keys(this.kire.$globals).filter(k => 
-            JS_IDENTIFIER_REGEX.test(k) && !RESERVED_KEYWORDS.has(k) && !localSet.has(k) && k !== varLocals && k !== "$ctx" && !commonScoped.has(k)
-        );
-        if (sanitizedGlobals.length > 0) startCode += `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;\n`;
-        
-        if (varLocals !== "none") startCode += `const ${varLocals} = $ctx.$props;\n`;
-        // Always attempt to destructure slots as it's a core feature
-        if (!localSet.has("slots")) startCode += `const { slots } = $ctx.$props;\n`;
-        
-        if (usedElements?.size) startCode += `// kire-elements: ${Array.from(usedElements).join(",")}\n`;
-		
-        if (this.dependencies.size > 0) {
-            const depsArr = Array.from(this.dependencies.entries()).map(([path, data]) => `${data.id} = $deps[${JSON.stringify(path)}]`);
-            startCode += `const { ${depsArr.join(", ")} } = $deps;\n`;
+    public compile(nodes: Node[], extraGlobals: string[] = []): string {
+        this.body = []; this.header = []; this.footer = [];
+        this.dependencies.clear(); this.uidCounter = new NullProtoObj();
+        this._isAsync = false;
+        this.textBuffer = "";
+
+        this.header.push(`const it = $ctx.$props;`);
+
+        const idents = new Set<string>();
+        this.collectIdentifiers(nodes, idents);
+        if (extraGlobals) extraGlobals.forEach(g => idents.add(g));
+
+        const localDecls = new Set<string>();
+        this.collectDeclarations(nodes, localDecls);
+
+        for (const id of idents) {
+            if (RESERVED_KEYWORDS.has(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$deps" || id === "$loop") continue;
+            if (typeof (globalThis as any)[id] !== 'undefined') continue;
+            this.header.push(`let ${id} = $ctx.$props['${id}'] !== undefined ? $ctx.$props['${id}'] : $ctx.$globals['${id}'];`);
         }
 
-        if (this.preBuffer.length > 0) startCode += this.preBuffer.join("\n") + "\n";
+        this.compileNodes(nodes);
+        this.flushText();
 
-		if (!this.kire.production) {
-            let currentGenLine = startCode.split("\n").length;
-			const bufferLineOffsets = new Map<number, number>();
-			for (let i = 0; i < this.resBuffer.length; i++) {
-				bufferLineOffsets.set(i, currentGenLine);
-				currentGenLine += (this.resBuffer[i]!.match(/\n/g) || []).length + 1;
-			}
+        return `
+${this.header.join("\n")}
+${this.body.join("\n")}
+${this.footer.join("\n")}
+return $ctx;
+//# sourceURL=${this.filename}`;
+    }
 
-			for (const mapping of this.resMappings) {
-				const genLine = bufferLineOffsets.get(mapping.index);
-				if (genLine !== undefined) {
-					this.generator.addMapping({
-						genLine,
-						genCol: mapping.col,
-						sourceLine: mapping.node.loc!.start.line,
-						sourceCol: mapping.node.loc!.start.column,
-					});
-				}
-			}
-		}
+    private collectIdentifiers(nodes: Node[], set: Set<string>) {
+        const scan = (c: string) => { 
+            let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
+                const id = m[1]; if (id && !RESERVED_KEYWORDS.has(id)) set.add(id);
+            }
+            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; // Reset state for global regex
+        };
+        for (const n of nodes) {
+            if (n.type === "interpolation" || n.type === "js") scan(n.content || "");
+            if (n.args) n.args.forEach(a => typeof a === "string" && scan(a));
+            
+            if (n.type === "element") {
+                const isCustom = this.kire.$elementMatchers.some(m => {
+                    if (typeof m.def.name === "string") return m.def.name === n.tagName || (m.def.name.includes("*") && n.tagName?.startsWith(m.def.name.split("*")[0]!));
+                    return m.def.name instanceof RegExp && m.def.name.test(n.tagName || "");
+                });
 
-		let code = `\n${startCode}\n${this.resBuffer.join("\n")}\n${this.posBuffer.join("\n")}\nreturn $ctx.$response;\n//# sourceURL=${this.filename}`;
-
-		if (!this.kire.production) {
-			code += `\n//# sourceMappingURL=${this.generator.toDataUri()}`;
-		}
-
-		return code;
-	}
-
-	/**
-	 * Iterates over AST nodes and delegates compilation based on node type.
-	 * @param nodes List of nodes to compile.
-	 */
-	private compileNodes(nodes: Node[]) {
-		let pending: string[] = [];
-
-		const flush = () => {
-			if (pending.length === 0) return;
-			this.resBuffer.push(`$ctx.$add(${pending.join(" + ")});`);
-			pending = [];
-		};
-
-		let i = 0;
-		while (i < nodes.length) {
-			const node = nodes[i]!;
-
-			if (node.type === "text") {
-				let content = node.content || "";
-				let j = i + 1;
-				while (j < nodes.length && nodes[j]!.type === "text") {
-					content += nodes[j]!.content || "";
-					j++;
-				}
-				
-                if (this.kire.production) {
-                    pending.push(JSON.stringify(content));
-                } else {
-                    this.compileText({ ...node, content });
+                if (isCustom && n.attributes) {
+                    for (const [key, val] of Object.entries(n.attributes)) {
+                        const code = this.parseAttrCode(val);
+                        scan(code);
+                    }
+                } else if (n.attributes) {
+                    for (const [key, val] of Object.entries(n.attributes)) {
+                        if (key.startsWith('@')) scan(val);
+                    }
                 }
-				i = j;
-				continue;
-			}
-
-            if (node.type === "variable") {
-                if (this.kire.production && node.content) {
-                    const expr = node.raw ? `(${node.content})` : `$ctx.$escape(${node.content})`;
-                    pending.push(expr);
-                } else {
-                    this.compileVariable(node);
-                }
-                i++;
-                continue;
             }
 
-            flush();
+            if (n.children) this.collectIdentifiers(n.children, set);
+            if (n.related) this.collectIdentifiers(n.related, set);
+        }
+    }
 
-			switch (node.type) {
-				case "javascript":
-					this.compileJavascript(node);
-					break;
-				case "directive":
-					this.processDirective(node);
-					break;
-                case "element":
-                    this.processElement(node);
+    private collectDeclarations(nodes: Node[], set: Set<string>) {
+        for (const n of nodes) {
+            if (n.type === "directive") {
+                if (n.name === "for") {
+                    const a = n.args?.[0]; if (typeof a === "string") {
+                        const m = a.match(FOR_VAR_EXTRACT_REGEX); if (m) set.add(m[1]);
+                    }
+                }
+                if (n.name === "let" || n.name === "const") {
+                    const a = n.args?.[0]; if (typeof a === "string") {
+                        const name = a.split("=")[0].trim(); if (JS_IDENTIFIER_REGEX.test(name)) set.add(name);
+                    }
+                }
+                if (n.name === "error") set.add("$message");
+            }
+            if (n.type === "element" && n.tagName === "kire:for") {
+                const as = n.attributes?.['as']; if (as) set.add(as);
+                const index = n.attributes?.['index'] || 'index'; set.add(index);
+            }
+            if (n.children) this.collectDeclarations(n.children, set);
+            if (n.related) this.collectDeclarations(n.related, set);
+        }
+    }
+
+    private compileNodes(nodes: Node[]) {
+        for (const n of nodes) {
+            switch (n.type) {
+                case "text": this.textBuffer += n.content || ""; break;
+                case "interpolation":
+                    this.flushText();
+                    if (n.content?.includes("await")) this.markAsync();
+                    this.body.push(`$ctx.$response += ${n.raw ? n.content : `$ctx.$escape(${n.content})`};`);
                     break;
-			}
-			i++;
-		}
-        flush();
-	}
-
-    private processElement(node: Node) {
-        const name = node.name;
-        const tagName = node.tagName;
-        if (!name || !tagName) return;
-
-        let foundMatcher = null;
-        for (const m of this.kire.$elementMatchers) {
-            if (m.def.name === name) {
-                foundMatcher = m;
-                break;
+                case "js": 
+                    this.flushText();
+                    if (n.content?.includes("await")) this.markAsync(); 
+                    this.body.push(n.content || ""); 
+                    break;
+                case "directive": 
+                    this.flushText();
+                    this.processDirective(n); 
+                    break;
+                case "element": this.processElement(n); break;
             }
         }
+    }
 
-        if (!foundMatcher) {
-            if (node.children) this.compileNodes(node.children);
+    private processDirective(n: Node) {
+        const d = this.kire.getDirective(n.name!);
+        if (d) d.onCall(this.createCompilerApi(n, d));
+    }
+
+    private processElement(n: Node) {
+        const t = n.tagName || ""; let matcher = null;
+        for (const m of this.kire.$elementMatchers) {
+            if (typeof m.def.name === "string") {
+                if (m.def.name === t) { matcher = m; break; }
+                if (m.def.name.includes("*")) {
+                    const p = m.def.name.replace("*", "(.*)");
+                    const m2 = t.match(new RegExp(`^${p}$`));
+                    if (m2) { n.wildcard = m2[1]; matcher = m; break; }
+                }
+            } else if (m.def.name instanceof RegExp && m.def.name.test(t)) { matcher = m; break; }
+        }
+
+        if (!matcher) {
+            this.textBuffer += "<" + t;
+            if (n.attributes) {
+                for (const [key, val] of Object.entries(n.attributes)) {
+                    if (key.startsWith('@')) {
+                        this.flushText();
+                        const dirDef = this.kire.getDirective(key.slice(1));
+                        if (dirDef) dirDef.onCall(this.createCompilerApi({ ...n, type: 'directive', name: key.slice(1), args: [val] }, dirDef));
+                    } else {
+                        this.textBuffer += ` ${key}='${val}'`;
+                    }
+                }
+            }
+            this.textBuffer += ">";
+            if (n.children) this.compileNodes(n.children);
+            if (!n.void) this.textBuffer += "</" + t + ">";
             return;
         }
-
-        if (node.loc && !this.kire.production) {
-            this.resMappings.push({ 
-                index: this.resBuffer.length, 
-                node, 
-                col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 
-            });
-        }
-
-        const compiler = this.createElementCompilerContext(node, foundMatcher.def);
-        if (foundMatcher.def.onCall) {
-            foundMatcher.def.onCall(compiler);
-        } else if (node.children) {
-            this.compileNodes(node.children);
-        }
-    }
-
-    private createElementCompilerContext(node: Node, def: ElementDefinition): ElementCompilerContext {
-        // Use an empty object for directive def since we are an element
-        const params = Array.isArray(def.attributes) ? def.attributes : undefined;
-        const base = this.createCompilerContext(node, { name: node.name, params } as any);
         
-        const compiler: ElementCompilerContext = {
-            ...base,
-            tagName: node.tagName!,
-            attributes: node.attributes || {},
-            wildcard: node.wildcard,
-            attribute: (key: string) => {
-                // Try validated param first if definitions exist
-                if (params) {
-                    const p = base.param(key);
-                    if (p !== undefined) return p;
-                }
-                return node.attributes?.[key];
-            },
-            param: (key: string | number) => {
-                if (typeof key === "number") return undefined;
-                return compiler.attribute(key as string);
-            }
-        };
-
-        return compiler;
+        this.flushText();
+        matcher.def.onCall(this.createCompilerApi(n, matcher.def));
     }
 
-	private isAsyncNodes(nodes: Node[]): boolean {
-		return nodes.some((node) => this.isAsyncNode(node));
-	}
-
-	private isAsyncNode(node: Node): boolean {
-		if (node.type === "javascript" || node.type === "variable") {
-			return node.content?.includes("await") ?? false;
-		}
-		if (node.type === "directive") {
-			const def = this.kire.getDirective(node.name!);
-            if (def?.onCall && def.onCall.toString().includes('await')) return true;
-			if (node.children && this.isAsyncNodes(node.children)) {
-				return true;
-			}
-			if (node.related && this.isAsyncNodes(node.related)) {
-				return true;
-			}
-		}
-        if (node.type === "element") {
-            const matcher = this.kire.$elementMatchers.find(m => m.def.name === node.name);
-            if (matcher?.def.onCall && matcher.def.onCall.toString().includes('await')) return true;
-            if (node.children && this.isAsyncNodes(node.children)) return true;
-            if (node.related && this.isAsyncNodes(node.related)) return true;
-        }
-		return false;
-	}
-
-	private compileText(node: Node) {
-		if (node.content) {
-			if (node.loc && !this.kire.production) {
-                const currentLine = node.loc.start.line;
-                this.resMappings.push({
-                    index: this.resBuffer.length + 1,
-                    node,
-                    col: this.resBuffer[this.resBuffer.length - 1]?.length || 0
-                });
-                this.resBuffer.push(`// kire-line: ${currentLine}`);
-            }
-			this.resBuffer.push(`$ctx.$add(${JSON.stringify(node.content)});`);
-		}
-	}
-
-	private compileVariable(node: Node) {
-		if (node.content) {
-			if (node.loc && !this.kire.production) {
-                const currentLine = node.loc.start.line;
-                this.resMappings.push({
-                    index: this.resBuffer.length + 1,
-                    node,
-                    col: this.resBuffer[this.resBuffer.length - 1]?.length || 0
-                });
-                this.resBuffer.push(`// kire-line: ${currentLine}`);
-            }
-			if (node.raw) {
-				this.resBuffer.push(`$ctx.$add(${node.content});`);
-			} else {
-				this.resBuffer.push(`$ctx.$add($ctx.$escape(${node.content}));`);
-			}
-		}
-	}
-
-	private compileJavascript(node: Node) {
-		if (node.content) {
-			const lines = node.content.split("\n");
-			for (let i = 0; i < lines.length; i++) {
-				const lineContent = lines[i]!;
-				if (node.loc && !this.kire.production) {
-                    const currentLine = node.loc.start.line + i;
-					this.resMappings.push({
-						index: this.resBuffer.length + 1,
-						node: {
-							...node,
-							loc: {
-								start: {
-									line: currentLine,
-									column: i === 0 ? node.loc.start.column + 4 : 1,
-								},
-								end: node.loc.end,
-							},
-						},
-						col: 0,
-					});
-                    this.resBuffer.push(`// kire-line: ${currentLine}`);
-				}
-				this.resBuffer.push(lineContent);
-			}
-		}
-	}
-
-	private processDirective(node: Node) {
-		const name = node.name;
-		if (!name) return;
-
-		const directive = this.kire.getDirective(name);
-
-		if (!directive) {
-			console.warn(`Directive @${name} not found.`);
-			return;
-		}
-
-		if (node.loc && !this.kire.production) this.resMappings.push({ index: this.resBuffer.length, node, col: this.resBuffer[this.resBuffer.length - 1]?.length || 0 });
-		const compiler = this.createCompilerContext(node, directive);
-		directive.onCall(compiler);
-	}
-
-	/**
-	 * Creates the CompilerContext API that is exposed to directive handlers.
-	 * @param node The current directive node.
-	 * @param directive The directive definition.
-	 * @returns The context object.
-	 */
-	private createCompilerContext(
-		node: Node,
-		directive: DirectiveDefinition,
-	): CompilerContext {
-		const paramsMap: Record<string, any> = new NullProtoObj();
-
-		// Process and validate parameters
-		if (directive.params && node.args) {
-			directive.params.forEach((paramDefStr, index) => {
-				const argValue = node.args![index];
-				// Skip if argument is missing
-				if (argValue === undefined) return;
-
-				const definition = parseParamDefinition(paramDefStr);
-				const validation = definition.validate(argValue);
-
-				if (!validation.valid) {
-					throw new Error(
-						`Invalid parameter for directive @${node.name}: ${validation.error}`,
-					);
-				}
-
-				// Store the main parameter value by its name
-				paramsMap[definition.name] = argValue;
-
-				// Store any extracted variables from patterns
-				if (validation.extracted) {
-					Object.assign(paramsMap, validation.extracted);
-				}
-			});
-		}
-
-		const compiler: CompilerContext = {
-			kire: this.kire,
-			node: node,
-			count: (name: string) => {
-				if (this.counters[name] === undefined) this.counters[name] = 0;
-				return `$${this.counters[name]++}${name}`;
-			},
-			param: (key: string | number) => {
-				if (typeof key === "number") {
-					return node.args?.[key];
-				}
-				// Lookup in the processed params map first
-				if (paramsMap[key] !== undefined) {
-					return paramsMap[key];
-				}
-				// Fallback to legacy index-based lookup
-				if (directive.params && node.args) {
-					const index = directive.params.findIndex(
-						(p) => p.split(":")[0] === key,
-					);
-					if (index !== -1) return node.args[index];
-				}
-				return undefined;
-			},
-			children: node.children,
-			parents: node.related,
-			set: (nodes: Node[]) => {
-				if (!nodes) return;
-				this.compileNodes(nodes);
-			},
-			render: (content: string) => {
-				return this.kire.compile(content);
-			},
-			resolve: (path: string) => {
-				return this.kire.resolvePath(path);
-			},
-            depend: (path: string, globals: string[] = []) => {
-                const resolved = this.kire.resolvePath(path);
-                if (!this.dependencies.has(resolved)) {
-                    const id = `_tpl${this.dependencies.size}`;
-                    this.dependencies.set(resolved, { id, globals });
-                } else {
-                    const entry = this.dependencies.get(resolved)!;
-                    // Merge globals if the same template is requested with different props
-                    for (const g of globals) {
-                        if (!entry.globals.includes(g)) entry.globals.push(g);
-                    }
-                }
-                return this.dependencies.get(resolved)!.id;
+    private createCompilerApi(node: Node, definition: any): any {
+        const api: any = {
+            kire: this.kire, node, 
+            get wildcard() { return node.wildcard; },
+            get children() { return node.children; },
+            prologue: (js: string) => { if (js.includes("await")) this.markAsync(); this.header.push(js); },
+            write: (js: string) => { this.flushText(); if (js.includes("await")) this.markAsync(); this.body.push(js); },
+            after: (js: string) => { this.flushText(); if (js.includes("await")) this.markAsync(); this.footer.push(js); },
+            markAsync: () => this.markAsync(),
+            depend: (p: string) => {
+                const r = this.kire.resolvePath(p);
+                if (this.dependencies.has(r)) return this.dependencies.get(r)!;
+                const id = `_dep${this.dependencies.size}`;
+                this.dependencies.set(r, id); return id;
             },
-			func: (code: string) => {
-				const isAsync = code.includes("await");
-				return `${isAsync ? "async " : ""}function($ctx) { ${code}; return $ctx.$response; }`;
-			},
-			merge: (
-				callback: (ctx: CompilerContext) => void,
-			) => {
-				const isAsync = this.isAsyncNode(node) || (node.children ? this.isAsyncNodes(node.children) : false) || (node.related ? this.isAsyncNodes(node.related) : false);
-				this.resBuffer.push(
-					`$ctx.$response += ${isAsync ? "await " : ""}(${
-						isAsync ? "async " : ""
-					}($ctx) => {`,
-				);
-				callback(compiler);
-				this.resBuffer.push(`  return $ctx.$response;`);
-				this.resBuffer.push(`})($ctx.$fork().$emptyResponse());`);
-			},
-			error: (msg: string) => {
-				throw new Error(`Error in directive @${node.name}: ${msg}`);
-			},
-			// Legacy/Standard Directive API
-			pre: (code: string) => {
-				this.preBuffer.push(code);
-			},
-			res: (content: string) => {
-                // Detect elements in dynamic content
-                if (this.kire.$elements.size > 0) {
-                    TAG_NAME_REGEX.lastIndex = 0;
-                    const tagMatch = content.match(TAG_NAME_REGEX);
-                    if (tagMatch) {
-                        for (const m of tagMatch) {
-                            const tagName = m.slice(1);
-                            this.usedElements.add(tagName);
-                        }
-                    }
+            append: (c: any) => {
+                if (typeof c === "string") {
+                    this.textBuffer += c;
+                } else {
+                    this.flushText();
+                    this.body.push(`$ctx.$response += ${c};`);
                 }
-				this.resBuffer.push(`$ctx.$add(${JSON.stringify(content)});`);
-			},
-			raw: (code: string) => {
-				this.resBuffer.push(code);
-			},
-			pos: (code: string) => {
-				this.posBuffer.push(code);
-			},
-			$pre: (code: string) => {
-				this.resBuffer.push(`$ctx.$on('before', async ($ctx) => { ${code} });`);
-			},
-			$pos: (code: string) => {
-				this.resBuffer.push(`$ctx.$on('after', async ($ctx) => { ${code} });`);
-			},
-		};
-
-		return compiler;
-	}
+            },
+            renderChildren: (ns?: Node[]) => {
+                const targetNodes = ns || node.children || [];
+                this.compileNodes(targetNodes);
+            },
+            uid: (p: string) => { this.uidCounter[p] = (this.uidCounter[p] || 0) + 1; return `_${p}${this.uidCounter[p]}`; },
+            getAttribute: (n: string) => {
+                const val = node.type === "element" ? node.attributes?.[n] : undefined;
+                if (val !== undefined) return this.parseAttrCode(val);
+                
+                if (definition.params && node.args) {
+                    const i = definition.params.findIndex((p: string) => p.startsWith(n + ":") || p === n);
+                    const argVal = i !== -1 ? node.args[i] : undefined;
+                    return typeof argVal === "string" ? this.parseAttrCode(argVal) : argVal;
+                }
+                return undefined;
+            },
+            getArgument: (i: number) => {
+                const argVal = node.args?.[i];
+                return typeof argVal === "string" ? this.parseAttrCode(argVal) : argVal;
+            },
+            transform: (c: string) => this.parseAttrCode(c),
+            addLocal: () => {}, removeLocal: () => {},
+            raw: (js: string) => api.write(js),
+            res: (c: any) => api.append(c),
+            set: (ns: Node[]) => api.renderChildren(ns),
+            attribute: (n: string) => api.getAttribute(n),
+            param: (n: string | number) => typeof n === 'number' ? api.getArgument(n) : api.getAttribute(n),
+            inject: (js: string) => api.prologue(js),
+            epilogue: (js: string) => api.after(js)
+        };
+        return api;
+    }
 }

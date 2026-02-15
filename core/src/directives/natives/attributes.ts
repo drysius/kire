@@ -4,22 +4,15 @@ export default (kire: Kire) => {
     kire.directive({
         name: `class`,
         params: [`classes:any`],
-        type: `html`,
-        description: `Conditionally adds CSS classes. Accepts a string, array, or object.`,
-        example: `<div @class(['p-4', 'active' => $isActive])></div>`,
-        onCall(compiler) {
-            const classes = compiler.param("classes");
-            compiler.raw(`{
+        onCall(api) {
+            const classes = api.getAttribute("classes");
+            api.write(`{
                 const $c = ${classes};
-                let $res = "";
-                if (Array.isArray($c)) {
-                    $res = $c.filter(Boolean).join(" ");
-                } else if (typeof $c === 'object' && $c !== null) {
-                    $res = Object.entries($c).filter(([_, v]) => v).map(([k]) => k).join(" ");
-                } else {
-                    $res = String($c || "");
-                }
-                if ($res) $ctx.$add(\` class="\${$ctx.$escape($res)}" \`);
+                let $r = "";
+                if (Array.isArray($c)) $r = $c.filter(Boolean).join(" ");
+                else if (typeof $c === 'object' && $c !== null) $r = Object.entries($c).filter(([_, v]) => v).map(([k]) => k).join(" ");
+                else $r = String($c || "");
+                if ($r) $ctx.$response += " class=\\"" + $ctx.$escape($r) + "\\"";
             }`);
         },
     });
@@ -27,22 +20,15 @@ export default (kire: Kire) => {
     kire.directive({
         name: `style`,
         params: [`styles:any`],
-        type: `html`,
-        description: `Conditionally adds inline styles. Accepts a string, array, or object.`,
-        example: `<div @style(['color: red', 'font-weight: bold' => $isBold])></div>`,
-        onCall(compiler) {
-            const styles = compiler.param("styles");
-            compiler.raw(`{
+        onCall(api) {
+            const styles = api.getAttribute("styles");
+            api.write(`{
                 const $s = ${styles};
-                let $res = "";
-                if (Array.isArray($s)) {
-                    $res = $s.filter(Boolean).join("; ");
-                } else if (typeof $s === 'object' && $s !== null) {
-                    $res = Object.entries($s).filter(([_, v]) => v).map(([k, v]) => v === true ? k : \`\${k}: \${v}\`).join("; ");
-                } else {
-                    $res = String($s || "");
-                }
-                if ($res) $ctx.$add(\` style="\${$ctx.$escape($res)}" \`);
+                let $r = "";
+                if (Array.isArray($s)) $r = $s.filter(Boolean).join("; ");
+                else if (typeof $s === 'object' && $s !== null) $r = Object.entries($s).filter(([_, v]) => v).map(([k, v]) => v === true ? k : k + ": " + v).join("; ");
+                else $r = String($s || "");
+                if ($r) $ctx.$response += " style=\\"" + $ctx.$escape($r) + "\\"";
             }`);
         },
     });
@@ -52,12 +38,9 @@ export default (kire: Kire) => {
         kire.directive({
             name: attr,
             params: [`cond:any`],
-            type: `html`,
-            description: `Conditionally adds the ${attr} attribute.`,
-            example: `<input type="checkbox" @${attr}($isActive)>`,
-            onCall(compiler) {
-                const cond = compiler.param("cond");
-                compiler.raw(`if (${cond}) $ctx.$add(' ${attr} ');`);
+            onCall(api) {
+                const cond = api.getAttribute("cond");
+                api.write(`if (${cond}) $ctx.$response += ' ${attr} ';`);
             },
         });
     }

@@ -4,11 +4,11 @@ import componentDirectives from "./component";
 import importDirectives from "./import";
 import defineDirectives from "./layout";
 import nativeDirectives from "./natives";
+import nativeElements from "../elements/natives";
 
 export const KireDirectives: KirePlugin = {
 	name: "@kirejs/core",
 	sort: 100,
-	options: {},
 	load(kire) {
         registerTypes(kire);
 
@@ -16,5 +16,7 @@ export const KireDirectives: KirePlugin = {
 		nativeDirectives(kire);
 		importDirectives(kire);
 		componentDirectives(kire);
+        
+        nativeElements(kire);
 	},
 };
