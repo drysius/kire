@@ -1,6 +1,6 @@
 import type { Kire } from "../kire";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
 	kire.directive({
 		name: `define`,
 		params: [`name:string`],
@@ -11,7 +11,7 @@ export default (kire: Kire) => {
         onInit(ctx) {
             ctx.$globals["~defines"] = ctx.$globals["~defines"] || {};
         },
-		onCall(ctx) {
+		onCall: (ctx) => {
 			const name = ctx.param("name");
 
 			if (ctx.children) {
@@ -36,7 +36,7 @@ export default (kire: Kire) => {
 		onInit(ctx) {
 			ctx.$globals["~defines"] = ctx.$globals["~defines"] || {};
 		},
-		onCall(ctx) {
+		onCall: (ctx) => {
 			const name = ctx.param("name");
 
 			ctx.raw(`if ($ctx.$globals['~defines'][${JSON.stringify(name)}] !== undefined) {`);
@@ -60,7 +60,7 @@ export default (kire: Kire) => {
 </head>
 </html>`,
 		children: false,
-		onCall(compiler) {
+		onCall: (compiler) => {
 			const name = compiler.param("name");
 			compiler.raw(
 				`$ctx.$add("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`,
@@ -97,17 +97,16 @@ export default (kire: Kire) => {
 		example: `@push('scripts')
   <script src="app.js"></script>
 @endpush`,
-		onCall(compiler) {
+		onCall: (compiler) => {
 			const name = compiler.param("name");
-			compiler.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = {};`);
+			compiler.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = new $ctx.$kire.NullProtoObj();`);
 			compiler.raw(
 				`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`,
 			);
 			compiler.merge((c) => {
 				if (c.children) c.set(c.children);
 				c.raw(
-					`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`,
-				);
+					`  $ctx['~stacks'][${JSON.stringify(name)}].push($ctx.$response);`);
 				c.raw(`  $ctx.$response = '';`);
 			});
 		},

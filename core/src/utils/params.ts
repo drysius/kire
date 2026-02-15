@@ -1,4 +1,4 @@
-import { WHITESPACE_REGEX } from "./regex";
+import { NullProtoObj, WHITESPACE_REGEX } from "./regex";
 
 export function isPatternDefinition(def: string): boolean {
     return def.includes(" ") || def.includes("$") || def.includes("{");
@@ -49,7 +49,7 @@ function matchPattern(pattern: string, input: string): Record<string, any> | nul
     if (!input || typeof input !== 'string') return null;
     const pTokens = pattern.split(WHITESPACE_REGEX);
     const iTokens = input.trim().split(WHITESPACE_REGEX);
-    const result: Record<string, any> = {};
+    const result: Record<string, any> = new NullProtoObj();
     
     let i = 0;
     for (const p of pTokens) {

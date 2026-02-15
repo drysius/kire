@@ -1,6 +1,6 @@
 import type { Kire } from "../../kire";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
     kire.directive({
         name: `switch`,
         params: [`expr:any`],
@@ -14,7 +14,7 @@ export default (kire: Kire) => {
   @default
     Other
 @endswitch`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             compiler.raw(`switch (${compiler.param("expr")}) {`);
             if (compiler.children) {
                 const cases = compiler.children.filter(
@@ -35,7 +35,7 @@ export default (kire: Kire) => {
         example: `@case('A')
   Value is A
 @endcase`,
-        onCall(c) {
+        onCall: (c) => {
             c.raw(`case ${JSON.stringify(c.param("val"))}: {`);
             if (c.children) c.set(c.children);
             c.raw(`break; }`);
@@ -50,7 +50,7 @@ export default (kire: Kire) => {
         example: `@default
   Value is something else
 @enddefault`,
-        onCall(c) {
+        onCall: (c) => {
             c.raw(`default: {`);
             if (c.children) c.set(c.children);
             c.raw(`}`);

@@ -1,7 +1,7 @@
 import type { Kire } from "../kire";
 import type { ElementDefinition } from "../types";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
     const elseElement: ElementDefinition = {
         name: 'else',
         onCall: (ctx) => {
@@ -25,7 +25,7 @@ export default (kire: Kire) => {
         name: 'kire:if',
         attributes: [`cond:any`],
         parents: [elseifElement, elseElement],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const cond = ctx.attribute("cond");
             ctx.raw(`if (${cond}) {`);
             if (ctx.children) ctx.set(ctx.children);
@@ -37,7 +37,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:unless',
         attributes: [`cond:any`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const cond = ctx.attribute("cond");
             ctx.raw(`if (!(${cond})) {`);
             if (ctx.children) ctx.set(ctx.children);
@@ -48,7 +48,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:for',
         attributes: [`items:any`, `as:string`, `index:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const expr = ctx.attribute("items") || ctx.attribute("loop") || ctx.attribute("each") || "[]";
             const as = ctx.attribute("as") || 'item';
             const indexAs = ctx.attribute("index") || 'index';
@@ -71,7 +71,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:switch',
         attributes: [`value:any`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const value = ctx.attribute("value") || ctx.attribute("on") || ctx.attribute("expr");
             ctx.raw(`switch (${value}) {`);
             if (ctx.children) ctx.set(ctx.children);
@@ -82,7 +82,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:case',
         attributes: [`value:any`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const value = ctx.attribute("value") || ctx.attribute("is");
             ctx.raw(`case ${value}: {`);
             if (ctx.children) ctx.set(ctx.children);
@@ -92,7 +92,7 @@ export default (kire: Kire) => {
 
     kire.element({
         name: 'kire:default',
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             ctx.raw(`default: {`);
             if (ctx.children) ctx.set(ctx.children);
             ctx.raw(`}`);
@@ -102,7 +102,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:define',
         attributes: [`name:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const name = ctx.attribute("name") || ctx.attribute("value");
             ctx.raw(`{`);
             ctx.raw(`  const _origRes = $ctx.$response;`);
@@ -117,7 +117,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:defined',
         attributes: [`name:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const name = ctx.attribute("id") || ctx.attribute("name") || ctx.attribute("value");
             ctx.raw(`if ($ctx.$globals['~defines'][${JSON.stringify(name)}] !== undefined) {`);
             ctx.raw(`  $ctx.$add($ctx.$globals['~defines'][${JSON.stringify(name)}]);`);
@@ -132,7 +132,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:stack',
         attributes: [`name:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const name = ctx.attribute("name") || ctx.attribute("value");
             ctx.raw(`$ctx.$add("<!-- KIRE:stack(" + ${JSON.stringify(name)} + ") -->");`);
         }
@@ -141,9 +141,9 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:push',
         attributes: [`name:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const name = ctx.attribute("name") || ctx.attribute("value") || ctx.attribute("to");
-            ctx.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = {};`);
+            ctx.raw(`if(!$ctx['~stacks']) $ctx['~stacks'] = new $ctx.$kire.NullProtoObj();`);
             ctx.raw(`if (!$ctx['~stacks'][${JSON.stringify(name)}]) $ctx['~stacks'][${JSON.stringify(name)}] = [];`);
             ctx.merge((c) => {
                 if (c.children) c.set(c.children);
@@ -156,7 +156,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:yield',
         attributes: [`name:string`, `default:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const name = ctx.attribute("name") || ctx.attribute("value");
             ctx.raw(`{`);
             ctx.raw(`  const content = ($ctx.slots && $ctx.slots[${JSON.stringify(name)}]) || ($ctx.$props.slots && $ctx.$props.slots[${JSON.stringify(name)}]);`);
@@ -175,7 +175,7 @@ export default (kire: Kire) => {
 
     kire.element({
         name: 'kire:csrf',
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             ctx.raw(`
                 if (typeof $ctx.$globals.csrf === 'undefined') {
                     throw new Error("CSRF token not defined. Please define it using kire.$global('csrf', 'token')");
@@ -188,7 +188,7 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:method',
         attributes: [`value:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const m = ctx.attribute("value") || ctx.attribute("method") || "POST";
             ctx.res(`<input type="hidden" name="_method" value="${m}">`);
         }
@@ -197,40 +197,79 @@ export default (kire: Kire) => {
     kire.element({
         name: 'kire:include',
         attributes: [`path:string`],
-        onCall: async (ctx) => {
+        onCall: (ctx) => {
             const path = ctx.attribute("path") || ctx.attribute("view");
             if (!path) return;
-            ctx.raw(`$ctx.$response += await $ctx.$require(${JSON.stringify(path)}, { ...$ctx.$props, ...${JSON.stringify(ctx.attributes)} }) || "";`);
+
+            const extraGlobals = Object.keys(ctx.attributes).filter(k => k !== 'path' && k !== 'view');
+            const id = ctx.depend(path, extraGlobals);
+            const ctxId = ctx.count('ctx');
+            ctx.raw(`const ${ctxId} = $ctx;`);
+            ctx.raw(`{
+                const $ctx = ${ctxId}.$fork().$emptyResponse();
+                Object.assign($ctx.$props, { ...${ctxId}.$props, ...${JSON.stringify(ctx.attributes)} });
+                await ${id}.execute.call($ctx.$props, $ctx, ${id}.dependencies);
+                ${ctxId}.$response += $ctx.$response;
+            }`);
         }
     });
 
     // 2. Generic Component System (<x-name>)
+    const xSlot: ElementDefinition = {
+        name: 'slot',
+        attributes: ['name:string'],
+        onCall: (ctx) => {
+            const slotName = ctx.attribute('name') || 'default';
+            ctx.merge((c) => {
+                if (c.children) c.set(c.children);
+                c.raw(`  if ($ctx.slots) $ctx.slots[${JSON.stringify(slotName)}] = $ctx.$response;`);
+                c.raw(`  $ctx.$response = '';`);
+            });
+        }
+    };
+
     kire.element({
         name: 'x-*',
-        onCall: async (ctx) => {
+        parents: [xSlot],
+        onCall: (ctx) => {
             const componentName = ctx.wildcard;
-            if (!componentName || componentName === 'slot') return;
+            if (!componentName) return;
 
-            ctx.raw(`await (async () => {`);
-            ctx.raw(`  const $slots = {};`);
-            
-            ctx.merge((c) => {
-                c.raw(`    $ctx.slots = $slots;`);
-                if (c.children) c.set(c.children);
-                c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
-                c.raw(`    $ctx.$response = '';`);
-            });
+            let viewPath = componentName;
+            if (kire.$namespaces.has('components') && kire.$existFile(`components.${componentName}`)) {
+                viewPath = `components.${componentName}`;
+            } else if (kire.$namespaces.has('layouts') && kire.$existFile(`layouts.${componentName}`)) {
+                viewPath = `layouts.${componentName}`;
+            }
 
-            ctx.raw(`  let viewPath = ${JSON.stringify(componentName)};`);
-            ctx.raw(`  if ($ctx.$kire.$namespaces.has('components')) { viewPath = 'components.' + viewPath; }`);
-            ctx.raw(`  const props = { ...$ctx.$props, ...${JSON.stringify(ctx.attributes)} };`);
-            ctx.raw(`  props.slots = $slots;`);
-            ctx.raw(`  try {`);
-            ctx.raw(`    $ctx.$response += await $ctx.$kire.view(viewPath, props) || "";`);
-            ctx.raw(`  } catch (e) {`);
-            ctx.raw(`    $ctx.$add(\`<!-- Error rendering \${viewPath}: \${e.message} -->\`);`);
-            ctx.raw(`  }`);
-            ctx.raw(`})();`);
+            const id = ctx.count('comp');
+            const hasContent = (ctx.children && ctx.children.length > 0) || (ctx.node.related && ctx.node.related.length > 0);
+            const extraGlobals = Object.keys(ctx.attributes);
+            const tplId = ctx.depend(viewPath, extraGlobals);
+            const ctxId = ctx.count('ctx');
+
+            ctx.raw(`const ${ctxId} = $ctx;`);
+            ctx.raw(`{`);
+            ctx.raw(`  const $ctx = ${ctxId}.$fork().$emptyResponse();`);
+            ctx.raw(`  const $slots = new ${ctxId}.$kire.NullProtoObj();`);
+            if (hasContent) {
+                ctx.raw(`  const $parentSlots${id} = ${ctxId}.slots;`);
+                ctx.raw(`${ctxId}.slots = $slots;`);
+                ctx.merge((c) => {
+                    if (c.children) c.set(c.children);
+                    if (c.node.related) c.set(c.node.related);
+                    c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
+                    c.raw(`    $ctx.$response = '';`);
+                });
+            }
+
+            ctx.raw(`  const props${id} = { ...${ctxId}.$props, ...${JSON.stringify(ctx.attributes)}, slots: $slots };`);
+            ctx.raw(`  $ctx.slots = $slots;`);
+            ctx.raw(`  Object.assign($ctx.$props, props${id});`);
+            ctx.raw(`  await ${tplId}.execute.call($ctx.$props, $ctx, ${tplId}.dependencies);`);
+            ctx.raw(`  ${ctxId}.$response += $ctx.$response;`);
+            if (hasContent) ctx.raw(`  ${ctxId}.slots = $parentSlots${id};`);
+            ctx.raw(`}`);
         }
     });
 };

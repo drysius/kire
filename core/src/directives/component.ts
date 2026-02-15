@@ -1,7 +1,7 @@
 import type { Kire } from "../kire";
 import type { CompilerContext } from "../types";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
 	const slotDirective = {
 		name: `slot`,
 		params: [`name:string`],
@@ -11,7 +11,7 @@ export default (kire: Kire) => {
 		example: `@slot('header')
   <h1>This is the header</h1>
 @endslot`,
-		onCall(compiler: any) {
+		onCall: (compiler: any) => {
 			const name = compiler.param("name");
 			compiler.merge((c: CompilerContext) => {
 				if (c.children) c.set(c.children);
@@ -38,7 +38,7 @@ export default (kire: Kire) => {
 		type: `html`,
 		description: `Renders the content of a named slot.`,
 		example: `@yield('header')`,
-		onCall(compiler) {
+		onCall: (compiler) => {
 			const name = compiler.param("name");
 			const def = compiler.param("default");
 			compiler.raw(`{`);
@@ -70,42 +70,64 @@ export default (kire: Kire) => {
   @endslot
   <p>Default content.</p>
 @endcomponent`,
-		onCall(compiler: any) {
+		onCall: (compiler: any) => {
 			const pathExpr = compiler.param("path");
 			const varsExpr = compiler.param("variables") || "{}";
 
-			compiler.raw(`await (async () => {`);
-			compiler.raw(`  const $slots = {};`);
+            const renderComponent = (path: string, isStatic: boolean) => {
+                const id = isStatic ? compiler.depend(path) : null;
+                const ctxId = compiler.count('ctx');
+                
+                if (isStatic) compiler.raw(`const ${ctxId} = $ctx;`);
+                
+                compiler.raw(`{`);
+                if (isStatic) {
+                    compiler.raw(`  const $ctx = ${ctxId}.$fork().$emptyResponse();`);
+                    compiler.raw(`  $ctx.slots = new $ctx.$kire.NullProtoObj();`);
+                }
+                compiler.raw(`  const $slots = ${isStatic ? '$ctx.slots' : 'new $ctx.$kire.NullProtoObj()'};`);
 
-			if (kire.$stream) {
-				compiler.raw(`  $slots.default = async () => {`);
-				compiler.raw(`    $ctx.slots = $slots;`);
-				if (compiler.children) compiler.set(compiler.children);
-				compiler.raw(`  };`);
-			} else {
-				compiler.merge((c: CompilerContext) => {
-					c.raw(`    $ctx.slots = $slots;`);
-					if (c.children) c.set(c.children);
-					c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
-					c.raw(`    $ctx.$response = '';`);
-				});
-			}
+                if (kire.$stream) {
+                    compiler.raw(`  $slots.default = async () => {`);
+                    compiler.raw(`    const $parentSlots = $ctx.slots;`);
+                    compiler.raw(`    $ctx.slots = $slots;`);
+                    if (compiler.children) compiler.set(compiler.children);
+                    compiler.raw(`    $ctx.slots = $parentSlots;`);
+                    compiler.raw(`  };`);
+                } else {
+                    compiler.merge((c: CompilerContext) => {
+                        c.raw(`    const $parentSlots = $ctx.slots;`);
+                        c.raw(`    $ctx.slots = $slots;`);
+                        if (c.children) c.set(c.children);
+                        c.raw(`    if (!$slots.default) $slots.default = $ctx.$response;`);
+                        c.raw(`    $ctx.$response = '';`);
+                        c.raw(`    $ctx.slots = $parentSlots;`);
+                    });
+                }
 
-			compiler.raw(`  const path = ${JSON.stringify(pathExpr)};`);
-			compiler.raw(`  const componentLocals = ${varsExpr};`);
-			compiler.raw(`  const finalLocals = { ...componentLocals };`);
-			compiler.raw(
-				`  if (typeof finalLocals === 'object' && finalLocals !== null) finalLocals.slots = $slots;`,
-			);
+                compiler.raw(`  const componentLocals = ${varsExpr};`);
+                compiler.raw(`  const finalLocals = { ...componentLocals, slots: $slots };`);
+                
+                if (isStatic) {
+                    compiler.raw(`  Object.assign($ctx.$props, finalLocals);`);
+                    compiler.raw(`  await ${id}.execute.call($ctx.$props, $ctx, ${id}.dependencies);`);
+                    compiler.raw(`  ${ctxId}.$response += $ctx.$response;`);
+                } else {
+                    const isAsync = kire.isAsync(path);
+                    compiler.raw(
+                        `  $ctx.$response += ${
+                            isAsync ? "await " : ""
+                        }$ctx.$require(${JSON.stringify(path)}, finalLocals) || "";`,
+                    );
+                }
+                compiler.raw(`}`);
+            };
 
-			const isAsync = kire.isAsync(pathExpr);
-			compiler.raw(
-				`  $ctx.$response += ${
-					isAsync ? "await " : ""
-				}$ctx.$require(path, finalLocals) || "";`,
-			);
-
-			compiler.raw(`})();`);
+            if (typeof pathExpr === 'string') {
+                renderComponent(pathExpr, true);
+            } else {
+                renderComponent(pathExpr, false);
+            }
 		},
 	};
 

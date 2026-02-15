@@ -6,7 +6,8 @@ import {
     DIRECTIVE_NAME_REGEX, 
     DIRECTIVE_TAG_REGEX, 
     DIRECTIVE_END_REGEX,
-    ATTR_SCANNER_REGEX
+    ATTR_SCANNER_REGEX,
+	NullProtoObj
 } from "./utils/regex";
 
 export class Parser {
@@ -224,7 +225,7 @@ export class Parser {
      * Parses attributes from a raw string.
      */
     private parseAttributes(raw: string): Record<string, string> {
-        const attributes: Record<string, string> = {};
+        const attributes: Record<string, string> = new NullProtoObj();
         const regex = /([a-zA-Z0-9_\-:]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
         let m;
         while ((m = regex.exec(raw))) {

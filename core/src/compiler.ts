@@ -1,15 +1,8 @@
 import type { Kire } from "./kire";
-import type { CompilerContext, DirectiveDefinition, Node } from "./types";
+import type { CompilerContext, DirectiveDefinition, ElementDefinition, Node } from "./types";
 import { parseParamDefinition } from "./utils/params";
 import { SourceMapGenerator } from "./utils/source-map";
-import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX, NullProtoObj } from "./utils/regex";
-
-const RESERVED_KEYWORDS = new Set([
-    "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", 
-    "export", "extends", "finally", "for", "function", "if", "import", "in", "instanceof", "new", "return", 
-    "super", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum", 
-    "await", "true", "false", "null"
-]);
+import { TAG_NAME_REGEX, JS_IDENTIFIER_REGEX, NullProtoObj, RESERVED_KEYWORDS } from "./utils/regex";
 
 export class Compiler {
 	private preBuffer: string[] = [];
@@ -19,9 +12,10 @@ export class Compiler {
 	private generator: SourceMapGenerator;
 	private resMappings: { index: number; node: Node; col: number }[] = [];
 	private counters: Record<string, number> = new NullProtoObj();
+    private dependencies: Map<string, { id: string, globals: string[] }> = new Map();
 
 	constructor(
-		private kire: Kire,
+		private kire: Kire<any>,
 		private filename = "template.kire",
         private usedElements: Set<string> = new Set()
 	) {
@@ -41,10 +35,11 @@ export class Compiler {
 		this.resMappings = [];
 		this.usedDirectives.clear();
 		this.counters = new NullProtoObj();
+        this.dependencies.clear();
         if (usedElements) this.usedElements = usedElements;
 
 		const varLocals = this.kire.$var_locals || "it";
-		this.compileNodesSync(nodes);
+		this.compileNodes(nodes);
 
 		// Optimized destructuring
 		let startCode = "";
@@ -69,8 +64,16 @@ export class Compiler {
         if (sanitizedGlobals.length > 0) startCode += `const { ${sanitizedGlobals.join(", ")} } = $ctx.$globals;\n`;
         
         if (varLocals !== "none") startCode += `const ${varLocals} = $ctx.$props;\n`;
+        // Always attempt to destructure slots as it's a core feature
+        if (!localSet.has("slots")) startCode += `const { slots } = $ctx.$props;\n`;
+        
         if (usedElements?.size) startCode += `// kire-elements: ${Array.from(usedElements).join(",")}\n`;
 		
+        if (this.dependencies.size > 0) {
+            const depsArr = Array.from(this.dependencies.entries()).map(([path, data]) => `${data.id} = $deps[${JSON.stringify(path)}]`);
+            startCode += `const { ${depsArr.join(", ")} } = $deps;\n`;
+        }
+
         if (this.preBuffer.length > 0) startCode += this.preBuffer.join("\n") + "\n";
 
 		if (!this.kire.production) {
@@ -107,7 +110,7 @@ export class Compiler {
 	 * Iterates over AST nodes and delegates compilation based on node type.
 	 * @param nodes List of nodes to compile.
 	 */
-	private compileNodesSync(nodes: Node[]) {
+	private compileNodes(nodes: Node[]) {
 		let pending: string[] = [];
 
 		const flush = () => {
@@ -180,8 +183,7 @@ export class Compiler {
         }
 
         if (!foundMatcher) {
-            // Fallback for unknown elements: compile children as if it was just text/nodes
-            if (node.children) this.compileNodesSync(node.children);
+            if (node.children) this.compileNodes(node.children);
             return;
         }
 
@@ -197,7 +199,7 @@ export class Compiler {
         if (foundMatcher.def.onCall) {
             foundMatcher.def.onCall(compiler);
         } else if (node.children) {
-            this.compileNodesSync(node.children);
+            this.compileNodes(node.children);
         }
     }
 
@@ -221,7 +223,7 @@ export class Compiler {
             },
             param: (key: string | number) => {
                 if (typeof key === "number") return undefined;
-                return compiler.attribute(key);
+                return compiler.attribute(key as string);
             }
         };
 
@@ -237,15 +239,8 @@ export class Compiler {
 			return node.content?.includes("await") ?? false;
 		}
 		if (node.type === "directive") {
-			if (
-				node.name === "require" ||
-				node.name === "include" ||
-				node.name === "layout" ||
-				node.name === "extends" ||
-				node.name === "component"
-			) {
-				return true;
-			}
+			const def = this.kire.getDirective(node.name!);
+            if (def?.onCall && def.onCall.toString().includes('await')) return true;
 			if (node.children && this.isAsyncNodes(node.children)) {
 				return true;
 			}
@@ -253,6 +248,12 @@ export class Compiler {
 				return true;
 			}
 		}
+        if (node.type === "element") {
+            const matcher = this.kire.$elementMatchers.find(m => m.def.name === node.name);
+            if (matcher?.def.onCall && matcher.def.onCall.toString().includes('await')) return true;
+            if (node.children && this.isAsyncNodes(node.children)) return true;
+            if (node.related && this.isAsyncNodes(node.related)) return true;
+        }
 		return false;
 	}
 
@@ -398,33 +399,46 @@ export class Compiler {
 			},
 			children: node.children,
 			parents: node.related,
-			set: async (nodes: Node[]) => {
+			set: (nodes: Node[]) => {
 				if (!nodes) return;
-				this.compileNodesSync(nodes);
+				this.compileNodes(nodes);
 			},
-			render: async (content: string) => {
+			render: (content: string) => {
 				return this.kire.compile(content);
 			},
 			resolve: (path: string) => {
 				return this.kire.resolvePath(path);
 			},
+            depend: (path: string, globals: string[] = []) => {
+                const resolved = this.kire.resolvePath(path);
+                if (!this.dependencies.has(resolved)) {
+                    const id = `_tpl${this.dependencies.size}`;
+                    this.dependencies.set(resolved, { id, globals });
+                } else {
+                    const entry = this.dependencies.get(resolved)!;
+                    // Merge globals if the same template is requested with different props
+                    for (const g of globals) {
+                        if (!entry.globals.includes(g)) entry.globals.push(g);
+                    }
+                }
+                return this.dependencies.get(resolved)!.id;
+            },
 			func: (code: string) => {
 				const isAsync = code.includes("await");
 				return `${isAsync ? "async " : ""}function($ctx) { ${code}; return $ctx.$response; }`;
 			},
-			merge: async (
-				callback: (ctx: CompilerContext) => void | Promise<void>,
+			merge: (
+				callback: (ctx: CompilerContext) => void,
 			) => {
-				const isAsync = node.children ? this.isAsyncNodes(node.children) : false;
+				const isAsync = this.isAsyncNode(node) || (node.children ? this.isAsyncNodes(node.children) : false) || (node.related ? this.isAsyncNodes(node.related) : false);
 				this.resBuffer.push(
 					`$ctx.$response += ${isAsync ? "await " : ""}(${
 						isAsync ? "async " : ""
 					}($ctx) => {`,
 				);
-				const res = callback(compiler);
-				if (res instanceof Promise) await res;
+				callback(compiler);
 				this.resBuffer.push(`  return $ctx.$response;`);
-				this.resBuffer.push(`})($ctx.$fork());`);
+				this.resBuffer.push(`})($ctx.$fork().$emptyResponse());`);
 			},
 			error: (msg: string) => {
 				throw new Error(`Error in directive @${node.name}: ${msg}`);

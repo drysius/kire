@@ -1,6 +1,5 @@
 import { readFile, existsSync } from "node:fs";
-import { resolve, join, dirname, isAbsolute } from "node:path";
-import { createHash } from "node:crypto";
+import { resolve, join, isAbsolute } from "node:path";
 import { Compiler } from "./compiler";
 import { KireDirectives } from "./directives";
 import { Parser } from "./parser";
@@ -13,7 +12,6 @@ import type {
     ICompilerConstructor,
     IParserConstructor,
     KireCache,
-    KireElementOptions,
     KireOptions,
     KirePlugin,
     KireContext,
@@ -32,17 +30,15 @@ export interface ElementMatcher {
     def: ElementDefinition;
 }
 
-export class Kire {
+export class Kire<Streaming extends boolean = false> {
+    public NullProtoObj = NullProtoObj;
     public $scoped = scoped;
     public $error = KireError;
 
     public $directives: Map<string, DirectiveDefinition> = new Map();
     public $elements: Set<ElementDefinition> = new Set();
-    
-    // Elements Cache
     public $elementMatchers: ElementMatcher[] = [];
 
-    // Optimized: Use objects instead of Maps for performance
     public $globals: Record<string, any>;
     public $props: Record<string, any>;
     public $namespaces: Map<string, string> = new Map();
@@ -50,28 +46,28 @@ export class Kire {
     public production: boolean;
     public $root: string;
     public $extension: string;
-    public $stream: boolean;
+    public $stream: Streaming;
     public $silent: boolean;
+    public $var_locals: string;
     
-    // Cache
-    public $files: Map<string, CompiledTemplate> = new Map();
+    public $files: Record<string, CompiledTemplate> = new NullProtoObj(); // Cache de templates compilados
+    public $vfiles: Record<string, string> = new NullProtoObj(); // Fontes virtuais SEM cache
+    public $sources: Record<string, string> = new NullProtoObj(); // Fontes virtuais COM cache
     public $cache: Record<string, any> = new NullProtoObj();
 
     public $parser: IParserConstructor;
     public $compiler: ICompilerConstructor;
-    public $var_locals: string;
     public $executor: KireExecutor;
 
     public $hooks: KireHooks;
-    protected $parent?: Kire;
+    protected $parent?: Kire<any>;
 
     public $types: Map<string, TypeDefinition> = new Map();
     public $schemaDefinition?: KireSchemaDefinition;
-    public $virtualFiles: Record<string, string> = new NullProtoObj();
 
-    constructor(options: KireOptions = {}) {
+    constructor(options: KireOptions<Streaming> = new NullProtoObj()) {
         this.production = options.production ?? process.env.NODE_ENV === 'production';
-        this.$stream = options.stream ?? false;
+        this.$stream = (options.stream ?? false) as Streaming;
         this.$extension = options.extension ?? "kire";
         this.$silent = options.silent ?? false;
         this.$var_locals = options.varLocals ?? "it";
@@ -80,46 +76,50 @@ export class Kire {
         
         if (options.files) {
             for (const key in options.files) {
-                this.$virtualFiles[this.resolvePath(key)] = options.files[key]!;
+                this.$sources[this.resolve(key)] = options.files[key]!;
+            }
+        }
+
+        if (options.vfiles) {
+            for (const key in options.vfiles) {
+                this.$vfiles[this.resolve(key)] = options.vfiles[key]!;
             }
         }
 
         if (options.bundled) {
             for (const key in options.bundled) {
                 const item = options.bundled[key]!;
+                const path = this.resolve(key);
                 if (typeof item === 'function') {
-                    this.$files.set(this.resolvePath(key), {
+                    this.$files[path] = {
                         execute: item,
                         isAsync: (item as any)._isAsync ?? true,
                         path: key,
                         code: "",
                         source: "",
                         usedElements: (item as any)._usedElements
-                    });
+                    };
                 } else {
-                    this.$files.set(this.resolvePath(key), item);
+                    this.$files[path] = item;
                 }
             }
         }
 
-        // Optimized Hooks
         this.$hooks = new KireHooks();
 
-        // Optimized Scope (Prototype Chain)
         if (this.$parent) {
             this.$globals = Object.create(this.$parent.$globals);
             this.$props = Object.create(this.$parent.$props);
-            
-            // Inherit config
             this.$executor = this.$parent.$executor;
             this.$parser = this.$parent.$parser;
             this.$compiler = this.$parent.$compiler;
             this.$files = this.$parent.$files;
+            this.$vfiles = this.$parent.$vfiles;
+            this.$sources = this.$parent.$sources;
             this.$cache = this.$parent.$cache;
             this.$directives = this.$parent.$directives;
             this.$elements = this.$parent.$elements;
             this.$elementMatchers = this.$parent.$elementMatchers;
-            this.$elementRegex = this.$parent.$elementRegex;
             this.$namespaces = this.$parent.$namespaces;
             this.$types = this.$parent.$types;
             this.$schemaDefinition = this.$parent.$schemaDefinition;
@@ -135,7 +135,6 @@ export class Kire {
             this.$parser = options.engine?.parser ?? Parser;
             this.$compiler = options.engine?.compiler ?? Compiler;
             
-            // Load Plugins
             if (options.directives !== false) {
                 this.plugin(KireDirectives);
                 nativeElements(this);
@@ -148,15 +147,15 @@ export class Kire {
         }
 
         this.rebuildElements();
-        (this.$error as any).html = (e: any, ctx?: KireContext) => this.renderError(e, ctx);
+        (this.$error as any).html = (e: any, ctx?: KireContext<Streaming>) => this.renderError(e, ctx);
     }
 
-    public fork(): Kire {
-        return new Kire({ parent: this });
+    public fork(): Kire<Streaming> {
+        return new Kire<Streaming>({ parent: this as any, stream: this.$stream });
     }
 
     public cacheClear() {
-        this.$files.clear();
+        this.$files = new NullProtoObj();
         this.$cache = new NullProtoObj();
     }
 
@@ -192,115 +191,113 @@ export class Kire {
 
     public $global(key: string, value: any) {
         this.$globals[key] = value;
-        
         const typeName = typeof value;
-        this.type({
-            variable: key,
-            type: 'global',
-            comment: `Global Variable ${key} (${typeName})`,
-            tstype: typeName
-        });
+        this.type({ variable: key, type: 'global', comment: `Global Variable ${key} (${typeName})`, tstype: typeName });
         return this;
     }
 
     public $ctx(key: string, value: any) {
         this.$globals[key] = value;
-        
         const typeName = typeof value;
-        this.type({
-            variable: "$ctx." + key,
-            type: 'context',
-            comment: `Context Helper $ctx.${key}`,
-            tstype: typeName
-        });
+        this.type({ variable: "$ctx." + key, type: 'context', comment: `Context Helper $ctx.${key}`, tstype: typeName });
         return this;
     }
 
     // --- Compilation & Rendering ---
 
     public parse(template: string) {
-        const parser = new this.$parser(template, this);
+        const parser = new this.$parser(template, this as any);
         return parser.parse();
     }
 
     public compile(template: string, filename?: string, globals: string[] = []): string {
-        const parser = new this.$parser(template, this);
+        const parser = new this.$parser(template, this as any);
         const nodes = parser.parse();
-        const compiler = new this.$compiler(this, filename);
-        return compiler.compile(nodes, globals, parser.usedElements) as string;
+        const compiler = new this.$compiler(this as any, filename);
+        return compiler.compile(nodes, globals, parser.usedElements);
     }
 
-    public compileFn(content: string, filename = "template.kire", globals: string[] = []): CompiledTemplate | Promise<CompiledTemplate> {
+    public async compileFn(content: string, filename = "template.kire", globals: string[] = []): Promise<CompiledTemplate> {
         const key = this.production && filename !== "template.kire" 
             ? `${filename}:${globals.sort().join(",")}` 
             : `tpl:${content.length}:${content.slice(0, 100)}:${globals.sort().join(",")}`;
         
-        if (this.production && this.$files.has(key)) return this.$files.get(key)!;
+        // NÃO usa cache se estiver em $vfiles
+        if (this.production && !this.$vfiles[filename] && this.$files[key]) {
+            return this.$files[key]!;
+        }
         
-        if (!this.$elementRegex) this.rebuildElements();
-
-        const parser = new this.$parser(content, this);
+        const parser = new this.$parser(content, this as any);
         const nodes = parser.parse();
-        const compiler = new this.$compiler(this, filename);
-        const code = compiler.compile(nodes, globals, parser.usedElements) as string;
+        const compilerInstance = new this.$compiler(this as any, filename);
+        const code = compilerInstance.compile(nodes, globals, parser.usedElements);
 
-        const mainFn = this.$executor(code, ["$ctx"]);
+        const dependencies: Record<string, CompiledTemplate> = new NullProtoObj();
+        const depsEntries = (compilerInstance as any).dependencies ? Array.from(((compilerInstance as any).dependencies as Map<string, {id: string, globals: string[]}>).entries()) : [];
+        
+        for (const [depPath, data] of depsEntries) {
+            dependencies[depPath] = await this.viewCompiled(depPath, data.globals);
+        }
+
+        const mainFn = this.$executor(code, ["$ctx", "$deps"]);
         const template: CompiledTemplate = {
             execute: mainFn,
             isAsync: code.includes("await") || (mainFn as any).constructor.name === 'AsyncFunction',
             usedElements: new Set(parser.usedElements),
             path: filename,
             code: code,
-            source: content
+            source: content,
+            dependencies
         };
         
-        if (this.production) {
-            this.$files.set(key, template);
+        if (this.production && !this.$vfiles[filename]) {
+            this.$files[key] = template;
         }
         
         return template;
     }
 
-    public render(
-        template: string,
-        locals: Record<string, any> = {},
-        controller?: ReadableStreamDefaultController,
-        filename = "template.kire",
-    ): string | Promise<string | ReadableStream> | ReadableStream {
-        const compiled = this.compileFn(template, filename, Object.keys(locals));
-        
-        if (compiled instanceof Promise) {
-            return compiled.then(tpl => this.run(tpl, locals, false, controller));
-        }
+    public async viewCompiled(path: string, extraGlobals: string[] = []): Promise<CompiledTemplate> {
+        const resolvedPath = this.resolve(path);
+        const key = this.production && !this.$vfiles[resolvedPath] 
+            ? `${resolvedPath}:${extraGlobals.sort().join(",")}` 
+            : null;
 
-        return this.run(compiled, locals, false, controller);
+        if (key && this.$files[key]) {
+            return this.$files[key]!;
+        }
+        const content = await this.readFile(resolvedPath);
+        const tpl = await this.compileFn(content, resolvedPath, extraGlobals);
+        if (key) {
+            this.$files[key] = tpl;
+        }
+        return tpl;
     }
 
-    public view(
-        path: string,
-        locals: Record<string, any> = {},
+    public async render(
+        template: string,
+        locals: Record<string, any> = new NullProtoObj(),
         controller?: ReadableStreamDefaultController,
-    ): string | Promise<string | ReadableStream> | ReadableStream {
-        const resolvedPath = this.resolvePath(path);
+        filename = "template.kire",
+    ): Promise<Streaming extends true ? ReadableStream : string> {
+        const compiled = await this.compileFn(template, filename, Object.keys(locals));
+        return this.run(compiled, locals, false, controller) as any;
+    }
 
-        if (this.production && this.$files.has(resolvedPath)) {
-            return this.run(this.$files.get(resolvedPath)!, locals, false, controller);
+    public async view(
+        path: string,
+        locals: Record<string, any> = new NullProtoObj(),
+        controller?: ReadableStreamDefaultController,
+    ): Promise<Streaming extends true ? ReadableStream : string> {
+        const resolvedPath = this.resolve(path);
+
+        if (this.production && !this.$vfiles[resolvedPath] && this.$files[resolvedPath]) {
+            return this.run(this.$files[resolvedPath]!, locals, false, controller) as any;
         }
 
-        const contentPromise = this.readFile(resolvedPath);
-        if (contentPromise instanceof Promise) {
-            return contentPromise.then(async content => {
-                const tpl = await this.compileFn(content, resolvedPath, Object.keys(locals));
-                return this.run(tpl, locals, false, controller);
-            });
-        }
-        
-        const tplPromise = this.compileFn(contentPromise, resolvedPath, Object.keys(locals));
-        if (tplPromise instanceof Promise) {
-            return tplPromise.then(tpl => this.run(tpl, locals, false, controller));
-        }
-        
-        return this.run(tplPromise, locals, false, controller);
+        const content = await this.readFile(resolvedPath);
+        const tpl = await this.compileFn(content, resolvedPath, Object.keys(locals));
+        return this.run(tpl, locals, false, controller) as any;
     }
 
     public run(
@@ -308,41 +305,46 @@ export class Kire {
         locals: Record<string, any>,
         children = false,
         controller?: ReadableStreamDefaultController,
-    ): string | Promise<string | ReadableStream> | ReadableStream {
-        return KireRuntime(this, locals, {
+    ): Streaming extends true ? ReadableStream : string | Promise<string> {
+        return KireRuntime(this as any, locals, {
             ...template,
             name: template.execute.name || 'anonymous',
             children,
             controller,
             usedElements: template.usedElements
-        });
+        }) as any;
     }
 
-    public renderError(e: any, ctx?: KireContext): string {
+    public renderError(e: any, ctx?: KireContext<Streaming>): string {
         return renderErrorHtml(e, ctx);
     }
 
     // --- File System & Resolution ---
 
-    public resolvePath(filepath: string): string {
+    public resolve(filepath: string): string {
+        return this.resolvePath(filepath);
+    }
+
+    private resolvePath(filepath: string): string {
         if (!filepath) return filepath;
         if (filepath.startsWith('http')) return filepath;
 
         let path = filepath.replace(/\\/g, '/');
         
-        // Handle namespaces
         const firstSep = path.search(/[.\/]/);
         const prefix = firstSep !== -1 ? path.slice(0, firstSep) : path;
         
         if (this.$namespaces.has(prefix)) {
             const ns = this.$namespaces.get(prefix)!;
-            const rest = firstSep !== -1 ? path.slice(firstSep + 1).replace(/\./g, '/') : '';
+            let rest = firstSep !== -1 ? path.slice(firstSep + 1) : '';
+            if (rest && !rest.includes('/') && rest.includes('.') && !rest.endsWith('.' + this.$extension)) {
+                rest = rest.replace(/\./g, '/');
+            }
             path = join(ns, rest).replace(/\\/g, '/');
-        } else if (!path.includes('/') && path.includes('.')) {
+        } else if (!path.includes('/') && path.includes('.') && !path.endsWith('.' + this.$extension)) {
              path = path.replace(/\./g, '/');
         }
 
-        // Add Extension if missing
         if (this.$extension) {
             const lastSlash = path.lastIndexOf('/');
             const lastDot = path.lastIndexOf('.');
@@ -360,7 +362,8 @@ export class Kire {
 
     public readFile(path: string): Promise<string> | string {
         const normalizedPath = path.replace(/\\/g, '/');
-        if (this.$virtualFiles[normalizedPath]) return this.$virtualFiles[normalizedPath]!;
+        if (this.$vfiles[normalizedPath]) return this.$vfiles[normalizedPath]!;
+        if (this.$sources[normalizedPath]) return this.$sources[normalizedPath]!;
 
         return new Promise((resolve, reject) => {
             readFile(path, 'utf-8', (err, data) => {
@@ -370,15 +373,19 @@ export class Kire {
         });
     }
 
+    public $existFile(path: string): boolean {
+        const resolved = this.resolve(path);
+        if (this.$vfiles[resolved] || this.$sources[resolved]) return true;
+        return existsSync(resolved);
+    }
+
     public namespace(name: string, path: string) {
         this.$namespaces.set(name, resolve(this.$root, path).replace(/\\/g, '/'));
         return this;
     }
 
-    // --- Definitions ---
-
     public isAsync(path: string): boolean {
-        const resolved = this.resolvePath(path);
+        const resolved = this.resolve(path);
         if (this.$files.has(resolved)) {
             return this.$files.get(resolved)!.isAsync;
         }
@@ -387,13 +394,7 @@ export class Kire {
 
     public directive(def: DirectiveDefinition) {
         this.$directives.set(def.name, def);
-        this.type({
-            variable: "@" + def.name,
-            type: 'directive',
-            comment: def.description,
-            example: def.example,
-            tstype: 'directive'
-        });
+        this.type({ variable: "@" + def.name, type: 'directive', comment: def.description, example: def.example, tstype: 'directive' });
         if (def.parents) def.parents.forEach(p => this.directive(p));
         return this;
     }
@@ -403,19 +404,11 @@ export class Kire {
     }
 
     public element(def: ElementDefinition) {
-        // Add to the beginning to ensure precedence over previous/native elements
         this.$elements = new Set([def, ...this.$elements]);
-        
         if (typeof def.name === 'string') {
             this.type({ variable: def.name, type: 'element', comment: def.description, tstype: 'element' });
         }
-        
-        if (def.parents) {
-            for (const p of def.parents) {
-                this.element(p);
-            }
-        }
-
+        if (def.parents) def.parents.forEach(p => this.element(p));
         this.rebuildElements();
         return this;
     }
@@ -423,7 +416,6 @@ export class Kire {
     private rebuildElements() {
         const allElements = Array.from(this.$elements);
         if (allElements.length === 0) return;
-
         this.$elementMatchers = allElements.map(def => ({ def }));
     }
 

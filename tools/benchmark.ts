@@ -1,7 +1,8 @@
-import { Kire } from "../core/src/kire";
+//import { Kire } from "../core/dist/index.js";
+import { Kire } from "../core/src";
 import { Edge } from "edge.js";
-import { consumeStream } from "../core/src/utils/stream";
-import { NullProtoObj } from "../core/src/utils/regex";
+import { consumeStream } from "../core/src/utils/stream.ts";
+import { NullProtoObj } from "../core/src/utils/regex.ts";
 
 async function runBenchmark() {
     const tpl = `
@@ -12,7 +13,7 @@ async function runBenchmark() {
                     <li class="{{ user.active ? 'active' : '' }}">
                         {{ user.name }} ({{ user.email }})
                         @if(user.isAdmin)
-                            <span class="badge">Admin</span>
+                            <x-user name="user.name" email="user.email" active="user.active" isAdmin="user.isAdmin" />
                         @endif
                     </li>
                 @endeach
@@ -28,7 +29,7 @@ async function runBenchmark() {
                     <li class="@{{ user.active ? 'active' : '' }}">
                         @{{ user.name }} (@{{ user.email }})
                         <kire:if cond="user.isAdmin">
-                            <span class="badge">Admin</span>
+                            <x-user name="user.name" email="user.email" active="user.active" isAdmin="user.isAdmin" />
                         </kire:if>
                     </li>
                 </kire:for>
@@ -78,11 +79,11 @@ async function runBenchmark() {
     
     console.log(`Diagnostic: Users in globals: ${!!kire.$globals.users}, Count: ${kire.$globals.users?.length}`);
 
-    // Register files with normalized paths
-    kire.$virtualFiles[kire.resolvePath("bench.kire")] = tpl;
-    kire.$virtualFiles[kire.resolvePath("bench-elements.kire")] = tplElements;
-    kire.$virtualFiles[kire.resolvePath("bench-components.kire")] = tplComponents;
-    kire.$virtualFiles[kire.resolvePath("components/user.kire")] = userComponent;
+    // Register files with normalized paths - using $sources for caching
+    kire.$sources[kire.resolve("bench.kire")] = tpl;
+    kire.$sources[kire.resolve("bench-elements.kire")] = tplElements;
+    kire.$sources[kire.resolve("bench-components.kire")] = tplComponents;
+    kire.$sources[kire.resolve("components/user.kire")] = userComponent;
     
     // Compile bundled template using the instance that has elements/directives loaded
     const bundledTpl = await kire.compileFn(tpl, "bundled.kire", Object.keys(data));

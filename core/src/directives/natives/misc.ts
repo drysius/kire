@@ -1,6 +1,6 @@
 import type { Kire } from "../../kire";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
     kire.directive({
         name: `once`,
         children: true,
@@ -9,7 +9,7 @@ export default (kire: Kire) => {
         example: `@once
   <script src="one-time-script.js"></script>
 @endonce`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const id = compiler.count("once");
             compiler.raw(`if (!$ctx['~once']) $ctx['~once'] = new Set();`);
             compiler.raw(`if (!$ctx['~once'].has('${id}')) { 
@@ -25,7 +25,7 @@ export default (kire: Kire) => {
         type: `js`,
         description: `Injects a module or service into the template.`,
         example: `@inject('metrics', './services/metrics')`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const varName = compiler.param("varName");
             const path = compiler.param("modulePath");
             compiler.raw(`const ${varName} = await import('${path}');`);
@@ -41,7 +41,7 @@ export default (kire: Kire) => {
         example: `@error('email')
   <span class="error">{{ $message }}</span>
 @enderror`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const field = compiler.param("field");
             compiler.raw(`if ($ctx.$props.errors && $ctx.$props.errors[${JSON.stringify(field)}]) {
                 const $message = $ctx.$props.errors[${JSON.stringify(field)}];`);
@@ -55,7 +55,7 @@ export default (kire: Kire) => {
         type: `html`,
         description: `Renders a CSRF token input field.`,
         example: `@csrf`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             compiler.raw(`
                 if (typeof $ctx.$globals.csrf === 'undefined') {
                     throw new Error("CSRF token not defined. Please define it using kire.$global('csrf', 'token')");
@@ -71,7 +71,7 @@ export default (kire: Kire) => {
         type: `html`,
         description: `Spoofs an HTTP method using a hidden input.`,
         example: `@method('PUT')`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const method = compiler.param("method");
             compiler.res(`<input type="hidden" name="_method" value="${method}">`);
         },
@@ -83,7 +83,7 @@ export default (kire: Kire) => {
         type: `html`,
         description: `Declares a block-scoped constant.`,
         example: `@const(myVar = 'hello')`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             compiler.raw(`const ${compiler.param("expr")};`);
         },
     });
@@ -94,7 +94,7 @@ export default (kire: Kire) => {
         type: `html`,
         description: `Declares a block-scoped local variable.`,
         example: `@let(counter = 0)`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             compiler.raw(`let ${compiler.param("expr")};`);
         },
     });
@@ -107,7 +107,7 @@ export default (kire: Kire) => {
         example: `@defer
   <p>Loading slow content...</p>
 @enddefer`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             compiler.raw(`{
                 const deferredRender = async ($ctx) => {`);
             if (compiler.children) compiler.set(compiler.children);

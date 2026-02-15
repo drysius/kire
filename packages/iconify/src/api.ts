@@ -1,7 +1,9 @@
+import { NullProtoObj } from "../../../core/src/utils/regex";
+
 export async function fetchIcon(
 	iconName: string,
 	apiUrl: string,
-	queryParams: Record<string, string> = {},
+	queryParams: Record<string, string> = new NullProtoObj(),
 	cache?: Map<string, string>,
 ): Promise<string> {
 	// Create a cache key that includes the query parameters to differentiate variants

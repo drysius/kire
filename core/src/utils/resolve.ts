@@ -1,7 +1,9 @@
+import { NullProtoObj } from "./regex";
+
 export function resolvePath(
 	filepath: string,
 	namespaces: Map<string, string>,
-	locals: Record<string, any> = {},
+	locals: Record<string, any>  = new NullProtoObj(),
 	extension = "kire",
 ): string {
 	if (!filepath || filepath.startsWith("http")) return filepath;

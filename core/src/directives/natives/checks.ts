@@ -1,7 +1,6 @@
 import type { Kire } from "../../kire";
-import type { DirectiveDefinition } from "../../types";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
     kire.directive({
         name: `isset`,
         params: [`expr:any`],
@@ -11,7 +10,7 @@ export default (kire: Kire) => {
         example: `@isset($user)
   User is set.
 @endisset`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const expr = compiler.param("expr");
             compiler.raw(`if (typeof ${expr} !== 'undefined' && ${expr} !== null) {`);
             if (compiler.children) compiler.set(compiler.children);
@@ -28,7 +27,7 @@ export default (kire: Kire) => {
         example: `@empty($records)
   No records found.
 @endempty`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const expr = compiler.param("expr");
             compiler.raw(`if (!${expr} || (Array.isArray(${expr}) && ${expr}.length === 0)) {`);
             if (compiler.children) compiler.set(compiler.children);

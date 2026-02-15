@@ -81,6 +81,7 @@ export default function (
             const fork = { ...$ctx, $response: "" };
             fork.$globals = $ctx.$globals;
             fork.$props = $ctx.$props;
+            if ($ctx.slots) fork.slots = $ctx.slots;
             fork.$add = (str: string) => (fork.$response += str);
             fork.$emptyResponse = () => {
                 fork.$response = "";
@@ -112,7 +113,7 @@ export default function (
         let hasError = false;
         const run = () => {
             try {
-                const res = meta.execute.call($ctx.$props, $ctx);
+                const res = meta.execute.call($ctx.$props, $ctx, meta.dependencies);
                 if (res instanceof Promise) {
                     return res.then(async () => {
                         return $ctx.$response;

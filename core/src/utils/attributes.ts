@@ -1,7 +1,9 @@
+import { NullProtoObj } from "./regex";
+
 export class Attributes {
     private attributes: Record<string, any>;
 
-    constructor(attributes: Record<string, any> = {}) {
+    constructor(attributes: Record<string, any> = new NullProtoObj()) {
         this.attributes = attributes;
     }
 

@@ -22,6 +22,13 @@ export const DIRECTIVE_END_REGEX = /@end(?![a-zA-Z0-9_])/g;
 export const JS_IDENTIFIER_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 export const WHITESPACE_REGEX = /\s+/;
 
+export const RESERVED_KEYWORDS = new Set([
+    "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", 
+    "export", "extends", "finally", "for", "function", "if", "import", "in", "instanceof", "new", "return", 
+    "super", "switch", "this", "throw", "try", "typeof", "var", "void", "while", "with", "yield", "enum", 
+    "await", "true", "false", "null"
+]);
+
 // HTML Escaping
 export const HTML_ESCAPE_CHECK_REGEX = /[&<>"']/;
 export const HTML_ESCAPE_GLOBAL_REGEX = /[&<>"']/g;

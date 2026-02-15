@@ -1,6 +1,6 @@
 import type { KireContext } from "../types";
 import { Attributes } from "./attributes";
-import { ATTR_SCANNER_REGEX } from "./regex";
+import { ATTR_SCANNER_REGEX, NullProtoObj } from "./regex";
 
 const AsyncFunction = (async () => {}).constructor;
 
@@ -22,7 +22,7 @@ export const processElements = ($ctx: KireContext): Promise<string> | string => 
 };
 
 function parseAttrs(raw: string): Record<string, any> {
-    const attributes: Record<string, any> = {};
+    const attributes: Record<string, any> = new NullProtoObj();
     const regex = new RegExp(ATTR_SCANNER_REGEX.source, 'g');
     let m;
     while ((m = regex.exec(raw))) {

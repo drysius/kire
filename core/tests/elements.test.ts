@@ -77,4 +77,24 @@ describe("Kire Elements System (Pattern-based)", () => {
         const result = await k.render('<my:tag title="Hello World" />');
         expect(result).toBe("Title: Hello World");
     });
+
+    test("should handle x-* components with x-slot", async () => {
+        const k = new Kire();
+        const cardPath = k.resolve("card");
+        k.$vfiles[cardPath] = "<div class='card'>@yield('header')<div class='body'>{{ slots.default }}</div>@yield('footer')</div>";
+
+        const template = `
+            <x-card>
+                <x-slot name="header"><h1>Header</h1></x-slot>
+                Main Content
+                <x-slot name="footer"><p>Footer</p></x-slot>
+            </x-card>
+        `;
+
+        const result = await k.render(template);
+        expect(result).toContain("<div class='card'>");
+        expect(result).toContain("<h1>Header</h1>");
+        expect(result).toContain("Main Content");
+        expect(result).toContain("<p>Footer</p>");
+    });
 });

@@ -51,8 +51,8 @@ describe("Kire Directives & Elements", () => {
 
     test("Namespaces and Views", async () => {
         const k = new Kire();
-        const vPath = k.resolvePath("admin/dashboard");
-        k.$virtualFiles[vPath] = "Admin View";
+        const vPath = k.resolve("admin/dashboard");
+        k.$vfiles[vPath] = "Admin View";
         k.namespace("admin", k.$root + "/admin");
         
         const result = await consumeStream(await k.view("admin.dashboard"));

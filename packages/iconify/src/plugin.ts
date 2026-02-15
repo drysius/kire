@@ -1,6 +1,7 @@
 import type { KirePlugin } from "kire";
 import { fetchIcon, processSvgAttributes } from "./api";
 import type { IconifyOptions } from "./types";
+import { NullProtoObj } from "../../../core/src/utils/regex";
 
 export const KireIconify: KirePlugin<IconifyOptions> = {
 	name: "@kirejs/iconify",
@@ -20,7 +21,7 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 
 		kire.$ctx(
 			"fetchIcon",
-			async (name: string, params: Record<string, string> = {}) => {
+			async (name: string, params: Record<string, string> = new NullProtoObj()) => {
 				return fetchIcon(name, apiUrl, params, iconCache);
 			},
 		);

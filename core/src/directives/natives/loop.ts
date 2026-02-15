@@ -1,7 +1,6 @@
 import type { Kire } from "../../kire";
-import type { DirectiveDefinition } from "../../types";
 
-export default (kire: Kire) => {
+export default (kire: Kire<any>) => {
     kire.directive({
         name: `for`,
         params: [`loop:$lhs {op:in/of} $rhs|statement:string`],
@@ -15,13 +14,13 @@ export default (kire: Kire) => {
                 children: true,
                 type: `html`,
                 description: `Renders if the loop had no iterations.`,
-                onCall(compiler) {
+                onCall: (compiler) => {
                     compiler.raw(`} if ($__empty) {`);
                     if (compiler.children) compiler.set(compiler.children);
                 },
             }
         ],
-        onCall(compiler) {
+        onCall: (compiler) => {
             const lhs = compiler.param("lhs");
             const rhs = compiler.param("rhs");
             const op = compiler.param("op");
@@ -72,9 +71,9 @@ export default (kire: Kire) => {
         example: `@each(item of items)
   <li>{{ item }}</li>
 @endeach`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const directive = kire.getDirective("for");
-            if (directive) directive.onCall(compiler);
+            if (directive) (directive.onCall(compiler));
         }
     });
 
@@ -89,9 +88,9 @@ export default (kire: Kire) => {
 @empty
   No users.
 @endforelse`,
-        onCall(compiler) {
+        onCall: (compiler) => {
             const directive = kire.getDirective("for");
-            if (directive) directive.onCall(compiler);
+            if (directive) (directive.onCall(compiler));
         }
     });
 };
