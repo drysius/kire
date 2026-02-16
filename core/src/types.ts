@@ -29,6 +29,8 @@ export interface KireContext {
     $props: Record<string, any>;
     $kire: Kire<any>;
     $template: KireTplFunction;
+    $dependencies: Record<string, KireTplFunction>;
+    $metafile: KireTplFunction['meta'];
     $response: string;
     $escape: (v: any) => string;
     [key: string]: any;
@@ -49,7 +51,7 @@ export interface KireTplFunction extends KireTplFunctionBase {
     /** Stream execution (returns ReadableStream) */
     stream: (kire: Kire<any>, locals?: object, globals?: object) => ReadableStream;
     /** Internal low-level execute method used by compiled code */
-    execute: (ctx: KireContext, dependencies: Record<string, DependencyMetadata>) => any;
+    execute: (ctx: KireContext) => any;
     /** Metadata about the compiled template */
     meta: {
         async: boolean;

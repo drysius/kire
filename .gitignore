@@ -48,4 +48,4 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 publish/**
 kire-intellisense-*.vsix
 # benchmark
-benchmark-results
+benchmark/results

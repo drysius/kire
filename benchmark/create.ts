@@ -17,7 +17,6 @@ function generateData(count: number) {
         title: "Benchmark Test"
     };
 }
-
 const templates = {
     kire: `
 <div class="container">
@@ -31,6 +30,20 @@ const templates = {
                 @endif
             </li>
         @endfor
+    </ul>
+</div>`.trim(),
+    kire_elements: `
+<div class="container">
+    <h1>{{ title }}</h1>
+    <ul>
+        <kire:for items="users" as="user">
+            <li class="{{ user.active ? 'active' : '' }}">
+                {{ user.name }} ({{ user.email }})
+                <kire:if cond="user.isAdmin">
+                    <span class="badge">Admin</span>
+                </kire:if>
+            </li>
+        </kire:for>
     </ul>
 </div>`.trim(),
     ejs: `
@@ -112,7 +125,7 @@ function runWorker(engineName: string, scenario: any, data: any): Promise<any> {
             eval: true,
             workerData: { engineName, scenario, data, }
         });
-        
+
         worker.on("message", (msg) => {
             if (msg.error) reject(msg);
             else resolve(msg);
@@ -156,19 +169,20 @@ async function main() {
         scenarios: []
     };
 
-    const engines = ["Kire", "EJS", "Edge.js", "Handlebars", "Nunjucks", "Pug"];
+    const engines = ["Kire", "Kire Elements","EJS", "Edge.js", "Handlebars", "Nunjucks", "Pug"];
 
     for (const s of scenarios) {
         console.log(`Scenario: ${s.name}...`);
         const scenarioResult: any = { ...s, engines: {} };
         delete scenarioResult.templates;
-        
+
         const data = generateData(s.dataCount);
 
-        for (const engine of engines) {
+        for (let engine of engines) {
+            engine = engine.toLocaleLowerCase().replace(" ", '_')
             try {
                 process.stdout.write(`  - ${engine}... `);
-                const result = isBun 
+                const result = isBun
                     ? await runWorkerBun(engine, s, data)
                     : await runWorker(engine, s, data);
                 scenarioResult.engines[engine] = result;
@@ -182,7 +196,7 @@ async function main() {
 
     const resultsDir = join(__dirname, "results");
     if (!existsSync(resultsDir)) mkdirSync(resultsDir);
-    
+
     writeFileSync(join(resultsDir, `results-${runtime}.json`), JSON.stringify(allResults, null, 2));
     console.log(`
 Benchmarks completed. Results saved to benchmark/results/results-${runtime}.json`);

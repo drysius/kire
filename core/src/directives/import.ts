@@ -16,7 +16,7 @@ export default (kire: Kire<any>) => {
             api.write(`{
                 const _oldProps = $ctx.$props;
                 $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps, ${locals});
-                const res = $deps['${depId}']($ctx, new NullProtoObj()); 
+                const res = $ctx.$dependencies['${depId}'].execute($ctx); 
                 if (res instanceof Promise) await res;
                 $ctx.$props = _oldProps;
             }`);

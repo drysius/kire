@@ -1,18 +1,42 @@
-import type { KireContext, CompiledTemplate } from "../types";
+import type { KireContext, CompiledTemplate, KireTplFunction } from "../types";
 import { resolveSourceLocation } from "./source-map";
 
 export class KireError extends Error {
 	public originalError: Error;
-	public template?: CompiledTemplate;
+	public template?: KireTplFunction['meta'];
 
-	constructor(message: string | Error, template?: CompiledTemplate) {
+	constructor(message: string | Error, template?: KireTplFunction | KireTplFunction['meta']) {
 		const originalError = message instanceof Error ? message : new Error(message);
 		super(originalError.message);
 		this.name = "KireError";
 		this.originalError = originalError;
-		this.template = template;
+		// Handle KireTplFunction or direct meta object
+		this.template = template && 'meta' in template ? template.meta : template;
 		this.stack = this.formatStack(originalError.stack || "");
 	}
+
+    /**
+     * Lazy-loads/parses the source map from the code if not already available.
+     */
+    private getMap() {
+        if (!this.template) return null;
+        if (this.template.map) return this.template.map;
+        
+        // Try to extract from code
+        if (this.template.code) {
+            const smMatch = this.template.code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
+            if (smMatch && smMatch[1]) {
+                try {
+                    // Cache it back to template meta to avoid reparsing
+                    this.template.map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString());
+                    return this.template.map;
+                } catch (e) {
+                    // Ignore parse errors
+                }
+            }
+        }
+        return null;
+    }
 
 	private formatStack(stack: string): string {
 		const lines = stack.split("\n");
@@ -33,9 +57,13 @@ export class KireError extends Error {
 			const [_, fn, file, l, c] = match;
 			const filename = file!.replace(/\\/g, '/');
             const genLine = parseInt(l!), genCol = parseInt(c!);
+            // Check if error matches template path or internal names
             if (filename.includes(this.template.path.replace(/\\/g, '/')) || filename.includes("template.kire") || /anonymous|eval|AsyncFunction/.test(filename)) {
+                
+                // Strategy 1: Use explicit line comments in code (// kire-line: X)
                 if (this.template.code) {
                     const generatedLines = this.template.code.split("\n");
+                    // Search backwards from the error line for the source mapping comment
                     for (let i = genLine - 1; i >= Math.max(0, genLine - 15); i--) {
                         const gl = generatedLines[i];
                         if (gl?.trim().startsWith("// kire-line:")) {
@@ -43,8 +71,11 @@ export class KireError extends Error {
                         }
                     }
                 }
-                if (this.template.map) {
-                    const resolved = resolveSourceLocation(this.template.map, genLine, genCol);
+
+                // Strategy 2: Use Source Map
+                const map = this.getMap();
+                if (map) {
+                    const resolved = resolveSourceLocation(map, genLine, genCol);
                     if (resolved) return `    at ${fn ? `${fn} ` : ""}(${resolved.source}:${resolved.line}:${resolved.column})`;
                 }
             }
@@ -58,19 +89,43 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 	const isProduction = kire?.production ?? false;
     if (isProduction) return `<html><body style="background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><h1 style="font-size:1.5rem;margin-top:1rem;letter-spacing:0.05em">INTERNAL SERVER ERROR</h1></body></html>`;
 
-    const template = (e instanceof KireError && e.template) || ctx?.$template;
+    // Support KireError or generic Error with context
+    const template = (e instanceof KireError && e.template) || (ctx?.$template ? ctx.$template.meta : undefined);
 	let snippet = "", location = "", astJson = "null";
+    
 	if (template && e.stack) {
+        // ... (Similar logic to extract location for HTML display)
 		const safePath = template.path.replace(/\\/g, '/').replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const match = e.stack.match(new RegExp(`${safePath}:(\\d+):(\\d+)`)) || e.stack.match(/template\.kire:(\d+):(\d+)/) || e.stack.match(/(?:eval|anonymous):(\d+):(\d+)/);
-		if (match) {
+		
+        if (match) {
 			const rawLine = parseInt(match[1]!), genCol = parseInt(match[2]!);
 			let sourceLine = -1;
+            
+            // Try to match source line from path match
             if (match[0].includes(template.path.replace(/\\/g, '/'))) sourceLine = rawLine - 1;
-			if (sourceLine === -1 && template.map) {
-				const res = resolveSourceLocation(template.map, rawLine, genCol);
-				if (res) sourceLine = res.line - 1;
+			
+            // Try Source Map
+            if (sourceLine === -1) {
+                // Manually parse map here if needed, or assume KireError already did? 
+                // We are outside KireError class context here, so we duplicate or helper extraction.
+                // But wait, KireError constructor already runs. 
+                // However, renderErrorHtml might take a raw Error.
+                // We should reuse extraction logic.
+                
+                let map = template.map;
+                if (!map && template.code) {
+                     const smMatch = template.code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
+                     if (smMatch && smMatch[1]) try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(_){}
+                }
+
+                if (map) {
+				    const res = resolveSourceLocation(map, rawLine, genCol);
+				    if (res) sourceLine = res.line - 1;
+                }
 			}
+
+            // Try comments
 			if (sourceLine === -1 && template.code) {
 				const lines = template.code.split("\n");
 				for (let i = rawLine - 1; i >= 0; i--) {
@@ -80,6 +135,7 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 					}
 				}
 			}
+
 			if (sourceLine !== -1 && template.source) {
 				location = `${template.path}:${sourceLine + 1}`;
 				const sourceLines = template.source.split("\n");
@@ -94,6 +150,7 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 	}
 	const stack = (e.stack || "").split("\n").filter((l: string) => !l.includes("new AsyncFunction")).map((l: string) => `<div>${l.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`).join("");
 
+    // HTML Template ...
 	return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Kire Error</title><style>
         :root { --bg: #000; --card: #09090b; --text: #fff; --muted: #71717a; --danger: #ef4444; --accent: #38bdf8; --border: #27272a; }
         body { background: var(--bg); color: var(--text); font-family: ui-sans-serif, system-ui, sans-serif; margin: 0; padding: 4rem 2rem; line-height: 1.5; }

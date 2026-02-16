@@ -75,7 +75,7 @@ export class Compiler {
         this.collectDeclarations(nodes, localDecls);
 
         for (const id of idents) {
-            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$deps" || id === "$loop") continue;
+            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$loop") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
             this.header.push(`let ${id} = $ctx.$props['${id}'] !== undefined ? $ctx.$props['${id}'] : $ctx.$globals['${id}'];`);
         }

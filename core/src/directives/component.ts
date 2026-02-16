@@ -61,9 +61,9 @@ export default (kire: Kire<any>) => {
                 $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps${id}, ${locals}, { slots: $slots });
                 const _oldCtxSlots${id} = $ctx.slots;
                 $ctx.slots = $slots;
-                const _dep${id} = $deps['${depId}'];
-                const res${id} = _dep${id}.execute($ctx, new NullProtoObj());
-                if (_dep${id} && _dep${id}.isAsync) await res${id};
+                const _dep${id} = $ctx.$dependencies['${depId}'];
+                const res${id} = _dep${id}.execute($ctx);
+                if (_dep${id} && _dep${id}.meta.async) await res${id};
                 $ctx.$props = _oldProps${id};
                 $ctx.slots = _oldCtxSlots${id};
             }`);
