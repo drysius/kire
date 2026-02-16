@@ -26,7 +26,7 @@ export class Attributes {
      * Special handling for 'class' and 'style' to append instead of overwrite.
      */
     public merge(newAttributes: Record<string, any>): Attributes {
-        const merged = { ...this.attributes };
+        const merged = Object.assign(new NullProtoObj(), this.attributes);
 
         for (const [key, value] of Object.entries(newAttributes)) {
             if (key === 'class') {

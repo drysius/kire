@@ -45,12 +45,12 @@ export default (kire: Kire<any>) => {
         children: true,
         onCall: (api) => {
             const path = api.getAttribute("path") || api.getArgument(0);
-            const locals = api.getAttribute("locals") || api.getArgument(1) || "{}";
+            const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
             const id = api.uid("comp");
             const depId = api.depend(path);
 
             api.write(`{
-                const $slots = {};
+                const $slots = new NullProtoObj();
                 const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
             api.renderChildren();
             api.write(`
@@ -61,7 +61,7 @@ export default (kire: Kire<any>) => {
                 const _oldCtxSlots${id} = $ctx.slots;
                 $ctx.slots = $slots;
                 const _dep${id} = $deps['${depId}'];
-                const res${id} = _dep${id}.execute($ctx, {});
+                const res${id} = _dep${id}.execute($ctx, new NullProtoObj());
                 if (_dep${id} && _dep${id}.isAsync) await res${id};
                 $ctx.$props = _oldProps${id};
                 $ctx.slots = _oldCtxSlots${id};
@@ -69,7 +69,7 @@ export default (kire: Kire<any>) => {
         }
     });
 
-    kire.directive({ name: 'layout', onCall: (api) => kire.getDirective('component')?.onCall(api) } as any);
-    kire.directive({ name: 'extends', onCall: (api) => kire.getDirective('component')?.onCall(api) } as any);
-    kire.directive({ name: 'section', onCall: (api) => kire.getDirective('slot')?.onCall(api) } as any);
+    kire.directive({ name: 'layout', onCall: (api) => kire.getDirective('component')?.onCall(api) });
+    kire.directive({ name: 'extends', onCall: (api) => kire.getDirective('component')?.onCall(api) });
+    kire.directive({ name: 'section', onCall: (api) => kire.getDirective('slot')?.onCall(api) });
 };

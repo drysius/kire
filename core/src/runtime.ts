@@ -1,5 +1,6 @@
 import type { Kire } from "./kire";
 import type { CompiledTemplate, KireContext } from "./types";
+import { KireError } from "./utils/error";
 import {
     HTML_ESCAPE_CHECK_REGEX,
     HTML_ESCAPE_GLOBAL_REGEX,
@@ -25,11 +26,12 @@ export default async function KireRuntime(
     props: Record<string, any>,
     template: CompiledTemplate
 ): Promise<string> {
-    // using nullprotoobj for more speed
     const ctx = new NullProtoObj();
+    ctx.NullProtoObj = NullProtoObj;
     ctx.$globals = kire.$globals;
     ctx.$props = props;
     ctx.$kire = kire;
+    ctx.$template = template;
     ctx.$response = "";
     ctx.$escape = escapeHtml;
     ctx.$add = (v: string) => { ctx.$response += v; };
@@ -39,6 +41,6 @@ export default async function KireRuntime(
         if (result instanceof Promise) await result;
         return ctx.$response;
     } catch (e: any) {
-        throw e;
+        throw new KireError(e, template);
     }
 }

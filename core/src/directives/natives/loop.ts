@@ -13,25 +13,33 @@ export default (kire: Kire<any>) => {
 
             let items = rawItems;
             let finalAs = as;
-            if (typeof rawItems === 'string' && rawItems.includes(' of ')) {
-                const parts = rawItems.split(' of ');
-                finalAs = parts[0]!.trim();
-                items = parts[1]!.trim();
-            } else if (typeof rawItems === 'string' && rawItems.includes(' in ')) {
-                 const parts = rawItems.split(' in ');
-                 finalAs = parts[0]!.trim();
-                 items = parts[1]!.trim();
+            let finalIndex = indexAs;
+
+            // Regex para separar "item of items" ou "(item, index) of items"
+            // Captura: 1=(item, index), 2=item, 3=index, 4=simple_item, 5=items
+            const loopMatch = rawItems.match(/^\s*(?:(\(([^,]+)\s*,\s*([^)]+)\))|(.+?))\s+(?:of|in)\s+(.+)$/);
+            
+            if (loopMatch) {
+                if (loopMatch[1]) {
+                    // Formato (item, index)
+                    finalAs = loopMatch[2].trim();
+                    finalIndex = loopMatch[3].trim();
+                } else {
+                    // Formato simples
+                    finalAs = loopMatch[4].trim();
+                }
+                items = loopMatch[5].trim();
             }
 
             api.write(`{
                 const _r${id} = ${items};
-                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});
+                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || new NullProtoObj());
                 const _len${id} = _it${id}.length;
                 for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
                     const _e${id} = _it${id}[${id}];
-                    ${finalAs} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
-                    ${indexAs} = ${id};
-                    $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
+                    let ${finalAs} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
+                    let ${finalIndex} = ${id};
+                    let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
             api.renderChildren();
             api.write(`  }
             }`);

@@ -1,5 +1,6 @@
 import type { Kire } from "../kire";
 import type { ElementDefinition } from "../types";
+import { NullProtoObj } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
     
@@ -43,13 +44,13 @@ export default (kire: Kire<any>) => {
             const id = api.uid('i');
             api.write(`{
                 const _r${id} = ${items};
-                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || {});
+                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || new NullProtoObj());
                 const _len${id} = _it${id}.length;
                 for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
                     const _e${id} = _it${id}[${id}];
-                    ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
-                    ${indexAs} = ${id};
-                    $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
+                    let ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
+                    let ${indexAs} = ${id};
+                    let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
             api.renderChildren();
             api.write(`  }
             }`);
@@ -114,13 +115,13 @@ export default (kire: Kire<any>) => {
             const id = api.uid('comp');
             const depId = api.depend(componentName);
             
-            const attrs = api.node.attributes || {};
+            const attrs = api.node.attributes || new NullProtoObj();
             const propsStr = Object.keys(attrs)
                 .map(k => `'${k}': ${api.getAttribute(k)}`)
                 .join(',');
 
             api.write(`{
-                const $slots = {};
+                const $slots = new NullProtoObj();
                 const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
             
             if (api.node.children) {
@@ -143,7 +144,7 @@ export default (kire: Kire<any>) => {
                 $ctx.slots = $slots;
                 // OTIMIZAÇÃO: Usa o metadado estático para decidir sobre o await
                 const _dep${id} = $deps['${depId}'];
-                const res${id} = _dep${id}.execute($ctx, {});
+                const res${id} = _dep${id}.execute($ctx, new NullProtoObj());
                 if (_dep${id} && _dep${id}.isAsync) await res${id};
                 $ctx.$props = _oldProps${id};
                 $ctx.slots = _oldCtxSlots${id};

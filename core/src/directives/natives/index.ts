@@ -4,7 +4,6 @@ import loopDirectives from "./loop";
 import checkDirectives from "./checks";
 import attrDirectives from "./attributes";
 import switchDirectives from "./switch";
-import stackDirectives from "./stack";
 import miscDirectives from "./misc";
 
 export default (kire: Kire) => {
@@ -20,6 +19,5 @@ export default (kire: Kire) => {
     checkDirectives(kire);
     attrDirectives(kire);
     switchDirectives(kire);
-    stackDirectives(kire);
     miscDirectives(kire);
 };

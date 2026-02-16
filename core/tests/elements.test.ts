@@ -67,7 +67,6 @@ describe("Kire Elements System (Pattern-based)", () => {
         const k = new Kire();
         k.element({
             name: 'my:tag',
-            attributes: ['title:string'],
             onCall: (ctx) => {
                 const title = ctx.attribute('title');
                 ctx.res(`Title: ${title}`);

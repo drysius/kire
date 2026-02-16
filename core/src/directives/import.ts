@@ -7,7 +7,7 @@ export default (kire: Kire<any>) => {
         children: false, // CORREÇÃO: SEM FILHOS
         onCall: (api) => {
             const path = api.getAttribute("path") || api.getArgument(0);
-            const locals = api.getAttribute("locals") || api.getArgument(1) || "{}";
+            const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
 
             if (!path) return;
 
@@ -16,7 +16,7 @@ export default (kire: Kire<any>) => {
             api.write(`{
                 const _oldProps = $ctx.$props;
                 $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps, ${locals});
-                const res = $deps['${depId}']($ctx, {}); 
+                const res = $deps['${depId}']($ctx, new NullProtoObj()); 
                 if (res instanceof Promise) await res;
                 $ctx.$props = _oldProps;
             }`);

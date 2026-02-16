@@ -22,6 +22,7 @@ export interface KireContext<Streaming extends boolean = boolean> {
     $globals: Record<string, any>;
     $props: Record<string, any>;
     $kire: Kire<Streaming>;
+    $template: CompiledTemplate;
     $response: string;
     $escape: (v: any) => string;
     [key: string]: any;
@@ -38,7 +39,8 @@ export interface CompiledTemplate {
     path: string;
     code: string;
     source: string;
-    dependencies: Record<string, DependencyMetadata>; // MUDANÇA AQUI
+    map?: any;
+    dependencies: Record<string, DependencyMetadata>;
 }
 
 export interface CompilerApi {
@@ -81,9 +83,22 @@ export interface KirePlugin<Options extends object | undefined = {}> {
     load(kire: Kire<any>, opts?: Options): void;
 }
 
+export interface KireSchemaDefinition {
+    name: string;
+    author?: string;
+    version?: string;
+    repository?: string;
+}
+
+export interface TypeDefinition {
+    variable: string;
+    type: "global" | "context" | "prop";
+    comment?: string;
+    tstype: string;
+}
+
 export interface IParser {
     parse(): Node[];
-    usedElements: Set<string>;
 }
 export type IParserConstructor = new (template: string, kire: Kire<any>) => IParser;
 

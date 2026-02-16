@@ -3,7 +3,7 @@ import { resolve, join, isAbsolute } from "node:path";
 import { Compiler } from "./compiler";
 import { Parser } from "./parser";
 import KireRuntime from "./runtime";
-import { renderErrorHtml } from "./utils/error";
+import { KireError, renderErrorHtml } from "./utils/error";
 import { NullProtoObj } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
 import type {
@@ -60,6 +60,37 @@ export class Kire<Streaming extends boolean = false> {
         this.$parser = options.engine?.parser ?? Parser;
         this.$compiler = options.engine?.compiler ?? Compiler;
 
+        if (options.files) {
+            for (const key in options.files) {
+                this.$sources[this.resolvePath(key)] = options.files[key]!;
+            }
+        }
+
+        if (options.vfiles) {
+            for (const key in options.vfiles) {
+                this.$vfiles[this.resolvePath(key)] = options.vfiles[key]!;
+            }
+        }
+
+        if (options.bundled) {
+            for (const key in options.bundled) {
+                const item = options.bundled[key]!;
+                const path = this.resolvePath(key);
+                if (typeof item === 'function') {
+                    this.$files[path] = {
+                        execute: item,
+                        isAsync: (item as any)._isAsync ?? true,
+                        path: key,
+                        code: "",
+                        source: "",
+                        dependencies: new NullProtoObj()
+                    };
+                } else {
+                    this.$files[path] = item;
+                }
+            }
+        }
+
         if (options.directives !== false) this.plugin(KireDirectives);
         if (options.plugins) {
             for (const p of options.plugins) {
@@ -69,8 +100,13 @@ export class Kire<Streaming extends boolean = false> {
         }
     }
 
-    public plugin<KirePlugged extends KirePlugin<any>>(plugin: KirePlugged, opts?: KirePlugged["options"]) {
+    public plugin<KirePlugged extends KirePlugin<any>>(plugin: KirePlugged, opts?: any) {
         plugin.load(this, opts); return this;
+    }
+
+    public parse(content: string): any[] {
+        const parser = new this.$parser(content, this as any);
+        return parser.parse();
     }
 
     public $global(key: string, value: any) { this.$globals[key] = value; return this; }
@@ -90,10 +126,15 @@ export class Kire<Streaming extends boolean = false> {
                 : new Function("$ctx", "$deps", code);
         } catch (e) {
             if (!this.$silent) { console.log("--- FAILED CODE ---\n" + code + "\n-------------------"); }
-            throw e;
+            let map;
+            const smMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
+            if (smMatch && smMatch[1]) {
+                try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(ex) {}
+            }
+            throw new KireError(e as Error, { execute: () => {}, isAsync, path: filename, code, source: content, map, dependencies: new NullProtoObj() });
         }
 
-        const dependencies: Record<string, DependencyMetadata> = {};
+        const dependencies: Record<string, DependencyMetadata> = new NullProtoObj();
         const depMap = compilerInstance.getDependencies();
         if (depMap.size > 0) {
             for (const [path, id] of depMap.entries()) {
@@ -101,7 +142,16 @@ export class Kire<Streaming extends boolean = false> {
                 dependencies[id] = { execute: compiledDep.execute, isAsync: compiledDep.isAsync };
             }
         }
-        return { execute, isAsync, path: filename, code, source: content, dependencies };
+
+        let map;
+        if (!this.production) {
+            const smMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
+            if (smMatch && smMatch[1]) {
+                try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(e) {}
+            }
+        }
+
+        return { execute, isAsync, path: filename, code, source: content, map, dependencies };
     }
 
     private async getOrCompile(path: string): Promise<CompiledTemplate> {

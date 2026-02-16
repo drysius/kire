@@ -12,7 +12,7 @@ export default (kire: Kire<any>) => {
             api.write(`{ const _origRes${id} = $ctx.$response; $ctx.$response = "";`);
             api.renderChildren();
             api.write(`
-                if (!$ctx.$globals["~defines"]) $ctx.$globals["~defines"] = {};
+                if (!$ctx.$globals["~defines"]) $ctx.$globals["~defines"] = new NullProtoObj();
                 $ctx.$globals["~defines"]['${name}'] = $ctx.$response;
                 $ctx.$response = _origRes${id};
             }`);
@@ -63,7 +63,7 @@ export default (kire: Kire<any>) => {
             if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
             const id = api.uid("push");
 			api.write(`{
-                if(!$ctx['~stacks']) $ctx['~stacks'] = {};
+                if(!$ctx['~stacks']) $ctx['~stacks'] = new NullProtoObj();
                 if (!$ctx['~stacks']['${name}']) $ctx['~stacks']['${name}'] = [];
                 const _origRes${id} = $ctx.$response; $ctx.$response = "";`);
             api.renderChildren();

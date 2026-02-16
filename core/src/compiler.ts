@@ -1,5 +1,6 @@
 import type { Kire } from "./kire";
 import type { CompilerApi, Node } from "./types";
+import { SourceMapGenerator } from "./utils/source-map";
 import { 
     NullProtoObj, 
     JS_IDENTIFIER_REGEX, 
@@ -18,8 +19,13 @@ export class Compiler {
     private uidCounter: Record<string, number> = new NullProtoObj();
     private _isAsync: boolean = false;
     private textBuffer: string = "";
+    private generator: SourceMapGenerator;
+    private mappings: { bodyIndex: number; node: Node; col: number }[] = [];
 
-    constructor(public kire: Kire<any>, private filename = "template.kire") {}
+    constructor(public kire: Kire<any>, private filename = "template.kire") {
+        this.generator = new SourceMapGenerator(filename);
+        this.generator.addSource(filename);
+    }
 
     public get isAsync(): boolean { return this._isAsync; }
     public getDependencies(): Map<string, string> { return this.dependencies; }
@@ -51,10 +57,12 @@ export class Compiler {
     public compile(nodes: Node[], extraGlobals: string[] = []): string {
         this.body = []; this.header = []; this.footer = [];
         this.dependencies.clear(); this.uidCounter = new NullProtoObj();
+        this.mappings = [];
         this._isAsync = false;
         this.textBuffer = "";
 
         this.header.push(`const it = $ctx.$props;`);
+        this.header.push(`const NullProtoObj = $ctx.NullProtoObj;`);
 
         const idents = new Set<string>();
         this.collectIdentifiers(nodes, idents);
@@ -72,12 +80,32 @@ export class Compiler {
         this.compileNodes(nodes);
         this.flushText();
 
-        return `
-${this.header.join("\n")}
-${this.body.join("\n")}
-${this.footer.join("\n")}
-return $ctx;
-//# sourceURL=${this.filename}`;
+        let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $ctx;\n//# sourceURL=${this.filename}`;
+
+        if (!this.kire.production) {
+            const headerLines = this.header.join("\n").split("\n").length + 1; // +1 for the newline before header
+            const bodyLineOffsets: number[] = [];
+            let currentLine = headerLines;
+            for (let i = 0; i < this.body.length; i++) {
+                bodyLineOffsets[i] = currentLine;
+                currentLine += this.body[i]!.split("\n").length;
+            }
+
+            for (const m of this.mappings) {
+                const genLine = bodyLineOffsets[m.bodyIndex];
+                if (genLine !== undefined && m.node.loc) {
+                    this.generator.addMapping({
+                        genLine,
+                        genCol: m.col,
+                        sourceLine: m.node.loc.line,
+                        sourceCol: m.node.loc.column,
+                    });
+                }
+            }
+            code += `\n//# sourceMappingURL=${this.generator.toDataUri()}`;
+        }
+
+        return code;
     }
 
     private collectIdentifiers(nodes: Node[], set: Set<string>) {
@@ -92,19 +120,14 @@ return $ctx;
             if (n.args) n.args.forEach(a => typeof a === "string" && scan(a));
             
             if (n.type === "element") {
-                const isCustom = this.kire.$elementMatchers.some(m => {
-                    if (typeof m.def.name === "string") return m.def.name === n.tagName || (m.def.name.includes("*") && n.tagName?.startsWith(m.def.name.split("*")[0]!));
-                    return m.def.name instanceof RegExp && m.def.name.test(n.tagName || "");
-                });
-
-                if (isCustom && n.attributes) {
+                if (n.attributes) {
                     for (const [key, val] of Object.entries(n.attributes)) {
-                        const code = this.parseAttrCode(val);
-                        scan(code);
-                    }
-                } else if (n.attributes) {
-                    for (const [key, val] of Object.entries(n.attributes)) {
-                        if (key.startsWith('@')) scan(val);
+                        if (key.startsWith('@')) {
+                            scan(val);
+                        } else {
+                            const code = this.parseAttrCode(val);
+                            if (code !== val) scan(code);
+                        }
                     }
                 }
             }
@@ -115,23 +138,42 @@ return $ctx;
     }
 
     private collectDeclarations(nodes: Node[], set: Set<string>) {
+        const scan = (c: string) => { 
+            let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
+                const id = m[1]; if (id && !RESERVED_KEYWORDS.has(id)) set.add(id);
+            }
+            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0;
+        };
         for (const n of nodes) {
             if (n.type === "directive") {
                 if (n.name === "for") {
                     const a = n.args?.[0]; if (typeof a === "string") {
-                        const m = a.match(FOR_VAR_EXTRACT_REGEX); if (m) set.add(m[1]);
+                        // Tenta extrair a parte 'as' do for
+                        let asPart = a;
+                        const ofIdx = a.lastIndexOf(" of ");
+                        const inIdx = a.lastIndexOf(" in ");
+                        const idx = Math.max(ofIdx, inIdx);
+                        if (idx !== -1) asPart = a.slice(0, idx);
+                        scan(asPart);
                     }
                 }
                 if (n.name === "let" || n.name === "const") {
                     const a = n.args?.[0]; if (typeof a === "string") {
-                        const name = a.split("=")[0].trim(); if (JS_IDENTIFIER_REGEX.test(name)) set.add(name);
+                        const first = a.split("=")[0];
+                        if (first) scan(first);
                     }
                 }
                 if (n.name === "error") set.add("$message");
             }
             if (n.type === "element" && n.tagName === "kire:for") {
-                const as = n.attributes?.['as']; if (as) set.add(as);
+                const as = n.attributes?.['as']; if (as) scan(as);
                 const index = n.attributes?.['index'] || 'index'; set.add(index);
+            }
+            if (n.type === "js" && n.content) {
+                const declRegex = /\b(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
+                let m; while ((m = declRegex.exec(n.content)) !== null) {
+                    if (m[1]) set.add(m[1]);
+                }
             }
             if (n.children) this.collectDeclarations(n.children, set);
             if (n.related) this.collectDeclarations(n.related, set);
@@ -145,12 +187,26 @@ return $ctx;
                 case "interpolation":
                     this.flushText();
                     if (n.content?.includes("await")) this.markAsync();
+                    if (!this.kire.production && n.loc) {
+                        this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+                        this.body.push(`// kire-line: ${n.loc.line}`);
+                    }
                     this.body.push(`$ctx.$response += ${n.raw ? n.content : `$ctx.$escape(${n.content})`};`);
                     break;
                 case "js": 
                     this.flushText();
                     if (n.content?.includes("await")) this.markAsync(); 
-                    this.body.push(n.content || ""); 
+                    if (!this.kire.production && n.content && n.loc) {
+                        const lines = n.content.split("\n");
+                        for (let i = 0; i < lines.length; i++) {
+                            const currentLine = n.loc.line + i;
+                            this.mappings.push({ bodyIndex: this.body.length, node: { ...n, loc: { ...n.loc, line: currentLine } }, col: 0 });
+                            this.body.push(`// kire-line: ${currentLine}`);
+                            this.body.push(lines[i] || "");
+                        }
+                    } else {
+                        this.body.push(n.content || "");
+                    }
                     break;
                 case "directive": 
                     this.flushText();
@@ -163,7 +219,13 @@ return $ctx;
 
     private processDirective(n: Node) {
         const d = this.kire.getDirective(n.name!);
-        if (d) d.onCall(this.createCompilerApi(n, d));
+        if (d) {
+            if (!this.kire.production) {
+                this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+                if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
+            }
+            d.onCall(this.createCompilerApi(n, d));
+        }
     }
 
     private processElement(n: Node) {
@@ -186,9 +248,23 @@ return $ctx;
                     if (key.startsWith('@')) {
                         this.flushText();
                         const dirDef = this.kire.getDirective(key.slice(1));
-                        if (dirDef) dirDef.onCall(this.createCompilerApi({ ...n, type: 'directive', name: key.slice(1), args: [val] }, dirDef));
+                        if (dirDef) {
+                            if (!this.kire.production) {
+                                this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+                                if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
+                            }
+                            dirDef.onCall(this.createCompilerApi({ ...n, type: 'directive', name: key.slice(1), args: [val] }, dirDef));
+                        }
                     } else {
-                        this.textBuffer += ` ${key}='${val}'`;
+                        if (val.includes("{{")) {
+                            this.textBuffer += ` ${key}='`;
+                            this.flushText();
+                            const code = this.parseAttrCode(val);
+                            this.body.push(`$ctx.$response += ${code};`);
+                            this.textBuffer += `'`;
+                        } else {
+                            this.textBuffer += ` ${key}='${val}'`;
+                        }
                     }
                 }
             }
@@ -199,6 +275,10 @@ return $ctx;
         }
         
         this.flushText();
+        if (!this.kire.production) {
+            this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+            if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
+        }
         matcher.def.onCall(this.createCompilerApi(n, matcher.def));
     }
 
@@ -246,7 +326,6 @@ return $ctx;
                 return typeof argVal === "string" ? this.parseAttrCode(argVal) : argVal;
             },
             transform: (c: string) => this.parseAttrCode(c),
-            addLocal: () => {}, removeLocal: () => {},
             raw: (js: string) => api.write(js),
             res: (c: any) => api.append(c),
             set: (ns: Node[]) => api.renderChildren(ns),

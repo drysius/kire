@@ -40,6 +40,7 @@ console.log(output);
 const fileOutput = await kire.view('views.home', { title: 'Home Page' });
 ```
 
+
 ## Core Concepts
 
 ### Namespaces and Path Resolution

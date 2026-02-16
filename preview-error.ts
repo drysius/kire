@@ -28,9 +28,10 @@ Bun.serve({
                 headers: { "Content-Type": "text/html" }
             });
         } catch (e: any) {
-            // O kire.view já chama renderError internamente se houver erro no runtime,
-            // mas aqui capturamos caso algo falhe na chamada em si.
-            return new Response(e.toString(), { status: 500 });
+            return new Response(kire.renderError(e), { 
+                status: 500,
+                headers: { "Content-Type": "text/html" }
+            });
         }
     }
 });

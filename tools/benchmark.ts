@@ -1,11 +1,11 @@
-//import { Kire } from "../core/src/kire";
-import { Kire } from "../core/dist/index.js";
+import { Kire } from "../core/src/kire";
+//import { Kire } from "../core/dist/index.js";
 import { Edge } from "edge.js";
 import { Eta } from "eta";
 import ejs from "ejs";
 
 async function runBenchmark() {
-    const users = Array.from({ length: 100 }, (_, i) => ({
+    const users = Array.from({ length: 5000 }, (_, i) => ({
         name: `User ${i}`,
         email: `user${i}@example.com`,
         active: i % 2 === 0,
@@ -98,7 +98,6 @@ async function runBenchmark() {
     await edge.renderRaw(edgeTpl, data);
     await eta.renderString(etaTpl, data);
     await ejsCompiled(data);
-
     // Kire (Pre-compiled)
     console.time("🚀 Kire (Pre-compiled)");
     for (let i = 0; i < iterations; i++) {
