@@ -2,7 +2,7 @@ import { readFile, existsSync } from "node:fs";
 import { resolve, join, isAbsolute } from "node:path";
 import { Compiler } from "./compiler";
 import { Parser } from "./parser";
-import KireRuntime from "./runtime";
+import { createKireFunction } from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { NullProtoObj, createFastMatcher } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
@@ -14,19 +14,18 @@ import type {
     KireOptions,
     KirePlugin,
     KireContext,
-    CompiledTemplate,
+    KireTplFunction,
+    KireRendered,
     DependencyMetadata,
     KireSchemaDefinition,
     TypeDefinition
 } from "./types";
 
-const AsyncFunction = (async () => {}).constructor;
-
 export interface ElementMatcher {
     def: ElementDefinition;
 }
 
-export class Kire<Streaming extends boolean = false> {
+export class Kire<Streaming extends boolean = false, Asyncronos extends boolean = true> {
     public $directives: Map<string, DirectiveDefinition> = new Map();
     public $elements: Set<ElementDefinition> = new Set();
     public $elementMatchers: ElementMatcher[] = [];
@@ -43,19 +42,21 @@ export class Kire<Streaming extends boolean = false> {
     public $root: string;
     public $extension: string;
     public $stream: Streaming;
+    public $async: Asyncronos;
     public $silent: boolean;
     public $var_locals: string;
     
-    public $files: Record<string, CompiledTemplate> = new NullProtoObj();
+    public $files: Record<string, KireTplFunction> = new NullProtoObj();
     public $vfiles: Record<string, string> = new NullProtoObj();
     public $sources: Record<string, string> = new NullProtoObj();
 
     public $parser: IParserConstructor;
     public $compiler: ICompilerConstructor;
 
-    constructor(options: KireOptions<Streaming> = new NullProtoObj()) {
+    constructor(options: KireOptions<Streaming, Asyncronos> = new NullProtoObj()) {
         this.production = options.production ?? process.env.NODE_ENV === 'production';
         this.$stream = (options.stream ?? false) as Streaming;
+        this.$async = (options.async ?? true) as Asyncronos;
         this.$extension = options.extension ?? "kire";
         this.$silent = options.silent ?? false;
         this.$var_locals = options.varLocals ?? "it";
@@ -80,18 +81,8 @@ export class Kire<Streaming extends boolean = false> {
             for (const key in options.bundled) {
                 const item = options.bundled[key]!;
                 const path = this.resolvePath(key);
-                if (typeof item === 'function') {
-                    this.$files[path] = {
-                        execute: item,
-                        isAsync: (item as any)._isAsync ?? true,
-                        path: key,
-                        code: "",
-                        source: "",
-                        dependencies: new NullProtoObj()
-                    };
-                } else {
-                    this.$files[path] = item;
-                }
+                // Assume pre-compiled functions are valid KireTplFunction or compatible
+                this.$files[path] = item as KireTplFunction;
             }
         }
 
@@ -116,17 +107,18 @@ export class Kire<Streaming extends boolean = false> {
     public $global(key: string, value: any) { this.$globals[key] = value; return this; }
     public $prop(key: string, value: any) { this.$props[key] = value; return this; }
 
-    public async compile(content: string, filename = "template.kire", extraGlobals: string[] = []): Promise<CompiledTemplate> {
+    public compile(content: string, filename = "template.kire", extraGlobals: string[] = []): KireTplFunction {
         const parser = new this.$parser(content, this as any);
         const nodes = parser.parse();
         const compilerInstance = new this.$compiler(this as any, filename);
         const code = compilerInstance.compile(nodes, extraGlobals);
 
         const isAsync = compilerInstance.isAsync;
-        let execute;
+        const AsyncFunc = (async () => {}).constructor;
+        let execFunc;
         try {
-            execute = isAsync 
-                ? new (AsyncFunction as any)("$ctx", "$deps", code)
+            execFunc = isAsync 
+                ? new (AsyncFunc as any)("$ctx", "$deps", code)
                 : new Function("$ctx", "$deps", code);
         } catch (e) {
             if (!this.$silent) { console.log("--- FAILED CODE ---\n" + code + "\n-------------------"); }
@@ -135,18 +127,9 @@ export class Kire<Streaming extends boolean = false> {
             if (smMatch && smMatch[1]) {
                 try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(ex) {}
             }
-            throw new KireError(e as Error, { execute: () => {}, isAsync, path: filename, code, source: content, map, dependencies: new NullProtoObj() });
+            throw new KireError(e as Error, { execute: () => {}, isAsync, path: filename, code, source: content, map, dependencies: new NullProtoObj() } as any);
         }
-
-        const dependencies: Record<string, DependencyMetadata> = new NullProtoObj();
-        const depMap = compilerInstance.getDependencies();
-        if (depMap.size > 0) {
-            for (const [path, id] of depMap.entries()) {
-                const compiledDep = await this.getOrCompile(path);
-                dependencies[id] = { execute: compiledDep.execute, isAsync: compiledDep.isAsync };
-            }
-        }
-
+        
         let map;
         if (!this.production) {
             const smMatch = code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
@@ -154,49 +137,50 @@ export class Kire<Streaming extends boolean = false> {
                 try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(e) {}
             }
         }
+        
+        // Convert Map<string, string> to Record<string, string> for JSON-safe metadata
+        const dependencies: Record<string, string> = new NullProtoObj();
+        for (const [path, id] of compilerInstance.getDependencies()) {
+            dependencies[path] = id;
+        }
 
-        return { execute, isAsync, path: filename, code, source: content, map, dependencies };
+        return createKireFunction(this as any, execFunc, {
+            async: isAsync,
+            path: filename,
+            code,
+            source: content,
+            map,
+            dependencies
+        });
     }
 
-    private async getOrCompile(path: string): Promise<CompiledTemplate> {
+    private async getOrCompile(path: string): Promise<KireTplFunction> {
         const resolved = this.resolvePath(path);
         if (this.production && this.$files[resolved]) return this.$files[resolved];
         const content = await this.readFile(resolved);
-        const compiled = await this.compile(content, resolved);
+        const compiled = this.compile(content, resolved);
         if (this.production) this.$files[resolved] = compiled;
         return compiled;
     }
 
-    public async render(template: string, locals: Record<string, any> = new NullProtoObj(), filename = "template.kire"): Promise<Streaming extends true ? ReadableStream : string> {
-        const compiled = await this.compile(template, filename, Object.keys(locals));
-        if (this.$stream) {
-            const encoder = new TextEncoder();
-            return new ReadableStream({
-                async start(controller) {
-                    const res = await KireRuntime(this as any, locals, compiled);
-                    controller.enqueue(encoder.encode(res)); controller.close();
-                }
-            }) as any;
-        }
-        return KireRuntime(this as any, locals, compiled) as any;
+    public render(template: string, locals: Record<string, any> = new NullProtoObj(), filename = "template.kire"): KireRendered<Streaming, Asyncronos> {
+        const compiled = this.compile(template, filename, Object.keys(locals));
+        if (this.$stream) return compiled.stream(this, locals) as any;
+        if (this.$async) return compiled.async(this, locals) as any;
+        return compiled.sync(this, locals) as any;
     }
 
-    public async view(path: string, locals: Record<string, any> = new NullProtoObj()): Promise<Streaming extends true ? ReadableStream : string> {
+    public async view(path: string, locals: Record<string, any> = new NullProtoObj()): Promise<KireRendered<Streaming, Asyncronos>> {
         const compiled = await this.getOrCompile(path);
-        return this.run(compiled, locals) as any;
+        if (this.$stream) return compiled.stream(this, locals) as any;
+        if (this.$async) return compiled.async(this, locals) as any;
+        return compiled.sync(this, locals) as any;
     }
 
-    public run(template: CompiledTemplate, locals: Record<string, any>): Promise<Streaming extends true ? ReadableStream : string> {
-        if (this.$stream) {
-            const encoder = new TextEncoder();
-            return new ReadableStream({
-                async start(controller) {
-                    const res = await KireRuntime(this as any, locals, template);
-                    controller.enqueue(encoder.encode(res)); controller.close();
-                }
-            }) as any;
-        }
-        return KireRuntime(this as any, locals, template) as any;
+    public run(template: KireTplFunction, locals: Record<string, any>): KireRendered<Streaming, Asyncronos> {
+        if (this.$stream) return template.stream(this, locals) as any;
+        if (this.$async) return template.async(this, locals) as any;
+        return template.sync(this, locals) as any;
     }
 
     public resolve(path: string): string { return this.resolvePath(path); }

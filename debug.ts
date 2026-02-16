@@ -26,7 +26,7 @@ async function debug() {
         console.log("--- COMPILING ---");
         const compiled = await kire.compile(template, "debug.kire");
         console.log("--- COMPILED CODE ---");
-        console.log(compiled.code);
+        console.log(compiled.sync.toString())
         
         console.log("--- RENDERING ---");
         const result = await kire.run(compiled, { users });

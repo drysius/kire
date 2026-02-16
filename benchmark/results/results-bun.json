@@ -1,6 +1,6 @@
 {
   "runtime": "bun",
-  "timestamp": "2026-02-16T06:11:02.151Z",
+  "timestamp": "2026-02-16T06:47:24.962Z",
   "scenarios": [
     {
       "name": "Small Data",
@@ -9,33 +9,33 @@
       "engines": {
         "Kire": {
           "engineName": "Kire",
-          "totalMs": 300.4504,
-          "opsPerSec": 33283
+          "totalMs": 313.794,
+          "opsPerSec": 31868
         },
         "EJS": {
           "engineName": "EJS",
-          "totalMs": 352.57660000000004,
-          "opsPerSec": 28363
+          "totalMs": 353.7836,
+          "opsPerSec": 28266
         },
         "Edge.js": {
           "engineName": "Edge.js",
-          "totalMs": 573.1539,
-          "opsPerSec": 17447
+          "totalMs": 570.2786000000001,
+          "opsPerSec": 17535
         },
         "Handlebars": {
           "engineName": "Handlebars",
-          "totalMs": 2890.1018,
-          "opsPerSec": 3460
+          "totalMs": 2874.64,
+          "opsPerSec": 3479
         },
         "Nunjucks": {
           "engineName": "Nunjucks",
-          "totalMs": 976.7583000000001,
-          "opsPerSec": 10238
+          "totalMs": 979.5226999999999,
+          "opsPerSec": 10209
         },
         "Pug": {
           "engineName": "Pug",
-          "totalMs": 7351.8774,
-          "opsPerSec": 1360
+          "totalMs": 7307.0208,
+          "opsPerSec": 1369
         }
       }
     },
@@ -46,33 +46,33 @@
       "engines": {
         "Kire": {
           "engineName": "Kire",
-          "totalMs": 60.73930000000001,
-          "opsPerSec": 16464
+          "totalMs": 49.0925,
+          "opsPerSec": 20370
         },
         "EJS": {
           "engineName": "EJS",
-          "totalMs": 146.80550000000002,
-          "opsPerSec": 6812
+          "totalMs": 140.5392,
+          "opsPerSec": 7115
         },
         "Edge.js": {
           "engineName": "Edge.js",
-          "totalMs": 127.72609999999999,
-          "opsPerSec": 7829
+          "totalMs": 130.82150000000001,
+          "opsPerSec": 7644
         },
         "Handlebars": {
           "engineName": "Handlebars",
-          "totalMs": 482.2085,
-          "opsPerSec": 2074
+          "totalMs": 499.47690000000006,
+          "opsPerSec": 2002
         },
         "Nunjucks": {
           "engineName": "Nunjucks",
-          "totalMs": 154.7822,
-          "opsPerSec": 6461
+          "totalMs": 156.67249999999999,
+          "opsPerSec": 6383
         },
         "Pug": {
           "engineName": "Pug",
-          "totalMs": 880.3752,
-          "opsPerSec": 1136
+          "totalMs": 903.4891,
+          "opsPerSec": 1107
         }
       }
     },
@@ -83,33 +83,33 @@
       "engines": {
         "Kire": {
           "engineName": "Kire",
-          "totalMs": 14.981900000000003,
-          "opsPerSec": 6675
+          "totalMs": 14.869200000000003,
+          "opsPerSec": 6725
         },
         "EJS": {
           "engineName": "EJS",
-          "totalMs": 117.17719999999998,
-          "opsPerSec": 853
+          "totalMs": 117.34540000000001,
+          "opsPerSec": 852
         },
         "Edge.js": {
           "engineName": "Edge.js",
-          "totalMs": 59.8653,
-          "opsPerSec": 1670
+          "totalMs": 59.78739999999999,
+          "opsPerSec": 1673
         },
         "Handlebars": {
           "engineName": "Handlebars",
-          "totalMs": 147.91989999999998,
-          "opsPerSec": 676
+          "totalMs": 147.0887,
+          "opsPerSec": 680
         },
         "Nunjucks": {
           "engineName": "Nunjucks",
-          "totalMs": 52.6136,
-          "opsPerSec": 1901
+          "totalMs": 49.011599999999994,
+          "opsPerSec": 2040
         },
         "Pug": {
           "engineName": "Pug",
-          "totalMs": 159.6612,
-          "opsPerSec": 626
+          "totalMs": 171.06380000000001,
+          "opsPerSec": 585
         }
       }
     }

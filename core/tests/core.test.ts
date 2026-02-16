@@ -89,7 +89,7 @@ describe("Kire Core (Bun)", () => {
 
     test("should handle streaming", async () => {
         const k = new Kire({ stream: true });
-        const stream = await k.render("Stream {{ name }}", { name: "Active" });
+        const stream = k.render("Stream {{ name }}", { name: "Active" });
         expect(stream).toBeInstanceOf(ReadableStream);
         
         const result = await consumeStream(stream);
