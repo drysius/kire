@@ -1,0 +1,46 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run Benchmark (Node.js)
+        run: npx tsx benchmark/create.ts
+        env:
+          NODE_ENV: production
+
+      - name: Run Benchmark (Bun)
+        run: bun run benchmark/create.ts
+        env:
+          NODE_ENV: production
+
+      - name: Generate Report
+        run: bun run benchmark/report.ts
+
+      - name: Commit Benchmark Report
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add BENCHMARK.md
+          git commit -m "docs: update performance benchmarks" || echo "No changes to commit"
+          git push

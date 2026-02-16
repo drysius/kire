@@ -1,4 +1,5 @@
 import type { Kire } from "../kire";
+import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
 	kire.directive({
@@ -7,7 +8,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("def");
             api.write(`{ const _origRes${id} = $ctx.$response; $ctx.$response = "";`);
             api.renderChildren();
@@ -25,7 +26,7 @@ export default (kire: Kire<any>) => {
 		children: `auto`,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
 			api.write(`if ($ctx.$globals["~defines"] && $ctx.$globals["~defines"]['${name}'] !== undefined) {`);
             api.write(`  $ctx.$response += $ctx.$globals["~defines"]['${name}'];`);
             if (api.node.children?.length) {
@@ -42,7 +43,7 @@ export default (kire: Kire<any>) => {
 		children: false,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
 			api.write(`$ctx.$response += "<!-- KIRE:stack(${name}) -->";`);
             api.epilogue(`
                 if ($ctx['~stacks'] && $ctx['~stacks']['${name}']) {
@@ -60,7 +61,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("push");
 			api.write(`{
                 if(!$ctx['~stacks']) $ctx['~stacks'] = new NullProtoObj();

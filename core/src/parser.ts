@@ -6,7 +6,8 @@ import {
     TAG_OPEN_REGEX,
     TAG_CLOSE_REGEX,
     ATTR_NAME_BREAK_REGEX,
-    WHITESPACE_REGEX
+    WHITESPACE_REGEX,
+    TEXT_SCAN_REGEX
 } from "./utils/regex";
 
 export class Parser {
@@ -106,12 +107,18 @@ export class Parser {
         if (!match) return false;
 
         let name = match[1]!;
-        const registered = Array.from(this.kire.$directives.keys());
-        if (!registered.includes(name) && !name.startsWith("end")) {
-            for (let i = name.length - 1; i > 0; i--) {
+        // Optimized check using pre-compiled regex pattern
+        if (!this.kire.$directivesPattern.test(name) && !name.startsWith("end")) {
+             // Fallback to partial matching if needed, but primarily trust the regex
+             // If pattern doesn't match, maybe it's a partial directive? 
+             // Logic kept similar but optimized:
+             const registered = Array.from(this.kire.$directives.keys());
+             let found = false;
+             for (let i = name.length - 1; i > 0; i--) {
                 const sub = name.slice(0, i);
-                if (registered.includes(sub)) { name = sub; break; }
+                if (registered.includes(sub)) { name = sub; found = true; break; }
             }
+            if (!found) return false; // If not found in partials either, it's text
         }
 
         if (name.startsWith("end")) {
@@ -146,7 +153,14 @@ export class Parser {
         const slice = this.template.slice(this.cursor);
         const match = slice.match(TAG_OPEN_REGEX);
         if (!match) return false;
+        
         const tagName = match[1]!;
+        
+        // OPTIMIZATION: Only parse as element if it matches a registered Kire element
+        if (!this.kire.$elementsPattern.test(tagName)) {
+            return false;
+        }
+
         this.advance(match[0]!.length);
         const attributes = this.parseAttributesState();
         let selfClosing = false;
@@ -218,7 +232,12 @@ export class Parser {
     private checkClosingTag(): boolean {
         const match = this.template.slice(this.cursor).match(TAG_CLOSE_REGEX);
         if (!match) return false;
-        this.popStack(match[1]!);
+        
+        const tagName = match[1]!;
+        // OPTIMIZATION: Only consume closing tag if it matches a registered Kire element
+        if (!this.kire.$elementsPattern.test(tagName)) return false;
+
+        this.popStack(tagName);
         this.advance(match[0]!.length); return true;
     }
 
@@ -244,15 +263,19 @@ export class Parser {
 
     private parseText() {
         const loc = this.getLoc();
-        let next = this.template.indexOf("{", this.cursor);
-        const nextAt = this.template.indexOf("@", this.cursor);
-        const nextTag = this.template.indexOf("<", this.cursor);
-        const stops = [next, nextAt, nextTag].filter(idx => idx !== -1);
-        const end = stops.length > 0 ? Math.min(...stops) : this.template.length;
+        TEXT_SCAN_REGEX.lastIndex = this.cursor;
+        const match = TEXT_SCAN_REGEX.exec(this.template);
+        const end = match ? match.index : this.template.length;
+        
         if (end > this.cursor) {
             this.addNode({ type: "text", content: this.template.slice(this.cursor, end), loc });
             this.advance(end - this.cursor);
         } else {
+            // Must advance at least one char if we are stuck at a stop char (handled by main loop)
+            // But main loop calls parseText only if specific checks failed.
+            // If main loop check failed (e.g. checkElement returned false for <div>),
+            // parseText sees '<' at cursor.
+            // We need to consume '<' as text and move on.
             this.addNode({ type: "text", content: this.template[this.cursor]!, loc });
             this.advance(1);
         }

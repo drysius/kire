@@ -4,11 +4,14 @@ import { SourceMapGenerator } from "./utils/source-map";
 import { 
     NullProtoObj, 
     JS_IDENTIFIER_REGEX, 
-    RESERVED_KEYWORDS,
+    RESERVED_KEYWORDS_REGEX,
     JS_EXTRACT_IDENTS_REGEX,
     FOR_VAR_EXTRACT_REGEX,
     INTERPOLATION_PURE_REGEX,
-    INTERPOLATION_GLOBAL_REGEX
+    INTERPOLATION_GLOBAL_REGEX,
+    INTERPOLATION_START_REGEX,
+    AWAIT_KEYWORD_REGEX,
+    WILDCARD_CHAR_REGEX
 } from "./utils/regex";
 
 export class Compiler {
@@ -44,7 +47,7 @@ export class Compiler {
 
     /** Converte valor de atributo HTML (possivelmente com {{}}) em expressão JS */
     private parseAttrCode(val: string): string {
-        if (!val.includes("{{")) return val;
+        if (!INTERPOLATION_START_REGEX.test(val)) return val;
         // Se for puramente uma interpolação, extrai o miolo
         const pureMatch = val.match(INTERPOLATION_PURE_REGEX);
         if (pureMatch) return pureMatch[1]!;
@@ -72,7 +75,7 @@ export class Compiler {
         this.collectDeclarations(nodes, localDecls);
 
         for (const id of idents) {
-            if (RESERVED_KEYWORDS.has(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$deps" || id === "$loop") continue;
+            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$deps" || id === "$loop") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
             this.header.push(`let ${id} = $ctx.$props['${id}'] !== undefined ? $ctx.$props['${id}'] : $ctx.$globals['${id}'];`);
         }
@@ -111,7 +114,7 @@ export class Compiler {
     private collectIdentifiers(nodes: Node[], set: Set<string>) {
         const scan = (c: string) => { 
             let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
-                const id = m[1]; if (id && !RESERVED_KEYWORDS.has(id)) set.add(id);
+                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
             }
             JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; // Reset state for global regex
         };
@@ -140,7 +143,7 @@ export class Compiler {
     private collectDeclarations(nodes: Node[], set: Set<string>) {
         const scan = (c: string) => { 
             let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
-                const id = m[1]; if (id && !RESERVED_KEYWORDS.has(id)) set.add(id);
+                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
             }
             JS_EXTRACT_IDENTS_REGEX.lastIndex = 0;
         };
@@ -186,7 +189,7 @@ export class Compiler {
                 case "text": this.textBuffer += n.content || ""; break;
                 case "interpolation":
                     this.flushText();
-                    if (n.content?.includes("await")) this.markAsync();
+                    if (n.content && AWAIT_KEYWORD_REGEX.test(n.content)) this.markAsync();
                     if (!this.kire.production && n.loc) {
                         this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                         this.body.push(`// kire-line: ${n.loc.line}`);
@@ -195,7 +198,7 @@ export class Compiler {
                     break;
                 case "js": 
                     this.flushText();
-                    if (n.content?.includes("await")) this.markAsync(); 
+                    if (n.content && AWAIT_KEYWORD_REGEX.test(n.content)) this.markAsync(); 
                     if (!this.kire.production && n.content && n.loc) {
                         const lines = n.content.split("\n");
                         for (let i = 0; i < lines.length; i++) {
@@ -233,7 +236,7 @@ export class Compiler {
         for (const m of this.kire.$elementMatchers) {
             if (typeof m.def.name === "string") {
                 if (m.def.name === t) { matcher = m; break; }
-                if (m.def.name.includes("*")) {
+                if (WILDCARD_CHAR_REGEX.test(m.def.name)) {
                     const p = m.def.name.replace("*", "(.*)");
                     const m2 = t.match(new RegExp(`^${p}$`));
                     if (m2) { n.wildcard = m2[1]; matcher = m; break; }
@@ -256,7 +259,7 @@ export class Compiler {
                             dirDef.onCall(this.createCompilerApi({ ...n, type: 'directive', name: key.slice(1), args: [val] }, dirDef));
                         }
                     } else {
-                        if (val.includes("{{")) {
+                        if (INTERPOLATION_START_REGEX.test(val)) {
                             this.textBuffer += ` ${key}='`;
                             this.flushText();
                             const code = this.parseAttrCode(val);
@@ -287,9 +290,9 @@ export class Compiler {
             kire: this.kire, node, 
             get wildcard() { return node.wildcard; },
             get children() { return node.children; },
-            prologue: (js: string) => { if (js.includes("await")) this.markAsync(); this.header.push(js); },
-            write: (js: string) => { this.flushText(); if (js.includes("await")) this.markAsync(); this.body.push(js); },
-            after: (js: string) => { this.flushText(); if (js.includes("await")) this.markAsync(); this.footer.push(js); },
+            prologue: (js: string) => { if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.header.push(js); },
+            write: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.body.push(js); },
+            after: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.footer.push(js); },
             markAsync: () => this.markAsync(),
             depend: (p: string) => {
                 const r = this.kire.resolvePath(p);

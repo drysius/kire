@@ -1,4 +1,5 @@
 import type { Kire } from "../kire";
+import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
 	kire.directive({
@@ -7,7 +8,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("slot");
 			api.write(`{ const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
             api.renderChildren();
@@ -24,7 +25,7 @@ export default (kire: Kire<any>) => {
         children: false,
 		onCall: (api) => {
 			let name = api.getAttribute("name");
-            if (typeof name === "string" && (name.startsWith("'") || name.startsWith('"'))) name = name.slice(1, -1);
+            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
 			const def = api.getAttribute("default");
 			api.write(`{
                 const content = ($ctx.slots && $ctx.slots['${name}']) || ($ctx.$props.slots && $ctx.$props.slots['${name}']);

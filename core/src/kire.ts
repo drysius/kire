@@ -4,7 +4,7 @@ import { Compiler } from "./compiler";
 import { Parser } from "./parser";
 import KireRuntime from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
-import { NullProtoObj } from "./utils/regex";
+import { NullProtoObj, createFastMatcher } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
 import type {
     DirectiveDefinition,
@@ -30,6 +30,10 @@ export class Kire<Streaming extends boolean = false> {
     public $directives: Map<string, DirectiveDefinition> = new Map();
     public $elements: Set<ElementDefinition> = new Set();
     public $elementMatchers: ElementMatcher[] = [];
+    
+    // Optimized Matchers
+    public $elementsPattern: RegExp = /$^/; // Matches nothing initially
+    public $directivesPattern: RegExp = /$^/;
 
     public $globals: Record<string, any> = new NullProtoObj();
     public $props: Record<string, any> = new NullProtoObj();
@@ -226,9 +230,20 @@ export class Kire<Streaming extends boolean = false> {
         this.$namespaces.set(name, resolve(this.$root, path).replace(/\\/g, '/')); return this;
     }
 
-    public directive(def: DirectiveDefinition) { this.$directives.set(def.name, def); return this; }
+    public directive(def: DirectiveDefinition) { 
+        this.$directives.set(def.name, def); 
+        this.$directivesPattern = createFastMatcher(Array.from(this.$directives.keys()));
+        return this; 
+    }
     public getDirective(name: string) { return this.$directives.get(name); }
-    public element(def: ElementDefinition) { this.$elements.add(def); this.$elementMatchers.unshift({ def }); return this; }
+    public element(def: ElementDefinition) { 
+        this.$elements.add(def); 
+        this.$elementMatchers.unshift({ def }); 
+        this.$elementsPattern = createFastMatcher(
+            this.$elementMatchers.map(m => m.def.name)
+        );
+        return this; 
+    }
 
     public $types: Map<string, TypeDefinition> = new Map();
     public $schemaDefinition?: KireSchemaDefinition;

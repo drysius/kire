@@ -1,0 +1,117 @@
+{
+  "runtime": "bun",
+  "timestamp": "2026-02-16T06:11:02.151Z",
+  "scenarios": [
+    {
+      "name": "Small Data",
+      "iterations": 10000,
+      "dataCount": 10,
+      "engines": {
+        "Kire": {
+          "engineName": "Kire",
+          "totalMs": 300.4504,
+          "opsPerSec": 33283
+        },
+        "EJS": {
+          "engineName": "EJS",
+          "totalMs": 352.57660000000004,
+          "opsPerSec": 28363
+        },
+        "Edge.js": {
+          "engineName": "Edge.js",
+          "totalMs": 573.1539,
+          "opsPerSec": 17447
+        },
+        "Handlebars": {
+          "engineName": "Handlebars",
+          "totalMs": 2890.1018,
+          "opsPerSec": 3460
+        },
+        "Nunjucks": {
+          "engineName": "Nunjucks",
+          "totalMs": 976.7583000000001,
+          "opsPerSec": 10238
+        },
+        "Pug": {
+          "engineName": "Pug",
+          "totalMs": 7351.8774,
+          "opsPerSec": 1360
+        }
+      }
+    },
+    {
+      "name": "Medium Data",
+      "iterations": 1000,
+      "dataCount": 100,
+      "engines": {
+        "Kire": {
+          "engineName": "Kire",
+          "totalMs": 60.73930000000001,
+          "opsPerSec": 16464
+        },
+        "EJS": {
+          "engineName": "EJS",
+          "totalMs": 146.80550000000002,
+          "opsPerSec": 6812
+        },
+        "Edge.js": {
+          "engineName": "Edge.js",
+          "totalMs": 127.72609999999999,
+          "opsPerSec": 7829
+        },
+        "Handlebars": {
+          "engineName": "Handlebars",
+          "totalMs": 482.2085,
+          "opsPerSec": 2074
+        },
+        "Nunjucks": {
+          "engineName": "Nunjucks",
+          "totalMs": 154.7822,
+          "opsPerSec": 6461
+        },
+        "Pug": {
+          "engineName": "Pug",
+          "totalMs": 880.3752,
+          "opsPerSec": 1136
+        }
+      }
+    },
+    {
+      "name": "Large Data",
+      "iterations": 100,
+      "dataCount": 1000,
+      "engines": {
+        "Kire": {
+          "engineName": "Kire",
+          "totalMs": 14.981900000000003,
+          "opsPerSec": 6675
+        },
+        "EJS": {
+          "engineName": "EJS",
+          "totalMs": 117.17719999999998,
+          "opsPerSec": 853
+        },
+        "Edge.js": {
+          "engineName": "Edge.js",
+          "totalMs": 59.8653,
+          "opsPerSec": 1670
+        },
+        "Handlebars": {
+          "engineName": "Handlebars",
+          "totalMs": 147.91989999999998,
+          "opsPerSec": 676
+        },
+        "Nunjucks": {
+          "engineName": "Nunjucks",
+          "totalMs": 52.6136,
+          "opsPerSec": 1901
+        },
+        "Pug": {
+          "engineName": "Pug",
+          "totalMs": 159.6612,
+          "opsPerSec": 626
+        }
+      }
+    }
+  ]
+}
