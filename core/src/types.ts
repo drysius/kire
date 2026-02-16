@@ -22,6 +22,8 @@ export interface KireOptions<Streaming extends boolean = boolean, Asyncronos ext
     vfiles?: Record<string, string>;
     bundled?: Record<string, KireTplFunction>;
     varLocals?: string;
+    parent?: Kire<any>;
+    attributes?: Record<string, AttributeDefinition | string>;
 }
 
 export interface DependencyMetadata {
@@ -68,6 +70,8 @@ export interface ElementDefinition {
     void?: boolean;
     onCall: KireHandler;
     related?: string[];
+    description?: string;
+    example?: string;
 }
 
 export interface DirectiveDefinition {
@@ -77,6 +81,8 @@ export interface DirectiveDefinition {
     onCall: KireHandler;
     related?: string[];
     exposes?: string[];
+    description?: string;
+    example?: string;
 }
 
 export interface KirePlugin<Options extends object | undefined = {}> {
@@ -90,6 +96,13 @@ export interface KireSchemaDefinition {
     author?: string;
     version?: string;
     repository?: string;
+    attributes?: Record<string, AttributeDefinition | string>;
+}
+
+export interface AttributeDefinition {
+    type: string | string[];
+    description?: string;
+    example?: string;
 }
 
 export interface TypeDefinition {

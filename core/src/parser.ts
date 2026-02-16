@@ -107,18 +107,14 @@ export class Parser {
         if (!match) return false;
 
         let name = match[1]!;
-        // Optimized check using pre-compiled regex pattern
         if (!this.kire.$directivesPattern.test(name) && !name.startsWith("end")) {
-             // Fallback to partial matching if needed, but primarily trust the regex
-             // If pattern doesn't match, maybe it's a partial directive? 
-             // Logic kept similar but optimized:
              const registered = Array.from(this.kire.$directives.keys());
              let found = false;
              for (let i = name.length - 1; i > 0; i--) {
                 const sub = name.slice(0, i);
                 if (registered.includes(sub)) { name = sub; found = true; break; }
             }
-            if (!found) return false; // If not found in partials either, it's text
+            if (!found) return false;
         }
 
         if (name.startsWith("end")) {
@@ -139,7 +135,9 @@ export class Parser {
         if (current && (name === "else" || name === "elseif" || name === "empty")) {
             if (!current.related) current.related = [];
             current.related.push(node);
-            this.stack.pop(); this.stack.push(node); return true;
+            this.stack.pop(); 
+            this.stack.push(node); 
+            return true;
         }
 
         this.addNode(node);
@@ -155,11 +153,7 @@ export class Parser {
         if (!match) return false;
         
         const tagName = match[1]!;
-        
-        // OPTIMIZATION: Only parse as element if it matches a registered Kire element
-        if (!this.kire.$elementsPattern.test(tagName)) {
-            return false;
-        }
+        if (!this.kire.$elementsPattern.test(tagName)) return false;
 
         this.advance(match[0]!.length);
         const attributes = this.parseAttributesState();
@@ -170,11 +164,29 @@ export class Parser {
 
         const node: Node = { type: "element", name: tagName, tagName, attributes, void: selfClosing, children: [], loc };
         
+        if (!selfClosing && (tagName === "style" || tagName === "script")) {
+            const closeTag = `</${tagName}>`;
+            const endIdx = this.template.indexOf(closeTag, this.cursor);
+            if (endIdx !== -1) {
+                const content = this.template.slice(this.cursor, endIdx);
+                node.children = [{ type: "text", content, loc: this.getLoc() }];
+                this.addNode(node);
+                this.advance(content.length + closeTag.length);
+                return true;
+            }
+        }
+
         const current = this.stack[this.stack.length - 1];
-        if (current && (tagName.endsWith(":else") || tagName.endsWith(":elseif") || tagName.endsWith(":empty") || tagName === "else" || tagName === "elseif" || tagName === "empty")) {
+        const isRelated = tagName.endsWith(":else") || tagName.endsWith(":elseif") || tagName.endsWith(":empty");
+        
+        if (current && isRelated) {
              if (!current.related) current.related = [];
              current.related.push(node);
-             this.stack.pop(); if (!node.void) this.stack.push(node); return true;
+             // We pop the old node (if/elseif) but push the NEW one (elseif/else) to the stack
+             // so its children are captured correctly.
+             this.stack.pop(); 
+             if (!node.void) this.stack.push(node); 
+             return true;
         }
 
         this.addNode(node);
@@ -234,7 +246,6 @@ export class Parser {
         if (!match) return false;
         
         const tagName = match[1]!;
-        // OPTIMIZATION: Only consume closing tag if it matches a registered Kire element
         if (!this.kire.$elementsPattern.test(tagName)) return false;
 
         this.popStack(tagName);
@@ -271,11 +282,6 @@ export class Parser {
             this.addNode({ type: "text", content: this.template.slice(this.cursor, end), loc });
             this.advance(end - this.cursor);
         } else {
-            // Must advance at least one char if we are stuck at a stop char (handled by main loop)
-            // But main loop calls parseText only if specific checks failed.
-            // If main loop check failed (e.g. checkElement returned false for <div>),
-            // parseText sees '<' at cursor.
-            // We need to consume '<' as text and move on.
             this.addNode({ type: "text", content: this.template[this.cursor]!, loc });
             this.advance(1);
         }

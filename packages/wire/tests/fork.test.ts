@@ -5,7 +5,7 @@ import { WireComponent, Wired } from "../src";
 class ContextComponent extends WireComponent {
 	async render() {
 		// Attempt to access 'request' from $globals, which should be set on the fork
-		const req = this.kire.$globals.get("request");
+		const req = this.kire.$globals["request"];
 		return `<div>URL: ${req ? req.url : "undefined"}</div>`;
 	}
 }

@@ -1,4 +1,4 @@
-import type { Kire } from "kire";
+import type { Kire, KireHandler } from "kire";
 import type { WireOptions } from "../types";
 import { getClientScript } from "../utils/client-script";
 import registerTypes from "../type-declare";
@@ -6,35 +6,36 @@ import registerTypes from "../type-declare";
 export function registerDirectives(kire: Kire, options: WireOptions) {
     registerTypes(kire);
 
-	const wireDirectiveHandler = async (compiler: any) => {
-		const nameExpr = compiler.param("name");
-		const paramsExpr = compiler.param("params") || "{}";
-		const optionsExpr = compiler.param("options") || "{}";
+	const wireDirectiveHandler: KireHandler = (api) => {
+		const nameExpr = api.getArgument(0);
+		const paramsExpr = api.getArgument(1) || "{}";
+		const optionsExpr = api.getArgument(2) || "{}";
 
-		compiler.raw(`await (async () => {
-                const $w = $ctx.$wire;
-                const $name = ${JSON.stringify(nameExpr)};
+        api.markAsync();
+		api.write(`await (async () => {
+                const $w = $globals.Wired;
+                const $name = ${nameExpr};
                 const $params = ${paramsExpr};
                 const $opts = ${optionsExpr};
                 
                 if ($opts.lazy) {
-                    const $id = crypto.randomUUID();
+                    const $id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : Math.random().toString(36).slice(2);
                     const $pJson = JSON.stringify($params).replace(/"/g, '&quot;');
-                    $ctx.$add('<div wire:id="' + $id + '" wire:lazy="true" wire:component="' + $name + '" wire:init-params="' + $pJson + '">');
-                    $ctx.$add($opts.placeholder || 'Loading...');
-                    $ctx.$add('</div>');
+                    $kire_response += '<div wire:id="' + $id + '" wire:lazy="true" wire:component="' + $name + '" wire:init-params="' + $pJson + '">';
+                    $kire_response += $opts.placeholder || 'Loading...';
+                    $kire_response += '</div>';
                     return;
                 }
 
                 const $c = $w.getComponentClass($name);
                 
                 if (!$c) {
-                    $ctx.$add('<!-- Wire component "' + $name + '" not found -->');
+                    $kire_response += '<!-- Wire component "' + $name + '" not found -->';
                     return;
                 }
 
-                const $i = new $c($ctx.$kire);
-                $i.context = { ...$ctx, kire: $ctx.$kire };
+                const $i = new $c(this);
+                $i.context = { kire: this };
                 $i.params = $params;
 
                 if ($i.mount) await $i.mount($params);
@@ -64,7 +65,7 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                     listeners: $i.listeners || {},
                 };
 
-                const $ident = $ctx.$wireToken || ($ctx.$props && $ctx.$props.$wireToken) || "";
+                const $ident = $globals.$wireToken || "";
                 const $sum = $w.checksum.generate($state, $memo, $ident);
                 
                 const $snap = JSON.stringify({
@@ -76,33 +77,35 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
                 const $esc = $snap.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
                 const $style = (!$html || !$html.trim()) ? ' style="display: none;"' : '';
 
-                $ctx.$add('<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="' + $name + '"' + $style + '>');
-                $ctx.$add($html || '');
-                $ctx.$add('</div>');
-            })();`);
+                $kire_response += '<div wire:id="' + $i.__id + '" wire:snapshot="' + $esc + '" wire:component="' + $name + '"' + $style + '>';
+                $kire_response += $html || '';
+                $kire_response += '</div>';
+            }).call(this);`);
 	};
 
 	kire.directive({
 		name: "wire",
-		params: ["name:string", "params?:object", "options?:object"],
+		params: ["name", "params", "options"],
 		children: false,
-		type: "html",
 		description: "Renders a Kirewire component.",
 		example: "@wire('counter', { count: 10 }, { lazy: true })",
 		onCall: wireDirectiveHandler,
 	});
 
+	kire.live = kire.wire = (name: string, params: object = {}, options: object = {}) => {
+        return kire.render(`@wire(${JSON.stringify(name)}, ${JSON.stringify(params)}, ${JSON.stringify(options)})`);
+    };
+
 	kire.directive({
 		name: "live",
-		params: ["name:string", "params?:object", "options?:object"],
+		params: ["name", "params", "options"],
 		children: false,
-		type: "html",
 		description: "Alias for @wire. Renders a Kirewire component.",
 		example: "@live('counter', { count: 10 })",
 		onCall: wireDirectiveHandler,
 	});
 
-	const injectScripts = (compiler: any) => {
+	const injectScripts: KireHandler = (api) => {
 		const script = getClientScript(
 			{
 				route: options.route || "/_wired",
@@ -114,13 +117,12 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 			},
 			kire.production,
 		);
-		compiler.res(script);
+		api.write(`$kire_response += ${JSON.stringify(script)};`);
 	};
 
 	kire.directive({
 		name: "wired",
 		children: false,
-		type: "html",
 		description: "Injects the necessary client-side scripts for Wired.",
 		example: "@wired",
 		onCall: injectScripts,
@@ -129,7 +131,6 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 	kire.directive({
 		name: "wiredScripts",
 		children: false,
-		type: "html",
 		description: "Alias for @wired. Injects client-side scripts.",
 		example: "@wiredScripts",
 		onCall: injectScripts,
@@ -139,7 +140,6 @@ export function registerDirectives(kire: Kire, options: WireOptions) {
 	kire.directive({
 		name: "kirewire",
 		children: false,
-		type: "html",
 		description: "Legacy alias for @wired.",
 		example: "@kirewire",
 		onCall: injectScripts,

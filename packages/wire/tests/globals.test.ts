@@ -1,4 +1,3 @@
-
 import { test, expect, mock } from "bun:test";
 import { Kire } from "kire";
 import Wired from "../src/index";
@@ -18,7 +17,11 @@ class InlineComponent extends WireComponent {
 
 test("WireComponent should respect globals from forked kire instance", async () => {
     // Setup Kire
-    const kire = new Kire();
+    const kire = new Kire({
+        vfiles: {
+            "example.kire": "<div>{{ request.url }}</div>"
+        }
+    });
     
     // Register Wired plugin
     kire.plugin(Wired.plugin);
@@ -27,24 +30,12 @@ test("WireComponent should respect globals from forked kire instance", async () 
     Wired.register('example', ExampleComponent);
     Wired.register('inline', InlineComponent);
 
-    // Setup Resolver
-    kire.$resolver = async (path) => {
-        if (path === 'example.kire') {
-            return '<div>{{ request.url }}</div>';
-        }
-        return '';
-    };
-
-    // 1. Run with global kire (no request global) - Should fail or return empty/undefined depending on usage
-    // But since we are testing the FIX for forks, let's focus on the fork.
-    
     // Create a fork
     const fkire = kire.fork();
     const req = { url: '/test-url' };
     fkire.$global('request', req);
 
     // Render using the fork
-    // We simulate what the @wire directive does: create instance, inject kire
     const component = new ExampleComponent(fkire);
     component.context = { kire: fkire };
 
@@ -112,8 +103,6 @@ test("WireComponent cache should not poison other forks with different globals (
     expect(html2).toContain('/url-2');
 
     // Fork 3: Does NOT have 'request'. 
-    // We expect a ReferenceError because it shouldn't reuse the compiled code from Fork 1/2
-    // which tried to destructure 'request' from globals.
     const fkire3 = kire.fork();
     const component3 = new InlineComponent(fkire3);
     
@@ -124,7 +113,7 @@ test("WireComponent cache should not poison other forks with different globals (
     try {
         await component3.render();
     } catch (e: any) {
-        expect(e.message).toContain('request is not defined');
+        expect(e.message).toContain("evaluating 'request.url'");
     } finally {
         console.error = originalConsoleError;
     }

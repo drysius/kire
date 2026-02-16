@@ -1,63 +1,72 @@
-import { Kire } from "./core/src/index";
+import { Kire } from "./core/src/kire";
 
-const kire = new Kire({
-    root: __dirname,
-    production: false,
-    silent: false
-});
+async function debugNativeElements() {
+    console.log("\n--- DEBUG NATIVE ELEMENTS ---");
+    const kire = new Kire({ silent: true });
 
-// Template to test various features: interpolation, directives, x-elements, and stacks
-const template = `
-@layout('base')
+    const template = `
+        <kire:if cond="val === 1">
+            One
+        </kire:if>
+        <kire:elseif cond="val === 2">
+            Two
+        </kire:elseif>
+        <kire:else>
+            Other
+        </kire:else>
+    `;
 
-@section('header')
-    <h1>Hello {{ name }}!</h1>
-@endsection
+    try {
+        const result = await kire.compile(template, "elements.kire");
+        console.log("COMPILED CODE:");
+        console.log(result.meta.code);
 
-@push('scripts')
-    <script>console.log("Push 1");</script>
-@endpush
+        const html1 = await kire.render(template, { val: 1 });
+        console.log("VAL=1:", JSON.stringify(html1.trim()));
 
-<kire:if cond="show">
-    <p>This is visible</p>
-</kire:if>
+        const html2 = await kire.render(template, { val: 2 });
+        console.log("VAL=2:", JSON.stringify(html2.trim()));
 
-@push('scripts')
-    <script>console.log("Push 2");</script>
-@endpush
-
-@stack('scripts')
-`;
-
-const baseTemplate = `
-<div class="layout">
-    @yield('header')
-    <div class="content">
-        @yield('default')
-    </div>
-</div>
-`;
-
-// Register virtual file for layout
-kire.$vfiles[kire.resolvePath('base')] = baseTemplate;
-
-try {
-    console.log("--- COMPILING TEMPLATE ---");
-    const compiled = kire.compile(template, "debug.kire");
-
-    console.log("\n--- COMPILED CODE (meta.code) ---");
-    console.log(compiled.meta.code);
-
-    console.log("\n--- RENDERING ---");
-    const result = compiled.call(kire, { name: "World", show: true }, kire.$globals);
-    console.log(result);
-
-} catch (e) {
-    console.error("--- ERROR ---");
-    if (e instanceof Error) {
-        console.error(e.message);
-        console.error(e.stack);
-    } else {
-        console.error(e);
+        const html3 = await kire.render(template, { val: 3 });
+        console.log("VAL=3:", JSON.stringify(html3.trim()));
+    } catch (e) {
+        console.error("ERROR:", e);
     }
 }
+
+async function debugXSlot() {
+    console.log("\n--- DEBUG X-SLOT ---");
+    const kire = new Kire({ 
+        silent: true,
+        vfiles: {
+            "card.kire": `
+                <div class="card">
+                    <div class="header">@yield('header')</div>
+                    <div class="body">@yield('default')</div>
+                </div>
+            `
+        }
+    });
+
+    const template = `
+        <x-card>
+            <x-slot name="header">My Header</x-slot>
+            Main Content
+        </x-card>
+    `;
+
+    try {
+        const result = await kire.compile(template, "xslot.kire");
+        console.log("COMPILED CODE:");
+        console.log(result.meta.code);
+
+        const html = await kire.render(template);
+        console.log("RENDERED HTML:");
+        console.log(html);
+    } catch (e) {
+        console.error("ERROR:", e);
+    }
+}
+
+await debugNativeElements();
+await debugXSlot();

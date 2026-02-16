@@ -70,7 +70,7 @@ export class Compiler {
         this.textBuffer = "";
         this.identifiers.clear();
 
-        this.header.push(`$globals = Object.assign({}, this.$globals, $globals);`);
+        this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
 
@@ -97,8 +97,9 @@ export class Compiler {
         this.allIdentifiers = new Set(this.identifiers);
         
         // Register variable providers
-        for (const [name, handler] of this.kire.$varThens) {
-            const regex = new RegExp(`\\b${name}\\b`);
+        for (const name in this.kire["~varThens"]) {
+            const handler = this.kire["~varThens"][name];
+            const regex = new RegExp(`\\b${name.replace('$', '\\$')}\\b`);
             if (this.allIdentifiers.has(name) || regex.test(this.fullBody)) {
                 handler(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}));
             }
@@ -269,15 +270,16 @@ export class Compiler {
 
     private processElement(n: Node) {
         const t = n.tagName || ""; let matcher = null;
-        for (const m of this.kire.$elementMatchers) {
-            if (typeof m.def.name === "string") {
-                if (m.def.name === t) { matcher = m; break; }
-                if (WILDCARD_CHAR_REGEX.test(m.def.name)) {
-                    const p = m.def.name.replace("*", "(.*)");
+        for (const m in this.kire["~elements"]) {
+            const def = this.kire["~elements"][m];
+            if (typeof def.name === "string") {
+                if (def.name === t) { matcher = { def }; break; }
+                if (WILDCARD_CHAR_REGEX.test(def.name)) {
+                    const p = def.name.replace("*", "(.*)");
                     const m2 = t.match(new RegExp(`^${p}$`));
-                    if (m2) { n.wildcard = m2[1]; matcher = m; break; }
+                    if (m2) { n.wildcard = m2[1]; matcher = { def }; break; }
                 }
-            } else if (m.def.name instanceof RegExp && m.def.name.test(t)) { matcher = m; break; }
+            } else if (def.name instanceof RegExp && def.name.test(t)) { matcher = { def }; break; }
         }
 
         if (!matcher) {

@@ -7,7 +7,7 @@ import type { TSchema } from "@sinclair/typebox";
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 export abstract class WireComponent {
-	public __id: string = randomUUID();
+	public __id: string = typeof crypto !== 'undefined' ? crypto.randomUUID() : Math.random().toString(36).slice(2);
 	public __name = "";
 	public __events: Array<{ name: string; params: any[] }> = [];
 	public __streams: Array<{
@@ -34,17 +34,11 @@ export abstract class WireComponent {
 
     public $globals: Record<string, any> = {};
     public $props: Record<string, any> = {};
-    public $ctx: Record<string, any> = {};
 
     constructor(public kire: Kire) {
-        if (!kire) {
-            // Allow empty constructor for testing or manual instantiation if needed, 
-            // but kire must be injected before use.
-            // Ideally strictly required, but for backward compat/testing flexibility:
-        } else {
-            this.$globals = kire.$globals.toObject();
-            this.$props = kire.$props.toObject();
-            this.$ctx = kire.$contexts.toObject();
+        if (kire) {
+            this.$globals = kire.$globals;
+            this.$props = kire.$props;
         }
     }
 
@@ -61,7 +55,6 @@ export abstract class WireComponent {
 
 	/**
 	 * Simple validation helper.
-	 * In a real app, use Zod or similar.
 	 * @param rules Object where key is property and value is a validation function or regex
 	 */
 	public validate(
@@ -135,37 +128,7 @@ export abstract class WireComponent {
 			...locals,
 		};
 
-		// Prepare injection
-		const keys = Object.keys(data).filter((k) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
-		);
-		const keysHash = keys.join("|");
-		const resolvedPath = this.kire.resolvePath(path);
-
-        // Include globals in cache key
-        const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
-		);
-		const globalKeys = sanitizedKeys.sort().join("|");
-
-		const cacheKey = `wire:${resolvedPath}:${keysHash}:${globalKeys}`;
-
-		let compiled: Function | undefined;
-
-		if (this.kire.production && this.kire.$files.has(cacheKey)) {
-			compiled = this.kire.$files.get(cacheKey) as Function;
-		} else {
-			const content = await this.kire.$resolver(resolvedPath);
-			const injection = keys.length
-				? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>`
-				: "";
-			compiled = await this.kire.compileFn(injection + content);
-			if (this.kire.production) {
-				this.kire.$files.set(cacheKey, compiled);
-			}
-		}
-
-		return this.kire.run(compiled, data);
+		return this.kire.view(path, data) as any;
 	}
 
 	/**
@@ -184,42 +147,7 @@ export abstract class WireComponent {
 			...locals,
 		};
 
-		const keys = Object.keys(data).filter((k) =>
-			/^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k),
-		);
-		
-		// Otimização: Cache de templates inline baseada no conteúdo
-		// Usamos o md5 do template + keys injetadas como chave de cache
-		const injection = keys.length
-			? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>`
-			: "";
-			
-		const fullTemplate = injection + template;
-		
-		// Se estiver em produção, tenta usar o cache
-		if (this.kire.production) {
-            // Include globals in cache key
-            const sanitizedKeys = Array.from(this.kire.$globals.keys()).filter((key) =>
-                /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key),
-            );
-            const globalKeys = sanitizedKeys.sort().join("|");
-            
-			// Usar um hash simples do template string como chave é arriscado se for muito longo
-			// Mas para inline templates geralmente é ok. 
-			// Melhor: usar o helper $md5 do contexto se disponível, ou o kire internal
-			const cacheKey = `inline:${fullTemplate}:${globalKeys}`;
-			
-			if (this.kire.$files.has(cacheKey)) {
-				const compiled = this.kire.$files.get(cacheKey) as Function;
-				return this.kire.run(compiled, data);
-			}
-			
-			const compiled = await this.kire.compileFn(fullTemplate);
-			this.kire.$files.set(cacheKey, compiled);
-			return this.kire.run(compiled, data);
-		}
-
-		return this.kire.render(fullTemplate, data);
+		return this.kire.render(template, data) as any;
 	}
 
 	/**
@@ -231,10 +159,6 @@ export abstract class WireComponent {
 
 	/**
 	 * Streams content to a specific target element on the client.
-	 * @param target The wire:stream target name
-	 * @param content The HTML content to stream
-	 * @param replace If true, replaces the target element itself. If false, appends/prepends based on method.
-	 * @param method 'append' | 'prepend' | 'update' | 'remove' (default: 'update' - replaces innerHTML)
 	 */
 	public stream(
 		target: string,
@@ -281,7 +205,6 @@ export abstract class WireComponent {
 				key.startsWith("_") ||
 				key === "$globals" ||
 				key === "$props" ||
-				key === "$ctx" ||
 				key === "kire" ||
 				key === "context" ||
 				key === "queryString" ||
@@ -350,7 +273,6 @@ export abstract class WireComponent {
                     const TargetClass = this.casts[key];
                     const instance = new TargetClass();
                     
-                    // If class has a fill method, use it, otherwise Object.assign
                     if (typeof instance.fill === 'function') {
                         instance.fill(value);
                     } else {

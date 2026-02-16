@@ -1,7 +1,6 @@
-import type { KirePlugin } from "kire";
+import type { KirePlugin, KireHandler } from "kire";
 import { fetchIcon, processSvgAttributes } from "./api";
 import type { IconifyOptions } from "./types";
-import { NullProtoObj } from "../../../core/src/utils/regex";
 
 export const KireIconify: KirePlugin<IconifyOptions> = {
 	name: "@kirejs/iconify",
@@ -17,76 +16,70 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 		const apiUrl = opts?.apiUrl || "https://api.iconify.design";
 		const defaultClass = opts?.defaultClass || "";
 
-		const iconCache = kire.cached<string>("@kirejs/iconify");
+		const iconCache = kire.cached("@kirejs/iconify");
 
-		kire.$ctx(
+		kire.$global(
 			"fetchIcon",
-			async (name: string, params: Record<string, string> = new NullProtoObj()) => {
+			async (name: string, params: Record<string, string> = kire.NullProtoObj()) => {
 				return fetchIcon(name, apiUrl, params, iconCache);
 			},
 		);
 
 		kire.directive({
 			name: "icon",
-			params: ["name:string", "className:string", "attrs:object"],
+			params: ["name", "className", "attrs"],
 			description: "Renders an Iconify icon SVG.",
 			example: "@icon('mdi:home', 'text-blue-500', { width: '24' })",
-			onCall(ctx) {
-				const nameExpr = ctx.param("name");
-				const classExpr = ctx.param("className") || '""';
-				const attrsExpr = ctx.param("attrs") || "{}";
+			onCall(api) {
+				const nameExpr = api.getArgument(0);
+				const classExpr = api.getArgument(1) || '""';
+				const attrsExpr = api.getArgument(2) || "{}";
 
-				ctx.raw(`await (async () => {`);
-				ctx.raw(`  const rawAttrs = ${attrsExpr};`);
-				ctx.raw(`  const apiParams = {};`);
-				ctx.raw(`  const htmlAttrs = {};`);
-				ctx.raw(
-					`  const apiKeys = ['width', 'height', 'color', 'flip', 'rotate', 'box'];`,
-				);
+                api.markAsync();
+				api.write(`await (async () => {
+                    const $rawAttrs = ${attrsExpr};
+                    const $apiParams = {};
+                    const $htmlAttrs = {};
+                    const $apiKeys = ['width', 'height', 'color', 'flip', 'rotate', 'box'];
 
-				ctx.raw(`  for (const [k, v] of Object.entries(rawAttrs)) {`);
-				ctx.raw(`    if (apiKeys.includes(k)) apiParams[k] = v;`);
-				ctx.raw(`    else htmlAttrs[k] = v;`);
-				ctx.raw(`  }`);
+                    for (const [$k, $v] of Object.entries($rawAttrs)) {
+                        if ($apiKeys.includes($k)) $apiParams[$k] = $v;
+                        else $htmlAttrs[$k] = $v;
+                    }
 
-				ctx.raw(
-					`  const svg = await $ctx.fetchIcon(${JSON.stringify(nameExpr)}, apiParams);`,
-				);
-				ctx.raw(`  const cls = ${classExpr};`);
+                    const $svg = await $globals.fetchIcon(${nameExpr}, $apiParams);
+                    const $cls = ${classExpr} || ${JSON.stringify(defaultClass)};
 
-				ctx.raw(`  if (svg.startsWith('<svg')) {`);
-				ctx.raw(`     let finalSvg = svg;`);
+                    if ($svg.startsWith('<svg')) {
+                        let $finalSvg = $svg;
 
-				ctx.raw(`     if (cls) {`);
-				ctx.raw(`        if (finalSvg.includes('class="')) {`);
-				ctx.raw(
-					`           finalSvg = finalSvg.replace('class="', 'class="' + cls + ' ');`,
-				);
-				ctx.raw(`        } else {`);
-				ctx.raw(
-					`           finalSvg = finalSvg.replace('<svg', '<svg class="' + cls + '"');`,
-				);
-				ctx.raw(`        }`);
-				ctx.raw(`     }`);
+                        if ($cls) {
+                            // Extract actual class string if it was wrapped in extra quotes from template literal in test
+                            const $actualCls = typeof $cls === 'string' && ($cls.startsWith("'") || $cls.startsWith('"')) 
+                                ? $cls.slice(1, -1) 
+                                : $cls;
 
-				ctx.raw(`     for (const [key, value] of Object.entries(htmlAttrs)) {`);
-				ctx.raw(`        const regex = new RegExp(key + '="[^"]*"', 'g');`);
-				ctx.raw(`        if (regex.test(finalSvg)) {`);
-				ctx.raw(
-					`           finalSvg = finalSvg.replace(regex, key + '="' + value + '"');`,
-				);
-				ctx.raw(`        } else {`);
-				ctx.raw(
-					`           finalSvg = finalSvg.replace('<svg', '<svg ' + key + '="' + value + '"');`,
-				);
-				ctx.raw(`        }`);
-				ctx.raw(`     }`);
+                            if ($finalSvg.includes('class="')) {
+                                $finalSvg = $finalSvg.replace('class="', 'class="' + $actualCls + ' ');
+                            } else {
+                                $finalSvg = $finalSvg.replace('<svg', '<svg class="' + $actualCls + '"');
+                            }
+                        }
 
-				ctx.raw(`     $ctx.$add(finalSvg);`);
-				ctx.raw(`  } else {`);
-				ctx.raw(`     $ctx.$add(svg);`);
-				ctx.raw(`  }`);
-				ctx.raw(`})();`);
+                        for (const [$key, $value] of Object.entries($htmlAttrs)) {
+                            const $regex = new RegExp($key + '="[^"]*"', 'g');
+                            if ($regex.test($finalSvg)) {
+                                $finalSvg = $finalSvg.replace($regex, $key + '="' + $value + '"');
+                            } else {
+                                $finalSvg = $finalSvg.replace('<svg', '<svg ' + $key + '="' + $value + '"');
+                            }
+                        }
+
+                        $kire_response += $finalSvg;
+                    } else {
+                        $kire_response += $svg;
+                    }
+                })();`);
 			},
 		});
 
@@ -94,12 +87,12 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 			name: "iconify",
 			description: "Renders an Iconify icon.",
 			void: true,
-			async run(ctx) {
-				const attrs = { ...ctx.element.attributes };
+			onCall(api) {
+				const attrs = { ...api.node.attributes };
 				const iconName = attrs.i || attrs.icon;
 
 				if (!iconName) {
-					ctx.replace('<!-- <iconify> missing "i" or "icon" attribute -->');
+					api.write(`$kire_response += '<!-- <iconify> missing "i" or "icon" attribute -->';`);
 					return;
 				}
 
@@ -128,14 +121,20 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 					}
 				}
 
-				try {
-                    const svg = await fetchIcon(iconName, apiUrl, apiParams, iconCache);
-                    const finalSvg = processSvgAttributes(svg, className, htmlAttrs);
-                    ctx.replace(finalSvg);
-                } catch (e: any) {
-                    ctx.replace(`<!-- Iconify error: ${e.message} -->`);
-                }
+                api.markAsync();
+                api.write(`await (async () => {
+                    try {
+                        const $svg = await $globals.fetchIcon(${JSON.stringify(iconName)}, ${JSON.stringify(apiParams)});
+                        const $finalSvg = this.processSvgAttributes($svg, ${JSON.stringify(className)}, ${JSON.stringify(htmlAttrs)});
+                        $kire_response += $finalSvg;
+                    } catch (e) {
+                        $kire_response += '<!-- Iconify error: ' + e.message + ' -->';
+                    }
+                })();`);
 			},
 		});
+
+        // Add helper to process attributes
+        (kire as any).processSvgAttributes = processSvgAttributes;
 	},
 };

@@ -86,17 +86,12 @@ export class Wired {
             }
 
 			// Expose Wired on Kire instance
-			kire.$ctx("Wired", Wired);
-			kire.$ctx("$wire", Wired); 
-			kire.$ctx("kire", kire);
+			kire.$global("Wired", Wired);
+			kire.$global("$wire", Wired); 
+			kire.$global("kire", kire);
 
             kire.Wired = Wired;
             kire.WireRequest = (opts: WireRequestOptions) => Wired.handleRequest(kire, opts);
-
-            kire.onFork((fork) => {
-                fork.Wired = Wired;
-                fork.WireRequest = (opts: WireRequestOptions) => Wired.handleRequest(fork, opts);
-            });
 
             kire.kireSchema({
                 name: "@kirejs/wire",
@@ -107,12 +102,11 @@ export class Wired {
 
             // Register Attributes
             for (const [key, value] of Object.entries(WireAttributes)) {
-                kire.type({
-                    variable: key,
-                    type: "element",
-                    comment: value.comment,
+                kire.attribute({
+                    name: key,
+                    type: "string",
+                    description: value.comment,
                     example: value.example,
-                    tstype: "string"
                 });
             }
 

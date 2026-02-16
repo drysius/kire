@@ -1,4 +1,4 @@
-import { Kire, type KirePlugin } from "kire";
+import { Kire, type KirePlugin, type KireHandler } from "kire";
 import { Arr } from "./Arr";
 import { Str } from "./Str";
 import { HtmlManager } from "./Html";
@@ -15,11 +15,11 @@ declare module "kire" {
     interface Kire {
         route(url: string | URL, name?: string): this;
         withInput(input: Record<string, any>): this;
-        withErrors(errors: Record<string, string[]>): this;
+        withErrors(errors: Record<string, string[]> | MessageBag): this;
     }
 }
 
-export default {
+export const KireUtils: KirePlugin = {
 	name: "@kirejs/utils",
 	options: {},
 	load(kire: Kire) {
@@ -27,9 +27,27 @@ export default {
         kire.$global("Str", Str);
         kire.$global("Arr", Arr);
 
-        const extend = (instance: Kire) => {
-            (instance as any).route = function(this: Kire, url: string | URL, name: string | null = null) {
-                const route = new RouteManager();
+        const setup = (instance: any) => {
+            const route = new RouteManager();
+            instance.$global("Route", route);
+            instance.$global("Html", new HtmlManager(route));
+            
+            // Initialize empty errors and old input
+            instance.$global("errors", new MessageBag());
+            instance.$global("_old", {});
+            
+            // Register helpers as globals bound to this instance using arrow functions
+            // to correctly capture 'instance' from closure instead of relying on 'this'
+            instance.$global("old", (key: string, def: any = null) => {
+                const oldInput = instance.$globals["_old"] || {};
+                return Arr.get(oldInput, key, def);
+            });
+
+            instance.$global("url", (path: string = '') => {
+                return route.to(path);
+            });
+
+            instance.route = function(this: Kire, url: string | URL, name: string | null = null) {
                 if (url instanceof URL) {
                     route.setUrl(url);
                 } else {
@@ -42,62 +60,58 @@ export default {
                 }
                 
                 if (name) route.set(route.current(), name);
-
+                
+                // Refresh globals to point to this instance's managers
                 this.$global("Route", route);
                 this.$global("Html", new HtmlManager(route));
-                
-                // Initialize empty errors and old input
-                this.$global("errors", new MessageBag());
-                this.$global("_old", {});
-                
-                // Register helpers as globals so they are destructured in template scope
-                this.$global("old", (key: string, def: any = null) => {
-                    const oldInput = this.$globals.get("_old") || {};
-                    return Arr.get(oldInput, key, def);
-                });
-
-                this.$global("url", (path: string = '') => {
-                     return route.to(path);
-                });
                 
                 return this;
             };
 
-            (instance as any).withInput = function(this: Kire, input: Record<string, any>) {
+            instance.withInput = function(this: Kire, input: Record<string, any>) {
                 this.$global("_old", input);
                 return this;
             };
 
-            (instance as any).withErrors = function(this: Kire, errors: Record<string, string[]> | MessageBag) {
+            instance.withErrors = function(this: Kire, errors: Record<string, string[]> | MessageBag) {
                 const bag = errors instanceof MessageBag ? errors : new MessageBag(errors);
                 this.$global("errors", bag);
                 return this;
             };
-
-            // Capture original fork to extend new instances
-            const originalFork = instance.fork;
-            instance.fork = function(this: Kire) {
-                const forked = originalFork.call(this);
-                extend(forked);
-                return forked;
-            };
         };
 
-        extend(kire);
+        setup(kire);
+        kire.onFork((fork) => setup(fork));
 
         // Register @error directive
         kire.directive({
             name: 'error',
-            params: ['name:string'],
+            params: ['name'],
             children: true,
-            type: 'html',
-            async onCall(c) {
-                const name = c.param('name');
-                c.raw(`if ($ctx.$globals.errors && $ctx.$globals.errors.has(${JSON.stringify(name)})) {`);
-                c.raw(`  const $message = $ctx.$globals.errors.first(${JSON.stringify(name)});`);
-                if (c.children) await c.set(c.children);
-                c.raw(`}`);
+            description: "Renders the block if there are validation errors for the given field.",
+            example: "@error('email')\n  <span class='error'>{{ $message }}</span>\n@end",
+            onCall(api) {
+                const nameExpr = api.getArgument(0);
+                api.write(`if ($globals.errors && $globals.errors.has(${nameExpr})) {`);
+                api.write(`  const $message = $globals.errors.first(${nameExpr});`);
+                api.renderChildren();
+                api.write(`}`);
+            }
+        });
+
+        // Register @old directive/helper
+        kire.directive({
+            name: 'old',
+            params: ['name', 'default'],
+            description: "Outputs the old input value for the given field.",
+            example: "<input type='text' name='email' value='@old(\"email\")' />",
+            onCall(api) {
+                const nameExpr = api.getArgument(0);
+                const defExpr = api.getArgument(1) || "null";
+                api.write(`$kire_response += $escape($globals.old(${nameExpr}, ${defExpr}));`);
             }
         });
 	},
-} as KirePlugin;
+};
+
+export default KireUtils;

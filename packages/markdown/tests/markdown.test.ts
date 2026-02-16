@@ -27,12 +27,9 @@ describe("KireMarkdown", () => {
 	it("should render markdown from file", async () => {
 		const kire = new Kire({ silent: true,
 			plugins: [KireMarkdown],
-			resolver: async (path) => {
-				if (path.includes(TEMP_MD)) {
-					return TEMP_MD_CONTENT;
-				}
-				throw new Error(`File not found: ${path}`);
-			},
+			vfiles: {
+				[TEMP_MD]: TEMP_MD_CONTENT
+			}
 		});
 
 		const tpl = `@markdown('${TEMP_MD}')`;
@@ -44,19 +41,16 @@ describe("KireMarkdown", () => {
 	it("should render markdown with dynamic locals (mdview)", async () => {
 		const kire = new Kire({ silent: true,
 			plugins: [KireMarkdown],
-			resolver: async (path) => {
-				if (path.includes("dynamic.md")) {
-					return "# Hello {{ it.name }}";
-				}
-				throw new Error("Not found");
-			},
+			vfiles: {
+				"dynamic.md": "# Hello {{ $props.name }}"
+			}
 		});
 
-		const html = await kire.view("dynamic.md", { name: "Kire" });
+		const html = await kire.mdview("dynamic.md", { name: "Kire" });
 		expect(html).toContain("<h1>Hello Kire</h1>");
 
 		// Test reactivity/different locals (cache check)
-		const html2 = await kire.view("dynamic.md", { name: "World" });
+		const html2 = await kire.mdview("dynamic.md", { name: "World" });
 		expect(html2).toContain("<h1>Hello World</h1>");
 	});
 
@@ -64,13 +58,13 @@ describe("KireMarkdown", () => {
 		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
 
 		// Mock $readdir
-		kire.$readdir = async (pattern) => {
+		kire.$global("$readdir", async (pattern: string) => {
 			if (pattern === "content/*.md") return ["file1.md", "file2.md"];
 			return [];
-		};
+		});
 
 		// Mock $mdrender to avoid file reading
-		kire.$ctx("$mdrender", async (src: string) => {
+		kire.$global("$mdrender", async (src: string) => {
 			if (src === "file1.md") return "<h1>File 1</h1>";
 			if (src === "file2.md") return "<h1>File 2</h1>";
 			return "";

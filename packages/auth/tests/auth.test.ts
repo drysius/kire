@@ -3,27 +3,19 @@ import { Kire } from "kire";
 import { KireAuth } from "../src/index.ts";
 
 describe("KireAuth", () => {
-	const createKire = (_user: any = null) => {
+	const createKire = () => {
 		const kire = new Kire({ silent: true });
 		kire.plugin(KireAuth, {
 			canPerm: async (perm, user) => {
 				if (!user) return false;
 				return user.perms.includes(perm);
 			},
-			getUser: (ctx) => ctx.$props.user,
+			getUser: function(this: Kire, props: any) { return props?.user; },
 		});
 		return kire;
 	};
 
 	test("@auth and @else", async () => {
-		const _template = `
-			@auth
-				Logged in: {{ user.name }}
-			@else
-				Not Logged
-			@end
-		`;
-
 		const kireLogged = createKire();
 		const htmlLogged = await kireLogged.render(
 			"@auth @user Logged in: {{ user.name }} @else Not Logged @end",
@@ -68,25 +60,22 @@ describe("KireAuth", () => {
 	});
 
 	test("@can and @notcan", async () => {
-		const template = `
-			@can('admin') Admin @else No Admin @end
-			@notcan('admin') Missing Admin @end
-		`;
+		const template = `@can('admin') Admin @else No Admin @end @notcan('admin') Missing Admin @end`;
 
 		const kireAdmin = createKire();
 		const htmlAdmin = await kireAdmin.render(template, {
 			user: { name: "Admin", perms: ["admin"] },
 		});
-		expect(htmlAdmin.trim()).toContain("Admin");
-		expect(htmlAdmin.trim()).not.toContain("No Admin");
-		expect(htmlAdmin.trim()).not.toContain("Missing Admin");
+		expect(htmlAdmin.trim().replace(/\s+/g, " ")).toContain("Admin");
+		expect(htmlAdmin.trim().replace(/\s+/g, " ")).not.toContain("No Admin");
+		expect(htmlAdmin.trim().replace(/\s+/g, " ")).not.toContain("Missing Admin");
 
 		const kireUser = createKire();
 		const htmlUser = await kireUser.render(template, {
 			user: { name: "User", perms: ["user"] },
 		});
-		expect(htmlUser.trim()).toContain("No Admin");
-		expect(htmlUser.trim()).toContain("Missing Admin");
+		expect(htmlUser.trim().replace(/\s+/g, " ")).toContain("No Admin");
+		expect(htmlUser.trim().replace(/\s+/g, " ")).toContain("Missing Admin");
 	});
 
 	test("@canany", async () => {

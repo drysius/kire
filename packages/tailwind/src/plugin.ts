@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { KirePlugin } from "kire";
+import type { KirePlugin, KireHandler } from "kire";
 import { compileCSSWithTailwind } from "./compiler";
 import { loadModule, loadStylesheet } from "./loader";
 import type { TailwindCompileOptions } from "./types";
@@ -8,7 +8,14 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 	name: "@kirejs/tailwind",
 	sort: 110,
 	options: {},
-	async load(kire, opts) {
+	load(kire, opts) {
+        kire.kireSchema({
+            name: "@kirejs/tailwind",
+            author: "Drysius",
+            repository: "https://github.com/drysius/kire",
+            version: "0.1.0"
+        });
+
 		const tailwindOptions: TailwindCompileOptions = {
 			...opts,
 			loadStylesheet,
@@ -16,52 +23,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 			from: undefined,
 		};
 
-		const cache = kire.cached<string>("@kirejs/tailwind");
-
-		/**
-		 * @tailwind directive for processing CSS with Tailwind
-		 */
-		kire.directive({
-			name: "tailwind",
-			params: ["code:string"],
-			children: true,
-			childrenRaw: true,
-			description: "Processes CSS content within the block using Tailwind CSS.",
-			example:
-				"@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end",
-			async onCall(ctx) {
-				try {
-					let code = ctx.param("code");
-
-					// Fallback to children content if no parameter provided
-					if (!code && ctx.children && ctx.children.length > 0) {
-						code = ctx.children.map((c) => c.content || "").join("");
-					}
-
-					// Use default Tailwind import if no code provided
-					if (!code || !code.trim()) {
-						code = "";
-					}
-
-					// Generate cache ID if caching is enabled
-					if (kire.production) {
-						const hash = createHash("sha256").update(code).digest("hex");
-						ctx.raw(`$ctx.$add('<tailwind id="${hash}">');`);
-					} else {
-						ctx.raw('$ctx.$add("<tailwind>");');
-					}
-
-					ctx.raw(`$ctx.$add(${JSON.stringify(code)});`);
-					ctx.raw('$ctx.$add("</tailwind>");');
-				} catch (_error) {
-					// Fallback behavior
-					const code = ctx.param("code") || "";
-					ctx.raw('$ctx.$add("<tailwind>");');
-					ctx.raw(`$ctx.$add(${JSON.stringify(code)});`);
-					ctx.raw('$ctx.$add("</tailwind>");');
-				}
-			},
-		});
+		const cache = kire.cached("@kirejs/tailwind");
 
 		/**
 		 * <tailwind> element for CSS content processing
@@ -71,82 +33,106 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 			description: "Processes CSS content within the block using Tailwind CSS.",
 			example:
 				"<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>",
-			async run(ctx) {
-				// _assets should be initialized by the @assets() directive
+			onCall(api) {
+                const attrs = api.node.attributes || {};
+                const id = attrs.id;
 
-				try {
-					const id = ctx.element.attributes.id;
+                api.markAsync();
+                
+                // Build content expression
+                const $children = api.node.children || [];
+                let contentExpr = '""';
+                for (const $child of $children) {
+                    if ($child.type === "text") contentExpr += ` + ${JSON.stringify($child.content)}`;
+                    else if ($child.type === "interpolation") contentExpr += ` + (${$child.content})`;
+                }
 
-					// Use cached CSS if available and caching is enabled
-					if (kire.production && id && cache.has(id)) {
-						const cachedCss = cache.get(id) ?? "";
-						ctx.replace(`<style>${cachedCss}</style>`);
-						return;
-					}
+                api.write(`await (async () => {
+                    try {
+                        const $id = ${JSON.stringify(id)};
+                        const $tailwindCache = this.cached("@kirejs/tailwind");
+                        if (this.production && $id && $tailwindCache[$id]) {
+                            const $cachedCss = $tailwindCache[$id];
+                            if ($globals.$assets) {
+                                const { createHash } = await import("node:crypto");
+                                const $hash = createHash("md5").update($cachedCss).digest("hex").slice(0, 8);
+                                const $assetCache = this.cached("@kirejs/assets");
+                                if (!$assetCache[$hash]) {
+                                    $assetCache[$hash] = { hash: $hash, content: $cachedCss, type: "css" };
+                                }
+                                if ($globals.$assets.styles.indexOf($hash) === -1) $globals.$assets.styles.push($hash);
+                            } else {
+                                $kire_response += '<style>' + $cachedCss + '</style>';
+                            }
+                            return;
+                        }
 
-					// Compilation logic (cache miss or caching disabled)
-					let content = ctx.element.inner || "";
+                        let $tailwind_content = ${contentExpr};
+                        if (!$tailwind_content.includes('@import "tailwindcss"')) {
+                            $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
+                        }
 
-					// Ensure Tailwind CSS is imported if not present
-					// This is required in v4 to load the default theme and utilities
-					if (!content.includes('@import "tailwindcss"')) {
-						content = `@import "tailwindcss";\n${content}`;
-					}
+                        // Candidates extraction
+                        const $candidates = []; 
+                        
+                        const $processedCSS = await this.compileCSSWithTailwind(
+                            $tailwind_content,
+                            ${JSON.stringify(tailwindOptions)},
+                            $candidates
+                        );
 
-					// Extract CSS classes from the entire HTML content
-					const candidates = new Set<string>();
-					const classRegex = /\bclass(?:Name)?\s*=\s*(["'])(.*?)\1/g;
-					let match: any;
+                        if (this.production && $id) {
+                            $tailwindCache[$id] = $processedCSS;
+                        }
 
-					while ((match = classRegex.exec(ctx.content)!) !== null) {
-						const cls = match[2]?.split(/\s+/);
-						cls?.forEach((c: string) => {
-							if (c) candidates.add(c);
-						});
-					}
-
-					const processedCSS = await compileCSSWithTailwind(
-						content, // Pass raw CSS content, might contain custom rules
-						tailwindOptions,
-						Array.from(candidates),
-					);
-
-					// Cache the result if caching is enabled
-					if (kire.production && id) {
-						cache.set(id, processedCSS);
-					}
-
-					// Integration with @kirejs/assets
-					// If the assets plugin is active, we can offload the CSS to a file
-					// and let the browser cache it, rather than inlineing it every time.
-					if ((ctx as any)._assets) {
-						const assetCache = kire.cached<any>("@kirejs/assets");
-						const hash = createHash("md5")
-							.update(processedCSS)
-							.digest("hex")
-							.slice(0, 8);
-
-						if (!assetCache.has(hash)) {
-							assetCache.set(hash, {
-								hash,
-								content: processedCSS,
-								type: "css",
-							});
-						}
-
-						(ctx as any)._assets.styles.push(hash);
-						// Remove the element as the link will be injected by @assets
-						ctx.replace("");
-						return;
-					}
-
-					ctx.replace(`<style>${processedCSS}</style>`);
-				} catch (error) {
-					console.warn("Tailwind compilation error:", error);
-					// Fallback: use original content without processing
-					ctx.replace(`<style>${ctx.element.inner || ""}</style>`);
-				}
+                        // Integration with @kirejs/assets
+                        if ($globals.$assets) {
+                            const { createHash } = await import("node:crypto");
+                            const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
+                            const $assetCache = this.cached("@kirejs/assets");
+                            if (!$assetCache[$hash]) {
+                                $assetCache[$hash] = { hash: $hash, content: $processedCSS, type: "css" };
+                            }
+                            if ($globals.$assets.styles.indexOf($hash) === -1) $globals.$assets.styles.push($hash);
+                        } else {
+                            $kire_response += '<style>' + $processedCSS + '</style>';
+                        }
+                    } catch (e) {
+                        console.warn("Tailwind compilation error:", e);
+                    }
+                }).call(this);`);
 			},
 		});
+
+		/**
+		 * @tailwind directive for processing CSS with Tailwind
+		 */
+		kire.directive({
+			name: "tailwind",
+			params: ["code"],
+			children: true,
+			description: "Processes CSS content within the block using Tailwind CSS.",
+			example:
+				"@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end",
+			onCall(api) {
+				const codeExpr = api.getArgument(0);
+                
+                api.write(`$kire_response += '<tailwind';`);
+                if (api.kire.production) {
+                    api.prologue(`const { createHash } = await import("node:crypto");`);
+                    api.write(`$kire_response += ' id="' + createHash("sha256").update(${codeExpr} || "").digest("hex") + '"';`);
+                }
+                api.write(`$kire_response += '>';`);
+                if (codeExpr) {
+                    api.write(`$kire_response += ${codeExpr};`);
+                } else {
+                    api.renderChildren();
+                }
+                api.write(`$kire_response += '</tailwind>';`);
+			},
+		});
+
+        // Inject helpers into Kire instance
+        (kire as any).compileCSSWithTailwind = compileCSSWithTailwind;
 	},
 };

@@ -1,99 +1,129 @@
-import { expect, test, describe } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { Kire } from "../src/kire";
 
 describe("Kire Elements System (Pattern-based)", () => {
-    test("should handle element with wildcard pattern (test:*)", async () => {
-        const k = new Kire();
-        
-        k.element({
-            name: 'test:*',
-            onCall: (api) => {
-                api.raw(`$kire_response += "[${api.wildcard}:";`);
-                if (api.children) api.set(api.children);
-                api.raw(`$kire_response += "]";`);
+	it("should handle element with wildcard pattern (test:*)", async () => {
+		const kire = new Kire({ silent: true });
+
+		kire.element({
+			name: "test:*",
+			onCall(ctx) {
+				ctx.write(`$kire_response += 'Wildcard: ' + ${JSON.stringify(ctx.wildcard)};`);
+			},
+		});
+
+		const result = await kire.render("<test:hello />");
+		expect(result).toBe("Wildcard: hello");
+
+		const result2 = await kire.render("<test:world />");
+		expect(result2).toBe("Wildcard: world");
+	});
+
+	it("should handle element with wildcard pattern (x-*)", async () => {
+		const kire = new Kire({ silent: true,
+            vfiles: {
+                "button.kire": "<button>@yield('default')</button>"
             }
         });
 
-        const result = await k.render("<test:if>condition</test:if>");
-        expect(result).toBe("[if:condition]");
-    });
+		// Native elements already has x-* handler in natives.ts
+		// but let's ensure it's loaded (it is by default in Kire)
 
-    test("should handle element with wildcard pattern (x-*)", async () => {
-        const k = new Kire();
-        
-        k.element({
-            name: 'x-*',
-            onCall: (ctx) => {
-                ctx.res(`[${ctx.wildcard}]`);
-            }
-        });
+		const template = "<x-button>Click Me</x-button>";
+		const result = await kire.render(template);
 
-        const result = await k.render("<x-button></x-button>");
-        expect(result).toBe("[button]");
-    });
+		expect(result).toContain("<button>Click Me</button>");
+	});
 
-    test("should handle native kire:if element", async () => {
-        const k = new Kire();
-        const result = await k.render('<kire:if cond="true">Yes</kire:if>');
-        expect(result.trim()).toBe("Yes");
-
-        const result2 = await k.render('<kire:if cond="false">Yes</kire:if>');
-        expect(result2.trim()).toBe("");
-    });
-
-    test("should handle native kire:if/elseif/else elements", async () => {
-        const k = new Kire();
-        const template = `
-            <kire:if cond="false">
-                If
-            <kire:elseif cond="true">
-                ElseIf
-            <kire:else>
-                Else
+	it("should handle native kire:if element", async () => {
+		const kire = new Kire({ silent: true });
+		const template = `
+            <kire:if cond="show">
+                Visible
             </kire:if>
         `;
-        const result = await k.render(template);
-        expect(result.trim()).toBe("ElseIf");
-    });
 
-    test("should handle native kire:for element", async () => {
-        const k = new Kire();
-        const template = '<kire:for items="[1, 2, 3]" as="num">{{ num }}</kire:for>';
-        const result = await k.render(template);
-        expect(result.trim()).toBe("123");
-    });
+		expect((await kire.render(template, { show: true })).trim()).toBe("Visible");
+		expect((await kire.render(template, { show: false })).trim()).toBe("");
+	});
 
-    test("should handle attributes via attribute() helper", async () => {
-        const k = new Kire();
-        k.element({
-            name: 'my:tag',
-            onCall: (ctx) => {
-                const title = ctx.attribute('title');
-                ctx.res(`Title: ${title}`);
-            }
-        });
+	it("should handle native kire:if/elseif/else elements", async () => {
+		const kire = new Kire({ silent: true });
+		const template = `
+            <kire:if cond="val === 1">
+                One
+            </kire:if>
+            <kire:elseif cond="val === 2">
+                Two
+            </kire:elseif>
+            <kire:else>
+                Other
+            </kire:else>
+        `;
 
-        const result = await k.render('<my:tag title="Hello World" />');
-        expect(result).toBe("Title: Hello World");
-    });
+		expect((await kire.render(template, { val: 1 })).trim()).toBe("One");
+		expect((await kire.render(template, { val: 2 })).trim()).toBe("Two");
+		expect((await kire.render(template, { val: 3 })).trim()).toBe("Other");
+	});
 
-    test("should handle x-* components with x-slot", async () => {
-        const k = new Kire();
-        const cardPath = k.resolve("card");
-        k.$vfiles[cardPath] = "<div class='card'>@yield('header')<div class='body'>{{ slots.default }}</div>@yield('footer')</div>";
+	it("should handle native kire:for element", async () => {
+		const kire = new Kire({ silent: true });
+		const template = `
+            <ul>
+                <kire:for items="[1, 2, 3]" as="num">
+                    <li>{{ num }}</li>
+                </kire:for>
+            </ul>
+        `;
 
-        const template = `
+		const result = await kire.render(template);
+		expect(result).toContain("<li>1</li>");
+		expect(result).toContain("<li>2</li>");
+		expect(result).toContain("<li>3</li>");
+	});
+
+	it("should handle attributes via attribute() helper", async () => {
+		const kire = new Kire({ silent: true });
+
+		kire.element({
+			name: "my-custom",
+			onCall(api) {
+				const title = api.getAttribute("title");
+				api.write(`$kire_response += 'Title: ' + ${title};`);
+			},
+		});
+
+		const result = await kire.render("<my-custom title=\"'Hello'\" />");
+		expect(result).toBe("Title: Hello");
+
+		const result2 = await kire.render("<my-custom title=\"name\" />", {
+			name: "Kire",
+		});
+		expect(result2).toBe("Title: Kire");
+	});
+
+	it("should handle x-* components with x-slot", async () => {
+		const kire = new Kire({
+			silent: true,
+			vfiles: {
+				"card.kire": `
+                    <div class="card">
+                        <div class="header">@yield('header')</div>
+                        <div class="body">@yield('default')</div>
+                    </div>
+                `,
+			},
+		});
+
+		const template = `
             <x-card>
-                <x-slot name="header"><h1>Header</h1></x-slot>
+                <x-slot name="header">My Header</x-slot>
                 Main Content
-                <x-slot name="footer"><p>Footer</p></x-slot>
             </x-card>
         `;
 
-        const result = await k.render(template);
-        expect(result).toContain("<div class='card'>");
-        expect(result).toContain("<h1>Header</h1>");
-        expect(result).toContain("Main Content");
-        expect(result).toContain("<p>Footer</p>");
-    });
+		const result = await kire.render(template);
+		expect(result).toContain('<div class="header">My Header</div>');
+		expect(result).toContain('<div class="body">Main Content</div>');
+	});
 });

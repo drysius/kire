@@ -7,10 +7,11 @@ describe("Wire Directives", () => {
 		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_wire" });
 
-		const code = await kire.compile("@wire('counter', { start: 5 })");
-		expect(code).toContain("const $w = $ctx.$wire");
+		const result = await kire.compile("@wire('counter', { start: 5 })");
+        const code = result.meta.code;
+		expect(code).toContain("const $w = $globals.Wired");
 		expect(code).toContain("getComponentClass($name)");
-		expect(code).toContain("new $c($ctx.$kire)");
+		expect(code).toContain("new $c(this)");
 		expect(code).toContain("$i.mount($params)");
 		expect(code).toContain("wire:snapshot");
 		expect(code).toContain(`'" wire:component="' + $name + '"'`);
@@ -22,8 +23,8 @@ describe("Wire Directives", () => {
 
 		const output = await kire.render("@wired");
 
-		expect(output).toContain("<script src=\"/_custom_wire/kirewire.min.js\"></script>");
-		expect(output).toContain("<link rel=\"stylesheet\" href=\"/_custom_wire/kirewire.min.css\">");
+		expect(output).toContain("<script src=\"/_custom_wire/kirewire.js\"></script>");
+		expect(output).toContain("<link rel=\"stylesheet\" href=\"/_custom_wire/kirewire.css\">");
 	});
 
 	test("attributes schema should be registered", async () => {

@@ -1,20 +1,15 @@
 import { describe, expect, it } from "bun:test";
 import { Kire } from "kire";
 // Import KireAssets from the sibling package source
-import KireAssets from "../../assets/src/index";
-import KireTailwind from "../src";
+import { KireAssets } from "../../assets/src/index";
+import { KireTailwind } from "../src";
 
 describe("@Kirejs/Tailwind", () => {
 	it("should compile tailwind css using real compiler", async () => {
 		const kire = new Kire({ silent: true });
 		kire.plugin(KireTailwind);
 
-		const tpl = `
-      @tailwind()
-        .custom-class { color: red; }
-      @end
-      <div class="p-4 custom-class"></div>
-    `;
+		const tpl = `@tailwind().custom-class { color: red; }@end<div class="p-4 custom-class"></div>`;
 
 		const result = await kire.render(tpl);
 
@@ -30,17 +25,10 @@ describe("@Kirejs/Tailwind", () => {
 	it("should integrate with @kirejs/assets for deduplication and offloading", async () => {
 		const kire = new Kire({ silent: true });
 		// Load both plugins
-		// Load Tailwind first so its element handler runs first and pushes styles to assets
 		kire.plugin(KireTailwind);
 		kire.plugin(KireAssets);
 
-		const tpl = `
-      @assets()
-      @tailwind()
-        .shared-class { color: blue; }
-      @end
-      <div class="m-2 shared-class">Shared</div>
-    `;
+		const tpl = `@assets()@tailwind().shared-class { color: blue; }@end<div class="m-2 shared-class">Shared</div>`;
 
 		// First Render
 		const result1 = await kire.render(tpl);
@@ -59,8 +47,8 @@ describe("@Kirejs/Tailwind", () => {
 
 		// Verify cache content
 		const cache = kire.cached("@kirejs/assets");
-		expect(cache.has(hash1!)).toBe(true);
-		const asset = cache.get(hash1!);
+		expect(cache[hash1!]).toBeDefined();
+		const asset = cache[hash1!];
 		expect(asset.content).toContain(".shared-class");
 		expect(asset.content).toContain("margin: calc(var(--spacing) * 2)"); // m-2
 
@@ -72,9 +60,6 @@ describe("@Kirejs/Tailwind", () => {
 		expect(hash2).toBe(hash1);
 
 		// Cache size should still be 1 (deduplicated)
-		// Note: This assumes no other tests polluted the cache, but new Kire({ silent: true }) is created per test.
-		// However, cached() might share global map if kire implementation uses static cache?
-		// Checking kire.ts: this.$cache = new Map(). It's instance based. So it is isolated.
-		expect(cache.size).toBe(1);
+		expect(Object.keys(cache).length).toBe(1);
 	});
 });

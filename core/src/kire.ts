@@ -1,5 +1,5 @@
 import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { resolve, join, isAbsolute, relative } from "node:path";
+import { resolve, join, isAbsolute } from "node:path";
 import { Compiler } from "./compiler";
 import { Parser } from "./parser";
 import { createKireFunction } from "./runtime";
@@ -18,7 +18,8 @@ import type {
     KireRendered,
     KireSchemaDefinition,
     TypeDefinition,
-    KireHandler
+    KireHandler,
+    AttributeDefinition
 } from "./types";
 
 export interface ElementMatcher {
@@ -30,11 +31,23 @@ export interface ElementMatcher {
  * Handles configuration, compilation, and rendering of templates.
  */
 export class Kire<Streaming extends boolean = false, Asyncronos extends boolean = true> {
-    /** Map of registered directives */
-    public $directives: Map<string, DirectiveDefinition> = new Map();
+    /** Internal storage with optimized objects */
+    private ["~directives"] = new NullProtoObj<DirectiveDefinition>();
+    private ["~elements"] = new NullProtoObj<ElementDefinition>();
+    private ["~namespaces"] = new NullProtoObj<string>();
+    private ["~types"] = new NullProtoObj<TypeDefinition>();
+    private ["~attributes"] = new NullProtoObj<AttributeDefinition>();
+    private ["~varThens"] = new NullProtoObj<KireHandler>();
+    private ["~onForkHandlers"]: ((fork: Kire<any>) => void)[] = [];
+
+    /** Map of registered directives (Public Alias) */
+    public get $directives() { return new Map(Object.entries(this["~directives"])); }
     
-    /** Set of registered custom elements */
-    public $elements: Set<ElementDefinition> = new Set();
+    /** Set of registered custom elements (Public Alias) */
+    public get $elements() { return new Set(Object.values(this["~elements"])); }
+
+    /** Map of registered global attributes (Public Alias) */
+    public get $attributes() { return new Map(Object.entries(this["~attributes"])); }
     
     /** Internal matchers for elements to optimize parsing */
     public $elementMatchers: ElementMatcher[] = [];
@@ -51,14 +64,14 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     /** Shared properties (legacy alias) */
     public $props: Record<string, any> = {};
     
-    /** Namespace mappings for template resolution */
-    public $namespaces: Map<string, string> = new Map();
+    /** Namespace mappings for template resolution (Public Alias) */
+    public get $namespaces() { return new Map(Object.entries(this["~namespaces"])); }
 
-    /** Registered types for type checking support */
-    public $types: Map<string, TypeDefinition> = new Map();
+    /** Registered types for type checking support (Public Alias) */
+    public get $types() { return new Map(Object.entries(this["~types"])); }
 
-    /** Registered variable handlers for conditional injection */
-    public $varThens: Map<string, KireHandler> = new Map();
+    /** Registered variable handlers for conditional injection (Public Alias) */
+    public get $varThens() { return new Map(Object.entries(this["~varThens"])); }
     
     /** Schema definition for the project */
     public $schemaDefinition?: KireSchemaDefinition;
@@ -102,8 +115,14 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     /** Set of templates currently being compiled to prevent loops */
     private _compiling: Set<string> = new Set();
 
+    /** Weak cache for dynamic render calls (object -> { template -> compiledFunction }) */
+    private _weakCache = new WeakMap<object, Record<string, KireTplFunction>>();
+
     /** Escape helper */
     public $escape = escapeHtml;
+
+    /** Parent instance if this is a fork */
+    public parent?: Kire<any>;
 
     /** Parser constructor */
     public $parser: IParserConstructor;
@@ -112,6 +131,46 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     public $compiler: ICompilerConstructor;
 
     constructor(options: KireOptions<Streaming, Asyncronos> = new NullProtoObj()) {
+        if (options.parent) {
+            this.parent = options.parent;
+            this.production = options.parent.production;
+            this.$stream = options.parent.$stream as Streaming;
+            this.$async = options.parent.$async as Asyncronos;
+            this.$extension = options.parent.$extension;
+            this.$silent = options.parent.$silent;
+            this.$var_locals = options.parent.$var_locals;
+            this.$root = options.parent.$root;
+            
+            this.$parser = options.parent.$parser;
+            this.$compiler = options.parent.$compiler;
+
+            // Share caches
+            this.$files = options.parent.$files;
+            this.$vfiles = options.parent.$vfiles;
+            this.$sources = options.parent.$sources;
+            this.$mtimes = options.parent['$mtimes'];
+            this._pluginCache = options.parent._pluginCache;
+            this._weakCache = options.parent._weakCache;
+
+            // Inherit registry references
+            this["~directives"] = options.parent["~directives"];
+            this["~elements"] = options.parent["~elements"];
+            this["~namespaces"] = options.parent["~namespaces"];
+            this["~attributes"] = options.parent["~attributes"];
+            this.$elementMatchers = options.parent.$elementMatchers;
+            this.$elementsPattern = options.parent.$elementsPattern;
+            this.$directivesPattern = options.parent.$directivesPattern;
+            this["~types"] = options.parent["~types"];
+            this["~varThens"] = options.parent["~varThens"];
+            this["~onForkHandlers"] = options.parent["~onForkHandlers"];
+
+            // Prototype chain for state isolation
+            this.$globals = Object.create(options.parent.$globals);
+            this.$props = Object.create(options.parent.$props);
+            
+            return;
+        }
+
         this.production = options.production ?? process.env.NODE_ENV === 'production';
         this.$stream = (options.stream ?? false) as Streaming;
         this.$async = (options.async ?? true) as Asyncronos;
@@ -135,6 +194,12 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
             }
         }
 
+        if (options.attributes) {
+            for (const [key, val] of Object.entries(options.attributes)) {
+                this.attribute(val);
+            }
+        }
+
         if (options.bundled) {
             for (const key in options.bundled) {
                 const item = options.bundled[key]!;
@@ -153,12 +218,35 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     }
 
     /**
+     * Creates a new Kire instance that inherits from this one.
+     * Useful for request-specific contexts.
+     */
+    public fork(): Kire<Streaming, Asyncronos> {
+        const fork = new Kire<Streaming, Asyncronos>({ parent: this as any });
+        
+        // Notify handlers
+        for (const handler of this["~onForkHandlers"]) {
+            handler(fork as any);
+        }
+        
+        return fork;
+    }
+
+    /**
+     * Registers a callback to be called when a fork is created.
+     */
+    public onFork(callback: (fork: Kire<any>) => void) {
+        this["~onForkHandlers"].push(callback);
+        return this;
+    }
+
+    /**
      * Loads a plugin into the Kire instance.
      * @param plugin The plugin object or function.
      * @param opts Optional configuration for the plugin.
      */
     public plugin<KirePlugged extends KirePlugin<any>>(plugin: KirePlugged, opts?: any) {
-        plugin.load(this, opts); return this;
+        plugin.load(this as any, opts); return this;
     }
 
     /**
@@ -168,8 +256,80 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      * @param callback The callback to execute.
      */
     public varThen(name: string, callback: KireHandler) {
-        this.$varThens.set(name, callback);
+        this["~varThens"][name] = callback;
         return this;
+    }
+
+    private _pluginCache: Record<string, any> = new NullProtoObj();
+
+    /**
+     * Returns a persistent cache Object for a specific key (e.g. plugin name).
+     * @param key Namespace key
+     */
+    public cached(key: string): Record<any, any> {
+        if (!this._pluginCache[key]) {
+            this._pluginCache[key] = new NullProtoObj();
+        }
+        return this._pluginCache[key]!;
+    }
+
+    /**
+     * Registers a global attribute definition.
+     */
+    public attribute(def: AttributeDefinition) {
+        this["~attributes"][def.name] = def;
+        return this;
+    }
+
+    /**
+     * Generates a schema object for the project.
+     * @param name Project name
+     */
+    public pkgSchema(name: string) {
+        const schema: any = {
+            name,
+            directives: {},
+            elements: {},
+            attributes: {},
+            types: [],
+            ...this.$schemaDefinition
+        };
+
+        for (const key in this["~directives"]) {
+            const def = this["~directives"][key];
+            schema.directives[key] = {
+                params: def.params,
+                children: def.children,
+                description: def.description,
+                example: def.example,
+                related: def.related
+            };
+        }
+
+        for (const key in this["~elements"]) {
+            const def = this["~elements"][key];
+            schema.elements[key] = {
+                void: def.void,
+                description: def.description,
+                example: def.example,
+                related: def.related
+            };
+        }
+
+        for (const key in this["~attributes"]) {
+            const def = this["~attributes"][key];
+            schema.attributes[key] = {
+                type: def.type,
+                description: def.description,
+                example: def.example
+            };
+        }
+
+        for (const key in this["~types"]) {
+            schema.types.push(this["~types"][key]);
+        }
+
+        return schema;
     }
 
     /**
@@ -203,8 +363,6 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      */
     public compile(content: string, filename = "template.kire", extraGlobals: string[] = []): KireTplFunction {
         if (this._compiling.has(filename)) {
-            // If already compiling, we can't inline yet. 
-            // In a better system we'd return a proxy, but for now we just throw to avoid stack overflow
             throw new Error(`Circular dependency detected while compiling: ${filename}`);
         }
         
@@ -224,19 +382,30 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
             }
 
             const AsyncFunc = (async () => {}).constructor;
-            const coreFunction = isAsync 
-                ? new (AsyncFunc as any)("$props = {}", "$globals = {}", code)
-                : new Function("$props = {}", "$globals = {}", code);
+            try {
+                const coreFunction = isAsync 
+                    ? new (AsyncFunc as any)("$props = {}", "$globals = {}", code)
+                    : new Function("$props = {}", "$globals = {}", code);
 
-            return createKireFunction(this as any, coreFunction, {
-                async: isAsync,
-                path: filename,
-                code,
-                source: content,
-                map: undefined, 
-                dependencies
-            });
+                return createKireFunction(this as any, coreFunction, {
+                    async: isAsync,
+                    path: filename,
+                    code,
+                    source: content,
+                    map: undefined, 
+                    dependencies
+                });
+            } catch (syntaxError) {
+                if (!this.$silent) {
+                    console.log("FAILED CODE:\n", code);
+                }
+                throw syntaxError;
+            }
         } catch (e) {
+            if (!this.$silent) {
+                console.error(`Compilation error in ${filename}:`);
+                console.error(e);
+            }
             if (e instanceof KireError) throw e;
             throw new KireError(e as Error, { execute: () => {}, isAsync: false, path: filename, code: "", source: content, map: undefined, dependencies: new NullProtoObj() } as any);
         } finally {
@@ -330,6 +499,23 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
      * @param filename Filename for debug.
      */
     public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Streaming, Asyncronos> {
+        // Optimization: Try to find in weak cache first
+        const cacheKey = (locals && typeof locals === 'object') ? locals : (globals && typeof globals === 'object' ? globals : null);
+        
+        if (cacheKey) {
+            let record = this._weakCache.get(cacheKey);
+            if (record && record[template]) return this.run(record[template], locals, globals);
+            
+            if (!record) {
+                record = new NullProtoObj();
+                this._weakCache.set(cacheKey, record);
+            }
+            
+            const compiled = this.compile(template, filename, Object.keys(locals));
+            record[template] = compiled;
+            return this.run(compiled, locals, globals);
+        }
+
         const compiled = this.compile(template, filename, Object.keys(locals));
         return this.run(compiled, locals, globals);
     }
@@ -352,12 +538,13 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
      * @param globals Optional global variables.
      */
     public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Streaming, Asyncronos> {
+        const self = this;
         if (this.$stream) {
             const encoder = new TextEncoder();
             return new ReadableStream({
                 async start(controller) {
                     try {
-                        const result = template.call(this as any, locals, globals);
+                        const result = template.call(self, locals, globals);
                         const final = result instanceof Promise ? await result : result;
                         if (final) controller.enqueue(encoder.encode(final));
                         controller.close();
@@ -392,7 +579,7 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
         let path = filepath.replace(/\\/g, '/');
         if (path.includes('.')) {
             const parts = path.split('.'); const ns = parts[0]!;
-            if (this.$namespaces.has(ns)) path = join(this.$namespaces.get(ns)!, parts.slice(1).join('/')).replace(/\\/g, '/');
+            if (this["~namespaces"][ns]) path = join(this["~namespaces"][ns]!, parts.slice(1).join('/')).replace(/\\/g, '/');
             else if (!path.endsWith('.' + this.$extension)) path = path.replace(/\./g, '/');
         }
         if (!path.endsWith('.' + this.$extension)) {
@@ -424,7 +611,7 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
      * @param path The directory path.
      */
     public namespace(name: string, path: string) {
-        this.$namespaces.set(name, resolve(this.$root, path).replace(/\\/g, '/')); return this;
+        this["~namespaces"][name] = resolve(this.$root, path).replace(/\\/g, '/'); return this;
     }
 
     /**
@@ -432,22 +619,27 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
      * @param def The directive definition.
      */
     public directive(def: DirectiveDefinition) { 
-        this.$directives.set(def.name, def); 
-        this.$directivesPattern = createFastMatcher(Array.from(this.$directives.keys()));
+        this["~directives"][def.name] = def; 
+        this.$directivesPattern = createFastMatcher(Object.keys(this["~directives"]));
         return this; 
     }
     
-    public getDirective(name: string) { return this.$directives.get(name); }
+    public getDirective(name: string) { return this["~directives"][name]; }
     
     /**
      * Registers a custom element.
      * @param def The element definition.
      */
     public element(def: ElementDefinition) { 
-        this.$elements.add(def); 
+        const name = def.name;
+        if (typeof name === "string") {
+            this["~elements"][name] = def;
+        } else if (name instanceof RegExp) {
+            this["~elements"][name.source] = def;
+        }
         this.$elementMatchers.unshift({ def }); 
         this.$elementsPattern = createFastMatcher(
-            this.$elementMatchers.map(m => m.def.name)
+            Object.values(this["~elements"]).map(m => m.name)
         );
         return this; 
     }
@@ -460,10 +652,10 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
     /**
      * Registers a type definition.
      */
-    public type(def: TypeDefinition) { this.$types.set(def.variable, def); return this; }
+    public type(def: TypeDefinition) { this["~types"][def.variable] = def; return this; }
     
     /**
      * Renders an error into HTML.
      */
-    public renderError(e: any, ctx?: any): string { return renderErrorHtml(e, this, ctx); }
+    public renderError(e: any, ctx?: any): string { return renderErrorHtml(e, this as any, ctx); }
 }

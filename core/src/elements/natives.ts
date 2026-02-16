@@ -4,23 +4,24 @@ import { NullProtoObj } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
     
-    const elseElement: ElementDefinition = {
+    kire.element({
         name: 'kire:else',
         onCall: (api) => {
             api.write(`} else {`);
             api.renderChildren();
         }
-    };
+    });
 
-    const elseifElement: ElementDefinition = {
+    kire.element({
         name: 'kire:elseif',
         related: ['kire:elseif', 'kire:else'],
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);
             api.renderChildren();
+            if (api.node.related) api.renderChildren(api.node.related);
         }
-    };
+    });
 
     kire.element({
         name: 'kire:if',
@@ -116,7 +117,6 @@ export default (kire: Kire<any>) => {
             const componentName = tagName.slice(2);
             const id = api.uid('comp');
             const depId = api.depend(componentName);
-            const dep = api.getDependency(componentName);
             
             const attrs = api.node.attributes || new NullProtoObj();
             const propsStr = Object.keys(attrs)
@@ -146,13 +146,14 @@ export default (kire: Kire<any>) => {
                 
                 const _dep${id} = ${depId};
                 const res${id} = _dep${id}.call(this, $props, $globals);
-                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
+                if (res${id} instanceof Promise) {
+                    $kire_response += await res${id};
+                } else {
+                    $kire_response += res${id};
+                }
                 
                 $props = _oldProps${id};
             }`);
         }
     });
-
-    kire.element(elseElement);
-    kire.element(elseifElement);
 };

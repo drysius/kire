@@ -1,33 +1,30 @@
 import { createHash } from "node:crypto";
-import type { KirePlugin } from "kire";
+import type { KirePlugin, KireHandler } from "kire";
 import type { KireAsset, KireAssetsOptions } from "./types";
 
 export const KireAssets: KirePlugin<KireAssetsOptions> = {
 	name: "@kirejs/assets",
 	sort: 200,
-	options: {
-		prefix: "_kire",
-	},
 	load(kire, opts) {
 		const prefix = opts?.prefix || "_kire";
 		const domain = opts?.domain || "";
-		const injectionTag = "kire-assets-injection-point";
 		const MAX_CACHE_SIZE = 500;
 		const getBaseUrl = () => (domain ? `${domain}/${prefix}` : `/${prefix}`);
 
-		const cache = kire.cached<KireAsset>("@kirejs/assets");
+		const cache = kire.cached("@kirejs/assets");
 
 		const addToCache = (key: string, value: KireAsset) => {
-			if (cache.has(key)) return;
-			if (cache.size >= MAX_CACHE_SIZE) {
-				const firstKey = cache.keys().next().value;
-				if (firstKey) cache.delete(firstKey);
+			if (cache[key]) return;
+            const keys = Object.keys(cache);
+			if (keys.length >= MAX_CACHE_SIZE) {
+				const firstKey = keys[0];
+				if (firstKey) delete cache[firstKey];
 			}
-			cache.set(key, value);
+			cache[key] = value;
 		};
 
 		// Helper to manually add an asset
-		kire.$ctx(
+		kire.$global(
 			"$addAsset",
 			(content: string, type: "js" | "css" | "mjs" | "svg" = "js") => {
 				const hash = createHash("md5")
@@ -40,7 +37,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 		);
 
 		// Helper to load SVG content and register it as an asset
-		kire.$ctx("$loadSVGAsset", async (path: string) => {
+		kire.$global("$loadSVGAsset", async (path: string) => {
 			let content = "";
 			try {
 				if (path.startsWith("http://") || path.startsWith("https://")) {
@@ -48,7 +45,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 					if (res.ok) content = await res.text();
 					else console.warn(`[KireAssets] Failed to fetch SVG: ${path}`);
 				} else {
-					content = await kire.$resolver(path);
+					content = kire.readFile(kire.resolvePath(path));
 				}
 			} catch (e) {
 				console.warn(`[KireAssets] Error loading SVG '${path}':`, e);
@@ -70,25 +67,26 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 		// @svg directive
 		kire.directive({
 			name: "svg",
-			params: ["path:string", "attrs:object"],
+			params: ["path", "attrs"],
 			description: `Loads an SVG and renders it as an <img> tag pointing to the asset.`,
 			example: `@svg('./icons/logo.svg', { class: 'h-4 w-4' })`,
-			onCall(ctx) {
-				const pathExpr = ctx.param("path");
-				const attrsExpr = ctx.param("attrs") || "{}";
+			onCall(api) {
+				const pathExpr = api.getArgument(0);
+				const attrsExpr = api.getArgument(1) || "{}";
 
-				ctx.raw(`await (async () => {
-                    const hash = await $ctx.$loadSVGAsset(${JSON.stringify(pathExpr)});
-                    const attrs = ${attrsExpr};
-                    if (hash) {
-                        const src = "${getBaseUrl()}/" + hash + ".svg";
-                        let attrsStr = "";
-                        for (const [key, value] of Object.entries(attrs)) {
-                            attrsStr += " " + key + '="' + value + '"';
+                api.markAsync();
+				api.write(`await (async () => {
+                    const $hash = await $globals.$loadSVGAsset(${pathExpr});
+                    const $attrs = ${attrsExpr};
+                    if ($hash) {
+                        const $src = "${getBaseUrl()}/" + $hash + ".svg";
+                        let $attrsStr = "";
+                        for (const [$key, $value] of Object.entries($attrs)) {
+                            $attrsStr += " " + $key + '="' + $value + '"';
                         }
-                        $ctx.$add('<img src="' + src + '"' + attrsStr + ' />');
+                        $kire_response += '<img src="' + $src + '"' + $attrsStr + ' />';
                     } else {
-                        $ctx.$add('<!-- SVG not found: ' + ${JSON.stringify(pathExpr)} + ' -->');
+                        $kire_response += '<!-- SVG not found: ' + ${pathExpr} + ' -->';
                     }
                 })();`);
 			},
@@ -99,9 +97,25 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			name: "style",
 			description: `Captures inline styles to be injected via @assets.`,
 			example: `<style>body { color: red; }</style>`,
-			async run(ctx) {
-				if (ctx.element.attributes.nocache !== undefined) return;
-				const content = ctx.element.inner;
+			onCall(api) {
+                const attrs = api.node.attributes || {};
+				if (attrs.nocache !== undefined) {
+                    api.write(`$kire_response += '<style';`);
+                    for (const [key, val] of Object.entries(attrs)) {
+                        api.write(`$kire_response += ' ${key}="' + ${JSON.stringify(val)} + '"';`);
+                    }
+                    api.write(`$kire_response += '>';`);
+                    api.renderChildren();
+                    api.write(`$kire_response += '</style>';`);
+                    return;
+                }
+
+                let content = "";
+                for (const child of api.node.children || []) {
+                    if (child.type === "text") content += child.content;
+                    else if (child.type === "interpolation") content += `{{ ${child.content} }}`;
+                }
+
 				if (!content.trim()) return;
 
 				const hash = createHash("md5")
@@ -111,9 +125,8 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				addToCache(hash, { hash, content, type: "css" });
 
-                if (!ctx._assets) ctx._assets = { scripts: [], styles: [] };
-				ctx._assets.styles.push(hash);
-				ctx.replace("");
+                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
+                api.write(`if ($globals.$assets.styles.indexOf("${hash}") === -1) $globals.$assets.styles.push("${hash}");`);
 			},
 		});
 
@@ -122,14 +135,28 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			name: "script",
 			description: `Captures inline scripts to be injected via @assets.`,
 			example: `<script>console.log('hello');</script>`,
-			async run(ctx) {
+			onCall(api) {
+                const attrs = api.node.attributes || {};
 				if (
-					ctx.element.attributes.src ||
-					ctx.element.attributes.nocache !== undefined
-				)
-					return;
+					attrs.src ||
+					attrs.nocache !== undefined
+				) {
+                    api.write(`$kire_response += '<script';`);
+                    for (const [key, val] of Object.entries(attrs)) {
+                        api.write(`$kire_response += ' ${key}="' + ${JSON.stringify(val)} + '"';`);
+                    }
+                    api.write(`$kire_response += '>';`);
+                    api.renderChildren();
+                    api.write(`$kire_response += '</script>';`);
+                    return;
+                }
 
-				const content = ctx.element.inner;
+                let content = "";
+                for (const child of api.node.children || []) {
+                    if (child.type === "text") content += child.content;
+                    else if (child.type === "interpolation") content += `{{ ${child.content} }}`;
+                }
+
 				if (!content.trim()) return;
 
 				const hash = createHash("md5")
@@ -139,7 +166,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				let type: "js" | "mjs" = "js";
 				if (
-					ctx.element.attributes.type === "module" ||
+					attrs.type === "module" ||
 					content.includes("import ") ||
 					content.includes("export ") ||
 					content.includes("import.")
@@ -149,9 +176,8 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				addToCache(hash, { hash, content, type });
 
-                if (!ctx._assets) ctx._assets = { scripts: [], styles: [] };
-				ctx._assets.scripts.push(hash);
-				ctx.replace("");
+                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
+                api.write(`if ($globals.$assets.scripts.indexOf("${hash}") === -1) $globals.$assets.scripts.push("${hash}");`);
 			},
 		});
 
@@ -160,43 +186,47 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			name: "assets",
 			description: `Injects the assets placeholder where scripts and styles will be output.`,
 			example: `@assets()`,
-			onInit(ctx) {
-                if (!ctx._assets) ctx._assets = { scripts: [], styles: [] };
-				ctx.$on("after", async (c: any) => {
-					const assets = c._assets;
-					const placeholder = `<!-- KIRE:assets -->`;
-					if (assets && c.$response.includes(placeholder)) {
-						let output = "";
-						const uniqueStyles = [...new Set(assets.styles as string[])];
-						for (const hash of uniqueStyles) {
-							output += `<link rel="stylesheet" href="${getBaseUrl()}/${hash}.css" />\n`;
-						}
-						const uniqueScripts = [...new Set(assets.scripts as string[])];
-						for (const hash of uniqueScripts) {
-							const asset = cache.get(hash);
-							if (asset && asset.type === "mjs") {
-								output += `<script type="module" src="${getBaseUrl()}/${hash}.mjs"></script>\n`;
-							} else {
-								output += `<script src="${getBaseUrl()}/${hash}.js" defer></script>\n`;
-							}
-						}
-						c.$response = c.$response.split(placeholder).join(output);
-					}
-				});
-			},
-			onCall(ctx) {
-                ctx.pre(`if (typeof $ctx._assets === 'undefined') $ctx._assets = { scripts: [], styles: [] };`);
-				ctx.raw(`$ctx.$add('<!-- KIRE:assets -->');\n`);
-			},
-		});
+			onCall(api) {
+                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
+				api.write(`$kire_response += '<!-- KIRE:assets -->';\n`);
+                
+                api.epilogue(`
+                    if (typeof $globals.$assets !== 'undefined') {
+                        const _assets_data = $globals.$assets;
+                        const _assets_placeholder = '<!-- KIRE:assets -->';
+                        const _assets_baseUrl = "${getBaseUrl()}";
+                        let _assets_output = "";
+                        
+                        const _uniqueStyles = [];
+                        for (let i = 0; i < _assets_data.styles.length; i++) {
+                            if (_uniqueStyles.indexOf(_assets_data.styles[i]) === -1) _uniqueStyles.push(_assets_data.styles[i]);
+                        }
+                        for (let i = 0; i < _uniqueStyles.length; i++) {
+                            _assets_output += '<link rel="stylesheet" href="' + _assets_baseUrl + '/' + _uniqueStyles[i] + '.css" />\\n';
+                        }
 
-		// Injection point handler
-		kire.element({
-			name: injectionTag,
-			description: `Internal placeholder for assets injection.`,
-			example: `<!-- Internal Use -->`,
-			async run(ctx) {
-				ctx.replace("<!-- KIRE:assets -->");
+                        const _uniqueScripts = [];
+                        for (let i = 0; i < _assets_data.scripts.length; i++) {
+                            if (_uniqueScripts.indexOf(_assets_data.scripts[i]) === -1) _uniqueScripts.push(_assets_data.scripts[i]);
+                        }
+                        const _assetCache = this.cached("@kirejs/assets");
+                        for (let i = 0; i < _uniqueScripts.length; i++) {
+                            const _hash = _uniqueScripts[i];
+                            const _asset = _assetCache[_hash];
+                            if (_asset && _asset.type === "mjs") {
+                                _assets_output += '<script type="module" src="' + _assets_baseUrl + '/' + _hash + '.mjs"></script>\\n';
+                            } else {
+                                _assets_output += '<script src="' + _assets_baseUrl + '/' + _hash + '.js" defer></script>\\n';
+                            }
+                        }
+                        
+                        if ($kire_response.indexOf(_assets_placeholder) !== -1) {
+                            $kire_response = $kire_response.split(_assets_placeholder).join(_assets_output);
+                        } else {
+                            $kire_response += _assets_output;
+                        }
+                    }
+                `);
 			},
 		});
 	},

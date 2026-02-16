@@ -22,7 +22,8 @@ export async function processRequest(
 ): Promise<{ code: number; data: WireResponse | { error: string } }> {
 	const body = req.body;
     const payloadList = body.components || [body];
-	const identifier = getIdentifier(req);
+	const $ident = (kire as any).$globals["$wireToken"] || "";
+	const identifier = contextOverrides.wireToken || $ident || getIdentifier(req);
 
 	try {
         const responses: any[] = [];
@@ -173,9 +174,7 @@ export async function renderComponent(instance: WireComponent): Promise<string> 
     let html = "";
 	if (typeof result === "string") {
 		const data = { ...instance.getDataForRender(), errors: instance.__errors };
-		const keys = Object.keys(data).filter((k) => /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k));
-		const injection = keys.length ? `<?js let { ${keys.join(", ")} } = $ctx.$props; ?>` : "";
-		html = await instance.kire.render(injection + result, data) as string;
+		html = await instance.kire.render(result, data) as any;
 	} else {
 		html = await result;
 	}
@@ -195,7 +194,8 @@ export function createResponse(instance: WireComponent, memo: WireSnapshot["memo
 	memo.errors = Object.keys(instance.__errors).length > 0 ? instance.__errors : [];
 	memo.listeners = instance.listeners;
 
-	const newChecksum = checksum.generate(newData, memo, identifier);
+	const $ident = (instance.kire as any)?.$globals?.["$wireToken"] || "";
+	const newChecksum = checksum.generate(newData, memo, $ident || identifier);
 	const finalSnapshot = { data: newData, memo, checksum: newChecksum };
 	const escapedSnapshot = JSON.stringify(finalSnapshot).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 	const style = !html || !html.trim() ? ' style="display: none;"' : "";

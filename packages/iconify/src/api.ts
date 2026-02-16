@@ -4,7 +4,7 @@ export async function fetchIcon(
 	iconName: string,
 	apiUrl: string,
 	queryParams: Record<string, string> = new NullProtoObj(),
-	cache?: Map<string, string>,
+	cache?: Record<string, string>,
 ): Promise<string> {
 	// Create a cache key that includes the query parameters to differentiate variants
 	// Sort keys to ensure stability
@@ -14,8 +14,8 @@ export async function fetchIcon(
 		.join("&");
 	const cacheKey = `${iconName}?${queryString}`;
 
-	if (cache?.has(cacheKey)) {
-		return cache.get(cacheKey)!;
+	if (cache && cache[cacheKey]) {
+		return cache[cacheKey]!;
 	}
 
 	try {
@@ -47,7 +47,7 @@ export async function fetchIcon(
 
 		const svg = await response.text();
 		if (cache) {
-			cache.set(cacheKey, svg);
+			cache[cacheKey] = svg;
 		}
 		return svg;
 	} catch (e) {
