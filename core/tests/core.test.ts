@@ -41,10 +41,10 @@ describe("Kire Core (Bun)", () => {
         const k = new Kire();
         k.element({
             name: "my-tag",
-            onCall: (ctx) => {
-                ctx.raw('$ctx.$add("<span>");');
-                if (ctx.children) ctx.set(ctx.children);
-                ctx.raw('$ctx.$add("</span>");');
+            onCall: (api) => {
+                api.raw('$kire_response += "<span>";');
+                if (api.children) api.set(api.children);
+                api.raw('$kire_response += "</span>";');
             }
         });
 
@@ -56,18 +56,18 @@ describe("Kire Core (Bun)", () => {
         const k = new Kire();
         k.element({
             name: "outer",
-            onCall: (ctx) => {
-                ctx.raw('$ctx.$add("<div>");');
-                if (ctx.children) ctx.set(ctx.children);
-                ctx.raw('$ctx.$add("</div>");');
+            onCall: (api) => {
+                api.raw('$kire_response += "<div>";');
+                if (api.children) api.set(api.children);
+                api.raw('$kire_response += "</div>";');
             }
         });
         k.element({
             name: "inner",
-            onCall: (ctx) => {
-                ctx.raw('$ctx.$add("<span>");');
-                if (ctx.children) ctx.set(ctx.children);
-                ctx.raw('$ctx.$add("</span>");');
+            onCall: (api) => {
+                api.raw('$kire_response += "<span>";');
+                if (api.children) api.set(api.children);
+                api.raw('$kire_response += "</span>";');
             }
         });
 

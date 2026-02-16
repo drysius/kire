@@ -12,6 +12,16 @@ export const KireDirectives: KirePlugin = {
 	load(kire) {
         registerTypes(kire);
 
+        kire.varThen('NullProtoObj', (api) => {
+            api.prologue(`const NullProtoObj = this.NullProtoObj;`);
+        });
+
+        kire.varThen('index', (api) => {
+            // This is tricky as it depends on loop. 
+            // If I just register it, the compiler will call it if 'index' is found.
+            // But the injection point matters.
+        });
+
 		defineDirectives(kire);
 		nativeDirectives(kire);
 		importDirectives(kire);

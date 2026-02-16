@@ -16,60 +16,37 @@ export default (kire: Kire) => {
     });
 
     kire.type({
-        variable: "$ctx",
-        type: "context",
-        comment:
-            "The runtime context object ($ctx) used during template execution. Contains helpers like $add, $resolve, $require, etc.",
-        tstype: "import('kire').KireContext",
-    });
-
-    kire.type({
-        variable: "it",
-        type: "context",
-        comment:
-            "Reference to the local variables (props) passed to the template. Alias for $props.",
-        tstype: "Record<string, any>",
-    });
-
-    kire.type({
-        variable: "$ctx.$props",
+        variable: "$props",
         type: "context",
         comment: "Local variables passed to the template.",
         tstype: "Record<string, any>",
     });
 
     kire.type({
-        variable: "$ctx.$globals",
+        variable: "it",
+        type: "context",
+        comment: "Reference to the local variables (props). Alias for $props.",
+        tstype: "Record<string, any>",
+    });
+
+    kire.type({
+        variable: "$globals",
         type: "context",
         comment: "Global variables accessible in all templates.",
         tstype: "Record<string, any>",
     });
 
     kire.type({
-        variable: "$ctx.$add",
+        variable: "$kire_response",
         type: "context",
-        comment: "Appends a string to the output buffer.",
-        tstype: "(content: string) => void",
+        comment: "The output buffer string. Can be modified directly.",
+        tstype: "string",
     });
 
     kire.type({
-        variable: "$ctx.$require",
+        variable: "$escape",
         type: "context",
-        comment: "Imports and renders another template file.",
-        tstype: "['path:filepath', 'locals?:object']",
-    });
-
-    kire.type({
-        variable: "$ctx.$resolve",
-        type: "context",
-        comment: "Resolves a template path using namespaces and aliases.",
-        tstype: "['path:filepath']",
-    });
-
-    kire.type({
-        variable: "$ctx.$att",
-        type: "context",
-        comment: "Attribute management helper. Allows merging and outputting HTML attributes.",
-        tstype: "import('kire').Attributes",
+        comment: "Function to escape HTML content.",
+        tstype: "(v: any) => string",
     });
 };

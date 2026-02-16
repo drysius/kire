@@ -44,15 +44,17 @@ export default (kire: Kire<any>) => {
             const id = api.uid('i');
             api.write(`{
                 const _r${id} = ${items};
-                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || new NullProtoObj());
+                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || this.NullProtoObj);
                 const _len${id} = _it${id}.length;
-                for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
+                let ${id} = 0;
+                while (${id} < _len${id}) {
                     const _e${id} = _it${id}[${id}];
                     let ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
-                    let ${indexAs} = ${id};
-                    let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };`);
+                    ${api.fullBody.includes('index') || api.allIdentifiers.has('index') ? `let ${indexAs} = ${id};` : ''}
+                    ${api.fullBody.includes('$loop') || api.allIdentifiers.has('$loop') ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ''}`);
             api.renderChildren();
-            api.write(`  }
+            api.write(`    ${id}++;
+                }
             }`);
         }
     });
@@ -102,11 +104,11 @@ export default (kire: Kire<any>) => {
                 const name = api.getAttribute("name") || "default";
                 const id = api.uid("slot");
                 api.write(`{
-                    const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+                    const _oldRes${id} = $kire_response; $kire_response = "";`);
                 api.renderChildren();
                 api.write(`
-                    if (typeof $slots !== 'undefined') $slots['${name}'] = $ctx.$response;
-                    $ctx.$response = _oldRes${id};
+                    if (typeof $slots !== 'undefined') $slots['${name}'] = $kire_response;
+                    $kire_response = _oldRes${id};
                 }`);
                 return;
             }
@@ -114,6 +116,7 @@ export default (kire: Kire<any>) => {
             const componentName = tagName.slice(2);
             const id = api.uid('comp');
             const depId = api.depend(componentName);
+            const dep = api.getDependency(componentName);
             
             const attrs = api.node.attributes || new NullProtoObj();
             const propsStr = Object.keys(attrs)
@@ -122,7 +125,7 @@ export default (kire: Kire<any>) => {
 
             api.write(`{
                 const $slots = new NullProtoObj();
-                const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+                const _oldRes${id} = $kire_response; $kire_response = "";`);
             
             if (api.node.children) {
                 const slots = api.node.children.filter(c => c.tagName === "x-slot");
@@ -130,24 +133,22 @@ export default (kire: Kire<any>) => {
                 api.renderChildren(slots);
                 if (defContent.length > 0) {
                     const defId = api.uid("def");
-                    api.write(`{ const _defRes${defId} = $ctx.$response; $ctx.$response = "";`);
+                    api.write(`{ const _defRes${defId} = $kire_response; $kire_response = "";`);
                     api.renderChildren(defContent);
-                    api.write(`$slots.default = $ctx.$response; $ctx.$response = _defRes${defId}; }`);
+                    api.write(`$slots.default = $kire_response; $kire_response = _defRes${defId}; }`);
                 }
             }
             
             api.write(`
-                $ctx.$response = _oldRes${id};
-                const _oldProps${id} = $ctx.$props;
-                $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps${id}, { ${propsStr} }, { slots: $slots });
-                const _oldCtxSlots${id} = $ctx.slots;
-                $ctx.slots = $slots;
-                // OTIMIZAÇÃO: Usa o metadado estático para decidir sobre o await
-                const _dep${id} = $ctx.$dependencies['${depId}'];
-                const res${id} = _dep${id}.execute($ctx);
-                if (_dep${id} && _dep${id}.meta.async) await res${id};
-                $ctx.$props = _oldProps${id};
-                $ctx.slots = _oldCtxSlots${id};
+                $kire_response = _oldRes${id};
+                const _oldProps${id} = $props;
+                $props = Object.assign(Object.create($globals), _oldProps${id}, { ${propsStr} }, { slots: $slots });
+                
+                const _dep${id} = ${depId};
+                const res${id} = _dep${id}.call(this, $props, $globals);
+                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
+                
+                $props = _oldProps${id};
             }`);
         }
     });

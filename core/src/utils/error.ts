@@ -1,4 +1,5 @@
-import type { KireContext, CompiledTemplate, KireTplFunction } from "../types";
+import type { Kire } from "../kire";
+import type { KireTplFunction } from "../types";
 import { resolveSourceLocation } from "./source-map";
 
 export class KireError extends Error {
@@ -24,11 +25,12 @@ export class KireError extends Error {
         
         // Try to extract from code
         if (this.template.code) {
-            const smMatch = this.template.code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
-            if (smMatch && smMatch[1]) {
+            // Match typical source mapping URL
+            const mapUrlIndex = this.template.code.lastIndexOf('//# sourceMappingURL=data:application/json;charset=utf-8;base64,');
+            if (mapUrlIndex !== -1) {
                 try {
-                    // Cache it back to template meta to avoid reparsing
-                    this.template.map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString());
+                    const base64 = this.template.code.slice(mapUrlIndex + 64).trim();
+                    this.template.map = JSON.parse(Buffer.from(base64, 'base64').toString());
                     return this.template.map;
                 } catch (e) {
                     // Ignore parse errors
@@ -84,12 +86,13 @@ export class KireError extends Error {
 	}
 }
 
-export function renderErrorHtml(e: any, ctx?: KireContext): string {
-	const kire = ctx?.$kire;
+export function renderErrorHtml(e: any, kire?: Kire<any>, ctx?: any): string {
 	const isProduction = kire?.production ?? false;
     if (isProduction) return `<html><body style="background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><h1 style="font-size:1.5rem;margin-top:1rem;letter-spacing:0.05em">INTERNAL SERVER ERROR</h1></body></html>`;
 
     // Support KireError or generic Error with context
+    // ctx is now arbitrary locals, it might not have $template info unless we attached it.
+    // If e is KireError, it has template.
     const template = (e instanceof KireError && e.template) || (ctx?.$template ? ctx.$template.meta : undefined);
 	let snippet = "", location = "", astJson = "null";
     
@@ -107,16 +110,13 @@ export function renderErrorHtml(e: any, ctx?: KireContext): string {
 			
             // Try Source Map
             if (sourceLine === -1) {
-                // Manually parse map here if needed, or assume KireError already did? 
-                // We are outside KireError class context here, so we duplicate or helper extraction.
-                // But wait, KireError constructor already runs. 
-                // However, renderErrorHtml might take a raw Error.
-                // We should reuse extraction logic.
-                
                 let map = template.map;
                 if (!map && template.code) {
-                     const smMatch = template.code.match(/\/\/# sourceMappingURL=data:application\/json;charset=utf-8;base64,(.*)$/m);
-                     if (smMatch && smMatch[1]) try { map = JSON.parse(Buffer.from(smMatch[1], 'base64').toString()); } catch(_){}
+                     const mapUrlIndex = template.code.lastIndexOf('//# sourceMappingURL=data:application/json;charset=utf-8;base64,');
+                     if (mapUrlIndex !== -1) try { 
+                         const base64 = template.code.slice(mapUrlIndex + 64).trim();
+                         map = JSON.parse(Buffer.from(base64, 'base64').toString()); 
+                     } catch(_){}
                 }
 
                 if (map) {

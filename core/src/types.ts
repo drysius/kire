@@ -24,18 +24,6 @@ export interface KireOptions<Streaming extends boolean = boolean, Asyncronos ext
     varLocals?: string;
 }
 
-export interface KireContext {
-    $globals: Record<string, any>;
-    $props: Record<string, any>;
-    $kire: Kire<any>;
-    $template: KireTplFunction;
-    $dependencies: Record<string, KireTplFunction>;
-    $metafile: KireTplFunction['meta'];
-    $response: string;
-    $escape: (v: any) => string;
-    [key: string]: any;
-}
-
 export interface DependencyMetadata {
     execute: KireTplFunction;
     isAsync: boolean;
@@ -44,14 +32,6 @@ export interface DependencyMetadata {
 export type KireTplFunctionBase = (this: Kire<any>, locals?: object, globals?: object) => string | Promise<string>;
 
 export interface KireTplFunction extends KireTplFunctionBase {
-    /** Async execution (returns Promise<string>) */
-    async: (kire: Kire<any>, locals?: object, globals?: object) => Promise<string>;
-    /** Sync execution (forces sync, returns string) */
-    sync: (kire: Kire<any>, locals?: object, globals?: object) => string;
-    /** Stream execution (returns ReadableStream) */
-    stream: (kire: Kire<any>, locals?: object, globals?: object) => ReadableStream;
-    /** Internal low-level execute method used by compiled code */
-    execute: (ctx: KireContext) => any;
     /** Metadata about the compiled template */
     meta: {
         async: boolean;
@@ -74,8 +54,10 @@ export interface CompilerApi {
     getArgument(index: number): any;
     depend(path: string): string;
     markAsync(): void;
+    varThen(name: string, callback: (api: CompilerApi) => void): void;
     kire: Kire<any>;
     node: Node;
+    editable: boolean;
     [key: string]: any;
 }
 

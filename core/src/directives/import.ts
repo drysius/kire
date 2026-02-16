@@ -4,21 +4,23 @@ export default (kire: Kire<any>) => {
     kire.directive({
         name: `include`,
         params: [`path:string`, `locals:object`],
-        children: false, // CORREÇÃO: SEM FILHOS
+        children: false, 
         onCall: (api) => {
-            const path = api.getAttribute("path") || api.getArgument(0);
+            const rawPath = api.getAttribute("path") || api.getArgument(0);
             const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
 
-            if (!path) return;
+            if (!rawPath) return;
 
-            const depId = api.depend(path);
+            const depId = api.depend(rawPath);
+            const dep = api.getDependency(rawPath);
             
             api.write(`{
-                const _oldProps = $ctx.$props;
-                $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps, ${locals});
-                const res = $ctx.$dependencies['${depId}'].execute($ctx); 
-                if (res instanceof Promise) await res;
-                $ctx.$props = _oldProps;
+                const _oldProps = $props;
+                $props = Object.assign(Object.create($globals), _oldProps, ${locals});
+                const _dep = ${depId};
+                const res = _dep.call(this, $props, $globals); 
+                ${dep.meta.async ? `$kire_response += await res;` : `$kire_response += res;`}
+                $props = _oldProps;
             }`);
         },
     });

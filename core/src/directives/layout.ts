@@ -2,6 +2,13 @@ import type { Kire } from "../kire";
 import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
+    kire.varThen('__kire_stack', (api) => {
+        api.prologue(`${api.editable ? 'let' : 'const'} __kire_stack = new this.NullProtoObj;`);
+        api.epilogue(`
+            $kire_response = $kire_response.replace(/<!-- KIRE:stack\\(.*?\\) -->/g, "");
+        `);
+    });
+
 	kire.directive({
 		name: `define`,
 		params: [`name:string`],
@@ -10,12 +17,12 @@ export default (kire: Kire<any>) => {
 			let name = api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("def");
-            api.write(`{ const _origRes${id} = $ctx.$response; $ctx.$response = "";`);
+            api.write(`{ const _origRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                if (!$ctx.$globals["~defines"]) $ctx.$globals["~defines"] = new NullProtoObj();
-                $ctx.$globals["~defines"]['${name}'] = $ctx.$response;
-                $ctx.$response = _origRes${id};
+                if (!$globals["~defines"]) $globals["~defines"] = new NullProtoObj();
+                $globals["~defines"]['${name}'] = $kire_response;
+                $kire_response = _origRes${id};
             }`);
 		},
 	});
@@ -27,8 +34,8 @@ export default (kire: Kire<any>) => {
 		onCall: (api) => {
 			let name = api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			api.write(`if ($ctx.$globals["~defines"] && $ctx.$globals["~defines"]['${name}'] !== undefined) {`);
-            api.write(`  $ctx.$response += $ctx.$globals["~defines"]['${name}'];`);
+			api.write(`if ($globals["~defines"] && $globals["~defines"]['${name}'] !== undefined) {`);
+            api.write(`  $kire_response += $globals["~defines"]['${name}'];`);
             if (api.node.children?.length) {
                 api.write(`} else {`);
                 api.renderChildren();
@@ -42,15 +49,16 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: false,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getAttribute("name") || api.getArgument(0);
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			api.write(`$ctx.$response += "<!-- KIRE:stack(${name}) -->";`);
+			api.write(`$kire_response += "<!-- KIRE:stack(${name}) -->";`);
+            
+            const phId = api.uid('ph');
             api.epilogue(`
-                if ($ctx['~stacks'] && $ctx['~stacks']['${name}']) {
-                    const _placeholder = "<!-- KIRE:stack(${name}) -->";
-                    $ctx.$response = $ctx.$response.split(_placeholder).join($ctx['~stacks']['${name}'].join("\\n"));
+                if (typeof __kire_stack !== 'undefined' && __kire_stack['${name}']) {
+                    const _placeholder${phId} = "<!-- KIRE:stack(${name}) -->";
+                    $kire_response = $kire_response.split(_placeholder${phId}).join(__kire_stack['${name}'].join("\\n"));
                 }
-                $ctx.$response = $ctx.$response.replace(/<!-- KIRE:stack\\(.*?\\) -->/g, "");
             `);
 		},
 	});
@@ -64,13 +72,12 @@ export default (kire: Kire<any>) => {
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("push");
 			api.write(`{
-                if(!$ctx['~stacks']) $ctx['~stacks'] = new NullProtoObj();
-                if (!$ctx['~stacks']['${name}']) $ctx['~stacks']['${name}'] = [];
-                const _origRes${id} = $ctx.$response; $ctx.$response = "";`);
+                if (!__kire_stack['${name}']) __kire_stack['${name}'] = [];
+                const __kire_${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                $ctx['~stacks']['${name}'].push($ctx.$response);
-                $ctx.$response = _origRes${id};
+                __kire_stack['${name}'].push($kire_response);
+                $kire_response = __kire_${id};
             }`);
 		},
 	});

@@ -7,10 +7,10 @@ describe("Kire Elements System (Pattern-based)", () => {
         
         k.element({
             name: 'test:*',
-            onCall: (ctx) => {
-                ctx.raw(`$ctx.$add("[${ctx.wildcard}:");`);
-                if (ctx.children) ctx.set(ctx.children);
-                ctx.raw(`$ctx.$add("]");`);
+            onCall: (api) => {
+                api.raw(`$kire_response += "[${api.wildcard}:";`);
+                if (api.children) api.set(api.children);
+                api.raw(`$kire_response += "]";`);
             }
         });
 

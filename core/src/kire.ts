@@ -1,5 +1,5 @@
-import { readFileSync, existsSync } from "node:fs";
-import { resolve, join, isAbsolute } from "node:path";
+import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { resolve, join, isAbsolute, relative } from "node:path";
 import { Compiler } from "./compiler";
 import { Parser } from "./parser";
 import { createKireFunction } from "./runtime";
@@ -14,11 +14,11 @@ import type {
     IParserConstructor,
     KireOptions,
     KirePlugin,
-    KireContext,
     KireTplFunction,
     KireRendered,
     KireSchemaDefinition,
-    TypeDefinition
+    TypeDefinition,
+    KireHandler
 } from "./types";
 
 export interface ElementMatcher {
@@ -46,16 +46,19 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     public $directivesPattern: RegExp = /$^/;
 
     /** Global variables available to all templates */
-    public $globals: Record<string, any> = new NullProtoObj();
+    public $globals: Record<string, any> = {};
     
     /** Shared properties (legacy alias) */
-    public $props: Record<string, any> = new NullProtoObj();
+    public $props: Record<string, any> = {};
     
     /** Namespace mappings for template resolution */
     public $namespaces: Map<string, string> = new Map();
 
     /** Registered types for type checking support */
     public $types: Map<string, TypeDefinition> = new Map();
+
+    /** Registered variable handlers for conditional injection */
+    public $varThens: Map<string, KireHandler> = new Map();
     
     /** Schema definition for the project */
     public $schemaDefinition?: KireSchemaDefinition;
@@ -89,6 +92,18 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     
     /** Raw source cache */
     public $sources: Record<string, string> = new NullProtoObj();
+
+    /** NullProtoObj constructor */
+    public NullProtoObj = NullProtoObj;
+
+    /** mtime cache for files (path -> mtime) */
+    private $mtimes: Record<string, number> = new NullProtoObj();
+
+    /** Set of templates currently being compiled to prevent loops */
+    private _compiling: Set<string> = new Set();
+
+    /** Escape helper */
+    public $escape = escapeHtml;
 
     /** Parser constructor */
     public $parser: IParserConstructor;
@@ -147,6 +162,17 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     }
 
     /**
+     * Registers a conditional variable handler.
+     * If the variable is used in the template, the callback is executed during compilation.
+     * @param name The variable name to watch for.
+     * @param callback The callback to execute.
+     */
+    public varThen(name: string, callback: KireHandler) {
+        this.$varThens.set(name, callback);
+        return this;
+    }
+
+    /**
      * Parses a template string into an AST.
      * @param content The template content.
      */
@@ -176,89 +202,96 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      * @param extraGlobals List of extra global variable names to inject.
      */
     public compile(content: string, filename = "template.kire", extraGlobals: string[] = []): KireTplFunction {
-        const parser = new this.$parser(content, this as any);
-        const nodes = parser.parse();
-        const compilerInstance = new this.$compiler(this as any, filename);
-        const code = compilerInstance.compile(nodes, extraGlobals);
-
-        const isAsync = compilerInstance.isAsync;
-        
-        // Convert Map to Record for metadata
-        const dependencies: Record<string, string> = new NullProtoObj();
-        for (const [path, id] of compilerInstance.getDependencies()) {
-            dependencies[path] = id;
+        if (this._compiling.has(filename)) {
+            // If already compiling, we can't inline yet. 
+            // In a better system we'd return a proxy, but for now we just throw to avoid stack overflow
+            throw new Error(`Circular dependency detected while compiling: ${filename}`);
         }
-
-        // Create the core function directly
-        // We use a try-catch block during function creation to catch syntax errors in generated code
+        
+        this._compiling.add(filename);
         try {
+            const parser = new this.$parser(content, this as any);
+            const nodes = parser.parse();
+            const compilerInstance = new this.$compiler(this as any, filename);
+            const code = compilerInstance.compile(nodes, extraGlobals);
+
+            const isAsync = compilerInstance.isAsync;
+            
+            // Convert Map to Record for metadata
+            const dependencies: Record<string, string> = new NullProtoObj();
+            for (const [path, id] of compilerInstance.getDependencies()) {
+                dependencies[path] = id;
+            }
+
             const AsyncFunc = (async () => {}).constructor;
-            // $deps is now accessed via $ctx.$dependencies, so we remove it from args
             const coreFunction = isAsync 
-                ? new (AsyncFunc as any)("$ctx", code)
-                : new Function("$ctx", code);
+                ? new (AsyncFunc as any)("$props = {}", "$globals = {}", code)
+                : new Function("$props = {}", "$globals = {}", code);
 
             return createKireFunction(this as any, coreFunction, {
                 async: isAsync,
                 path: filename,
                 code,
                 source: content,
-                // map parsing is now handled lazily by KireError/Utils
                 map: undefined, 
                 dependencies
             });
         } catch (e) {
-            if (!this.$silent) { console.log("--- FAILED CODE ---\n" + code + "\n-------------------"); }
-            throw new KireError(e as Error, { execute: () => {}, isAsync, path: filename, code, source: content, map: undefined, dependencies: new NullProtoObj() } as any);
+            if (e instanceof KireError) throw e;
+            throw new KireError(e as Error, { execute: () => {}, isAsync: false, path: filename, code: "", source: content, map: undefined, dependencies: new NullProtoObj() } as any);
+        } finally {
+            this._compiling.delete(filename);
         }
     }
 
     /**
-     * Creates a new execution context.
-     * @param locals Local variables.
-     * @param globals Global variables.
-     * @param template The template function being executed.
-     * @param dependencies Resolved dependencies map.
+     * Compiles all templates in the given directories and bundles them into a single JS file.
+     * This file can be loaded into Kire's bundled cache.
+     * @param directories List of directories to scan for templates.
+     * @param outputFile The output file path for the bundle.
      */
-    public createContext(locals: any, globals: any, template: KireTplFunction, dependencies: Record<string, KireTplFunction> = new NullProtoObj()): KireContext {
-        // We use a safe object creation method from regex utils or just object create
-        // But types.ts defines context structure.
-        // We also need escapeHtml. It is currently in runtime/html utils.
-        // We can import it or pass it. 
-        // For now, let's keep minimal logic here or import helpers.
-        // Note: createKireFunction in runtime.ts currently handles context creation.
-        // If we move it here, we need escapeHtml.
-        // I will implement a minimal context creation here, assuming runtime will augment/use it or I move escapeHtml import here.
-        // Actually, runtime.ts `createKireFunction` calls `createContext`. 
-        // User asked to move `createContext` TO Kire.
-        // So I should import `escapeHtml` here.
+    public compileAndBuild(directories: string[], outputFile: string) {
+        const bundled: Record<string, string> = {};
         
-        const ctx: any = new NullProtoObj();
-        ctx.NullProtoObj = NullProtoObj;
-        ctx.$globals = globals || this.$globals;
-        ctx.$props = locals || {};
-        ctx.$kire = this;
-        ctx.$template = template;
-        ctx.$metafile = template.meta;
-        ctx.$dependencies = dependencies;
-        ctx.$response = "";
-        ctx.$escape = escapeHtml;
-        ctx.$add = (v: string) => { ctx.$response += v; };
-        return ctx;
-    }
+        const scan = (dir: string) => {
+            if (!existsSync(dir)) return;
+            const items = readdirSync(dir);
+            for (const item of items) {
+                const fullPath = join(dir, item);
+                const stat = statSync(fullPath);
+                if (stat.isDirectory()) {
+                    scan(fullPath);
+                } else if (stat.isFile() && (fullPath.endsWith(this.$extension) || fullPath.endsWith('.kire'))) {
+                    const content = readFileSync(fullPath, 'utf-8');
+                    const resolved = this.resolvePath(fullPath);
+                    // Compile directly to get the code string
+                    const parser = new this.$parser(content, this as any);
+                    const nodes = parser.parse();
+                    const compilerInstance = new this.$compiler(this as any, resolved);
+                    const code = compilerInstance.compile(nodes, []);
+                    
+                    // We need to wrap it in a function string
+                    const isAsync = compilerInstance.isAsync;
+                    bundled[resolved] = isAsync 
+                        ? `async function($props = {}, $globals = {}) { ${code} }`
+                        : `function($props = {}, $globals = {}) { ${code} }`;
+                }
+            }
+        };
 
-    /**
-     * Resolves dependencies synchronously.
-     * @param depMap Map of path -> id.
-     */
-    public resolveDependencies(depMap: Record<string, string>): Record<string, KireTplFunction> {
-        const deps: Record<string, KireTplFunction> = new NullProtoObj();
-        if (!depMap) return deps;
-
-        for (const [path, id] of Object.entries(depMap)) {
-            deps[id] = this.getOrCompile(path);
+        for (const dir of directories) {
+            scan(resolve(this.$root, dir));
         }
-        return deps;
+
+        const output = `
+// Kire Bundled Templates
+// Generated at ${new Date().toISOString()}
+
+module.exports = {
+${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
+};
+`;
+        writeFileSync(outputFile, output, 'utf-8');
     }
 
     /**
@@ -268,12 +301,24 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      */
     public getOrCompile(path: string): KireTplFunction {
         const resolved = this.resolvePath(path);
+        
         if (this.production && this.$files[resolved]) return this.$files[resolved];
+        
+        // In dev mode, check mtime
+        if (!this.production && existsSync(resolved)) {
+            const mtime = statSync(resolved).mtimeMs;
+            if (this.$files[resolved] && this.$mtimes[resolved] === mtime) {
+                return this.$files[resolved];
+            }
+            this.$mtimes[resolved] = mtime;
+        } else if (this.$files[resolved]) {
+            return this.$files[resolved];
+        }
         
         const content = this.readFile(resolved);
         const compiled = this.compile(content, resolved);
         
-        if (this.production) this.$files[resolved] = compiled;
+        this.$files[resolved] = compiled;
         return compiled;
     }
 
@@ -281,38 +326,55 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      * Renders a raw template string.
      * @param template The template string.
      * @param locals Local variables.
+     * @param globals Optional extra global variables.
      * @param filename Filename for debug.
      */
-    public render(template: string, locals: Record<string, any> = new NullProtoObj(), filename = "template.kire"): KireRendered<Streaming, Asyncronos> {
+    public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Streaming, Asyncronos> {
         const compiled = this.compile(template, filename, Object.keys(locals));
-        if (this.$stream) return compiled.stream(this, locals) as any;
-        if (this.$async) return compiled.async(this, locals) as any;
-        return compiled.sync(this, locals) as any;
+        return this.run(compiled, locals, globals);
     }
 
     /**
      * Renders a template from a file.
      * @param path The file path.
      * @param locals Local variables.
+     * @param globals Optional extra global variables.
      */
-    public view(path: string, locals: Record<string, any> = new NullProtoObj()): KireRendered<Streaming, Asyncronos> {
-        // Since getOrCompile is sync, this whole method is sync in structure.
-        // It returns the execution result, which might be a Promise if async mode is on.
+    public view(path: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>): KireRendered<Streaming, Asyncronos> {
         const compiled = this.getOrCompile(path);
-        if (this.$stream) return compiled.stream(this, locals) as any;
-        if (this.$async) return compiled.async(this, locals) as any;
-        return compiled.sync(this, locals) as any;
+        return this.run(compiled, locals, globals);
     }
 
     /**
      * Runs a pre-compiled template function.
      * @param template The compiled template function.
      * @param locals Local variables.
+     * @param globals Optional global variables.
      */
-    public run(template: KireTplFunction, locals: Record<string, any>): KireRendered<Streaming, Asyncronos> {
-        if (this.$stream) return template.stream(this, locals) as any;
-        if (this.$async) return template.async(this, locals) as any;
-        return template.sync(this, locals) as any;
+    public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Streaming, Asyncronos> {
+        if (this.$stream) {
+            const encoder = new TextEncoder();
+            return new ReadableStream({
+                async start(controller) {
+                    try {
+                        const result = template.call(this as any, locals, globals);
+                        const final = result instanceof Promise ? await result : result;
+                        if (final) controller.enqueue(encoder.encode(final));
+                        controller.close();
+                    } catch (e) {
+                        controller.error(e);
+                    }
+                }
+            }) as any;
+        }
+
+        const result = template.call(this, locals, globals);
+        
+        if (!this.$async && result instanceof Promise) {
+             throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);
+        }
+
+        return result as any;
     }
 
     /**
@@ -403,5 +465,5 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     /**
      * Renders an error into HTML.
      */
-    public renderError(e: any, ctx?: KireContext): string { return renderErrorHtml(e, ctx); }
+    public renderError(e: any, ctx?: any): string { return renderErrorHtml(e, this, ctx); }
 }

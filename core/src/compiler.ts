@@ -3,7 +3,6 @@ import type { CompilerApi, Node } from "./types";
 import { SourceMapGenerator } from "./utils/source-map";
 import { 
     NullProtoObj, 
-    JS_IDENTIFIER_REGEX, 
     RESERVED_KEYWORDS_REGEX,
     JS_EXTRACT_IDENTS_REGEX,
     FOR_VAR_EXTRACT_REGEX,
@@ -11,7 +10,8 @@ import {
     INTERPOLATION_GLOBAL_REGEX,
     INTERPOLATION_START_REGEX,
     AWAIT_KEYWORD_REGEX,
-    WILDCARD_CHAR_REGEX
+    WILDCARD_CHAR_REGEX,
+    STRIP_QUOTES_REGEX
 } from "./utils/regex";
 
 export class Compiler {
@@ -21,9 +21,13 @@ export class Compiler {
     private dependencies: Map<string, string> = new Map();
     private uidCounter: Record<string, number> = new NullProtoObj();
     private _isAsync: boolean = false;
+    private _isDependency: boolean = false;
     private textBuffer: string = "";
     private generator: SourceMapGenerator;
     private mappings: { bodyIndex: number; node: Node; col: number }[] = [];
+    private identifiers: Set<string> = new Set();
+    private fullBody: string = "";
+    private allIdentifiers: Set<string> = new Set();
 
     constructor(public kire: Kire<any>, private filename = "template.kire") {
         this.generator = new SourceMapGenerator(filename);
@@ -40,7 +44,7 @@ export class Compiler {
 
     private flushText() {
         if (this.textBuffer) {
-            this.body.push(`$ctx.$response += ${this.esc(this.textBuffer)};`);
+            this.body.push(`$kire_response += ${this.esc(this.textBuffer)};`);
             this.textBuffer = "";
         }
     }
@@ -53,40 +57,73 @@ export class Compiler {
         if (pureMatch) return pureMatch[1]!;
         
         // Se for texto misto, transforma em template literal ou concatenação
-        let res = val.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${$ctx.$escape(${expr})}`);
+        let res = val.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${$escape(${expr})}`);
         return "`" + res + "`";
     }
 
-    public compile(nodes: Node[], extraGlobals: string[] = []): string {
+    public compile(nodes: Node[], extraGlobals: string[] = [], isDependency = false): string {
+        this._isDependency = isDependency;
         this.body = []; this.header = []; this.footer = [];
         this.dependencies.clear(); this.uidCounter = new NullProtoObj();
         this.mappings = [];
         this._isAsync = false;
         this.textBuffer = "";
+        this.identifiers.clear();
 
-        this.header.push(`const it = $ctx.$props;`);
-        this.header.push(`const NullProtoObj = $ctx.NullProtoObj;`);
+        this.header.push(`$globals = Object.assign({}, this.$globals, $globals);`);
+        this.header.push(`let $kire_response = "";`);
+        this.header.push(`const $escape = this.$escape;`);
 
-        const idents = new Set<string>();
-        this.collectIdentifiers(nodes, idents);
-        if (extraGlobals) extraGlobals.forEach(g => idents.add(g));
+        this.collectIdentifiers(nodes, this.identifiers);
+        if (extraGlobals) extraGlobals.forEach(g => this.identifiers.add(g));
 
         const localDecls = new Set<string>();
         this.collectDeclarations(nodes, localDecls);
 
-        for (const id of idents) {
-            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$ctx" || id === "$loop") continue;
+        for (const id of this.identifiers) {
+            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
-            this.header.push(`let ${id} = $ctx.$props['${id}'] !== undefined ? $ctx.$props['${id}'] : $ctx.$globals['${id}'];`);
+            this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'];`);
+        }
+        
+        if (this.identifiers.has('it')) {
+            this.header.push(`const it = $props;`);
         }
 
         this.compileNodes(nodes);
         this.flushText();
+        
+        this.fullBody = this.body.join("\n");
+        this.allIdentifiers = new Set(this.identifiers);
+        
+        // Register variable providers
+        for (const [name, handler] of this.kire.$varThens) {
+            const regex = new RegExp(`\\b${name}\\b`);
+            if (this.allIdentifiers.has(name) || regex.test(this.fullBody)) {
+                handler(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}));
+            }
+        }
 
-        let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $ctx;\n//# sourceURL=${this.filename}`;
+        if (this.dependencies.size > 0) {
+            this.header.push(`// Dependencies`);
+            for (const [path, id] of this.dependencies) {
+                const depNodes = this.kire.parse(this.kire.readFile(this.kire.resolvePath(path)));
+                const compilerInstance = new Compiler(this.kire, path);
+                const depCode = compilerInstance.compile(depNodes, [], true);
+                const isDepAsync = compilerInstance.isAsync;
+                
+                this.header.push(`// ${path}`);
+                this.header.push(`const ${id} = ${isDepAsync ? 'async ' : ''}function($props = {}, $globals = {}) {`);
+                this.header.push(depCode);
+                this.header.push(`};`);
+                this.header.push(`${id}.meta = { async: ${isDepAsync}, path: '${path}' };`);
+            }
+        }
+
+        let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
         if (!this.kire.production) {
-            const headerLines = this.header.join("\n").split("\n").length + 1; // +1 for the newline before header
+            const headerLines = this.header.join("\n").split("\n").length + 1; 
             const bodyLineOffsets: number[] = [];
             let currentLine = headerLines;
             for (let i = 0; i < this.body.length; i++) {
@@ -116,7 +153,7 @@ export class Compiler {
             let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
                 const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
             }
-            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; // Reset state for global regex
+            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; 
         };
         for (const n of nodes) {
             if (n.type === "interpolation" || n.type === "js") scan(n.content || "");
@@ -125,7 +162,7 @@ export class Compiler {
             if (n.type === "element") {
                 if (n.attributes) {
                     for (const [key, val] of Object.entries(n.attributes)) {
-                        if (key.startsWith('@')) {
+                        if (n.tagName?.startsWith('kire:') || key.startsWith('@')) {
                             scan(val);
                         } else {
                             const code = this.parseAttrCode(val);
@@ -151,7 +188,6 @@ export class Compiler {
             if (n.type === "directive") {
                 if (n.name === "for") {
                     const a = n.args?.[0]; if (typeof a === "string") {
-                        // Tenta extrair a parte 'as' do for
                         let asPart = a;
                         const ofIdx = a.lastIndexOf(" of ");
                         const inIdx = a.lastIndexOf(" in ");
@@ -194,7 +230,7 @@ export class Compiler {
                         this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                         this.body.push(`// kire-line: ${n.loc.line}`);
                     }
-                    this.body.push(`$ctx.$response += ${n.raw ? n.content : `$ctx.$escape(${n.content})`};`);
+                    this.body.push(`$kire_response += ${n.raw ? n.content : `$escape(${n.content})`};`);
                     break;
                 case "js": 
                     this.flushText();
@@ -263,7 +299,7 @@ export class Compiler {
                             this.textBuffer += ` ${key}='`;
                             this.flushText();
                             const code = this.parseAttrCode(val);
-                            this.body.push(`$ctx.$response += ${code};`);
+                            this.body.push(`$kire_response += ${code};`);
                             this.textBuffer += `'`;
                         } else {
                             this.textBuffer += ` ${key}='${val}'`;
@@ -286,16 +322,26 @@ export class Compiler {
     }
 
     private createCompilerApi(node: Node, definition: any): any {
+        const self = this;
         const api: any = {
             kire: this.kire, node, 
+            editable: true,
+            get fullBody() { return self.fullBody; },
+            get allIdentifiers() { return self.allIdentifiers; },
             get wildcard() { return node.wildcard; },
             get children() { return node.children; },
             prologue: (js: string) => { if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.header.push(js); },
             write: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.body.push(js); },
-            after: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.footer.push(js); },
+            epilogue: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.footer.push(js); },
+            after: (js: string) => { api.epilogue(js); },
             markAsync: () => this.markAsync(),
+            getDependency: (p: string) => {
+                const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
+                return this.kire.getOrCompile(cleanPath);
+            },
             depend: (p: string) => {
-                const r = this.kire.resolvePath(p);
+                const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
+                const r = this.kire.resolvePath(cleanPath);
                 if (this.dependencies.has(r)) return this.dependencies.get(r)!;
                 const id = `_dep${this.dependencies.size}`;
                 this.dependencies.set(r, id); return id;
@@ -305,7 +351,7 @@ export class Compiler {
                     this.textBuffer += c;
                 } else {
                     this.flushText();
-                    this.body.push(`$ctx.$response += ${c};`);
+                    this.body.push(`$kire_response += ${c};`);
                 }
             },
             renderChildren: (ns?: Node[]) => {
@@ -335,7 +381,9 @@ export class Compiler {
             attribute: (n: string) => api.getAttribute(n),
             param: (n: string | number) => typeof n === 'number' ? api.getArgument(n) : api.getAttribute(n),
             inject: (js: string) => api.prologue(js),
-            epilogue: (js: string) => api.after(js)
+            varThen: (name: string, callback: (api: CompilerApi) => void) => {
+                this.kire.varThen(name, callback);
+            }
         };
         return api;
     }

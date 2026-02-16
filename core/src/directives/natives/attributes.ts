@@ -12,7 +12,7 @@ export default (kire: Kire) => {
                 if (Array.isArray($c)) $r = $c.filter(Boolean).join(" ");
                 else if (typeof $c === 'object' && $c !== null) $r = Object.entries($c).filter(([_, v]) => v).map(([k]) => k).join(" ");
                 else $r = String($c || "");
-                if ($r) $ctx.$response += " class=\\"" + $ctx.$escape($r) + "\\"";
+                if ($r) $kire_response += " class=\\"" + $escape($r) + "\\"";
             }`);
         },
     });
@@ -28,7 +28,7 @@ export default (kire: Kire) => {
                 if (Array.isArray($s)) $r = $s.filter(Boolean).join("; ");
                 else if (typeof $s === 'object' && $s !== null) $r = Object.entries($s).filter(([_, v]) => v).map(([k, v]) => v === true ? k : k + ": " + v).join("; ");
                 else $r = String($s || "");
-                if ($r) $ctx.$response += " style=\\"" + $ctx.$escape($r) + "\\"";
+                if ($r) $kire_response += " style=\\"" + $escape($r) + "\\"";
             }`);
         },
     });
@@ -40,7 +40,7 @@ export default (kire: Kire) => {
             params: [`cond:any`],
             onCall(api) {
                 const cond = api.getAttribute("cond");
-                api.write(`if (${cond}) $ctx.$response += ' ${attr} ';`);
+                api.write(`if (${cond}) $kire_response += ' ${attr} ';`);
             },
         });
     }

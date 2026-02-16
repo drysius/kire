@@ -1,40 +1,63 @@
-import { Kire } from "./core/src/kire";
+import { Kire } from "./core/src/index";
 
-async function debug() {
-    const kire = new Kire({ production: false });
-    const template = `
-<div class="container">
-    <h1>Users List</h1>
-    <ul>
-        @for(user of users)
-            <li class="{{ user.active ? 'active' : '' }}">
-                {{ user.name }} ({{ user.email }})
-                @if(user.isAdmin)
-                    <span class="badge">Admin</span>
-                @endif
-            </li>
-        @endfor
-    </ul>
-</div>`;
+const kire = new Kire({
+    root: __dirname,
+    production: false,
+    silent: false
+});
 
-    const users = [
-        { name: "User 0", email: "user0@example.com", active: true, isAdmin: true },
-        { name: "User 1", email: "user1@example.com", active: false, isAdmin: false }
-    ];
+// Template to test various features: interpolation, directives, x-elements, and stacks
+const template = `
+@layout('base')
 
-    try {
-        console.log("--- COMPILING ---");
-        const compiled = await kire.compile(template, "debug.kire");
-        console.log("--- COMPILED CODE ---");
-        console.log(compiled.sync.toString())
-        
-        console.log("--- RENDERING ---");
-        const result = await kire.run(compiled, { users });
-        console.log("--- RESULT ---");
-        console.log(result);
-    } catch (e) {
+@section('header')
+    <h1>Hello {{ name }}!</h1>
+@endsection
+
+@push('scripts')
+    <script>console.log("Push 1");</script>
+@endpush
+
+<kire:if cond="show">
+    <p>This is visible</p>
+</kire:if>
+
+@push('scripts')
+    <script>console.log("Push 2");</script>
+@endpush
+
+@stack('scripts')
+`;
+
+const baseTemplate = `
+<div class="layout">
+    @yield('header')
+    <div class="content">
+        @yield('default')
+    </div>
+</div>
+`;
+
+// Register virtual file for layout
+kire.$vfiles[kire.resolvePath('base')] = baseTemplate;
+
+try {
+    console.log("--- COMPILING TEMPLATE ---");
+    const compiled = kire.compile(template, "debug.kire");
+
+    console.log("\n--- COMPILED CODE (meta.code) ---");
+    console.log(compiled.meta.code);
+
+    console.log("\n--- RENDERING ---");
+    const result = compiled.call(kire, { name: "World", show: true }, kire.$globals);
+    console.log(result);
+
+} catch (e) {
+    console.error("--- ERROR ---");
+    if (e instanceof Error) {
+        console.error(e.message);
+        console.error(e.stack);
+    } else {
         console.error(e);
     }
 }
-
-debug();

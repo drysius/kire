@@ -7,14 +7,14 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getAttribute("name") || api.getArgument(0);
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("slot");
-			api.write(`{ const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+			api.write(`{ const _oldRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                if (typeof $slots !== 'undefined') $slots['${name}'] = $ctx.$response;
-                $ctx.$response = _oldRes${id};
+                if (typeof $slots !== 'undefined') $slots['${name}'] = $kire_response;
+                $kire_response = _oldRes${id};
             }`);
 		},
 	});
@@ -24,17 +24,15 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`, `default:string`],
         children: false,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getAttribute("name") || api.getArgument(0);
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			const def = api.getAttribute("default");
+			const def = api.getAttribute("default") || api.getArgument(1);
 			api.write(`{
-                const content = ($ctx.slots && $ctx.slots['${name}']) || ($ctx.$props.slots && $ctx.$props.slots['${name}']);
-                if (typeof content === 'function') {
-                    const r = content(); if (r instanceof Promise) await r;
-                } else if (content) {
-                    $ctx.$response += content;
+                const content = ($props.slots && $props.slots['${name}']);
+                if (content) {
+                    $kire_response += content;
                 } else {
-                    $ctx.$response += ${def || "''"};
+                    $kire_response += ${def || "''"};
                 }
             }`);
 		},
@@ -45,27 +43,27 @@ export default (kire: Kire<any>) => {
         params: ['path:string', 'locals:object'],
         children: true,
         onCall: (api) => {
-            const path = api.getAttribute("path") || api.getArgument(0);
+            const rawPath = api.getAttribute("path") || api.getArgument(0);
             const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
             const id = api.uid("comp");
-            const depId = api.depend(path);
+            const depId = api.depend(rawPath);
+            const dep = api.getDependency(rawPath);
 
             api.write(`{
                 const $slots = new NullProtoObj();
-                const _oldRes${id} = $ctx.$response; $ctx.$response = "";`);
+                const _oldRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                if (!$slots.default) $slots.default = $ctx.$response;
-                $ctx.$response = _oldRes${id};
-                const _oldProps${id} = $ctx.$props;
-                $ctx.$props = Object.assign(Object.create($ctx.$globals), _oldProps${id}, ${locals}, { slots: $slots });
-                const _oldCtxSlots${id} = $ctx.slots;
-                $ctx.slots = $slots;
-                const _dep${id} = $ctx.$dependencies['${depId}'];
-                const res${id} = _dep${id}.execute($ctx);
-                if (_dep${id} && _dep${id}.meta.async) await res${id};
-                $ctx.$props = _oldProps${id};
-                $ctx.slots = _oldCtxSlots${id};
+                if (!$slots.default) $slots.default = $kire_response;
+                $kire_response = _oldRes${id};
+                const _oldProps${id} = $props;
+                $props = Object.assign(Object.create($globals), _oldProps${id}, ${locals}, { slots: $slots });
+                
+                const _dep${id} = ${depId};
+                const res${id} = _dep${id}.call(this, $props, $globals);
+                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
+
+                $props = _oldProps${id};
             }`);
         }
     });

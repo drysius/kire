@@ -6,9 +6,9 @@ export default (kire: Kire<any>) => {
         children: true,
         onCall: (api) => {
             const id = api.uid("once");
-            api.write(`if (!$ctx['~once']) $ctx['~once'] = new Set();`);
-            api.write(`if (!$ctx['~once'].has('${id}')) { 
-                $ctx['~once'].add('${id}');`);
+            api.write(`if (!$globals['~once']) $globals['~once'] = new Set();`);
+            api.write(`if (!$globals['~once'].has('${id}')) { 
+                $globals['~once'].add('${id}');`);
             api.renderChildren();
             api.write(`}`);
         },
@@ -20,8 +20,8 @@ export default (kire: Kire<any>) => {
         children: true,
         onCall: (api) => {
             const field = api.getAttribute("field");
-            api.write(`if ($ctx.$props.errors && $ctx.$props.errors[${field}]) {
-                $message = $ctx.$props.errors[${field}];`);
+            api.write(`if ($props.errors && $props.errors[${field}]) {
+                $message = $props.errors[${field}];`);
             api.renderChildren();
             api.write(`}`);
         },
@@ -32,10 +32,10 @@ export default (kire: Kire<any>) => {
         children: false,
         onCall: (api) => {
             api.write(`
-                if (typeof $ctx.$globals.csrf === 'undefined') {
+                if (typeof $globals.csrf === 'undefined') {
                     throw new Error("CSRF token not defined. Please define it using kire.$global('csrf', 'token')");
                 }
-                $ctx.$response += \`<input type="hidden" name="_token" value="\${$ctx.$globals.csrf}">\`;
+                $kire_response += \`<input type="hidden" name="_token" value="\${$globals.csrf}">\`;
             `);
         },
     });
@@ -46,7 +46,7 @@ export default (kire: Kire<any>) => {
         children: false,
         onCall: (api) => {
             const method = api.getAttribute("method");
-            api.append(`<input type="hidden" name="_method" value="\${$ctx.$escape(${method})}">`);
+            api.append(`<input type="hidden" name="_method" value="\${$escape(${method})}">`);
         },
     });
 
