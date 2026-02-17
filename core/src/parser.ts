@@ -181,7 +181,14 @@ export class Parser {
             const endIdx = this.template.indexOf(closeTag, this.cursor);
             if (endIdx !== -1) {
                 const content = this.template.slice(this.cursor, endIdx);
-                node.children = [{ type: "text", content, loc: this.getLoc() }];
+                
+                // Recursively parse content to support interpolation
+                const innerParser = new Parser(content, this.kire);
+                // Adjust inner parser's line/column to match current position
+                (innerParser as any).line = this.line;
+                (innerParser as any).column = this.column;
+                node.children = innerParser.parse();
+                
                 this.addNode(node);
                 this.advance(content.length + closeTag.length);
                 return true;

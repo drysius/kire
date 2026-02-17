@@ -11,7 +11,9 @@ import {
     INTERPOLATION_START_REGEX,
     AWAIT_KEYWORD_REGEX,
     WILDCARD_CHAR_REGEX,
-    STRIP_QUOTES_REGEX
+    STRIP_QUOTES_REGEX,
+    JS_STRINGS_REGEX,
+    createVarThenRegex
 } from "./utils/regex";
 
 export class Compiler {
@@ -63,7 +65,7 @@ export class Compiler {
 
     public compile(nodes: Node[], extraGlobals: string[] = [], isDependency = false): string {
         this._isDependency = isDependency;
-        this.body = []; this.header = []; this.footer = [];
+        this.body = []; this.header = []; this.varHeader = []; this.footer = [];
         this.dependencies.clear(); this.uidCounter = new NullProtoObj();
         this.mappings = [];
         this._isAsync = false;
@@ -83,6 +85,10 @@ export class Compiler {
         for (const id of this.identifiers) {
             if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
+            
+            // Skip variables that have varThen handlers
+            if (this.kire["~varThens"][id]) continue;
+
             this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'];`);
         }
         
@@ -93,15 +99,28 @@ export class Compiler {
         this.compileNodes(nodes);
         this.flushText();
         
-        this.fullBody = this.body.join("\n");
-        this.allIdentifiers = new Set(this.identifiers);
-        
         // Register variable providers
-        for (const name in this.kire["~varThens"]) {
-            const handler = this.kire["~varThens"][name];
-            const regex = new RegExp(`\\b${name.replace('$', '\\$')}\\b`);
-            if (this.allIdentifiers.has(name) || regex.test(this.fullBody)) {
-                handler(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}));
+        // We do this in a loop because one varThen might trigger another
+        let changed = true;
+        const triggered = new Set<string>();
+        while (changed) {
+            changed = false;
+            // Join everything to scan for variable usage
+            const rawAllCode = this.header.join("\n") + "\n" + this.varHeader.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
+            // Strip strings to avoid false positives
+            const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
+
+            for (const name in this.kire["~varThens"]) {
+                if (triggered.has(name)) continue;
+
+                const handler = this.kire["~varThens"][name];
+                const regex = createVarThenRegex(name);
+                
+                if (this.identifiers.has(name) || regex.test(cleanCode)) {
+                    handler(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}, true));
+                    triggered.add(name);
+                    changed = true;
+                }
             }
         }
 
@@ -121,10 +140,10 @@ export class Compiler {
             }
         }
 
-        let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
+        let code = `\n${this.header.join("\n")}\n${this.varHeader.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
         if (!this.kire.production) {
-            const headerLines = this.header.join("\n").split("\n").length + 1; 
+            const headerLines = (this.header.join("\n") + "\n" + this.varHeader.join("\n")).split("\n").length + 1; 
             const bodyLineOffsets: number[] = [];
             let currentLine = headerLines;
             for (let i = 0; i < this.body.length; i++) {
@@ -323,7 +342,7 @@ export class Compiler {
         matcher.def.onCall(this.createCompilerApi(n, matcher.def));
     }
 
-    private createCompilerApi(node: Node, definition: any): any {
+    private createCompilerApi(node: Node, definition: any, isVarThen = false): any {
         const self = this;
         const api: any = {
             kire: this.kire, node, 
@@ -332,9 +351,20 @@ export class Compiler {
             get allIdentifiers() { return self.allIdentifiers; },
             get wildcard() { return node.wildcard; },
             get children() { return node.children; },
-            prologue: (js: string) => { if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.header.push(js); },
-            write: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.body.push(js); },
-            epilogue: (js: string) => { this.flushText(); if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); this.footer.push(js); },
+            prologue: (js: string) => { 
+                if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); 
+                this.header.unshift(js); 
+            },
+            write: (js: string) => { 
+                this.flushText(); 
+                if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); 
+                this.body.push(js); 
+            },
+            epilogue: (js: string) => { 
+                this.flushText(); 
+                if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync(); 
+                this.footer.push(js); 
+            },
             after: (js: string) => { api.epilogue(js); },
             markAsync: () => this.markAsync(),
             getDependency: (p: string) => {

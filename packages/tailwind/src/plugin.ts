@@ -24,6 +24,7 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 		};
 
 		const cache = kire.cached("@kirejs/tailwind");
+        cache.options = tailwindOptions;
 
 		/**
 		 * <tailwind> element for CSS content processing
@@ -51,41 +52,28 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
                     try {
                         const $id = ${JSON.stringify(id)};
                         const $tailwindCache = this.cached("@kirejs/tailwind");
-                        if (this.production && $id && $tailwindCache[$id]) {
-                            const $cachedCss = $tailwindCache[$id];
-                            if (typeof __kire_assets !== 'undefined') {
-                                const { createHash } = await import("node:crypto");
-                                const $hash = createHash("md5").update($cachedCss).digest("hex").slice(0, 8);
-                                const $assetCache = this.cached("@kirejs/assets");
-                                if (!$assetCache[$hash]) {
-                                    $assetCache[$hash] = { hash: $hash, content: $cachedCss, type: "css" };
-                                }
-                                if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
-                            } else {
-                                $kire_response += '<style>' + $cachedCss + '</style>';
-                            }
-                            return;
-                        }
-
+                        
                         let $tailwind_content = ${contentExpr};
                         if (!$tailwind_content.includes('@import "tailwindcss"')) {
                             $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
                         }
 
-                        // Candidates extraction
-                        const $candidates = []; 
-                        
-                        const $processedCSS = await this.compileCSSWithTailwind(
-                            $tailwind_content,
-                            ${JSON.stringify(tailwindOptions)},
-                            $candidates
-                        );
-
-                        if (this.production && $id) {
-                            $tailwindCache[$id] = $processedCSS;
+                        let $processedCSS = "";
+                        if (this.production && $id && $tailwindCache[$id]) {
+                            $processedCSS = $tailwindCache[$id];
+                        } else {
+                            const $candidates = []; 
+                            $processedCSS = await this.compileCSSWithTailwind(
+                                $tailwind_content,
+                                $tailwindCache.options,
+                                $candidates
+                            );
+                            if (this.production && $id) {
+                                $tailwindCache[$id] = $processedCSS;
+                            }
                         }
 
-                        // Integration with @kirejs/assets
+                        // Integration with @kirejs/assets - Just use if available
                         if (typeof __kire_assets !== 'undefined') {
                             const { createHash } = await import("node:crypto");
                             const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
@@ -116,19 +104,51 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 				"@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end",
 			onCall(api) {
 				const codeExpr = api.getArgument(0);
+                api.markAsync();
                 
-                api.write(`$kire_response += '<tailwind';`);
-                if (api.kire.production) {
-                    api.prologue(`const { createHash } = await import("node:crypto");`);
-                    api.write(`$kire_response += ' id="' + createHash("sha256").update(${codeExpr} || "").digest("hex") + '"';`);
-                }
-                api.write(`$kire_response += '>';`);
-                if (codeExpr) {
-                    api.write(`$kire_response += ${codeExpr};`);
-                } else {
+                api.write(`await (async () => {
+                    try {
+                        const $tailwindCache = this.cached("@kirejs/tailwind");
+                        let $tailwind_content = ${codeExpr ? `String(${codeExpr})` : '""'};
+                `);
+
+                if (!codeExpr) {
+                    const contentId = api.uid("tw_content");
+                    api.write(`{ 
+                        const _oldRes${contentId} = $kire_response; $kire_response = "";`);
                     api.renderChildren();
+                    api.write(`
+                        $tailwind_content = $kire_response;
+                        $kire_response = _oldRes${contentId};
+                    }`);
                 }
-                api.write(`$kire_response += '</tailwind>';`);
+
+                api.write(`
+                        if (!$tailwind_content.includes('@import "tailwindcss"')) {
+                            $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
+                        }
+
+                        const $processedCSS = await this.compileCSSWithTailwind(
+                            $tailwind_content,
+                            $tailwindCache.options,
+                            []
+                        );
+
+                        if (typeof __kire_assets !== 'undefined') {
+                            const { createHash } = await import("node:crypto");
+                            const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
+                            const $assetCache = this.cached("@kirejs/assets");
+                            if (!$assetCache[$hash]) {
+                                $assetCache[$hash] = { hash: $hash, content: $processedCSS, type: "css" };
+                            }
+                            if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
+                        } else {
+                            $kire_response += '<style>' + $processedCSS + '</style>';
+                        }
+                    } catch (e) {
+                        console.warn("Tailwind compilation error:", e);
+                    }
+                }).call(this);`);
 			},
 		});
 

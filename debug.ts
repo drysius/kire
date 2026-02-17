@@ -17,9 +17,9 @@ async function debugNativeElements() {
     `;
 
     try {
-        const result = await kire.compile(template, "elements.kire");
+        const result = kire.compile(template, "elements.kire");
         console.log("COMPILED CODE:");
-        console.log(result.meta.code);
+        console.log(result);
 
         const html1 = await kire.render(template, { val: 1 });
         console.log("VAL=1:", JSON.stringify(html1.trim()));
@@ -56,9 +56,9 @@ async function debugXSlot() {
     `;
 
     try {
-        const result = await kire.compile(template, "xslot.kire");
+        const result = kire.compile(template, "xslot.kire");
         console.log("COMPILED CODE:");
-        console.log(result.meta.code);
+        console.log(result.toString());
 
         const html = await kire.render(template);
         console.log("RENDERED HTML:");

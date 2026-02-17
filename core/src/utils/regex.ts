@@ -43,27 +43,34 @@ export const INTERPOLATION_START_REGEX = /{{/;
 export const AWAIT_KEYWORD_REGEX = /await/;
 export const WILDCARD_CHAR_REGEX = /\*/;
 
+/**
+ * Regex for detecting varThen variables in generated code.
+ * Designed to be used on code where string literals have been stripped.
+ */
+export const createVarThenRegex = (name: string) => {
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
+    return new RegExp(`\\b${escaped}\\b`);
+};
+
 // String Manipulation
 export const QUOTED_STR_CHECK_REGEX = /^['"]/;
 export const STRIP_QUOTES_REGEX = /^['"]|['"]$/g;
+export const JS_STRINGS_REGEX = /'[^']*'|"[^"]*"|`[^`]*`/g;
 
 export function createFastMatcher(list: (string | RegExp)[]): RegExp {
     const sources = list.map(item => {
         if (item instanceof RegExp) return item.source;
         
-        // Handle wildcard strings: x-* -> ^x-.*$
         if (item.includes('*')) {
-            const escaped = item.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-            // Restore * as .* and anchor
-            return `^${escaped.replace(/\*/g, '.*')}$`;
+            const parts = item.split('*');
+            const escapedParts = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`));
+            return escapedParts.join('.*');
         }
 
-        // Handle exact string matches: div -> ^div$
-        return `^${item.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`;
+        return item.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
     });
     
     // Sort by length (descending) to ensure specific matches come before general ones
-    // Note: For anchored regexes, order matters less, but for partials it helps.
     sources.sort((a, b) => b.length - a.length);
     
     return new RegExp(`(?:${sources.join('|')})`);

@@ -16,6 +16,10 @@ export const KireDirectives: KirePlugin = {
             api.prologue(`const NullProtoObj = this.NullProtoObj;`);
         });
 
+        kire.varThen('$kire', (api) => {
+            api.prologue(`const $kire = this;`);
+        });
+
         kire.varThen('index', (api) => {
             // This is tricky as it depends on loop. 
             // If I just register it, the compiler will call it if 'index' is found.

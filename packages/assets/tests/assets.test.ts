@@ -39,8 +39,8 @@ describe("KireAssets", () => {
 		expect(result).not.toContain('<script src="/_assets/');
 
 		// Check if tags are present
-		expect(result).toContain("<style nocache>");
-		expect(result).toContain("<script nocache>");
+		expect(result).toContain('<style nocache="true">');
+		expect(result).toContain('<script nocache="true">');
 	});
 
 	it("should serve assets via KireFS middleware", async () => {

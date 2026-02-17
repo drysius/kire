@@ -14,32 +14,35 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 		const cache = kire.cached("@kirejs/assets");
 
         kire.varThen('__kire_assets', (api) => {
-            api.prologue(`const __kire_assets = { scripts: [], styles: [] };`);
+            api.prologue(`const __kire_assets = { scripts: [], styles: [], baseUrl: "${getBaseUrl()}" };`);
             api.epilogue(`
                 if (typeof __kire_assets !== 'undefined') {
                     const _assets_placeholder = '<!-- KIRE:assets -->';
-                    const _assets_baseUrl = "${getBaseUrl()}";
+                    const _assets_baseUrl = __kire_assets.baseUrl;
                     let _assets_output = "";
                     
                     const _uniqueStyles = [];
                     for (let i = 0; i < __kire_assets.styles.length; i++) {
                         if (_uniqueStyles.indexOf(__kire_assets.styles[i]) === -1) _uniqueStyles.push(__kire_assets.styles[i]);
                     }
+                    const _assetCache = this.cached("@kirejs/assets");
                     for (let i = 0; i < _uniqueStyles.length; i++) {
-                        _assets_output += '<link rel="stylesheet" href="' + _assets_baseUrl + '/' + _uniqueStyles[i] + '.css" />\\n';
+                        const _hash = _uniqueStyles[i];
+                        if (_assetCache[_hash]) {
+                            _assets_output += '<link rel="stylesheet" href="' + _assets_baseUrl + '/' + _hash + '.css" />\\n';
+                        }
                     }
 
                     const _uniqueScripts = [];
                     for (let i = 0; i < __kire_assets.scripts.length; i++) {
                         if (_uniqueScripts.indexOf(__kire_assets.scripts[i]) === -1) _uniqueScripts.push(__kire_assets.scripts[i]);
                     }
-                    const _assetCache = this.cached("@kirejs/assets");
                     for (let i = 0; i < _uniqueScripts.length; i++) {
                         const _hash = _uniqueScripts[i];
                         const _asset = _assetCache[_hash];
                         if (_asset && _asset.type === "mjs") {
                             _assets_output += '<script type="module" src="' + _assets_baseUrl + '/' + _hash + '.mjs"></script>\\n';
-                        } else {
+                        } else if (_asset) {
                             _assets_output += '<script src="' + _assets_baseUrl + '/' + _hash + '.js" defer></script>\\n';
                         }
                     }
@@ -138,15 +141,16 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			description: `Captures inline styles to be injected via @assets.`,
 			example: `<style>body { color: red; }</style>`,
 			onCall(api) {
+                api.write(`__kire_assets;`);
                 const attrs = api.node.attributes || {};
 				if (attrs.nocache !== undefined) {
-                    api.write(`$kire_response += '<style';`);
+                    api.append('<style');
                     for (const [key, val] of Object.entries(attrs)) {
-                        api.write(`$kire_response += ' ${key}="' + ${JSON.stringify(val)} + '"';`);
+                        api.append(` ${key}=${JSON.stringify(val)}`);
                     }
-                    api.write(`$kire_response += '>';`);
+                    api.append('>');
                     api.renderChildren();
-                    api.write(`$kire_response += '</style>';`);
+                    api.append('</style>');
                     return;
                 }
 
@@ -175,18 +179,19 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			description: `Captures inline scripts to be injected via @assets.`,
 			example: `<script>console.log('hello');</script>`,
 			onCall(api) {
+                api.write(`__kire_assets;`);
                 const attrs = api.node.attributes || {};
 				if (
 					attrs.src ||
 					attrs.nocache !== undefined
 				) {
-                    api.write(`$kire_response += '<script';`);
+                    api.append('<script');
                     for (const [key, val] of Object.entries(attrs)) {
-                        api.write(`$kire_response += ' ${key}="' + ${JSON.stringify(val)} + '"';`);
+                        api.append(` ${key}=${JSON.stringify(val)}`);
                     }
-                    api.write(`$kire_response += '>';`);
+                    api.append('>');
                     api.renderChildren();
-                    api.write(`$kire_response += '</script>';`);
+                    api.append('</script>');
                     return;
                 }
 
@@ -226,6 +231,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 			description: `Injects the assets placeholder where scripts and styles will be output.`,
 			example: `@assets()`,
 			onCall(api) {
+                api.write(`__kire_assets;`);
 				api.write(`$kire_response += '<!-- KIRE:assets -->';\n`);
 			},
 		});
