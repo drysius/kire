@@ -215,6 +215,12 @@
             "tstype": "import('kire').Kire"
         },
         {
+            "variable": "$kire",
+            "type": "context",
+            "comment": "The Kire template engine instance (context alias).",
+            "tstype": "import('kire').Kire"
+        },
+        {
             "variable": "$props",
             "type": "context",
             "comment": "Local variables passed to the template.",

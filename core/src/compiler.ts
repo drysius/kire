@@ -66,7 +66,7 @@ export class Compiler {
 
     public compile(nodes: Node[], extraGlobals: string[] = [], isDependency = false): string {
         this._isDependency = isDependency;
-        this.body = []; this.header = []; this.varHeader = []; this.footer = [];
+        this.body = []; this.header = []; this.footer = [];
         this.dependencies.clear(); this.uidCounter = new NullProtoObj();
         this.mappings = [];
         this._isAsync = false;
@@ -74,6 +74,7 @@ export class Compiler {
         this.identifiers.clear();
 
         this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
+        this.header.push(`const $kire_stream = $globals['~$kire-stream'];`);
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
 
@@ -118,7 +119,7 @@ export class Compiler {
                 const regex = createVarThenRegex(name);
                 
                 if (this.identifiers.has(name) || regex.test(cleanCode)) {
-                    handler(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}, true));
+                    handler?.(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}, true));
                     triggered.add(name);
                     changed = true;
                 }
@@ -141,10 +142,10 @@ export class Compiler {
             }
         }
 
-        let code = `\n${this.header.join("\n")}\n${this.varHeader.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
+        let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
         if (!this.kire.production) {
-            const headerLines = (this.header.join("\n") + "\n" + this.varHeader.join("\n")).split("\n").length + 1; 
+            const headerLines = (this.header.join("\n") + "\n" ).split("\n").length + 1; 
             const bodyLineOffsets: number[] = [];
             let currentLine = headerLines;
             for (let i = 0; i < this.body.length; i++) {
@@ -291,7 +292,7 @@ export class Compiler {
     private processElement(n: Node) {
         const t = n.tagName || ""; let matcher = null;
         for (const m in this.kire["~elements"]) {
-            const def = this.kire["~elements"][m];
+            const def = this.kire["~elements"][m]!;
             if (typeof def.name === "string") {
                 if (def.name === t) { matcher = { def }; break; }
                 if (WILDCARD_CHAR_REGEX.test(def.name)) {

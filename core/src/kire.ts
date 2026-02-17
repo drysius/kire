@@ -549,10 +549,23 @@ ${exportLine}
             const encoder = new TextEncoder();
             return new ReadableStream({
                 async start(controller) {
+                    let lastSent = 0;
+                    const $globals = Object.assign(Object.create(self.$globals), globals || {});
+                    
+                    $globals['~$kire-stream'] = (val: string) => {
+                        if (val === undefined || val === null) { lastSent = 0; return; }
+                        if (val.length < lastSent) lastSent = 0;
+                        const chunk = val.slice(lastSent);
+                        if (chunk) {
+                            controller.enqueue(encoder.encode(chunk));
+                            lastSent += chunk.length;
+                        }
+                    };
+
                     try {
-                        const result = template.call(self, locals, globals, template);
+                        const result = template.call(self, locals, $globals, template);
                         const final = result instanceof Promise ? await result : result;
-                        if (final) controller.enqueue(encoder.encode(final));
+                        if (final) $globals['~$kire-stream'](final);
                         controller.close();
                     } catch (e) {
                         controller.error(e instanceof KireError ? e : new KireError(e as Error, template));
@@ -587,15 +600,48 @@ ${exportLine}
     public resolvePath(filepath: string): string {
         if (!filepath || filepath.startsWith('http')) return filepath;
         let path = filepath.replace(/\\/g, '/');
-        if (path.includes('.')) {
-            const parts = path.split('.'); const ns = parts[0]!;
-            if (this["~namespaces"][ns]) path = join(this["~namespaces"][ns]!, parts.slice(1).join('/')).replace(/\\/g, '/');
-            else if (!path.endsWith('.' + this.$extension)) path = path.replace(/\./g, '/');
+        const ext = '.' + this.$extension;
+
+        // 1. Handle Namespaces (e.g., ~/path or ns.path)
+        let matchedNS = false;
+        for (const ns in this["~namespaces"]) {
+            // Check for prefix match: "ns/" or "ns."
+            if (path.startsWith(ns + '/') || path.startsWith(ns + '.')) {
+                const target = this["~namespaces"][ns]!;
+                let suffix = path.slice(ns.length + 1);
+                
+                // Only replace dots and add extension if it doesn't already have it
+                if (!suffix.endsWith(ext)) {
+                    suffix = suffix.replace(/\./g, '/') + ext;
+                }
+                
+                path = join(target, suffix).replace(/\\/g, '/');
+                matchedNS = true;
+                break;
+            }
         }
-        if (!path.endsWith('.' + this.$extension)) {
-            const lastSlash = path.lastIndexOf('/'); const lastDot = path.lastIndexOf('.');
-            if (lastDot === -1 || lastDot < lastSlash) path += `.${this.$extension}`;
+
+        // 2. Legacy/Fallback resolution if no namespace prefix matched
+        if (!matchedNS) {
+            if (path.includes('.')) {
+                const parts = path.split('.');
+                const ns = parts[0]!;
+                // Check if the first part is a registered namespace
+                if (this["~namespaces"][ns]) {
+                    const target = this["~namespaces"][ns]!;
+                    let suffix = parts.slice(1).join('/');
+                    if (!suffix.endsWith(ext)) suffix += ext;
+                    path = join(target, suffix).replace(/\\/g, '/');
+                } else if (!path.endsWith(ext)) {
+                    // Treat all dots as separators if extension is missing
+                    path = path.replace(/\./g, '/') + ext;
+                }
+            } else if (!path.endsWith(ext)) {
+                path += ext;
+            }
         }
+
+        // 3. Final normalization
         if (!isAbsolute(path)) path = join(this.$root, path).replace(/\\/g, '/');
         return path.replace(/\\/g, '/');
     }
