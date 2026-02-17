@@ -117,6 +117,7 @@ export default (kire: Kire<any>) => {
             const componentName = tagName.slice(2);
             const id = api.uid('comp');
             const depId = api.depend(componentName);
+            const dep = api.getDependency(componentName);
             
             const attrs = api.node.attributes || new NullProtoObj();
             const propsStr = Object.keys(attrs)
@@ -149,11 +150,7 @@ export default (kire: Kire<any>) => {
                 
                 const _dep${id} = ${depId};
                 const res${id} = _dep${id}.call(this, $props, $globals);
-                if (res${id} instanceof Promise) {
-                    $kire_response += await res${id};
-                } else {
-                    $kire_response += res${id};
-                }
+                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
                 
                 $props = _oldProps${id};
             }`);

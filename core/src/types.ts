@@ -49,17 +49,30 @@ export interface CompilerApi {
     prologue(jsCode: string): void;
     write(jsCode: string): void;
     epilogue(jsCode: string): void;
+    after(jsCode: string): void;
+    markAsync(): void;
+    getDependency(path: string): KireTplFunction;
+    depend(path: string): string;
     append(content: string | number | boolean): void;
     renderChildren(nodes?: Node[]): void;
     uid(prefix: string): string;
     getAttribute(name: string): any;
     getArgument(index: number): any;
-    depend(path: string): string;
-    markAsync(): void;
+    transform(code: string): string;
+    raw(jsCode: string): void;
+    res(content: any): void;
+    set(nodes: Node[]): void;
+    attribute(name: string): any;
+    param(name: string | number): any;
+    inject(jsCode: string): void;
     varThen(name: string, callback: (api: CompilerApi) => void): void;
     kire: Kire<any>;
     node: Node;
     editable: boolean;
+    fullBody: string;
+    allIdentifiers: Set<string>;
+    wildcard?: string;
+    children?: Node[];
     [key: string]: any;
 }
 

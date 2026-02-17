@@ -1,3 +1,4 @@
+import { resolve, join, isAbsolute, relative } from "node:path";
 import type { Kire } from "./kire";
 import type { CompilerApi, Node } from "./types";
 import { SourceMapGenerator } from "./utils/source-map";
@@ -83,7 +84,7 @@ export class Compiler {
         this.collectDeclarations(nodes, localDecls);
 
         for (const id of this.identifiers) {
-            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
+            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
             
             // Skip variables that have varThen handlers
@@ -106,7 +107,7 @@ export class Compiler {
         while (changed) {
             changed = false;
             // Join everything to scan for variable usage
-            const rawAllCode = this.header.join("\n") + "\n" + this.varHeader.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
+            const rawAllCode = this.header.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
             // Strip strings to avoid false positives
             const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
 
@@ -373,7 +374,13 @@ export class Compiler {
             },
             depend: (p: string) => {
                 const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
-                const r = this.kire.resolvePath(cleanPath);
+                let r = this.kire.resolvePath(cleanPath);
+                
+                // If it's within kire root, make it relative for better portability
+                if (r.startsWith(this.kire.$root)) {
+                    r = relative(this.kire.$root, r).replace(/\\/g, '/');
+                }
+
                 if (this.dependencies.has(r)) return this.dependencies.get(r)!;
                 const id = `_dep${this.dependencies.size}`;
                 this.dependencies.set(r, id); return id;

@@ -1,13 +1,9 @@
 import { Kire } from "kire";
 import { join } from "node:path";
-import { readFile } from "node:fs/promises";
 
 const kire = new Kire({
     stream: true,
-    production: false,
-    resolver: async (path) => {
-        return await readFile(path, "utf-8");
-    }
+    production: true,
 });
 
 kire.namespace("~", join(process.cwd(), "views"));
@@ -22,7 +18,7 @@ export default {
     
     if (url.pathname === "/") {
         // kire.view returns a ReadableStream because stream: true
-        const stream = await kire.view("~/index", {
+        const stream = kire.view("~/index", {
             data1: "Fresh info from DB",
             data2: "Analytics processed"
         });

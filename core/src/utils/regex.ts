@@ -20,7 +20,7 @@ export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_]+)/;
 
 // Validação e Extração de Identificadores JS
 export const JS_IDENTIFIER_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
-export const JS_EXTRACT_IDENTS_REGEX = /(?:['"`].*?['"`])|(?<=\.\s*)\b[a-zA-Z_$][a-zA-Z0-9_$]*\b|\b([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
+export const JS_EXTRACT_IDENTS_REGEX = /(?:['"`].*?['"`])|(?<=\.\s*)[a-zA-Z_$][a-zA-Z0-9_$]*|(?<![a-zA-Z0-9_$])([a-zA-Z_$][a-zA-Z0-9_$]*)(?![a-zA-Z0-9_$])/g;
 export const FOR_VAR_EXTRACT_REGEX = /^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/;
 
 // Interpolação e Atributos Dinâmicos
@@ -49,7 +49,7 @@ export const WILDCARD_CHAR_REGEX = /\*/;
  */
 export const createVarThenRegex = (name: string) => {
     const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
-    return new RegExp(`\\b${escaped}\\b`);
+    return new RegExp(`(?<![a-zA-Z0-9_$])${escaped}(?![a-zA-Z0-9_$])`);
 };
 
 // String Manipulation

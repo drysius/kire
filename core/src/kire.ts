@@ -1,5 +1,5 @@
 import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { resolve, join, isAbsolute } from "node:path";
+import { resolve, join, isAbsolute, relative } from "node:path";
 import { Compiler } from "./compiler";
 import { Parser } from "./parser";
 import { createKireFunction } from "./runtime";
@@ -384,8 +384,8 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
             const AsyncFunc = (async () => {}).constructor;
             try {
                 const coreFunction = isAsync 
-                    ? new (AsyncFunc as any)("$props = {}", "$globals = {}", code)
-                    : new Function("$props = {}", "$globals = {}", code);
+                    ? new (AsyncFunc as any)("$props, $globals, $kire", code)
+                    : new Function("$props, $globals, $kire", code);
 
                 return createKireFunction(this as any, coreFunction, {
                     async: isAsync,
@@ -426,13 +426,14 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
             if (!existsSync(dir)) return;
             const items = readdirSync(dir);
             for (const item of items) {
-                const fullPath = join(dir, item);
+                const fullPath = join(dir, item).replace(/\\/g, '/');
                 const stat = statSync(fullPath);
                 if (stat.isDirectory()) {
                     scan(fullPath);
                 } else if (stat.isFile() && (fullPath.endsWith(this.$extension) || fullPath.endsWith('.kire'))) {
                     const content = readFileSync(fullPath, 'utf-8');
-                    const resolved = this.resolvePath(fullPath);
+                    const resolved = relative(this.$root, fullPath).replace(/\\/g, '/');
+                    
                     // Compile directly to get the code string
                     const parser = new this.$parser(content, this as any);
                     const nodes = parser.parse();
@@ -442,23 +443,28 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
                     // We need to wrap it in a function string
                     const isAsync = compilerInstance.isAsync;
                     bundled[resolved] = isAsync 
-                        ? `async function($props = {}, $globals = {}) { ${code} }`
-                        : `function($props = {}, $globals = {}) { ${code} }`;
+                        ? `async function($props = {}, $globals = {}) {\n${code}\n}`
+                        : `function($props = {}, $globals = {}) {\n${code}\n}`;
                 }
             }
         };
 
         for (const dir of directories) {
-            scan(resolve(this.$root, dir));
+            scan(resolve(this.$root, dir).replace(/\\/g, '/'));
         }
+
+        const isCjs = typeof module !== 'undefined';
+        const exportLine = isCjs ? 'module.exports = _kire_bundled;' : 'export default _kire_bundled;';
 
         const output = `
 // Kire Bundled Templates
 // Generated at ${new Date().toISOString()}
 
-module.exports = {
+const _kire_bundled = {
 ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
 };
+
+${exportLine}
 `;
         writeFileSync(outputFile, output, 'utf-8');
     }
@@ -471,9 +477,9 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
     public getOrCompile(path: string): KireTplFunction {
         const resolved = this.resolvePath(path);
         
-        if (this.production && this.$files[resolved]) return this.$files[resolved];
+        if (this.$files[resolved]) return this.$files[resolved];
         
-        // In dev mode, check mtime
+        // In dev mode, check mtime if it's a real file
         if (!this.production && existsSync(resolved)) {
             const mtime = statSync(resolved).mtimeMs;
             if (this.$files[resolved] && this.$mtimes[resolved] === mtime) {
@@ -544,24 +550,28 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
             return new ReadableStream({
                 async start(controller) {
                     try {
-                        const result = template.call(self, locals, globals);
+                        const result = template.call(self, locals, globals, template);
                         const final = result instanceof Promise ? await result : result;
                         if (final) controller.enqueue(encoder.encode(final));
                         controller.close();
                     } catch (e) {
-                        controller.error(e);
+                        controller.error(e instanceof KireError ? e : new KireError(e as Error, template));
                     }
                 }
             }) as any;
         }
 
-        const result = template.call(this, locals, globals);
-        
-        if (!this.$async && result instanceof Promise) {
-             throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);
-        }
+        try {
+            const result = template.call(this, locals, globals, template);
+            
+            if (!this.$async && result instanceof Promise) {
+                 throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);
+            }
 
-        return result as any;
+            return result as any;
+        } catch (e) {
+            throw e instanceof KireError ? e : new KireError(e as Error, template);
+        }
     }
 
     /**

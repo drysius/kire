@@ -1,5 +1,4 @@
 import path from "node:path";
-import { KireNode } from "@kirejs/node";
 import { Wired } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
@@ -15,8 +14,6 @@ const app = new Elysia({
 	},
 }).derive(() => ({ wireKey: "", user: {}, kire:kire.fork() }));
 void (async () => {
-	// allow to use view system
-	kire.plugin(KireNode);
 	// allow to use wired
 	kire.plugin(Wired.plugin, {
 		route: "/_wired",

@@ -16,6 +16,13 @@ export default (kire: Kire) => {
     });
 
     kire.type({
+        variable: "$kire",
+        type: "context",
+        comment: "The Kire template engine instance (context alias).",
+        tstype: "import('kire').Kire",
+    });
+
+    kire.type({
         variable: "$props",
         type: "context",
         comment: "Local variables passed to the template.",

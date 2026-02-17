@@ -1,5 +1,4 @@
 import path from "node:path";
-import { KireNode } from "@kirejs/node";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 
@@ -11,10 +10,6 @@ const kire = new Kire({
 });
 
 void (async () => {
-	// allow to use view system
-	kire.plugin(KireNode);
-
-    
     // Dynamic namespace with variable
     kire.namespace("views", path.join(process.cwd(), "themes", "{theme}"));
 	kire.namespace("extensions",path.join(process.cwd(), "extensions", "{extension}", 'views'));
