@@ -383,6 +383,9 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
 
             const AsyncFunc = (async () => {}).constructor;
             try {
+                if (!this.production && !this.$silent) {
+                    // console.log("GENERATED CODE FOR " + filename + ":\n", code);
+                }
                 const coreFunction = isAsync 
                     ? new (AsyncFunc as any)("$props = {}", "$globals = {}", code)
                     : new Function("$props = {}", "$globals = {}", code);

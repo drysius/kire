@@ -1,64 +1,30 @@
 {
-    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "kire-app",
-    "version": "0.0.0",
-    "directives": [
-        {
-            "name": "svg",
-            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
-            "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })",
+    "name": "@kirejs/assets",
+    "directives": {
+        "svg": {
             "params": [
-                "path:string",
-                "attrs:object"
-            ]
+                "path",
+                "attrs"
+            ],
+            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
+            "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })"
         },
-        {
-            "name": "assets",
+        "assets": {
+            "children": false,
             "description": "Injects the assets placeholder where scripts and styles will be output.",
             "example": "@assets()"
         }
-    ],
-    "elements": [
-        {
-            "variable": "style",
+    },
+    "elements": {
+        "style": {
             "description": "Captures inline styles to be injected via @assets.",
-            "comment": "Captures inline styles to be injected via @assets.",
-            "example": "<style>body { color: red; }</style>",
-            "type": "element"
+            "example": "<style>body { color: red; }</style>"
         },
-        {
-            "variable": "script",
+        "script": {
             "description": "Captures inline scripts to be injected via @assets.",
-            "comment": "Captures inline scripts to be injected via @assets.",
-            "example": "<script>console.log('hello');</script>",
-            "type": "element"
-        },
-        {
-            "variable": "kire-assets-injection-point",
-            "description": "Internal placeholder for assets injection.",
-            "comment": "Internal placeholder for assets injection.",
-            "example": "<!-- Internal Use -->",
-            "type": "element"
+            "example": "<script>console.log('hello');</script>"
         }
-    ],
-    "globals": [
-        {
-            "variable": "$ctx",
-            "separator": ".",
-            "extends": [
-                {
-                    "variable": "$addAsset",
-                    "description": "Global Variable of Kire $ctx.$addAsset with type function",
-                    "comment": "Global Variable of Kire $ctx.$addAsset with type function",
-                    "type": "function"
-                },
-                {
-                    "variable": "$loadSVGAsset",
-                    "description": "Global Variable of Kire $ctx.$loadSVGAsset with type function",
-                    "comment": "Global Variable of Kire $ctx.$loadSVGAsset with type function",
-                    "type": "function"
-                }
-            ]
-        }
-    ]
+    },
+    "attributes": {},
+    "types": []
 }

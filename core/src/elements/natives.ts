@@ -131,11 +131,14 @@ export default (kire: Kire<any>) => {
                 const slots = api.node.children.filter(c => c.tagName === "x-slot");
                 const defContent = api.node.children.filter(c => c.tagName !== "x-slot");
                 api.renderChildren(slots);
-                if (defContent.length > 0) {
+                
+                // Trim default content to avoid whitespace issues in tests and layouts
+                const hasRealContent = defContent.some(c => c.type !== 'text' || c.content?.trim());
+                if (hasRealContent) {
                     const defId = api.uid("def");
                     api.write(`{ const _defRes${defId} = $kire_response; $kire_response = "";`);
                     api.renderChildren(defContent);
-                    api.write(`$slots.default = $kire_response; $kire_response = _defRes${defId}; }`);
+                    api.write(`$slots.default = $kire_response.trim(); $kire_response = _defRes${defId}; }`);
                 }
             }
             

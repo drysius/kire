@@ -107,18 +107,30 @@ export class Parser {
         if (!match) return false;
 
         let name = match[1]!;
-        if (!this.kire.$directivesPattern.test(name) && !name.startsWith("end")) {
-             const registered = Array.from(this.kire.$directives.keys());
-             let found = false;
-             for (let i = name.length - 1; i > 0; i--) {
-                const sub = name.slice(0, i);
-                if (registered.includes(sub)) { name = sub; found = true; break; }
+        const isEnd = name.startsWith("end");
+        const baseName = isEnd ? (name === "end" ? null : name.slice(3)) : name;
+        
+        // console.log("CHECK DIRECTIVE", name, "IS_END:", isEnd, "MATCHES:", new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(isEnd && baseName ? baseName : name));
+
+        if (!isEnd) {
+            if (!new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(name)) {
+                const registered = Array.from(this.kire.$directives.keys());
+                let found = false;
+                for (let i = name.length - 1; i > 0; i--) {
+                    const sub = name.slice(0, i);
+                    if (registered.includes(sub)) { name = sub; found = true; break; }
+                }
+                if (!found) return false;
             }
-            if (!found) return false;
+        } else {
+            // For end directives, we check if the baseName is registered OR it's a generic @end
+            if (baseName && !new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(baseName)) {
+                 // Might be a custom end directive not in pattern, but usually end + name
+            }
         }
 
-        if (name.startsWith("end")) {
-            this.popStack(name === "end" ? null : name.slice(3));
+        if (isEnd) {
+            this.popStack(baseName);
             this.advance(name.length + 1); return true;
         }
 
@@ -177,14 +189,17 @@ export class Parser {
         }
 
         const current = this.stack[this.stack.length - 1];
+        const siblings = current ? (current.children || []) : this.root;
+        let lastIdx = siblings.length - 1;
+        while (lastIdx >= 0 && siblings[lastIdx].type === "text" && !siblings[lastIdx].content?.trim()) {
+            lastIdx--;
+        }
+        const lastSibling = siblings[lastIdx];
         const isRelated = tagName.endsWith(":else") || tagName.endsWith(":elseif") || tagName.endsWith(":empty");
-        
-        if (current && isRelated) {
-             if (!current.related) current.related = [];
-             current.related.push(node);
-             // We pop the old node (if/elseif) but push the NEW one (elseif/else) to the stack
-             // so its children are captured correctly.
-             this.stack.pop(); 
+
+        if (lastSibling && isRelated && (lastSibling.tagName === tagName.split(":")[0] || (lastSibling.tagName && (tagName.startsWith(lastSibling.tagName) || lastSibling.tagName.startsWith(tagName.split(":")[0]))))) {
+             if (!lastSibling.related) lastSibling.related = [];
+             lastSibling.related.push(node);
              if (!node.void) this.stack.push(node); 
              return true;
         }

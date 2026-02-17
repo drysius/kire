@@ -53,14 +53,14 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
                         const $tailwindCache = this.cached("@kirejs/tailwind");
                         if (this.production && $id && $tailwindCache[$id]) {
                             const $cachedCss = $tailwindCache[$id];
-                            if ($globals.$assets) {
+                            if (typeof __kire_assets !== 'undefined') {
                                 const { createHash } = await import("node:crypto");
                                 const $hash = createHash("md5").update($cachedCss).digest("hex").slice(0, 8);
                                 const $assetCache = this.cached("@kirejs/assets");
                                 if (!$assetCache[$hash]) {
                                     $assetCache[$hash] = { hash: $hash, content: $cachedCss, type: "css" };
                                 }
-                                if ($globals.$assets.styles.indexOf($hash) === -1) $globals.$assets.styles.push($hash);
+                                if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
                             } else {
                                 $kire_response += '<style>' + $cachedCss + '</style>';
                             }
@@ -86,14 +86,14 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
                         }
 
                         // Integration with @kirejs/assets
-                        if ($globals.$assets) {
+                        if (typeof __kire_assets !== 'undefined') {
                             const { createHash } = await import("node:crypto");
                             const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
                             const $assetCache = this.cached("@kirejs/assets");
                             if (!$assetCache[$hash]) {
                                 $assetCache[$hash] = { hash: $hash, content: $processedCSS, type: "css" };
                             }
-                            if ($globals.$assets.styles.indexOf($hash) === -1) $globals.$assets.styles.push($hash);
+                            if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
                         } else {
                             $kire_response += '<style>' + $processedCSS + '</style>';
                         }

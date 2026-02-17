@@ -4,8 +4,9 @@
  */
 
 // Optimized Object with Null Prototype
-export type NullProtoObj<T = unknown> = InstanceType<new () => Record<PropertyKey, T>>;
-export const NullProtoObj = /* @__PURE__ */ (()=>{const e=function(){};return e.prototype=Object.create(null),Object.freeze(e.prototype),e})() as unknown as { new (): any };
+export const NullProtoObj = function (this: any) {
+    return Object.create(null);
+} as unknown as { new <T = any>(): Record<string, T> };
 
 
 // Detecção de Tags e Atributos

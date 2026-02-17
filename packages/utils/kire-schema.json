@@ -1,29 +1,24 @@
 {
-    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-    "package": "kire-app",
-    "version": "0.0.0",
-    "directives": [
-        {
-            "name": "error",
+    "name": "@kirejs/utils",
+    "directives": {
+        "error": {
             "params": [
-                "name:string"
+                "name"
             ],
-            "children": true
-        }
-    ],
-    "elements": [],
-    "globals": [
-        {
-            "variable": "Str",
-            "description": "Global Variable of Kire Str with type object",
-            "comment": "Global Variable of Kire Str with type object",
-            "type": "object"
+            "children": true,
+            "description": "Renders the block if there are validation errors for the given field.",
+            "example": "@error('email')\n  <span class='error'>{{ $message }}</span>\n@end"
         },
-        {
-            "variable": "Arr",
-            "description": "Global Variable of Kire Arr with type object",
-            "comment": "Global Variable of Kire Arr with type object",
-            "type": "object"
+        "old": {
+            "params": [
+                "name",
+                "default"
+            ],
+            "description": "Outputs the old input value for the given field.",
+            "example": "<input type='text' name='email' value='@old(\"email\")' />"
         }
-    ]
+    },
+    "elements": {},
+    "attributes": {},
+    "types": []
 }

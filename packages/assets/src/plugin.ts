@@ -13,6 +13,46 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 		const cache = kire.cached("@kirejs/assets");
 
+        kire.varThen('__kire_assets', (api) => {
+            api.prologue(`const __kire_assets = { scripts: [], styles: [] };`);
+            api.epilogue(`
+                if (typeof __kire_assets !== 'undefined') {
+                    const _assets_placeholder = '<!-- KIRE:assets -->';
+                    const _assets_baseUrl = "${getBaseUrl()}";
+                    let _assets_output = "";
+                    
+                    const _uniqueStyles = [];
+                    for (let i = 0; i < __kire_assets.styles.length; i++) {
+                        if (_uniqueStyles.indexOf(__kire_assets.styles[i]) === -1) _uniqueStyles.push(__kire_assets.styles[i]);
+                    }
+                    for (let i = 0; i < _uniqueStyles.length; i++) {
+                        _assets_output += '<link rel="stylesheet" href="' + _assets_baseUrl + '/' + _uniqueStyles[i] + '.css" />\\n';
+                    }
+
+                    const _uniqueScripts = [];
+                    for (let i = 0; i < __kire_assets.scripts.length; i++) {
+                        if (_uniqueScripts.indexOf(__kire_assets.scripts[i]) === -1) _uniqueScripts.push(__kire_assets.scripts[i]);
+                    }
+                    const _assetCache = this.cached("@kirejs/assets");
+                    for (let i = 0; i < _uniqueScripts.length; i++) {
+                        const _hash = _uniqueScripts[i];
+                        const _asset = _assetCache[_hash];
+                        if (_asset && _asset.type === "mjs") {
+                            _assets_output += '<script type="module" src="' + _assets_baseUrl + '/' + _hash + '.mjs"></script>\\n';
+                        } else {
+                            _assets_output += '<script src="' + _assets_baseUrl + '/' + _hash + '.js" defer></script>\\n';
+                        }
+                    }
+                    
+                    if ($kire_response.indexOf(_assets_placeholder) !== -1) {
+                        $kire_response = $kire_response.split(_assets_placeholder).join(_assets_output);
+                    } else {
+                        $kire_response += _assets_output;
+                    }
+                }
+            `);
+        });
+
 		const addToCache = (key: string, value: KireAsset) => {
 			if (cache[key]) return;
             const keys = Object.keys(cache);
@@ -125,8 +165,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				addToCache(hash, { hash, content, type: "css" });
 
-                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
-                api.write(`if ($globals.$assets.styles.indexOf("${hash}") === -1) $globals.$assets.styles.push("${hash}");`);
+                api.write(`if (typeof __kire_assets !== 'undefined' && __kire_assets.styles.indexOf("${hash}") === -1) __kire_assets.styles.push("${hash}");`);
 			},
 		});
 
@@ -176,57 +215,18 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 				addToCache(hash, { hash, content, type });
 
-                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
-                api.write(`if ($globals.$assets.scripts.indexOf("${hash}") === -1) $globals.$assets.scripts.push("${hash}");`);
+                api.write(`if (typeof __kire_assets !== 'undefined' && __kire_assets.scripts.indexOf("${hash}") === -1) __kire_assets.scripts.push("${hash}");`);
 			},
 		});
 
 		// @assets() directive
 		kire.directive({
 			name: "assets",
+			children: false,
 			description: `Injects the assets placeholder where scripts and styles will be output.`,
 			example: `@assets()`,
 			onCall(api) {
-                api.prologue(`if (typeof $globals.$assets === 'undefined') $globals.$assets = { scripts: [], styles: [] };`);
 				api.write(`$kire_response += '<!-- KIRE:assets -->';\n`);
-                
-                api.epilogue(`
-                    if (typeof $globals.$assets !== 'undefined') {
-                        const _assets_data = $globals.$assets;
-                        const _assets_placeholder = '<!-- KIRE:assets -->';
-                        const _assets_baseUrl = "${getBaseUrl()}";
-                        let _assets_output = "";
-                        
-                        const _uniqueStyles = [];
-                        for (let i = 0; i < _assets_data.styles.length; i++) {
-                            if (_uniqueStyles.indexOf(_assets_data.styles[i]) === -1) _uniqueStyles.push(_assets_data.styles[i]);
-                        }
-                        for (let i = 0; i < _uniqueStyles.length; i++) {
-                            _assets_output += '<link rel="stylesheet" href="' + _assets_baseUrl + '/' + _uniqueStyles[i] + '.css" />\\n';
-                        }
-
-                        const _uniqueScripts = [];
-                        for (let i = 0; i < _assets_data.scripts.length; i++) {
-                            if (_uniqueScripts.indexOf(_assets_data.scripts[i]) === -1) _uniqueScripts.push(_assets_data.scripts[i]);
-                        }
-                        const _assetCache = this.cached("@kirejs/assets");
-                        for (let i = 0; i < _uniqueScripts.length; i++) {
-                            const _hash = _uniqueScripts[i];
-                            const _asset = _assetCache[_hash];
-                            if (_asset && _asset.type === "mjs") {
-                                _assets_output += '<script type="module" src="' + _assets_baseUrl + '/' + _hash + '.mjs"></script>\\n';
-                            } else {
-                                _assets_output += '<script src="' + _assets_baseUrl + '/' + _hash + '.js" defer></script>\\n';
-                            }
-                        }
-                        
-                        if ($kire_response.indexOf(_assets_placeholder) !== -1) {
-                            $kire_response = $kire_response.split(_assets_placeholder).join(_assets_output);
-                        } else {
-                            $kire_response += _assets_output;
-                        }
-                    }
-                `);
 			},
 		});
 	},
