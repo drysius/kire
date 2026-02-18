@@ -1,18 +1,19 @@
-# Kire - A Powerful and Flexible Template Engine
+# Kire - Ultra-Fast JIT Template Engine for JavaScript
 
-Kire is a modern, lightweight, and extensible template engine for JavaScript and TypeScript. It is designed to be intuitive, supporting advanced features like namespaces, dynamic mounting, layout inheritance, and a robust plugin system.
+Kire is a high-performance, generic, and extensible template engine inspired by **Blade** (Laravel) and **Edge.js** (AdonisJS). It compiles templates directly into optimized JavaScript functions, offering near-native performance with an intuitive and expressive syntax.
 
-## Features
+## ✨ Features
 
-- **Intuitive Syntax**: Use `{{ variable }}` for interpolation and `@directive` for control flow.
-- **Namespaces & Mounts**: Organize your templates with namespaces (`@include('theme.header')`) and mount dynamic data to them.
-- **Layouts & Slots**: Powerful component-based architecture with `@component`, `@slot`, and layouts.
-- **Extensible**: Create custom directives and elements easily.
-- **Async Support**: First-class support for asynchronous operations in templates.
-- **Source Mapping**: Detailed error reporting with snippets pointing to the exact line in your template.
-- **TypeScript Ready**: Written in TypeScript for excellent type safety.
+- **JIT Compilation**: Templates are compiled to pure JS functions for maximum execution speed.
+- **Intuitive Syntax**: Use `{{ expr }}` for interpolation and `@directive` for control flow.
+- **Namespaces**: Organize templates into logical modules or directories.
+- **Component-Based**: Native support for components and slots using `@component` or `<x-tag>`.
+- **Request Isolation**: Use `kire.fork()` to safely handle per-request context in web servers.
+- **Extensible Architecture**: The core is generic; all logic (directives, elements) is provided via a modular plugin system.
+- **Async & Sync**: Intelligent detection of `await` to switch between sync and async execution.
+- **First-Class Error Reporting**: Integrated source maps point exactly to the template line that caused an error.
 
-## Installation
+## 📦 Installation
 
 ```bash
 npm install kire
@@ -20,86 +21,117 @@ npm install kire
 bun add kire
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
-```javascript
+```typescript
 import { Kire } from 'kire';
-import { join } from 'path';
 
 const kire = new Kire();
 
-// Register a namespace pointing to a directory
-kire.namespace('views', join(__dirname, 'views'));
-
-// Render a template string
+// Render a raw string
 const output = await kire.render('Hello {{ name }}!', { name: 'Kire' });
 console.log(output);
 
-// Render a file from a namespace
-// resolving to: /path/to/views/home.kire
-const fileOutput = await kire.view('views.home', { title: 'Home Page' });
+// Use a layout and component
+const template = `
+    @layout('base')
+        @slot('content')
+            <x-alert type="'success'">
+                Operation completed!
+            </x-alert>
+        @endslot
+    @endlayout
+`;
 ```
 
+## 🔑 Core Concepts
 
-## Core Concepts
-
-### Namespaces and Path Resolution
-
-Kire uses a namespace system instead of a single root directory. This allows you to organize templates into modules, themes, or plugins.
-
-```javascript
-// Register namespaces
-kire.namespace('~', process.cwd()); // Root
-kire.namespace('theme', './themes/{name}'); // Dynamic path with placeholder
-
-// Mount data for placeholders
-kire.mount('theme', { name: 'dark' });
-
-// In your template:
-// Loads ./themes/dark/header.kire
-@include('theme.header')
+### Local Variables & `$props`
+By default, all data passed to `render` is available via the `it` or `$props` aliases.
+```html
+<h1>{{ it.title }}</h1>
+<p>{{ $props.content }}</p>
+```
+You can customize the local variable name in the constructor:
+```typescript
+const kire = new Kire({ local_variable: 'data' }); // Use {{ data.title }}
 ```
 
-## Directives
+### Namespaces & Path Resolution
+Organize your views across multiple directories.
+```typescript
+kire.namespace('admin', './views/admin');
+kire.namespace('shared', './views/shared');
 
-Kire comes with a rich set of built-in directives.
+// Resolves to ./views/admin/dashboard.kire
+await kire.view('admin.dashboard');
+```
+
+### Request Isolation (`fork`)
+Crucial for web servers (Hono, Express, etc.). A fork shares the template cache but has isolated global state.
+```typescript
+app.get('/profile', async (c) => {
+    const requestKire = kire.fork();
+    requestKire.$global('auth', c.get('user'));
+    
+    return c.html(await requestKire.view('profile'));
+});
+```
+
+### Virtual Files (`files`)
+Load templates from memory or pre-compiled bundles.
+```typescript
+const kire = new Kire({
+    files: {
+        'button.kire': '<button>{{ label }}</button>'
+    }
+});
+```
+
+## 🛠️ Directives & Elements
 
 ### Control Flow
-- `@if(condition) ... @elseif(cond) ... @else ... @end`
-- `@switch(value) ... @case(val) ... @default ... @end`
+- `@if(cond) ... @elseif(cond) ... @else ... @end`
+- `@switch(expr) ... @case(val) ... @default ... @end`
 - `@for(item of items) ... @end`
+- `@unless(cond) ... @end`
+- `@isset(var) ... @end`
 
-### Variables
-- `@const(name = value)`: Define a constant.
-- `@let(name = value)`: Define a variable.
+### Stacks & Layouts
+- `@stack('name')` / `@push('name')`
+- `@yield('name', default)` / `@slot('name')`
+- `@define('name')` / `@defined('name')`
 
-### Includes & Components
-- `@include('namespace.path', { ...locals })`: Include another template.
-- `@component('namespace.path', { ...props }) ... @end`: Render a component with slots.
-- `@slot('name') ... @end`: Define a slot content within a component.
+### Native Elements
+Kire supports HTML-like elements for logic:
+```html
+<kire:if cond="user.isLogged">
+    <x-user-menu />
+</kire:if>
+```
 
-### Layouts
-- `@define('blockName') ... @end`: Define content for a block.
-- `@defined('blockName')`: Render the defined content.
-- `@stack('name')`: Define a stack insertion point.
-- `@push('name') ... @end`: Push content to a stack.
+## 🧩 Plugin System
 
-## API Reference
+Kire is designed to be extended. You can add your own directives and elements.
 
-### `kire.namespace(prefix, path)`
-Registers a namespace. `path` can contain placeholders like `{key}`.
+```typescript
+kire.plugin({
+    name: 'my-plugin',
+    load(kire) {
+        kire.directive({
+            name: 'hello',
+            onCall(api) {
+                api.append('Hello from Directive!');
+            }
+        });
+    }
+});
+```
 
-### `kire.mount(prefix, data)`
-Mounts data to a namespace to resolve its placeholders.
+## 🎓 VS Code Extension
 
-### `kire.view(path, locals)`
-Renders a template file. `path` can use dot notation (`views.home`) which resolves relative to registered namespaces.
-
-### `kire.render(templateString, locals)`
-Renders a raw string.
-
-### `kire.element(name, handler)`
-Registers a custom HTML-like element handler.
+Install the official extension for syntax highlighting and autocompletion:
+👉 **[Kire Intellisense](https://marketplace.visualstudio.com/items?itemName=Kire.kire-intellisense)**
 
 ## License
 

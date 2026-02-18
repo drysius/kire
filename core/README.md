@@ -1,124 +1,81 @@
 # Kire Core
 
-The core engine of **Kire**, a powerful, expressive, and lightweight template engine for JavaScript/TypeScript environments. Kire is designed to be fast, extensible via plugins, and familiar to developers used to Blade (Laravel) or Edge (AdonisJS).
+This is the generic core of the **Kire** template engine. It provides the foundation for parsing, compiling, and executing templates while remaining agnostic about specific directive or element logic.
 
-## 🧩 VS Code Extension
+## 🏗️ Architecture
 
-For the best development experience, syntax highlighting, and autocomplete, install the official VS Code extension:
-👉 **[Kire Intellisense](https://marketplace.visualstudio.com/items?itemName=Kire.kire-intellisense)**
+Kire operates in three main stages:
 
-## ✨ Features
+1.  **Parser**: Scans the template string and generates a typed AST (Abstract Syntax Tree). It handles interpolation `{{ }}`, directives `@`, and elements `<tag>`.
+2.  **Compiler**: Transforms the AST into highly optimized JavaScript code. It performs identifier collection for automatic variable declaration and integrates source maps.
+3.  **Runtime**: Executes the compiled JS functions. It manages the context (`$props`, `$globals`, `$kire`), request isolation (`fork`), and error mapping.
 
-- **Expressive Syntax**: Clean and readable directives like `@if`, `@for`, `@each`, `@include`, `@component`.
-- **Async Support**: First-class support for asynchronous operations within templates (e.g., `{{ await fetchData() }}`).
-- **Streaming & Defer**: Built-in support for streaming responses and out-of-order rendering using `@defer`.
-- **Components & Slots**: Modern component architecture with slot support and "Wire" capabilities (Livewire-like).
-- **Extensible**: Robust plugin system to add custom directives, elements, and functionality.
-- **Request Isolation**: Use `kire.fork()` to handle per-request context safely.
-- **High Performance**: Compiles templates to efficient JavaScript functions.
+## 🧩 Developing Plugins
 
-## 📦 Installation
+The core doesn't know what `@if` or `<x-button>` means. These are provided by plugins (like the built-in `KireDirectives`).
 
+### Creating a Plugin
+```typescript
+import { Kire, KirePlugin } from 'kire';
+
+export const MyPlugin: KirePlugin = {
+    name: 'my-custom-logic',
+    load(kire: Kire) {
+        // Register a directive
+        kire.directive({
+            name: 'uppercase',
+            onCall(api) {
+                const arg = api.getArgument(0);
+                api.write(`$kire_response += String(${arg}).toUpperCase();`);
+            }
+        });
+
+        // Register an element
+        kire.element({
+            name: 'my-tag',
+            onCall(api) {
+                api.append('<div>');
+                api.renderChildren();
+                api.append('</div>');
+            }
+        });
+    }
+};
+```
+
+## 🛠️ Core API for Plugin Authors
+
+### `api.write(jsCode)`
+Injects raw JavaScript into the generated function's body. Use this for control flow (if, for).
+
+### `api.append(content)`
+Appends static string content to the output buffer. If a non-string is passed, it generates `$kire_response += content;`.
+
+### `api.prologue(jsCode)`
+Injects code at the beginning of the generated function (e.g., variable initialization).
+
+### `api.epilogue(jsCode)`
+Injects code at the end of the generated function, just before the return.
+
+### `api.getAttribute(name)`
+Retrieves an attribute value from an element or a parameter from a directive, automatically handling interpolation.
+
+### `api.depend(path)`
+Registers a dependency on another template and returns its internal identifier.
+
+## ⚡ Performance Optimization
+
+Kire Core is built for speed:
+- **NullProtoObj**: Uses `Object.create(null)` for all internal maps/stores to avoid prototype chain overhead and security risks.
+- **Fast Matchers**: Uses pre-compiled, length-sorted regex patterns for element and directive detection.
+- **Lazy Resolution**: Dependencies are resolved only during execution, not compilation.
+
+## 🧪 Testing
+
+We use **Bun:test** for our test suite. To run core tests:
 ```bash
-npm install kire
-# or
-bun add kire
+bun test core/tests
 ```
-
-## 🚀 Basic Usage
-
-```typescript
-import { Kire } from 'kire';
-
-// Initialize Kire
-const kire = new Kire({
-  stream: false, // Enable streaming support (default: false)
-  silent: false, // Suppress logs (default: false)
-});
-
-const template = `
-  <h1>Hello, {{ it.name }}!</h1>
-  
-  @if(it.isAdmin)
-    <button>Admin Panel</button>
-  @else
-    <button>User Settings</button>
-  @end
-
-  <ul>
-    @each(user in it.users)
-      <li>{{ user.name }}</li>
-    @else
-      <li>No users found.</li>
-    @end
-  </ul>
-`;
-
-const html = await kire.render(template, {
-  name: 'World',
-  isAdmin: true,
-  users: [{ name: 'Alice' }, { name: 'Bob' }]
-});
-
-console.log(html);
-```
-
-## 🔑 Key Concepts
-
-### Local Variables (`it`)
-By default, all local variables passed to `render()` are accessible via the `it` object (e.g., `{{ it.title }}`). This prevents variable collisions and makes the source of data clear.
-You can change this variable name in the options:
-```typescript
-const kire = new Kire({ varLocals: 'props' }); // Use {{ props.title }}
-```
-
-### Streaming & `@defer`
-Kire supports HTML streaming, allowing you to send the initial page structure immediately and stream heavy content later.
-```typescript
-const kire = new Kire({ stream: true });
-
-// In your template:
-// Content inside @defer will be rendered asynchronously and injected later
-// using a placeholder and a small script.
-const tpl = `
-  <nav>...</nav>
-  @defer
-    {{ await heavyDatabaseCall() }}
-  @end
-  <footer>...</footer>
-`;
-```
-
-### Request Isolation (`fork`)
-When building a web server (like with Hono, Express, or Elysia), you should use `kire.fork()` for each request. This creates a lightweight copy of the Kire instance that shares the cache but has its own global context (perfect for request-specific data like `auth` user, `request` object, etc.).
-
-```typescript
-app.get('/', (req, res) => {
-  const requestKire = kire.fork();
-  requestKire.$global('user', req.user);
-  
-  return requestKire.render('pages.dashboard');
-});
-```
-
-### Directives
-- **Control Flow**: 
-  - `@if(cond)` / `@elseif(cond)` / `@elif(cond)` / `@else`
-  - `@switch(expr)` / `@case(val)` / `@default`
-- **Loops**: 
-  - `@for(item of items)` / `@empty`
-  - `@each(item in items)` / `@empty` (Alias for `@for`)
-- **Variables**: `@const(name = val)`, `@let(name = val)`
-- **Components & Layouts**: 
-  - `@component('path', props)` / `@slot('name')`
-  - `@layout('path')` / `@extends('path')` (Aliases for `@component`)
-  - `@section('name')` (Alias for `@slot`)
-  - `@yield('name', default)`
-  - `@include('path', locals)`
-- **Stacks**: `@push('stack')`, `@stack('stack')`
-- **Blocks**: `@define('name')`, `@defined('name')`
-- **Async**: `@defer` (requires streaming)
-- **HTTP/Forms**: `@csrf`, `@method('PUT')`
 
 ## License
 
