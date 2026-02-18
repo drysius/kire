@@ -560,18 +560,18 @@ export class Kire<Asyncronos extends boolean = true> {
     }
 
     public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Asyncronos> {
-        let bucket = this.$cache.files.get(this["~render-symbol"]) as Map<string, KireCacheEntry>;
+        let bucket = this.$cache.files.get(this["~render-symbol"]) as unknown as Map<string, KireCacheEntry>;
         if (!bucket) {
             bucket = new Map();
-            this.$cache.files.set(this["~render-symbol"], bucket);
+            this.$cache.files.set(this["~render-symbol"], bucket as never);
         }
 
         let entry = bucket.get(template);
         if (!entry) {
             entry = this.compile(template, filename, Object.keys(locals));
-            if (bucket.size >= this.max_renders) {
+            if (bucket.size >= this.$max_renders) {
                 const first = bucket.keys().next().value;
-                bucket.delete(first);
+                bucket.delete(first!);
             }
             bucket.set(template, entry);
         }

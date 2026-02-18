@@ -198,13 +198,13 @@ export class Parser {
         const current = this.stack[this.stack.length - 1];
         const siblings = current ? (current.children || []) : this.root;
         let lastIdx = siblings.length - 1;
-        while (lastIdx >= 0 && siblings[lastIdx].type === "text" && !siblings[lastIdx].content?.trim()) {
+        while (lastIdx >= 0 && siblings[lastIdx]!.type === "text" && !siblings[lastIdx]!.content?.trim()) {
             lastIdx--;
         }
         const lastSibling = siblings[lastIdx];
         const isRelated = tagName.endsWith(":else") || tagName.endsWith(":elseif") || tagName.endsWith(":empty");
 
-        if (lastSibling && isRelated && (lastSibling.tagName === tagName.split(":")[0] || (lastSibling.tagName && (tagName.startsWith(lastSibling.tagName) || lastSibling.tagName.startsWith(tagName.split(":")[0]))))) {
+        if (lastSibling && isRelated && (lastSibling.tagName === tagName.split(":")[0] || (lastSibling.tagName && (tagName.startsWith(lastSibling.tagName) || lastSibling.tagName.startsWith(tagName.split(":")[0]!))))) {
              if (!lastSibling.related) lastSibling.related = [];
              lastSibling.related.push(node);
              if (!node.void) this.stack.push(node); 

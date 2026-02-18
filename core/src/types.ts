@@ -84,7 +84,7 @@ export interface DependencyMetadata {
     async: boolean;
 }
 
-export type KireTplFunctionBase = (this: Kire<any>, locals?: object, globals?: object) => string | Promise<string>;
+export type KireTplFunctionBase = (this: Kire<any>, locals?: object, globals?: object, template?:KireTplFunction) => string | Promise<string>;
 
 export interface KireTplFunction extends KireTplFunctionBase {
     /** Metadata about the compiled template */
