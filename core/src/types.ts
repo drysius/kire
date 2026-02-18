@@ -167,10 +167,11 @@ export interface DirectiveDefinition {
     example?: string;
 }
 
-export interface KirePlugin<Options extends object | undefined = {}> {
-    name: string;
+export interface KirePlugin<Options extends object = {}> {
+    name?: string;
     sort?: number;
-    load(kire: Kire<any>, opts?: Options): void;
+    options?: Options;
+    load(kire: Kire<any>, opts: Options): void;
 }
 
 export interface KireExistVar {

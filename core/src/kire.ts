@@ -32,6 +32,19 @@ export interface ElementMatcher {
 }
 
 /**
+ * Helper to create a Kire Plugin with default options.
+ */
+export function kirePlugin<Options extends object>(
+    defaultOptions: Options,
+    load: (kire: Kire<any>, opts: Options) => void
+): KirePlugin<Options> {
+    return {
+        options: defaultOptions,
+        load
+    };
+}
+
+/**
  * The main Kire engine class.
  * Handles configuration, compilation, and rendering of templates.
  */
@@ -332,8 +345,9 @@ export class Kire<Asyncronos extends boolean = true> {
         return this;
     }
 
-    public plugin<Options extends object | undefined = {}>(plugin: KirePlugin<Options>, opts?: Options) {
-        plugin.load(this, opts); 
+    public plugin<Options extends object>(plugin: KirePlugin<Options>, opts?: Partial<Options>) {
+        const merged = Object.assign({}, plugin.options, opts);
+        plugin.load(this, merged as Options); 
         return this;
     }
 

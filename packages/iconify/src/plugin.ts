@@ -1,22 +1,22 @@
-import type { KirePlugin, KireHandler } from "kire";
+import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
 import { fetchIcon, processSvgAttributes } from "./api";
 import type { IconifyOptions } from "./types";
 
-export const KireIconify: KirePlugin<IconifyOptions> = {
-	name: "@kirejs/iconify",
-	options: {},
-	load(kire, opts) {
-        kire.kireSchema({
-            name: "@kirejs/iconify",
-            author: "Drysius",
-            repository: "https://github.com/drysius/kire",
-            version: "0.1.0"
-        });
+export const KireIconify = kirePlugin<IconifyOptions>({
+    apiUrl: "https://api.iconify.design",
+    defaultClass: ""
+}, (kire, opts) => {
+    kire.kireSchema({
+        name: "@kirejs/iconify",
+        author: "Drysius",
+        repository: "https://github.com/drysius/kire",
+        version: "0.1.0"
+    });
 
-		const apiUrl = opts?.apiUrl || "https://api.iconify.design";
-		const defaultClass = opts?.defaultClass || "";
+    const apiUrl = opts.apiUrl || "https://api.iconify.design";
+    const defaultClass = opts.defaultClass || "";
 
-		const iconCache = kire.cached("@kirejs/iconify");
+    const iconCache = kire.cached("@kirejs/iconify");
 
 		kire.$global(
 			"fetchIcon",
@@ -136,5 +136,5 @@ export const KireIconify: KirePlugin<IconifyOptions> = {
 
         // Add helper to process attributes
         (kire as any).processSvgAttributes = processSvgAttributes;
-	},
-};
+    }
+);

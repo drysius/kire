@@ -1,4 +1,4 @@
-import type { Kire, KirePlugin, KireTplFunction } from "kire";
+import { kirePlugin, type Kire, type KirePlugin, type KireTplFunction } from "kire";
 import { marked } from "marked";
 
 declare module "kire" {
@@ -10,18 +10,15 @@ declare module "kire" {
 
 export type MarkdownOptions = {};
 
-export const KireMarkdown: KirePlugin<MarkdownOptions> = {
-	name: "@kirejs/markdown",
-	options: {},
-	load(kire: Kire, _opts) {
-        kire.kireSchema({
-            name: "@kirejs/markdown",
-            author: "Drysius",
-            repository: "https://github.com/drysius/kire",
-            version: "0.1.0"
-        });
+export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
+    kire.kireSchema({
+        name: "@kirejs/markdown",
+        author: "Drysius",
+        repository: "https://github.com/drysius/kire",
+        version: "0.1.0"
+    });
 
-		const _fnCache = kire.cached("@kirejs/markdown");
+    const _fnCache = kire.cached("@kirejs/markdown");
 
 		kire.mdrender = async (
 			content: string,
@@ -115,7 +112,7 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 				})();`);
 			},
 		});
-	},
-};
+    }
+);
 
 export default KireMarkdown;

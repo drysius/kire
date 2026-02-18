@@ -1,25 +1,20 @@
-import type { KirePlugin, KireHandler } from "kire";
+import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
 import type { AuthOptions } from "./types";
 
-export const KireAuth: KirePlugin<AuthOptions> = {
-	name: "@kirejs/auth",
-	options: {
-		canPerm: async () => false,
-		getUser: async () => null,
-	} as AuthOptions,
-	load(kire, opts) {
-        kire.kireSchema({
-            name: "@kirejs/auth",
-            author: "Drysius",
-            repository: "https://github.com/drysius/kire",
-            version: "0.1.0"
-        });
+export const KireAuth = kirePlugin<AuthOptions>({
+    canPerm: async () => false,
+    getUser: async () => null,
+}, (kire, options) => {
+    kire.kireSchema({
+        name: "@kirejs/auth",
+        author: "Drysius",
+        repository: "https://github.com/drysius/kire",
+        version: "0.1.0"
+    });
 
-		const options = { ...KireAuth.options, ...opts } as AuthOptions;
-
-		// Register global helpers
-		kire.$global("$auth_getUser", options.getUser);
-		kire.$global("$auth_can", options.canPerm);
+    // Register global helpers
+    kire.$global("$auth_getUser", options.getUser);
+    kire.$global("$auth_can", options.canPerm);
 
         // helper for else
         kire.directive({
@@ -164,5 +159,5 @@ export const KireAuth: KirePlugin<AuthOptions> = {
 				api.write("}");
 			},
 		});
-	},
-};
+	}
+);

@@ -1,29 +1,25 @@
 import { createHash } from "node:crypto";
-import type { KirePlugin, KireHandler } from "kire";
+import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
 import { compileCSSWithTailwind } from "./compiler";
 import { loadModule, loadStylesheet } from "./loader";
 import type { TailwindCompileOptions } from "./types";
 
-export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
-	name: "@kirejs/tailwind",
-	sort: 110,
-	options: {},
-	load(kire, opts) {
-        kire.kireSchema({
-            name: "@kirejs/tailwind",
-            author: "Drysius",
-            repository: "https://github.com/drysius/kire",
-            version: "0.1.0"
-        });
+export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) => {
+    kire.kireSchema({
+        name: "@kirejs/tailwind",
+        author: "Drysius",
+        repository: "https://github.com/drysius/kire",
+        version: "0.1.0"
+    });
 
-		const tailwindOptions: TailwindCompileOptions = {
-			...opts,
-			loadStylesheet,
-			loadModule,
-			from: undefined,
-		};
+    const tailwindOptions: TailwindCompileOptions = {
+        ...opts,
+        loadStylesheet,
+        loadModule,
+        from: undefined,
+    };
 
-		const cache = kire.cached("@kirejs/tailwind");
+    const cache = kire.cached("@kirejs/tailwind");
         cache.options = tailwindOptions;
 
 		/**
@@ -154,5 +150,5 @@ export const KireTailwind: KirePlugin<NonNullable<TailwindCompileOptions>> = {
 
         // Inject helpers into Kire instance
         (kire as any).compileCSSWithTailwind = compileCSSWithTailwind;
-	},
-};
+    }
+);

@@ -1,17 +1,24 @@
 import { createHash } from "node:crypto";
-import type { KirePlugin, KireHandler } from "kire";
+import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
 import type { KireAsset, KireAssetsOptions } from "./types";
 
-export const KireAssets: KirePlugin<KireAssetsOptions> = {
-	name: "@kirejs/assets",
-	sort: 200,
-	load(kire, opts) {
-		const prefix = opts?.prefix || "_kire";
-		const domain = opts?.domain || "";
-		const MAX_CACHE_SIZE = 500;
-		const getBaseUrl = () => (domain ? `${domain}/${prefix}` : `/${prefix}`);
+export const KireAssets = kirePlugin<KireAssetsOptions>({
+    prefix: "_kire",
+    domain: ""
+}, (kire, opts) => {
+    kire.kireSchema({
+        name: "@kirejs/assets",
+        author: "Drysius",
+        repository: "https://github.com/drysius/kire",
+        version: "0.1.0"
+    });
 
-		const cache = kire.cached("@kirejs/assets");
+    const prefix = opts.prefix || "_kire";
+    const domain = opts.domain || "";
+    const MAX_CACHE_SIZE = 500;
+    const getBaseUrl = () => (domain ? `${domain}/${prefix}` : `/${prefix}`);
+
+    const cache = kire.cached("@kirejs/assets");
 
         kire.existVar('__kire_assets', (api) => {
             api.prologue(`const __kire_assets = { scripts: [], styles: [], baseUrl: "${getBaseUrl()}" };`);
@@ -235,5 +242,5 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 				api.write(`$kire_response += '<!-- KIRE:assets -->';\n`);
 			},
 		});
-	},
-};
+	}
+);

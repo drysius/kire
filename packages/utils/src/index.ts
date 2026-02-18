@@ -1,4 +1,4 @@
-import { Kire, type KirePlugin, type KireHandler } from "kire";
+import { Kire, kirePlugin, type KirePlugin, type KireHandler } from "kire";
 import { Arr } from "./Arr";
 import { Str } from "./Str";
 import { HtmlManager } from "./Html";
@@ -19,15 +19,12 @@ declare module "kire" {
     }
 }
 
-export const KireUtils: KirePlugin = {
-	name: "@kirejs/utils",
-	options: {},
-	load(kire: Kire) {
-        // Register static helpers globally immediately
-        kire.$global("Str", Str);
-        kire.$global("Arr", Arr);
+export const KireUtils = kirePlugin({}, (kire: Kire, _opts) => {
+    // Register static helpers globally immediately
+    kire.$global("Str", Str);
+    kire.$global("Arr", Arr);
 
-        const setup = (instance: any) => {
+    const setup = (instance: any) => {
             const route = new RouteManager();
             instance.$global("Route", route);
             instance.$global("Html", new HtmlManager(route));
@@ -111,7 +108,7 @@ export const KireUtils: KirePlugin = {
                 api.write(`$kire_response += $escape($globals.old(${nameExpr}, ${defExpr}));`);
             }
         });
-	},
-};
+    }
+);
 
 export default KireUtils;

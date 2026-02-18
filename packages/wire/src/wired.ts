@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, parse, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Kire } from "kire";
+import { type Kire, kirePlugin } from "kire";
 import { WireAttributes } from "./core/attrs-declarations";
 import { ChecksumManager } from "./core/checksum";
 import { attachContext } from "./core/context";
@@ -69,73 +69,73 @@ export class Wired {
         return null;
     }
 
-	public static plugin = {
-		name: "@kirejs/wire",
-		options: {},
-		load: (kire: Kire, opts: Record<string, string> = {}) => {
-			Wired.kire = kire;
-			Wired.options = { ...Wired.options, ...opts };
-			if (!Wired.options.secret) Wired.options.secret = randomUUID();
+	public static plugin = kirePlugin<WireOptions>({
+        route: "/_wired",
+        adapter: "http",
+        expire: "10m",
+    }, (kire, opts) => {
+        Wired.kire = kire;
+        Wired.options = { ...Wired.options, ...opts };
+        if (!Wired.options.secret) Wired.options.secret = randomUUID();
 
-			Wired.checksum = new ChecksumManager(() => Wired.options.secret!);
+        Wired.checksum = new ChecksumManager(() => Wired.options.secret!);
 
-            if (Wired.options.cache) {
-                Wired.cache = Wired.options.cache;
-            } else {
-                Wired.cache = new WireMemoryCaching(kire);
-            }
+        if (Wired.options.cache) {
+            Wired.cache = Wired.options.cache;
+        } else {
+            Wired.cache = new WireMemoryCaching(kire);
+        }
 
-			// Expose Wired on Kire instance
-			kire.$global("Wired", Wired);
-			kire.$global("$wire", Wired); 
-			kire.$global("kire", kire);
+        // Expose Wired on Kire instance
+        kire.$global("Wired", Wired);
+        kire.$global("$wire", Wired); 
+        kire.$global("kire", kire);
 
-            kire.Wired = Wired;
-            kire.WireRequest = (opts: WireRequestOptions) => Wired.handleRequest(kire, opts);
+        kire.Wired = Wired;
+        kire.WireRequest = (opts: WireRequestOptions) => Wired.handleRequest(kire, opts);
 
-            kire.kireSchema({
-                name: "@kirejs/wire",
-                author: "Drysius",
-                repository: "https://github.com/drysius/kire",
-                version: "0.1.2"
+        kire.kireSchema({
+            name: "@kirejs/wire",
+            author: "Drysius",
+            repository: "https://github.com/drysius/kire",
+            version: "0.1.2"
+        });
+
+        // Register Attributes
+        for (const [key, value] of Object.entries(WireAttributes)) {
+            kire.attribute({
+                name: key,
+                type: "string",
+                description: value.comment,
+                example: value.example,
             });
+        }
 
-            // Register Attributes
-            for (const [key, value] of Object.entries(WireAttributes)) {
-                kire.attribute({
-                    name: key,
-                    type: "string",
-                    description: value.comment,
-                    example: value.example,
-                });
-            }
+        // Register Template Element
+        kire.element({
+            name: "template",
+            description: "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
+        });
+        // Register template attributes manually as kire.element() strictly registers the element tag now
+        kire.type({
+            variable: "x-for",
+            type: "element",
+            comment: "Iterates over an array or object.",
+            example: 'x-for="item in items"',
+            tstype: "string"
+        });
+        kire.type({
+            variable: "x-if",
+            type: "element",
+            comment: "Conditionally renders content.",
+            example: 'x-if="open"',
+            tstype: "string"
+        });
 
-            // Register Template Element
-            kire.element({
-                name: "template",
-                description: "Standard HTML template element, heavily used by Alpine.js for x-for and x-if directives.",
-            });
-            // Register template attributes manually as kire.element() strictly registers the element tag now
-            kire.type({
-                variable: "x-for",
-                type: "element",
-                comment: "Iterates over an array or object.",
-                example: 'x-for="item in items"',
-                tstype: "string"
-            });
-            kire.type({
-                variable: "x-if",
-                type: "element",
-                comment: "Conditionally renders content.",
-                example: 'x-if="open"',
-                tstype: "string"
-            });
+        registerDirectives(kire, Wired.options);
 
-			registerDirectives(kire, Wired.options);
-
-			(kire as any).wired = async (pattern: string) => Wired.discoverComponents(pattern);
-		},
-	};
+        (kire as any).wired = async (pattern: string) => Wired.discoverComponents(pattern);
+    });
 
     public static async handleRequest(kire: Kire, options: WireRequestOptions): Promise<WireRequestResponse> {
         const { path, method, body, query, locals, token } = options;
