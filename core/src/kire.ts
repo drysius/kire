@@ -30,7 +30,7 @@ export interface ElementMatcher {
  * The main Kire engine class.
  * Handles configuration, compilation, and rendering of templates.
  */
-export class Kire<Streaming extends boolean = false, Asyncronos extends boolean = true> {
+export class Kire<Asyncronos extends boolean = true> {
     /** Internal storage with optimized objects */
     private ["~directives"] = new NullProtoObj<DirectiveDefinition>();
     private ["~elements"] = new NullProtoObj<ElementDefinition>();
@@ -85,9 +85,6 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     /** Default file extension */
     public $extension: string;
     
-    /** Stream mode flag */
-    public $stream: Streaming;
-    
     /** Async mode flag */
     public $async: Asyncronos;
     
@@ -130,11 +127,10 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
     /** Compiler constructor */
     public $compiler: ICompilerConstructor;
 
-    constructor(options: KireOptions<Streaming, Asyncronos> = new NullProtoObj()) {
+    constructor(options: KireOptions<Asyncronos> = new NullProtoObj()) {
         if (options.parent) {
             this.parent = options.parent;
             this.production = options.parent.production;
-            this.$stream = options.parent.$stream as Streaming;
             this.$async = options.parent.$async as Asyncronos;
             this.$extension = options.parent.$extension;
             this.$silent = options.parent.$silent;
@@ -172,7 +168,6 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
         }
 
         this.production = options.production ?? process.env.NODE_ENV === 'production';
-        this.$stream = (options.stream ?? false) as Streaming;
         this.$async = (options.async ?? true) as Asyncronos;
         this.$extension = options.extension ?? "kire";
         this.$silent = options.silent ?? false;
@@ -221,8 +216,8 @@ export class Kire<Streaming extends boolean = false, Asyncronos extends boolean 
      * Creates a new Kire instance that inherits from this one.
      * Useful for request-specific contexts.
      */
-    public fork(): Kire<Streaming, Asyncronos> {
-        const fork = new Kire<Streaming, Asyncronos>({ parent: this as any });
+    public fork(): Kire<Asyncronos> {
+        const fork = new Kire<Asyncronos>({ parent: this as any });
         
         // Notify handlers
         for (const handler of this["~onForkHandlers"]) {
@@ -504,7 +499,7 @@ ${exportLine}
      * @param globals Optional extra global variables.
      * @param filename Filename for debug.
      */
-    public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Streaming, Asyncronos> {
+    public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Asyncronos> {
         // Optimization: Try to find in weak cache first
         const cacheKey = (locals && typeof locals === 'object') ? locals : (globals && typeof globals === 'object' ? globals : null);
         
@@ -532,7 +527,7 @@ ${exportLine}
      * @param locals Local variables.
      * @param globals Optional extra global variables.
      */
-    public view(path: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>): KireRendered<Streaming, Asyncronos> {
+    public view(path: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>): KireRendered<Asyncronos> {
         const compiled = this.getOrCompile(path);
         return this.run(compiled, locals, globals);
     }
@@ -543,37 +538,7 @@ ${exportLine}
      * @param locals Local variables.
      * @param globals Optional global variables.
      */
-    public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Streaming, Asyncronos> {
-        const self = this;
-        if (this.$stream) {
-            const encoder = new TextEncoder();
-            return new ReadableStream({
-                async start(controller) {
-                    let lastSent = 0;
-                    const $globals = Object.assign(Object.create(self.$globals), globals || {});
-                    
-                    $globals['~$kire-stream'] = (val: string) => {
-                        if (val === undefined || val === null) { lastSent = 0; return; }
-                        if (val.length < lastSent) lastSent = 0;
-                        const chunk = val.slice(lastSent);
-                        if (chunk) {
-                            controller.enqueue(encoder.encode(chunk));
-                            lastSent += chunk.length;
-                        }
-                    };
-
-                    try {
-                        const result = template.call(self, locals, $globals, template);
-                        const final = result instanceof Promise ? await result : result;
-                        if (final) $globals['~$kire-stream'](final);
-                        controller.close();
-                    } catch (e) {
-                        controller.error(e instanceof KireError ? e : new KireError(e as Error, template));
-                    }
-                }
-            }) as any;
-        }
-
+    public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Asyncronos> {
         try {
             const result = template.call(this, locals, globals, template);
             

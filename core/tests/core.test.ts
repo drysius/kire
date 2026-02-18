@@ -1,6 +1,5 @@
 import { expect, test, describe } from "bun:test";
 import { Kire } from "../src/kire";
-import { consumeStream } from "../src/utils/stream";
 
 describe("Kire Core (Bun)", () => {
     const kire = new Kire({ production: true });
@@ -24,10 +23,10 @@ describe("Kire Core (Bun)", () => {
             @endif
         `.trim();
         
-        const res1 = await consumeStream(await kire.render(template, { show: true }));
+        const res1 = await kire.render(template, { show: true });
         expect(res1.trim()).toBe("Visible");
         
-        const res2 = await consumeStream(await kire.render(template, { show: false }));
+        const res2 = await kire.render(template, { show: false });
         expect(res2.trim()).toBe("Hidden");
     });
 
@@ -85,14 +84,5 @@ describe("Kire Core (Bun)", () => {
         // Shadowing in a fork or via locals
         const result2 = await k.render("Theme: {{ theme }}", { theme: "light" });
         expect(result2).toBe("Theme: light");
-    });
-
-    test("should handle streaming", async () => {
-        const k = new Kire({ stream: true });
-        const stream = k.render("Stream {{ name }}", { name: "Active" });
-        expect(stream).toBeInstanceOf(ReadableStream);
-        
-        const result = await consumeStream(stream);
-        expect(result).toBe("Stream Active");
     });
 });

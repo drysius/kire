@@ -74,7 +74,6 @@ export class Compiler {
         this.identifiers.clear();
 
         this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
-        this.header.push(`const $kire_stream = $globals['~$kire-stream'];`);
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
 

@@ -1,5 +1,4 @@
 import { Kire } from "../core/src/kire";
-import { consumeStream } from "../core/src/utils/stream";
 
 async function testPerf() {
     const kire = new Kire({ production: true });

@@ -1,13 +1,11 @@
 import type { Kire } from "./kire";
 
-export type KireRendered<Streaming extends boolean = false, Asyncronos extends boolean = true> = 
-    Streaming extends true ? ReadableStream : 
+export type KireRendered<Asyncronos extends boolean = true> = 
     Asyncronos extends true ? Promise<string> : 
     string;
 
-export interface KireOptions<Streaming extends boolean = boolean, Asyncronos extends boolean = boolean> {
+export interface KireOptions<Asyncronos extends boolean = boolean> {
     production?: boolean;
-    stream?: Streaming;
     async?: Asyncronos;
     root?: string;
     extension?: string;

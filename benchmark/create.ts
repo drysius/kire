@@ -1,6 +1,6 @@
 import { Worker } from "node:worker_threads";
 import { writeFileSync, mkdirSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import path, { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
@@ -202,4 +202,11 @@ async function main() {
 Benchmarks completed. Results saved to benchmark/results/results-${runtime}.json`);
 }
 
-main().then(i => import('./report.ts')).catch(console.error);
+async function build() {
+    await Bun.build({
+        entrypoints:[path.join(process.cwd(), 'core/src/index.ts')],
+        outdir:path.join(process.cwd(), 'core/dist')
+    })
+}
+
+build().then(main).then(i => import('./report.ts')).catch(console.error);
