@@ -9,7 +9,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should fetch and render icon with class injection (Element)", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async (url: string) => {
 			if (url.includes("mdi/home.svg")) {
@@ -28,7 +28,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should support 'icon' attribute alias (Element)", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async (url: string) => {
 			if (url.includes("mdi/account.svg")) {
@@ -43,7 +43,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should handle fetch errors gracefully", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async () => new Response(null, { status: 404 }));
 
@@ -52,7 +52,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should cache fetched icons to avoid redundant requests", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async (_url: string) => {
 			return new Response("<svg>cached</svg>", { status: 200 });
@@ -67,7 +67,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should use the @icon directive correctly", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async () => {
 			return new Response('<svg viewBox="0 0 10 10"></svg>', { status: 200 });
@@ -82,7 +82,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should parse hyphenated icon names (prefix-name)", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async (url: string | URL | Request) => {
 			// Check if url string contains the expected path
@@ -99,7 +99,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should merge classes if svg already has class attribute", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireIconify] });
+		const kire = new Kire({ silent: true }).plugin(KireIconify);
 
 		global.fetch = mock(async () => {
 			return new Response('<svg class="base-icon" viewBox="0 0 24 24"></svg>', {
@@ -114,9 +114,7 @@ describe("KireIconify", () => {
 	});
 
 	it("should use default class from options if provided", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [[KireIconify, { defaultClass: "icon-default" }]],
-		});
+		const kire = new Kire({ silent: true }).plugin(KireIconify, { defaultClass: "icon-default" });
 
 		global.fetch = mock(async () => {
 			return new Response("<svg></svg>", { status: 200 });

@@ -19,7 +19,7 @@ export class Parser {
 
     constructor(
         private template: string,
-        private kire: Kire
+        private kire: Kire<any>
     ) {}
 
     public parse(): Node[] {
@@ -114,7 +114,7 @@ export class Parser {
 
         if (!isEnd) {
             if (!new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(name)) {
-                const registered = Array.from(this.kire.$directives.keys());
+                const registered = Object.keys(this.kire.$directives.records);
                 let found = false;
                 for (let i = name.length - 1; i > 0; i--) {
                     const sub = name.slice(0, i);

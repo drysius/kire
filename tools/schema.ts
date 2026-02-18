@@ -16,11 +16,11 @@ export async function generate() {
 			if (pkg.name === "kire") {
 				// Core: Load with defaults
 				const kire = new Kire();
-				const schema = kire.pkgSchema(
-					pkg.name,
-					pkg.json.repository,
-					pkg.version,
-				);
+				const schema = kire.kireSchema({
+					name: pkg.name,
+					repository: pkg.json.repository,
+					version: pkg.version
+				})
 
 				const outPath = join(pkg.path, "kire-schema.json");
 				await writeFile(outPath, JSON.stringify(schema, null, 4));
@@ -52,11 +52,12 @@ export async function generate() {
 					// Load plugin
 					kire.plugin(plugin);
 
-					const schema = kire.pkgSchema(
-						pkg.name,
-						pkg.json.repository,
-						pkg.version,
-					);
+					const schema = kire.kireSchema({
+						name: pkg.name,
+						author: "Drysius",
+						version: pkg.json.repository,
+						repository: pkg.version,
+					});
 
 					const outPath = join(pkg.path, "kire-schema.json");
 					await writeFile(outPath, JSON.stringify(schema, null, 4));

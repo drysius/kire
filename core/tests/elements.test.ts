@@ -20,14 +20,8 @@ describe("Kire Elements System (Pattern-based)", () => {
 	});
 
 	it("should handle element with wildcard pattern (x-*)", async () => {
-		const kire = new Kire({ silent: true,
-            vfiles: {
-                "button.kire": "<button>@yield('default')</button>"
-            }
-        });
-
-		// Native elements already has x-* handler in natives.ts
-		// but let's ensure it's loaded (it is by default in Kire)
+		const kire = new Kire({ silent: true });
+        kire.$files[kire.resolvePath("button")] = "<button>@yield('default')</button>";
 
 		const template = "<x-button>Click Me</x-button>";
 		const result = await kire.render(template);
@@ -103,17 +97,13 @@ describe("Kire Elements System (Pattern-based)", () => {
 	});
 
 	it("should handle x-* components with x-slot", async () => {
-		const kire = new Kire({
-			silent: true,
-			vfiles: {
-				"card.kire": `
+		const kire = new Kire({ silent: true });
+        kire.$files[kire.resolvePath("card")] = `
                     <div class="card">
                         <div class="header">@yield('header')</div>
                         <div class="body">@yield('default')</div>
                     </div>
-                `,
-			},
-		});
+                `;
 
 		const template = `
             <x-card>

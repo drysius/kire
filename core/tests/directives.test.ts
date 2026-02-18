@@ -51,7 +51,7 @@ describe("Kire Directives & Elements", () => {
     test("Namespaces and Views", async () => {
         const k = new Kire();
         const vPath = k.resolve("admin/dashboard");
-        k.$vfiles[vPath] = "Admin View";
+        k.$files[vPath] = "Admin View";
         k.namespace("admin", k.$root + "/admin");
         
         const result = await k.view("admin.dashboard");
@@ -81,6 +81,12 @@ describe("Kire Directives & Elements", () => {
 
     test("@define and @defined", async () => {
         const template = '@define("header")<h1>Title</h1>@enddefine @defined("header")Fallback@enddefined';
+        const result = await kire.render(template);
+        expect(result.trim()).toBe("<h1>Title</h1>");
+    });
+
+    test("order-independent @define and @defined", async () => {
+        const template = '@defined("header")Fallback@enddefined @define("header")<h1>Title</h1>@enddefine';
         const result = await kire.render(template);
         expect(result.trim()).toBe("<h1>Title</h1>");
     });

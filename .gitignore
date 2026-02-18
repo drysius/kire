@@ -49,3 +49,6 @@ publish/**
 kire-intellisense-*.vsix
 # benchmark
 benchmark/results
+
+# ia tests
+.contexts

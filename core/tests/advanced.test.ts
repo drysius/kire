@@ -10,8 +10,8 @@ describe("Kire Advanced Features", () => {
         k.namespace("shared", "views/shared");
         
         // Mock virtual files
-        k.$vfiles[k.resolvePath("views/theme/layout.kire")] = "Theme Layout: @yield('content')";
-        k.$vfiles[k.resolvePath("views/shared/button.kire")] = "<button>{{ text }}</button>";
+        k["~store"].files[k.resolvePath("views/theme/layout.kire")] = "Theme Layout: @yield('content')";
+        k["~store"].files[k.resolvePath("views/shared/button.kire")] = "<button>{{ text }}</button>";
         
         const template = `
             @layout('theme.layout')
@@ -60,8 +60,8 @@ describe("Kire Advanced Features", () => {
 
     test("Circular Dependencies: should detect and throw error", async () => {
         const k = new Kire();
-        k.$vfiles[k.resolvePath("a.kire")] = "@include('b')";
-        k.$vfiles[k.resolvePath("b.kire")] = "@include('a')";
+        k["~store"].files[k.resolvePath("a.kire")] = "@include('b')";
+        k["~store"].files[k.resolvePath("b.kire")] = "@include('a')";
         
         try {
             await k.view("a");
@@ -102,7 +102,7 @@ describe("Kire Advanced Features", () => {
 
     test("VFiles: should resolve templates from memory", async () => {
         const k = new Kire();
-        k.$vfiles[k.resolvePath("partials/header")] = "<h1>Header</h1>";
+        k["~store"].files[k.resolvePath("partials/header")] = "<h1>Header</h1>";
         
         const result = await k.render("@include('partials.header')");
         expect(result).toBe("<h1>Header</h1>");

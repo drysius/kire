@@ -10,12 +10,9 @@ class LayoutComponent extends WireComponent {
 }
 
 test("$require (used by @include/@component) should respect globals from forked kire instance", async () => {
-    const kire = new Kire({
-        vfiles: {
-            "page.kire": '@include("partial")',
-            "partial.kire": 'Value: {{ global_var }}'
-        }
-    });
+    const kire = new Kire({ silent: true });
+    kire.$files[kire.resolvePath("page")] = '@include("partial")';
+    kire.$files[kire.resolvePath("partial")] = 'Value: {{ global_var }}';
     kire.plugin(Wired.plugin);
     
     // Register component
@@ -33,16 +30,13 @@ test("$require (used by @include/@component) should respect globals from forked 
 });
 
 test("@component directive should respect globals from forked kire instance", async () => {
-    const kire = new Kire({
-        vfiles: {
-            "comp-page.kire": `@component('card')
+    const kire = new Kire({ silent: true });
+    kire.$files[kire.resolvePath("comp-page")] = `@component('card')
                         @slot('content')
                             {{ global_var }}
                         @end
-                    @end`,
-            "card.kire": `<div class="card">@yield('content')</div>`
-        }
-    });
+                    @end`;
+    kire.$files[kire.resolvePath("card")] = `<div class="card">@yield('content')</div>`;
     kire.plugin(Wired.plugin);
     
     class CompTest extends WireComponent {

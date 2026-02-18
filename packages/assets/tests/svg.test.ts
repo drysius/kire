@@ -13,9 +13,7 @@ describe("KireAssets SVG", () => {
 			},
 		);
 
-		const kire = new Kire({ silent: true,
-			plugins: [KireAssets],
-		});
+		const kire = new Kire({ silent: true }).plugin(KireAssets);
 
 		const template = `@svg('https://example.com/icon.svg', { class: 'icon', alt: 'Remote Icon' })`;
 		const result = await kire.render(template);
@@ -34,12 +32,8 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should load and cache local SVG via resolver", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [KireAssets],
-			vfiles: {
-				"./local.svg": "<svg>local-icon</svg>"
-			}
-		});
+		const kire = new Kire({ silent: true }).plugin(KireAssets);
+        kire.$files[kire.resolvePath("./local.svg")] = "<svg>local-icon</svg>";
 
 		const template = `@svg('./local.svg', { width: '24' })`;
 		const result = await kire.render(template);
@@ -49,12 +43,8 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should serve SVG assets with correct content type", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [KireAssets],
-			vfiles: {
-				"./test.svg": "<svg>served-icon</svg>"
-			}
-		});
+		const kire = new Kire({ silent: true }).plugin(KireAssets);
+        kire.$files[kire.resolvePath("./test.svg")] = "<svg>served-icon</svg>";
 
 		// Render to cache the asset
 		const html = await kire.render(`@svg('./test.svg')`);
@@ -84,9 +74,7 @@ describe("KireAssets SVG", () => {
 	});
 
 	it("should handle missing SVG gracefully", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [KireAssets]
-		});
+		const kire = new Kire({ silent: true }).plugin(KireAssets);
 
 		// Suppress console.warn for this test
 		const originalWarn = console.warn;

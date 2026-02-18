@@ -42,11 +42,11 @@ export const KireMarkdown: KirePlugin<MarkdownOptions> = {
 				const resolved = kire.resolvePath(path);
 				const content = kire.readFile(resolved);
 				const htmlTemplate = await marked.parse(content);
-				const fn = kire.compile(htmlTemplate, resolved);
+				const entry = kire.compile(htmlTemplate, resolved);
 
-				if (kire.production) _fnCache[cacheKey] = fn;
+				if (kire.production) _fnCache[cacheKey] = entry.fn;
 
-				return kire.run(fn, locals) as any;
+				return kire.run(entry.fn!, locals) as any;
 			} catch (e) {
 				console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
 				return "";

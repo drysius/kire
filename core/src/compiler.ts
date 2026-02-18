@@ -21,9 +21,9 @@ export class Compiler {
     private body: string[] = [];
     private header: string[] = [];
     private footer: string[] = [];
-    private dependencies: Map<string, string> = new Map();
+    private dependencies: Record<string, string> = new NullProtoObj();
     private uidCounter: Record<string, number> = new NullProtoObj();
-    private _isAsync: boolean = false;
+    private _async: boolean = false;
     private _isDependency: boolean = false;
     private textBuffer: string = "";
     private generator: SourceMapGenerator;
@@ -37,9 +37,9 @@ export class Compiler {
         this.generator.addSource(filename);
     }
 
-    public get isAsync(): boolean { return this._isAsync; }
-    public getDependencies(): Map<string, string> { return this.dependencies; }
-    private markAsync() { this._isAsync = true; }
+    public get async(): boolean { return this._async; }
+    public getDependencies(): Record<string, string> { return this.dependencies; }
+    private markAsync() { this._async = true; }
 
     private esc(str: string): string {
         return "'" + str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "\\r") + "'";
@@ -67,9 +67,9 @@ export class Compiler {
     public compile(nodes: Node[], extraGlobals: string[] = [], isDependency = false): string {
         this._isDependency = isDependency;
         this.body = []; this.header = []; this.footer = [];
-        this.dependencies.clear(); this.uidCounter = new NullProtoObj();
+        this.dependencies = new NullProtoObj(); this.uidCounter = new NullProtoObj();
         this.mappings = [];
-        this._isAsync = false;
+        this._async = false;
         this.textBuffer = "";
         this.identifiers.clear();
 
@@ -87,8 +87,8 @@ export class Compiler {
             if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
             
-            // Skip variables that have varThen handlers
-            if (this.kire["~varThens"][id]) continue;
+            // Skip variables that have existVar handlers
+            if (this.kire.$kire["~handlers"].exists_vars.has(id)) continue;
 
             this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'];`);
         }
@@ -101,7 +101,7 @@ export class Compiler {
         this.flushText();
         
         // Register variable providers
-        // We do this in a loop because one varThen might trigger another
+        // We do this in a loop because one existVar might trigger another
         let changed = true;
         const triggered = new Set<string>();
         while (changed) {
@@ -111,33 +111,42 @@ export class Compiler {
             // Strip strings to avoid false positives
             const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
 
-            for (const name in this.kire["~varThens"]) {
-                if (triggered.has(name)) continue;
+            for (const [name, entries] of this.kire.$kire["~handlers"].exists_vars) {
+                const nameStr = name.toString();
+                if (triggered.has(nameStr)) continue;
 
-                const handler = this.kire["~varThens"][name];
-                const regex = createVarThenRegex(name);
-                
-                if (this.identifiers.has(name) || regex.test(cleanCode)) {
-                    handler?.(this.createCompilerApi({ type: 'directive', name: 'varThen', loc: { line: 0, column: 0 } } as any, {}, true));
-                    triggered.add(name);
-                    changed = true;
+                for (const entry of entries) {
+                    // If unique is true, only trigger if it's NOT a dependency
+                    if (entry.unique && this._isDependency) {
+                         triggered.add(nameStr);
+                         continue;
+                    }
+
+                    const regex = createVarThenRegex(typeof entry.name === 'string' ? entry.name : entry.name.source);
+                    
+                    if (this.identifiers.has(nameStr) || regex.test(cleanCode)) {
+                        entry.callback?.(this.createCompilerApi({ type: 'directive', name: 'existVar', loc: { line: 0, column: 0 } } as any, {}, true));
+                        triggered.add(nameStr);
+                        changed = true;
+                    }
                 }
             }
         }
 
-        if (this.dependencies.size > 0) {
+        if (Object.keys(this.dependencies).length > 0) {
             this.header.push(`// Dependencies`);
-            for (const [path, id] of this.dependencies) {
+            for (const path in this.dependencies) {
+                const id = this.dependencies[path]!;
                 const depNodes = this.kire.parse(this.kire.readFile(this.kire.resolvePath(path)));
                 const compilerInstance = new Compiler(this.kire, path);
                 const depCode = compilerInstance.compile(depNodes, [], true);
-                const isDepAsync = compilerInstance.isAsync;
+                const asyncDep = compilerInstance.async;
                 
                 this.header.push(`// ${path}`);
-                this.header.push(`const ${id} = ${isDepAsync ? 'async ' : ''}function($props = {}, $globals = {}) {`);
+                this.header.push(`const ${id} = ${asyncDep ? 'async ' : ''}function($props = {}, $globals = {}) {`);
                 this.header.push(depCode);
                 this.header.push(`};`);
-                this.header.push(`${id}.meta = { async: ${isDepAsync}, path: '${path}' };`);
+                this.header.push(`${id}.meta = { async: ${asyncDep}, path: '${path}' };`);
             }
         }
 
@@ -290,16 +299,16 @@ export class Compiler {
 
     private processElement(n: Node) {
         const t = n.tagName || ""; let matcher = null;
-        for (const m in this.kire["~elements"]) {
-            const def = this.kire["~elements"][m]!;
+        for (const m of this.kire.$elementMatchers) {
+            const def = m.def;
             if (typeof def.name === "string") {
-                if (def.name === t) { matcher = { def }; break; }
+                if (def.name === t) { matcher = m; break; }
                 if (WILDCARD_CHAR_REGEX.test(def.name)) {
                     const p = def.name.replace("*", "(.*)");
                     const m2 = t.match(new RegExp(`^${p}$`));
-                    if (m2) { n.wildcard = m2[1]; matcher = { def }; break; }
+                    if (m2) { n.wildcard = m2[1]; matcher = m; break; }
                 }
-            } else if (def.name instanceof RegExp && def.name.test(t)) { matcher = { def }; break; }
+            } else if (def.name instanceof RegExp && def.name.test(t)) { matcher = m; break; }
         }
 
         if (!matcher) {
@@ -343,7 +352,7 @@ export class Compiler {
         matcher.def.onCall(this.createCompilerApi(n, matcher.def));
     }
 
-    private createCompilerApi(node: Node, definition: any, isVarThen = false): any {
+    private createCompilerApi(node: Node, definition: any, isExistVar = false): any {
         const self = this;
         const api: any = {
             kire: this.kire, node, 
@@ -370,7 +379,7 @@ export class Compiler {
             markAsync: () => this.markAsync(),
             getDependency: (p: string) => {
                 const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
-                return this.kire.getOrCompile(cleanPath);
+                return this.kire.getOrCompile(cleanPath, true);
             },
             depend: (p: string) => {
                 const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
@@ -381,9 +390,9 @@ export class Compiler {
                     r = relative(this.kire.$root, r).replace(/\\/g, '/');
                 }
 
-                if (this.dependencies.has(r)) return this.dependencies.get(r)!;
-                const id = `_dep${this.dependencies.size}`;
-                this.dependencies.set(r, id); return id;
+                if (this.dependencies[r]) return this.dependencies[r]!;
+                const id = `_dep${Object.keys(this.dependencies).length}`;
+                this.dependencies[r] = id; return id;
             },
             append: (c: any) => {
                 if (typeof c === "string") {
@@ -420,8 +429,8 @@ export class Compiler {
             attribute: (n: string) => api.getAttribute(n),
             param: (n: string | number) => typeof n === 'number' ? api.getArgument(n) : api.getAttribute(n),
             inject: (js: string) => api.prologue(js),
-            varThen: (name: string, callback: (api: CompilerApi) => void) => {
-                this.kire.varThen(name, callback);
+            existVar: (name: string, callback: (api: CompilerApi) => void, unique = false) => {
+                this.kire.existVar(name, callback, unique);
             }
         };
         return api;

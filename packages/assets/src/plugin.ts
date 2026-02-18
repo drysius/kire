@@ -13,7 +13,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
 
 		const cache = kire.cached("@kirejs/assets");
 
-        kire.varThen('__kire_assets', (api) => {
+        kire.existVar('__kire_assets', (api) => {
             api.prologue(`const __kire_assets = { scripts: [], styles: [], baseUrl: "${getBaseUrl()}" };`);
             api.epilogue(`
                 if (typeof __kire_assets !== 'undefined') {
@@ -54,7 +54,7 @@ export const KireAssets: KirePlugin<KireAssetsOptions> = {
                     }
                 }
             `);
-        });
+        },true);
 
 		const addToCache = (key: string, value: KireAsset) => {
 			if (cache[key]) return;

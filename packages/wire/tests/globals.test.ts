@@ -17,11 +17,8 @@ class InlineComponent extends WireComponent {
 
 test("WireComponent should respect globals from forked kire instance", async () => {
     // Setup Kire
-    const kire = new Kire({
-        vfiles: {
-            "example.kire": "<div>{{ request.url }}</div>"
-        }
-    });
+    const kire = new Kire({ silent: true });
+    kire.$files[kire.resolvePath("example")] = "<div>{{ request.url }}</div>";
     
     // Register Wired plugin
     kire.plugin(Wired.plugin);

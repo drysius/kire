@@ -1,25 +1,30 @@
-import { readFileSync, existsSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { resolve, join, isAbsolute, relative } from "node:path";
-import { Compiler } from "./compiler";
-import { Parser } from "./parser";
+import { platform as nodePlatform } from "./utils/node";
 import { createKireFunction } from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { escapeHtml } from "./utils/html";
 import { NullProtoObj, createFastMatcher } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
+import { Compiler } from "./compiler";
+import { Parser } from "./parser";
+import { resolvePath as resolvePathUtil } from "./utils/resolve";
+
 import type {
     DirectiveDefinition,
     ElementDefinition,
-    ICompilerConstructor,
-    IParserConstructor,
     KireOptions,
-    KirePlugin,
     KireTplFunction,
-    KireRendered,
-    KireSchemaDefinition,
-    TypeDefinition,
+    KireCacheEntry,
+    KireSchemaObject,
+    KireExistVar,
+    KirePlatform,
+    KireConfig,
+    KireRuntime,
     KireHandler,
-    AttributeDefinition
+    KirePlugin,
+    KireRendered,
+    Node,
+    TypeDefinition,
+    KireAttributeDeclaration
 } from "./types";
 
 export interface ElementMatcher {
@@ -31,428 +36,580 @@ export interface ElementMatcher {
  * Handles configuration, compilation, and rendering of templates.
  */
 export class Kire<Asyncronos extends boolean = true> {
-    /** Internal storage with optimized objects */
-    private ["~directives"] = new NullProtoObj<DirectiveDefinition>();
-    private ["~elements"] = new NullProtoObj<ElementDefinition>();
-    private ["~namespaces"] = new NullProtoObj<string>();
-    private ["~types"] = new NullProtoObj<TypeDefinition>();
-    private ["~attributes"] = new NullProtoObj<AttributeDefinition>();
-    private ["~varThens"] = new NullProtoObj<KireHandler>();
-    private ["~onForkHandlers"]: ((fork: Kire<any>) => void)[] = [];
+    /** 
+     * The Root Engine Instance (Source of Truth).
+     */
+    public readonly $kire: Kire<any>;
 
-    /** Map of registered directives (Public Alias) */
-    public get $directives() { return new Map(Object.entries(this["~directives"])); }
-    
-    /** Set of registered custom elements (Public Alias) */
-    public get $elements() { return new Set(Object.values(this["~elements"])); }
+    /** 
+     * Internal Storage Structures 
+     */
+    public ["~elements"] = {
+        matchers: [] as ElementMatcher[],
+        pattern: /$^/,
+        list: [] as ElementDefinition[]
+    };
 
-    /** Map of registered global attributes (Public Alias) */
-    public get $attributes() { return new Map(Object.entries(this["~attributes"])); }
-    
-    /** Internal matchers for elements to optimize parsing */
-    public $elementMatchers: ElementMatcher[] = [];
-    
-    /** Optimized regex pattern for matching elements */
-    public $elementsPattern: RegExp = /$^/; 
-    
-    /** Optimized regex pattern for matching directives */
-    public $directivesPattern: RegExp = /$^/;
+    public ["~directives"] = {
+        pattern: /$^/,
+        records: new NullProtoObj() as Record<string, DirectiveDefinition>
+    };
 
-    /** Global variables available to all templates */
-    public $globals: Record<string, any> = {};
-    
-    /** Shared properties (legacy alias) */
-    public $props: Record<string, any> = {};
-    
-    /** Namespace mappings for template resolution (Public Alias) */
-    public get $namespaces() { return new Map(Object.entries(this["~namespaces"])); }
+    public ["~cache"] = {
+        modules: new Map<string, any>(),
+        files: new Map<string | symbol, KireCacheEntry>()
+    };
 
-    /** Registered types for type checking support (Public Alias) */
-    public get $types() { return new Map(Object.entries(this["~types"])); }
+    public ["~store"] = {
+        globals: new NullProtoObj() as Record<string, any>,
+        props: new NullProtoObj() as Record<string, any>,
+        files: new NullProtoObj() as Record<string, string | KireTplFunction>,
+        config: new NullProtoObj() as KireConfig,
+        // Platform and Runtime functions shared across forks
+        platform: new NullProtoObj() as KirePlatform,
+        runtime: new NullProtoObj() as KireRuntime
+    };
 
-    /** Registered variable handlers for conditional injection (Public Alias) */
-    public get $varThens() { return new Map(Object.entries(this["~varThens"])); }
-    
-    /** Schema definition for the project */
-    public $schemaDefinition?: KireSchemaDefinition;
+    public ["~handlers"] = {
+        exists_vars: new Map<RegExp | string, KireExistVar[]>(),
+        forks: [] as ((fork: Kire<Asyncronos>) => void)[]
+    };
 
-    /** Production mode flag (disables detailed error maps and enables caching) */
-    public production: boolean;
-    
-    /** Root directory for template resolution */
-    public $root: string;
-    
-    /** Default file extension */
-    public $extension: string;
-    
-    /** Async mode flag */
-    public $async: Asyncronos;
-    
-    /** Silent mode flag (suppresses console logs) */
-    public $silent: boolean;
-    
-    /** Variable name for local variables in compiled code */
-    public $var_locals: string;
-    
-    /** Cache of compiled templates */
-    public $files: Record<string, KireTplFunction> = new NullProtoObj();
-    
-    /** Virtual files (memory-based templates) */
-    public $vfiles: Record<string, string> = new NullProtoObj();
-    
-    /** Raw source cache */
-    public $sources: Record<string, string> = new NullProtoObj();
+    public ["~schema"]: KireSchemaObject = {
+        name: "kire-app",
+        version: "1.0.0",
+        repository: "",
+        dependencies: [],
+        directives: [],
+        elements: [],
+        attributes: [],
+        types: []
+    };
 
-    /** NullProtoObj constructor */
-    public NullProtoObj = NullProtoObj;
-
-    /** mtime cache for files (path -> mtime) */
-    private $mtimes: Record<string, number> = new NullProtoObj();
-
-    /** Set of templates currently being compiled to prevent loops */
-    private _compiling: Set<string> = new Set();
-
-    /** Weak cache for dynamic render calls (object -> { template -> compiledFunction }) */
-    private _weakCache = new WeakMap<object, Record<string, KireTplFunction>>();
-
-    /** Escape helper */
-    public $escape = escapeHtml;
-
-    /** Parent instance if this is a fork */
-    public parent?: Kire<any>;
-
-    /** Parser constructor */
-    public $parser: IParserConstructor;
+    public ["~parent"]?: Kire<any>;
+    public ["~compiling"] = new Set<string>();
     
-    /** Compiler constructor */
-    public $compiler: ICompilerConstructor;
+    // Delegation getters
+    public get $elements() { return this.$kire["~elements"]; }
+    public get $directives() { return this.$kire["~directives"]; }
+    public get $cache() { return this.$kire["~cache"]; }
+    public get $files(): Record<string, string | KireTplFunction> { 
+        const stored = this["~store"].files;
+        const cache = this.$cache.files;
+        
+        return new Proxy(stored, {
+            get: (target, prop) => {
+                if (typeof prop !== 'string') return Reflect.get(target, prop);
+                const s = target[prop];
+                if (typeof s === 'function') return s;
+                
+                // Also check parent if we are a fork and don't have it locally
+                if (s === undefined && this["~parent"]) {
+                    const ps = this["~parent"].$files[prop];
+                    if (ps !== undefined) return ps;
+                }
+
+                const cached = cache.get(prop);
+                return (cached && cached.fn) ? cached.fn : s;
+            },
+            set: (target, prop, value) => {
+                return Reflect.set(target, prop, value);
+            }
+        }) as any;
+    }
+    public get $schema() { return this.$kire["~schema"]; };
+
+    public get $elementMatchers() { return this.$elements.matchers; }
+    public get $elementsPattern() { return this.$elements.pattern; }
+    public get $directivesPattern() { return this.$directives.pattern; }
+
+    /** Aliases for ~store (readonly) */
+    public readonly $globals!: Record<string, any>;
+    public readonly $props!: Record<string, any>;
+    public readonly $config!: KireConfig;
+    public readonly $platform!: KirePlatform;
+    public readonly $runtime!: KireRuntime;
+
+    /** Config Getters (Delegating to $config) */
+    public get $production(): boolean { return this.$config.production; }
+    public get $root(): string { return this.$config.root; }
+    public get $extension(): string { return this.$config.extension; }
+    public get $async(): Asyncronos { return this.$config.async as Asyncronos; }
+    public get $silent(): boolean { return this.$config.silent; }
+    public get $var_locals(): string { return this.$config.var_locals; }
+    public get $namespaces(): Record<string, string> { return this.$config.namespaces; }
+    public get $max_renders(): number { return this.$config.max_renders; }
+    
+    /** Runtime Getters */
+    public get $escape() { return this.$runtime.escapeHtml; }
+    public get NullProtoObj() { return this.$runtime.NullProtoObj; }
+    public get KireError() { return this.$runtime.KireError; }
+    public get renderErrorHtml() { return this.$runtime.renderErrorHtml; }
+
+    public ["~render-symbol"] = Symbol.for("~templates");
 
     constructor(options: KireOptions<Asyncronos> = new NullProtoObj()) {
+        this.$kire = options.parent ? options.parent.$kire : this;
+
         if (options.parent) {
-            this.parent = options.parent;
-            this.production = options.parent.production;
-            this.$async = options.parent.$async as Asyncronos;
-            this.$extension = options.parent.$extension;
-            this.$silent = options.parent.$silent;
-            this.$var_locals = options.parent.$var_locals;
-            this.$root = options.parent.$root;
+            this["~parent"] = options.parent;
             
-            this.$parser = options.parent.$parser;
-            this.$compiler = options.parent.$compiler;
-
-            // Share caches
-            this.$files = options.parent.$files;
-            this.$vfiles = options.parent.$vfiles;
-            this.$sources = options.parent.$sources;
-            this.$mtimes = options.parent['$mtimes'];
-            this._pluginCache = options.parent._pluginCache;
-            this._weakCache = options.parent._weakCache;
-
-            // Inherit registry references
-            this["~directives"] = options.parent["~directives"];
-            this["~elements"] = options.parent["~elements"];
-            this["~namespaces"] = options.parent["~namespaces"];
-            this["~attributes"] = options.parent["~attributes"];
-            this.$elementMatchers = options.parent.$elementMatchers;
-            this.$elementsPattern = options.parent.$elementsPattern;
-            this.$directivesPattern = options.parent.$directivesPattern;
-            this["~types"] = options.parent["~types"];
-            this["~varThens"] = options.parent["~varThens"];
-            this["~onForkHandlers"] = options.parent["~onForkHandlers"];
-
-            // Prototype chain for state isolation
-            this.$globals = Object.create(options.parent.$globals);
-            this.$props = Object.create(options.parent.$props);
+            Object.defineProperty(this, '$globals', {
+                value: this.createStoreProxy(this["~store"].globals, options.parent.$globals),
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
             
+            Object.defineProperty(this, '$props', {
+                value: this.createStoreProxy(this["~store"].props, options.parent.$props),
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
+            
+            Object.defineProperty(this, '$config', {
+                value: this.createStoreProxy(this["~store"].config, options.parent.$config),
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
+            
+            Object.defineProperty(this, '$platform', {
+                value: this.createStoreProxy(this["~store"].platform, options.parent.$platform),
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
+            
+            Object.defineProperty(this, '$runtime', {
+                value: this.createStoreProxy(this["~store"].runtime, options.parent.$runtime),
+                writable: true,
+                enumerable: true,
+                configurable: true
+            });
+
             return;
         }
 
-        this.production = options.production ?? process.env.NODE_ENV === 'production';
-        this.$async = (options.async ?? true) as Asyncronos;
-        this.$extension = options.extension ?? "kire";
-        this.$silent = options.silent ?? false;
-        this.$var_locals = options.varLocals ?? "it";
-        this.$root = options.root ? resolve(options.root).replace(/\\/g, '/') : process.cwd().replace(/\\/g, '/');
+        const run = this["~store"].runtime;
+        run.escapeHtml = escapeHtml;
+        run.NullProtoObj = NullProtoObj;
+        run.KireError = KireError;
+        run.renderErrorHtml = renderErrorHtml;
+        run.createKireFunction = createKireFunction;
+
+        const plat = this["~store"].platform;
+        Object.assign(plat, nodePlatform);
+
+        const conf = this["~store"].config;
+        conf.production = options.production ?? plat.isProd();
+        conf.async = (options.async ?? true);
+        conf.extension = options.extension ?? "kire";
+        conf.silent = options.silent ?? false;
+        conf.var_locals = options.local_variable ?? "it";
+        conf.max_renders = options.max_renders ?? 1000;
+        conf.root = options.root ? plat.resolve(options.root) : plat.cwd();
+        conf.namespaces = new NullProtoObj();
         
-        this.$parser = options.engine?.parser ?? Parser;
-        this.$compiler = options.engine?.compiler ?? Compiler;
-
         if (options.files) {
-            for (const key in options.files) {
-                this.$sources[this.resolvePath(key)] = options.files[key]!;
-            }
+            this["~store"].files = { ...options.files };
         }
 
-        if (options.vfiles) {
-            for (const key in options.vfiles) {
-                this.$vfiles[this.resolvePath(key)] = options.vfiles[key]!;
-            }
-        }
+        Object.defineProperty(this, '$globals', {
+            value: this["~store"].globals,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
+        
+        Object.defineProperty(this, '$props', {
+            value: this["~store"].props,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
+        
+        Object.defineProperty(this, '$config', {
+            value: this["~store"].config,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
+        
+        Object.defineProperty(this, '$platform', {
+            value: this["~store"].platform,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
+        
+        Object.defineProperty(this, '$runtime', {
+            value: this["~store"].runtime,
+            writable: true,
+            enumerable: true,
+            configurable: true
+        });
 
-        if (options.attributes) {
-            for (const [key, val] of Object.entries(options.attributes)) {
-                this.attribute(val);
-            }
-        }
-
-        if (options.bundled) {
-            for (const key in options.bundled) {
-                const item = options.bundled[key]!;
-                const path = this.resolvePath(key);
-                this.$files[path] = item as KireTplFunction;
-            }
-        }
-
-        if (options.directives !== false) this.plugin(KireDirectives);
-        if (options.plugins) {
-            for (const p of options.plugins) {
-                const [plugin, opts] = Array.isArray(p) ? p : [p, undefined];
-                this.plugin(plugin, opts);
-            }
+        if (!options.emptykire) {
+            this.plugin(KireDirectives);
         }
     }
 
-    /**
-     * Creates a new Kire instance that inherits from this one.
-     * Useful for request-specific contexts.
-     */
-    public fork(): Kire<Asyncronos> {
-        const fork = new Kire<Asyncronos>({ parent: this as any });
-        
-        // Notify handlers
-        for (const handler of this["~onForkHandlers"]) {
-            handler(fork as any);
+    public createStoreProxy(localStore: any, parentStore: any) {
+        return new Proxy(localStore, {
+            get: (target, prop, receiver) => {
+                if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
+                return Reflect.get(parentStore, prop, receiver);
+            },
+            set: (target, prop, value) => {
+                target[prop] = value;
+                return true;
+            },
+            has: (target, prop) => {
+                return Reflect.has(target, prop) || Reflect.has(parentStore, prop);
+            },
+            deleteProperty: (target, prop) => {
+                Reflect.deleteProperty(target, prop);
+                return true;
+            },
+            ownKeys: (target) => {
+                const parentKeys = Reflect.ownKeys(parentStore);
+                const localKeys = Reflect.ownKeys(target);
+                return Array.from(new Set([...localKeys, ...parentKeys]));
+            },
+            getOwnPropertyDescriptor: (target, prop) => {
+                if (Reflect.has(target, prop)) return Reflect.getOwnPropertyDescriptor(target, prop);
+                const parentDesc = Reflect.getOwnPropertyDescriptor(parentStore, prop);
+                if (parentDesc && !parentDesc.configurable) {
+                    // To satisfy Proxy invariants, we must return a configurable descriptor 
+                    // if it doesn't exist on the target yet.
+                    return { ...parentDesc, configurable: true };
+                }
+                return parentDesc;
+            },
+            defineProperty: (target, prop, descriptor) => {
+                Reflect.defineProperty(target, prop, descriptor);
+                return true;
+            },
+            getPrototypeOf: (target) => {
+                return Reflect.getPrototypeOf(target);
+            },
+            setPrototypeOf: (target, proto) => {
+                return Reflect.setPrototypeOf(target, proto);
+            },
+            isExtensible: (target) => {
+                return Reflect.isExtensible(target);
+            },
+            preventExtensions: (target) => {
+                return Reflect.preventExtensions(target);
+            }
+        });
+    }
+
+    // --- State Methods ---
+
+    public cached(name: string): any {
+        let mod = this.$cache.modules.get(name);
+        if (!mod) {
+            mod = new this.NullProtoObj();
+            this.$cache.modules.set(name, mod);
         }
-        
+        return mod;
+    }
+
+    public fork(): Kire<Asyncronos> {
+        const fork = new (this.constructor as any)({ parent: this });
+        const handlers = this.$kire["~handlers"].forks;
+        for (const handler of handlers) {
+            handler(fork);
+        }
         return fork;
     }
 
-    /**
-     * Registers a callback to be called when a fork is created.
-     */
-    public onFork(callback: (fork: Kire<any>) => void) {
-        this["~onForkHandlers"].push(callback);
+    public onFork(callback: (fork: Kire<Asyncronos>) => void) {
+        this.$kire["~handlers"].forks.push(callback);
         return this;
     }
 
-    /**
-     * Loads a plugin into the Kire instance.
-     * @param plugin The plugin object or function.
-     * @param opts Optional configuration for the plugin.
-     */
-    public plugin<KirePlugged extends KirePlugin<any>>(plugin: KirePlugged, opts?: any) {
-        plugin.load(this as any, opts); return this;
-    }
-
-    /**
-     * Registers a conditional variable handler.
-     * If the variable is used in the template, the callback is executed during compilation.
-     * @param name The variable name to watch for.
-     * @param callback The callback to execute.
-     */
-    public varThen(name: string, callback: KireHandler) {
-        this["~varThens"][name] = callback;
+    public plugin<Options extends object | undefined = {}>(plugin: KirePlugin<Options>, opts?: Options) {
+        plugin.load(this, opts); 
         return this;
     }
 
-    private _pluginCache: Record<string, any> = new NullProtoObj();
-
-    /**
-     * Returns a persistent cache Object for a specific key (e.g. plugin name).
-     * @param key Namespace key
-     */
-    public cached(key: string): Record<any, any> {
-        if (!this._pluginCache[key]) {
-            this._pluginCache[key] = new NullProtoObj();
+    public existVar(name: string | RegExp, callback: KireHandler, unique = false) {
+        const handlers = this.$kire["~handlers"];
+        const key = name.toString(); 
+        let list = handlers.exists_vars.get(key);
+        if (!list) {
+            list = [];
+            handlers.exists_vars.set(key, list);
         }
-        return this._pluginCache[key]!;
-    }
-
-    /**
-     * Registers a global attribute definition.
-     */
-    public attribute(def: AttributeDefinition) {
-        this["~attributes"][def.name] = def;
+        list.push({ name, unique, callback });
         return this;
     }
 
-    /**
-     * Generates a schema object for the project.
-     * @param name Project name
-     */
-    public pkgSchema(name: string) {
-        const schema: any = {
-            name,
-            directives: {},
-            elements: {},
-            attributes: {},
-            types: [],
-            ...this.$schemaDefinition
-        };
+    public $global(key: string, value: any) { 
+        this.$globals[key] = value; 
+        return this; 
+    }
 
-        for (const key in this["~directives"]) {
-            const def = this["~directives"][key];
-            schema.directives[key] = {
-                params: def.params,
-                children: def.children,
+    public $prop(key: string, value: any) { 
+        this.$props[key] = value; 
+        return this; 
+    }
+
+    public resolve(path: string): string { 
+        return this.resolvePath(path); 
+    }
+
+    public renderError(e: any, ctx?: any): string { 
+        return this.renderErrorHtml(e, this, ctx); 
+    }
+
+    // --- Schema Methods ---
+
+    public kireSchema(def: Partial<KireSchemaObject>) { 
+        Object.assign(this.$schema, def); 
+        return this; 
+    }
+
+    public type(def: TypeDefinition) { 
+        this.$schema.types.push(def);
+        return this; 
+    }
+
+    public attribute(def: KireAttributeDeclaration) {
+        this.$schema.attributes.push(def);
+        return this;
+    }
+
+    public directive(def: DirectiveDefinition) {
+        this.$directives.records[def.name] = def;
+        this.$directives.pattern = createFastMatcher(Object.keys(this.$directives.records));
+        this.$schema.directives.push({
+            name: def.name,
+            description: def.description,
+            params: def.params,
+            children: def.children,
+            example: def.example,
+            related: def.related,
+            exposes: def.exposes
+        });
+        return this;
+    }
+
+    public getDirective(name: string) {
+        return this.$directives.records[name];
+    }
+
+    public element(def: ElementDefinition) {
+        this.$elements.list.push(def);
+        this.$elements.matchers.unshift({ def });
+        const names = this.$elements.list.map(d => d.name);
+        this.$elements.pattern = createFastMatcher(names);
+        if (typeof def.name === 'string') {
+            this.$schema.elements.push({
+                name: def.name,
                 description: def.description,
-                example: def.example,
-                related: def.related
-            };
-        }
-
-        for (const key in this["~elements"]) {
-            const def = this["~elements"][key];
-            schema.elements[key] = {
                 void: def.void,
-                description: def.description,
+                attributes: def.attributes,
                 example: def.example,
                 related: def.related
-            };
+            });
         }
-
-        for (const key in this["~attributes"]) {
-            const def = this["~attributes"][key];
-            schema.attributes[key] = {
-                type: def.type,
-                description: def.description,
-                example: def.example
-            };
-        }
-
-        for (const key in this["~types"]) {
-            schema.types.push(this["~types"][key]);
-        }
-
-        return schema;
+        return this;
     }
 
-    /**
-     * Parses a template string into an AST.
-     * @param content The template content.
-     */
-    public parse(content: string): any[] {
-        const parser = new this.$parser(content, this as any);
-        return parser.parse();
+    public namespace(name: string, path: string) {
+        this.$namespaces[name] = this.$platform.resolve(this.$root, path);
+        return this;
     }
 
-    /**
-     * Registers a global variable.
-     * @param key The variable name.
-     * @param value The value.
-     */
-    public $global(key: string, value: any) { this.$globals[key] = value; return this; }
-    
-    /**
-     * Registers a shared property (alias for globals/props).
-     * @param key The property name.
-     * @param value The value.
-     */
-    public $prop(key: string, value: any) { this.$props[key] = value; return this; }
+    // --- Engine Methods ---
 
-    /**
-     * Compiles a template string into a KireTplFunction.
-     * @param content The template source code.
-     * @param filename The filename for debug/source map purposes.
-     * @param extraGlobals List of extra global variable names to inject.
-     */
-    public compile(content: string, filename = "template.kire", extraGlobals: string[] = []): KireTplFunction {
-        if (this._compiling.has(filename)) {
-            throw new Error(`Circular dependency detected while compiling: ${filename}`);
-        }
+    public resolvePath(filepath: string): string {
+        return resolvePathUtil(filepath, this.$config, this.$platform);
+    }
+
+    public readFile(path: string): string {
+        const normalized = path.replace(/\\/g, '/');
         
-        this._compiling.add(filename);
-        try {
-            const parser = new this.$parser(content, this as any);
-            const nodes = parser.parse();
-            const compilerInstance = new this.$compiler(this as any, filename);
-            const code = compilerInstance.compile(nodes, extraGlobals);
+        // Check cache first for source
+        const entry = this.$cache.files.get(normalized);
+        if (entry?.source) return entry.source;
 
-            const isAsync = compilerInstance.isAsync;
-            
-            // Convert Map to Record for metadata
+        const stored = this.$files[normalized];
+        if (stored) {
+            if (typeof stored === 'string') return stored;
+            if (typeof stored === 'function' && (stored as KireTplFunction).meta?.source) {
+                return (stored as KireTplFunction).meta.source;
+            }
+            throw new Error(`Path ${path} points to a pre-compiled function without source text.`);
+        }
+        if (this.$platform.exists(path)) return this.$platform.readFile(path);
+        throw new Error(`Template file not found: ${path}`);
+    }
+
+    public parse(content: string): Node[] {
+        return new Parser(content, this).parse();
+    }
+
+    public compile(content: string, filename = "template.kire", extraGlobals: string[] = [], isDependency = false): KireCacheEntry {
+        try {
+            const nodes = this.parse(content);
+            const compilerInstance = new Compiler(this, filename);
+            const code = compilerInstance.compile(nodes, extraGlobals, isDependency);
+            const async = compilerInstance.async;
             const dependencies: Record<string, string> = new NullProtoObj();
-            for (const [path, id] of compilerInstance.getDependencies()) {
+            
+            for (const [path, id] of Object.entries(compilerInstance.getDependencies())) {
                 dependencies[path] = id;
             }
 
-            const AsyncFunc = (async () => {}).constructor;
-            try {
-                const coreFunction = isAsync 
-                    ? new (AsyncFunc as any)("$props, $globals, $kire", code)
-                    : new Function("$props, $globals, $kire", code);
+            const AsyncFunc = (async () => {}).constructor as new (...args: any[]) => Function;
+            const coreFunction = async 
+                ? new AsyncFunc("$props, $globals, $kire", code)
+                : new Function("$props, $globals, $kire", code);
 
-                return createKireFunction(this as any, coreFunction, {
-                    async: isAsync,
-                    path: filename,
-                    code,
-                    source: content,
-                    map: undefined, 
-                    dependencies
-                });
-            } catch (syntaxError) {
-                if (!this.$silent) {
-                    console.log("FAILED CODE:\n", code);
-                }
-                throw syntaxError;
-            }
+            const fn = this.$runtime.createKireFunction(this, coreFunction, {
+                async, 
+                path: filename, 
+                code, 
+                source: content, 
+                map: undefined, 
+                dependencies
+            });
+
+            return { ast: nodes, code, fn, async, time: Date.now(), dependencies, source: content };
         } catch (e) {
-            if (!this.$silent) {
-                console.error(`Compilation error in ${filename}:`);
-                console.error(e);
+            if (!this.$silent) { 
+                console.error(`Compilation error in ${filename}:`); 
+                console.error(e); 
             }
-            if (e instanceof KireError) throw e;
-            throw new KireError(e as Error, { execute: () => {}, isAsync: false, path: filename, code: "", source: content, map: undefined, dependencies: new NullProtoObj() } as any);
-        } finally {
-            this._compiling.delete(filename);
+            if (e instanceof this.KireError) throw e;
+            throw new this.KireError(e as Error, { 
+                execute: () => {}, 
+                async: false, 
+                path: filename, 
+                code: "", 
+                source: content, 
+                map: undefined, 
+                dependencies: new NullProtoObj() 
+            } as any);
         }
     }
 
-    /**
-     * Compiles all templates in the given directories and bundles them into a single JS file.
-     * This file can be loaded into Kire's bundled cache.
-     * @param directories List of directories to scan for templates.
-     * @param outputFile The output file path for the bundle.
-     */
+    public getOrCompile(path: string, isDependency = false): KireTplFunction {
+        const resolved = this.resolvePath(path);
+        const stored = this.$files[resolved];
+        
+        if (typeof stored === 'function') return stored as KireTplFunction;
+        
+        const cached = this.$cache.files.get(resolved);
+        const source = typeof stored === 'string' ? stored : undefined;
+
+        if (this.$production && cached) return cached.fn!;
+        
+        if (!this.$production && !source && this.$platform.exists(resolved)) {
+            const mtime = this.$platform.stat(resolved).mtimeMs;
+            if (cached && cached.time === mtime) return cached.fn!;
+        } else if (source && cached) {
+            return cached.fn!;
+        }
+
+        if (this.$kire["~compiling"].has(resolved)) {
+            throw new Error(`Circular dependency detected: ${resolved}`);
+        }
+
+        const content = source ?? this.readFile(resolved);
+        this.$kire["~compiling"].add(resolved);
+        try {
+            const entry = this.compile(content, resolved, [], isDependency);
+            
+            if (!source && this.$platform.exists(resolved)) {
+                entry.time = this.$platform.stat(resolved).mtimeMs;
+            }
+
+            this.$cache.files.set(resolved, entry);
+            return entry.fn!;
+        } finally {
+            this.$kire["~compiling"].delete(resolved);
+        }
+    }
+
+    public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Asyncronos> {
+        try {
+            let effectiveProps = locals;
+            let effectiveGlobals = globals || this.$globals;
+            
+            if (this["~parent"]) {
+                effectiveProps = Object.assign(Object.create(this.$props), locals);
+            }
+            
+            const result = template.call(this, effectiveProps, effectiveGlobals, template);
+            
+            if (!this.$async && result instanceof Promise) {
+                throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);
+            }
+            
+            return result as any;
+        } catch (e) {
+            throw e instanceof this.KireError ? e : new this.KireError(e as Error, template);
+        }
+    }
+
+    public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Asyncronos> {
+        let bucket = this.$cache.files.get(this["~render-symbol"]) as Map<string, KireCacheEntry>;
+        if (!bucket) {
+            bucket = new Map();
+            this.$cache.files.set(this["~render-symbol"], bucket);
+        }
+
+        let entry = bucket.get(template);
+        if (!entry) {
+            entry = this.compile(template, filename, Object.keys(locals));
+            if (bucket.size >= this.max_renders) {
+                const first = bucket.keys().next().value;
+                bucket.delete(first);
+            }
+            bucket.set(template, entry);
+        }
+        
+        return this.run(entry.fn!, locals, globals);
+    }
+
+    public view(path: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>): KireRendered<Asyncronos> {
+        return this.run(this.getOrCompile(path), locals, globals);
+    }
+
     public compileAndBuild(directories: string[], outputFile: string) {
         const bundled: Record<string, string> = {};
-        
         const scan = (dir: string) => {
-            if (!existsSync(dir)) return;
-            const items = readdirSync(dir);
+            if (!this.$platform.exists(dir)) return;
+            const items = this.$platform.readDir(dir);
             for (const item of items) {
-                const fullPath = join(dir, item).replace(/\\/g, '/');
-                const stat = statSync(fullPath);
-                if (stat.isDirectory()) {
-                    scan(fullPath);
-                } else if (stat.isFile() && (fullPath.endsWith(this.$extension) || fullPath.endsWith('.kire'))) {
-                    const content = readFileSync(fullPath, 'utf-8');
-                    const resolved = relative(this.$root, fullPath).replace(/\\/g, '/');
-                    
-                    // Compile directly to get the code string
-                    const parser = new this.$parser(content, this as any);
-                    const nodes = parser.parse();
-                    const compilerInstance = new this.$compiler(this as any, resolved);
-                    const code = compilerInstance.compile(nodes, []);
-                    
-                    // We need to wrap it in a function string
-                    const isAsync = compilerInstance.isAsync;
-                    bundled[resolved] = isAsync 
-                        ? `async function($props = {}, $globals = {}) {\n${code}\n}`
-                        : `function($props = {}, $globals = {}) {\n${code}\n}`;
+                const fullPath = this.$platform.join(dir, item);
+                const stat = this.$platform.stat(fullPath);
+                if (stat.isDirectory()) scan(fullPath);
+                else if (stat.isFile() && (fullPath.endsWith(this.$extension) || fullPath.endsWith('.kire'))) {
+                    const content = this.$platform.readFile(fullPath);
+                    const resolved = this.$platform.relative(this.$root, fullPath);
+                    const entry = this.compile(content, resolved);
+                    this.$cache.files.set(resolved, entry);
+                    bundled[resolved] = entry.async 
+                        ? `async function($props = {}, $globals = {}, $kire) {
+${entry.code}
+}`
+                        : `function($props = {}, $globals = {}, $kire) {
+${entry.code}
+}`;
                 }
             }
         };
-
-        for (const dir of directories) {
-            scan(resolve(this.$root, dir).replace(/\\/g, '/'));
-        }
-
-        const isCjs = typeof module !== 'undefined';
-        const exportLine = isCjs ? 'module.exports = _kire_bundled;' : 'export default _kire_bundled;';
-
-        const output = `
-// Kire Bundled Templates
+        for (const dir of directories) scan(this.$platform.resolve(this.$root, dir));
+        const exportLine = typeof module !== 'undefined' ? 'module.exports = _kire_bundled;' : 'export default _kire_bundled;';
+        const output = `// Kire Bundled Templates
 // Generated at ${new Date().toISOString()}
 
 const _kire_bundled = {
@@ -461,222 +618,6 @@ ${Object.entries(bundled).map(([key, fn]) => `  "${key}": ${fn}`).join(',\n')}
 
 ${exportLine}
 `;
-        writeFileSync(outputFile, output, 'utf-8');
+        this.$platform.writeFile(outputFile, output);
     }
-
-    /**
-     * Gets a compiled template from cache or compiles it from file.
-     * Synchronous operation.
-     * @param path The file path.
-     */
-    public getOrCompile(path: string): KireTplFunction {
-        const resolved = this.resolvePath(path);
-        
-        if (this.$files[resolved]) return this.$files[resolved];
-        
-        // In dev mode, check mtime if it's a real file
-        if (!this.production && existsSync(resolved)) {
-            const mtime = statSync(resolved).mtimeMs;
-            if (this.$files[resolved] && this.$mtimes[resolved] === mtime) {
-                return this.$files[resolved];
-            }
-            this.$mtimes[resolved] = mtime;
-        } else if (this.$files[resolved]) {
-            return this.$files[resolved];
-        }
-        
-        const content = this.readFile(resolved);
-        const compiled = this.compile(content, resolved);
-        
-        this.$files[resolved] = compiled;
-        return compiled;
-    }
-
-    /**
-     * Renders a raw template string.
-     * @param template The template string.
-     * @param locals Local variables.
-     * @param globals Optional extra global variables.
-     * @param filename Filename for debug.
-     */
-    public render(template: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>, filename = "template.kire"): KireRendered<Asyncronos> {
-        // Optimization: Try to find in weak cache first
-        const cacheKey = (locals && typeof locals === 'object') ? locals : (globals && typeof globals === 'object' ? globals : null);
-        
-        if (cacheKey) {
-            let record = this._weakCache.get(cacheKey);
-            if (record && record[template]) return this.run(record[template], locals, globals);
-            
-            if (!record) {
-                record = new NullProtoObj();
-                this._weakCache.set(cacheKey, record);
-            }
-            
-            const compiled = this.compile(template, filename, Object.keys(locals));
-            record[template] = compiled;
-            return this.run(compiled, locals, globals);
-        }
-
-        const compiled = this.compile(template, filename, Object.keys(locals));
-        return this.run(compiled, locals, globals);
-    }
-
-    /**
-     * Renders a template from a file.
-     * @param path The file path.
-     * @param locals Local variables.
-     * @param globals Optional extra global variables.
-     */
-    public view(path: string, locals: Record<string, any> = new NullProtoObj(), globals?: Record<string, any>): KireRendered<Asyncronos> {
-        const compiled = this.getOrCompile(path);
-        return this.run(compiled, locals, globals);
-    }
-
-    /**
-     * Runs a pre-compiled template function.
-     * @param template The compiled template function.
-     * @param locals Local variables.
-     * @param globals Optional global variables.
-     */
-    public run(template: KireTplFunction, locals: Record<string, any>, globals?: Record<string, any>): KireRendered<Asyncronos> {
-        try {
-            const result = template.call(this, locals, globals, template);
-            
-            if (!this.$async && result instanceof Promise) {
-                 throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);
-            }
-
-            return result as any;
-        } catch (e) {
-            throw e instanceof KireError ? e : new KireError(e as Error, template);
-        }
-    }
-
-    /**
-     * Resolves a file path using configured root and namespaces.
-     * @param path The raw path.
-     */
-    public resolve(path: string): string { return this.resolvePath(path); }
-
-    /**
-     * Internal path resolution logic.
-     * @param filepath The path to resolve.
-     */
-    public resolvePath(filepath: string): string {
-        if (!filepath || filepath.startsWith('http')) return filepath;
-        let path = filepath.replace(/\\/g, '/');
-        const ext = '.' + this.$extension;
-
-        // 1. Handle Namespaces (e.g., ~/path or ns.path)
-        let matchedNS = false;
-        for (const ns in this["~namespaces"]) {
-            // Check for prefix match: "ns/" or "ns."
-            if (path.startsWith(ns + '/') || path.startsWith(ns + '.')) {
-                const target = this["~namespaces"][ns]!;
-                let suffix = path.slice(ns.length + 1);
-                
-                // Only replace dots and add extension if it doesn't already have it
-                if (!suffix.endsWith(ext)) {
-                    suffix = suffix.replace(/\./g, '/') + ext;
-                }
-                
-                path = join(target, suffix).replace(/\\/g, '/');
-                matchedNS = true;
-                break;
-            }
-        }
-
-        // 2. Legacy/Fallback resolution if no namespace prefix matched
-        if (!matchedNS) {
-            if (path.includes('.')) {
-                const parts = path.split('.');
-                const ns = parts[0]!;
-                // Check if the first part is a registered namespace
-                if (this["~namespaces"][ns]) {
-                    const target = this["~namespaces"][ns]!;
-                    let suffix = parts.slice(1).join('/');
-                    if (!suffix.endsWith(ext)) suffix += ext;
-                    path = join(target, suffix).replace(/\\/g, '/');
-                } else if (!path.endsWith(ext)) {
-                    // Treat all dots as separators if extension is missing
-                    path = path.replace(/\./g, '/') + ext;
-                }
-            } else if (!path.endsWith(ext)) {
-                path += ext;
-            }
-        }
-
-        // 3. Final normalization
-        if (!isAbsolute(path)) path = join(this.$root, path).replace(/\\/g, '/');
-        return path.replace(/\\/g, '/');
-    }
-
-    /**
-     * Synchronously reads a file from the filesystem or memory.
-     * @param path The resolved file path.
-     */
-    public readFile(path: string): string {
-        const normalized = path.replace(/\\/g, '/');
-        if (this.$vfiles[normalized]) return this.$vfiles[normalized]!;
-        if (this.$sources[normalized]) return this.$sources[normalized]!;
-        
-        if (existsSync(path)) {
-            return readFileSync(path, 'utf-8');
-        }
-        throw new Error(`Template file not found: ${path}`);
-    }
-
-    /**
-     * Registers a namespace for template resolution.
-     * @param name The namespace prefix.
-     * @param path The directory path.
-     */
-    public namespace(name: string, path: string) {
-        this["~namespaces"][name] = resolve(this.$root, path).replace(/\\/g, '/'); return this;
-    }
-
-    /**
-     * Registers a directive.
-     * @param def The directive definition.
-     */
-    public directive(def: DirectiveDefinition) { 
-        this["~directives"][def.name] = def; 
-        this.$directivesPattern = createFastMatcher(Object.keys(this["~directives"]));
-        return this; 
-    }
-    
-    public getDirective(name: string) { return this["~directives"][name]; }
-    
-    /**
-     * Registers a custom element.
-     * @param def The element definition.
-     */
-    public element(def: ElementDefinition) { 
-        const name = def.name;
-        if (typeof name === "string") {
-            this["~elements"][name] = def;
-        } else if (name instanceof RegExp) {
-            this["~elements"][name.source] = def;
-        }
-        this.$elementMatchers.unshift({ def }); 
-        this.$elementsPattern = createFastMatcher(
-            Object.values(this["~elements"]).map(m => m.name)
-        );
-        return this; 
-    }
-
-    /**
-     * Registers schema information.
-     */
-    public kireSchema(def: KireSchemaDefinition) { this.$schemaDefinition = def; return this; }
-    
-    /**
-     * Registers a type definition.
-     */
-    public type(def: TypeDefinition) { this["~types"][def.variable] = def; return this; }
-    
-    /**
-     * Renders an error into HTML.
-     */
-    public renderError(e: any, ctx?: any): string { return renderErrorHtml(e, this as any, ctx); }
 }

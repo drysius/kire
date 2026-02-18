@@ -12,7 +12,11 @@ const kire = new Kire();
 writeFileSync(
 	"kire-schema.json",
 	JSON.stringify(
-		kire.pkgSchema(pkg.name, pkg.repository, pkg.version),
+		kire.kireSchema({
+			name:pkg.name, 
+			repository:pkg.repository.url,
+			version:pkg.version
+		}),
 		null,
 		3,
 	),

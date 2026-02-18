@@ -7,8 +7,8 @@ describe("Wire Directives", () => {
 		const kire = new Kire({ silent: true });
 		registerDirectives(kire, { route: "/_wire" });
 
-		const result = await kire.compile("@wire('counter', { start: 5 })");
-        const code = result.meta.code;
+		const result = kire.compile("@wire('counter', { start: 5 })");
+        const code = result.code;
 		expect(code).toContain("const $w = $globals.Wired");
 		expect(code).toContain("getComponentClass($name)");
 		expect(code).toContain("new $c(this)");
@@ -23,21 +23,21 @@ describe("Wire Directives", () => {
 
 		const output = await kire.render("@wired");
 
-		expect(output).toContain("<script src=\"/_custom_wire/kirewire.js\"></script>");
-		expect(output).toContain("<link rel=\"stylesheet\" href=\"/_custom_wire/kirewire.css\">");
+		expect(output).toContain("<script src=\"/_custom_wire/kirewire.min.js\"></script>");
+		expect(output).toContain("<link rel=\"stylesheet\" href=\"/_custom_wire/kirewire.min.css\">");
 	});
 
 	test("attributes schema should be registered", async () => {
-		const kire = new Kire({ silent: true, directives:false });
+		const kire = new Kire({ silent: true, emptykire:true });
         const { Wired } = await import("../../src/wired");
 		kire.plugin(Wired.plugin, { route: "/_wire" });
 
-		const schema = kire.pkgSchema("test-app");
+		const schema = kire.$schema;
 		const attrs = schema.attributes;
 
 		expect(attrs).toBeDefined();
-		expect(attrs["wire:click"]).toBeDefined();
-		expect(attrs["wire:model"]).toBeDefined();
-		expect(attrs["wire:loading"]).toBeDefined();
+		expect(attrs.find(a => a.name === "wire:click")).toBeDefined();
+		expect(attrs.find(a => a.name === "wire:model")).toBeDefined();
+		expect(attrs.find(a => a.name === "wire:loading")).toBeDefined();
 	});
 });

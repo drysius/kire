@@ -1,11 +1,11 @@
 import { expect, test, describe } from "bun:test";
 import { Kire } from "../src/kire";
 
-describe("Kire varThen System", () => {
-    test("should trigger varThen for simple variable usage", async () => {
+describe("Kire existVar System", () => {
+    test("should trigger existVar for simple variable usage", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("MY_VAR", (api) => {
+        kire.existVar("MY_VAR", (api) => {
             triggered = true;
             api.prologue("const MY_VAR = 'resolved';");
         });
@@ -15,10 +15,10 @@ describe("Kire varThen System", () => {
         expect(result).toBe("resolved");
     });
 
-    test("should trigger varThen for property access (var.prop)", async () => {
+    test("should trigger existVar for property access (var.prop)", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("USER", (api) => {
+        kire.existVar("USER", (api) => {
             triggered = true;
             api.prologue("const USER = { name: 'John' };");
         });
@@ -28,10 +28,10 @@ describe("Kire varThen System", () => {
         expect(result).toBe("John");
     });
 
-    test("should trigger varThen for optional chaining (var?.prop)", async () => {
+    test("should trigger existVar for optional chaining (var?.prop)", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("USER", (api) => {
+        kire.existVar("USER", (api) => {
             triggered = true;
             api.prologue("const USER = { name: 'Doe' };");
         });
@@ -41,10 +41,10 @@ describe("Kire varThen System", () => {
         expect(result).toBe("Doe");
     });
 
-    test("should trigger varThen for typeof", async () => {
+    test("should trigger existVar for typeof", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("MY_VAR", (api) => {
+        kire.existVar("MY_VAR", (api) => {
             triggered = true;
             api.prologue("const MY_VAR = 123;");
         });
@@ -54,10 +54,10 @@ describe("Kire varThen System", () => {
         expect(result).toBe("number");
     });
 
-    test("should trigger varThen for negation (!var, !!var)", async () => {
+    test("should trigger existVar for negation (!var, !!var)", async () => {
         const kire = new Kire({ silent: true });
         let triggeredCount = 0;
-        kire.varThen("FLAG", (api) => {
+        kire.existVar("FLAG", (api) => {
             triggeredCount++;
             api.prologue("const FLAG = true;");
         });
@@ -67,10 +67,10 @@ describe("Kire varThen System", () => {
         expect(result).toBe("false - true");
     });
 
-    test("should trigger varThen for parenthetical usage ((var))", async () => {
+    test("should trigger existVar for parenthetical usage ((var))", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("VAL", (api) => {
+        kire.existVar("VAL", (api) => {
             triggered = true;
             api.prologue("const VAL = 10;");
         });
@@ -80,17 +80,17 @@ describe("Kire varThen System", () => {
         expect(result).toBe("20");
     });
 
-    test("should handle varThen dependencies (one varThen uses another)", async () => {
+    test("should handle existVar dependencies (one existVar uses another)", async () => {
         const kire = new Kire({ silent: true });
         let aTriggered = false;
         let bTriggered = false;
 
-        kire.varThen("VAR_A", (api) => {
+        kire.existVar("VAR_A", (api) => {
             aTriggered = true;
             api.prologue("const VAR_A = 'A';");
         });
 
-        kire.varThen("VAR_B", (api) => {
+        kire.existVar("VAR_B", (api) => {
             bTriggered = true;
             api.prologue("const VAR_B = VAR_A + 'B';");
         });
@@ -101,14 +101,38 @@ describe("Kire varThen System", () => {
         expect(result).toBe("AB");
     });
 
-    test("should NOT trigger varThen if variable is not used", async () => {
+    test("should NOT trigger existVar if variable is not used", async () => {
         const kire = new Kire({ silent: true });
         let triggered = false;
-        kire.varThen("UNUSED", (api) => {
+        kire.existVar("UNUSED", (api) => {
             triggered = true;
         });
 
         await kire.render("Hello World");
         expect(triggered).toBe(false);
+    });
+
+    test("should handle unique flag in existVar", async () => {
+        const kire = new Kire({ silent: true });
+        let triggeredCount = 0;
+        kire.existVar("UNIQUE_VAR", (api) => {
+            triggeredCount++;
+            api.prologue("const UNIQUE_VAR = 'unique';");
+        }, true);
+
+        kire.$files[kire.resolvePath("dep")] = "{{ UNIQUE_VAR }}";
+        
+        // UNIQUE_VAR is used in dependency 'dep', but it should NOT trigger because unique=true and it's a dependency
+        // It will throw ReferenceError because UNIQUE_VAR is not defined in dep scope
+        try {
+            await kire.render("@include('dep')");
+        } catch (e) {}
+        
+        expect(triggeredCount).toBe(0);
+        
+        // Now use it in main template
+        const result2 = await kire.render("{{ UNIQUE_VAR }}");
+        expect(triggeredCount).toBe(1); // Triggered for main template
+        expect(result2).toBe("unique");
     });
 });

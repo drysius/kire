@@ -18,19 +18,15 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should render markdown string", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		const tpl = `@markdown('# Hello World')`;
 		const result = await kire.render(tpl);
 		expect(result).toContain("<h1>Hello World</h1>");
 	});
 
 	it("should render markdown from file", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [KireMarkdown],
-			vfiles: {
-				[TEMP_MD]: TEMP_MD_CONTENT
-			}
-		});
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+        kire.$files[kire.resolvePath(TEMP_MD)] = TEMP_MD_CONTENT;
 
 		const tpl = `@markdown('${TEMP_MD}')`;
 		const result = await kire.render(tpl);
@@ -39,12 +35,8 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should render markdown with dynamic locals (mdview)", async () => {
-		const kire = new Kire({ silent: true,
-			plugins: [KireMarkdown],
-			vfiles: {
-				"dynamic.md": "# Hello {{ $props.name }}"
-			}
-		});
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+        kire.$files[kire.resolvePath("dynamic.md")] = "# Hello {{ $props.name }}";
 
 		const html = await kire.mdview("dynamic.md", { name: "Kire" });
 		expect(html).toContain("<h1>Hello Kire</h1>");
@@ -55,7 +47,7 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should render wildcard content (glob pattern)", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 
 		// Mock $readdir
 		kire.$global("$readdir", async (pattern: string) => {
@@ -78,7 +70,7 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should expose kire.mdrender helper", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		expect(kire.mdrender).toBeDefined();
 		if (kire.mdrender) {
 			const html = await kire.mdrender("**Bold**");
@@ -87,7 +79,7 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should render kire components inside markdown", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		const html = await kire.mdrender("Hello {{ 123 }}");
 		expect(html).toContain("Hello 123");
 
@@ -96,7 +88,7 @@ describe("KireMarkdown", () => {
 	});
 
 	it("should handle missing file gracefully (fallback to string)", async () => {
-		const kire = new Kire({ silent: true, plugins: [KireMarkdown] });
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		const tpl = `@markdown('missing_file.md')`;
 		const result = await kire.render(tpl);
 		expect(result).toContain("<p>missing_file.md</p>");

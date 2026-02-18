@@ -2,12 +2,21 @@ import type { Kire } from "../kire";
 import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
 export default (kire: Kire<any>) => {
-    kire.varThen('__kire_stack', (api) => {
+    kire.existVar('__kire_stack', (api) => {
         api.prologue(`${api.editable ? 'let' : 'const'} __kire_stack = new this.NullProtoObj;`);
         api.epilogue(`
             $kire_response = $kire_response.replace(/<!-- KIRE:stack\\(.*?\\) -->/g, "");
         `);
-    });
+    }, true);
+
+    kire.existVar('__kire_defines', (api) => {
+        api.prologue(`${api.editable ? 'let' : 'const'} __kire_defines = new this.NullProtoObj;`);
+        api.epilogue(`
+            $kire_response = $kire_response.replace(/<!-- KIRE:defined\\((.*?)\\) -->([\\s\\S]*?)<!-- KIRE:enddefined -->/g, (match, name, fallback) => {
+                return __kire_defines[name] !== undefined ? __kire_defines[name] : fallback;
+            });
+        `);
+    }, true);
 
 	kire.directive({
 		name: `define`,
@@ -20,8 +29,7 @@ export default (kire: Kire<any>) => {
             api.write(`{ const _origRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                if (!$globals["~defines"]) $globals["~defines"] = new NullProtoObj();
-                $globals["~defines"]['${name}'] = $kire_response;
+                __kire_defines['${name}'] = $kire_response;
                 $kire_response = _origRes${id};
             }`);
 		},
@@ -34,13 +42,11 @@ export default (kire: Kire<any>) => {
 		onCall: (api) => {
 			let name = api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			api.write(`if ($globals["~defines"] && $globals["~defines"]['${name}'] !== undefined) {`);
-            api.write(`  $kire_response += $globals["~defines"]['${name}'];`);
-            if (api.node.children?.length) {
-                api.write(`} else {`);
+            api.write(`$kire_response += "<!-- KIRE:defined(${name}) -->";`);
+            if (api.children) {
                 api.renderChildren();
             }
-            api.write(`}`);
+            api.write(`$kire_response += "<!-- KIRE:enddefined -->";`);
 		},
 	});
 

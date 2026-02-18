@@ -1,36 +1,36 @@
+import type { Kire } from "../kire";
 
 /**
- * Kire Path Resolution Utility
- * Handles namespaces, extensions, and absolute/relative paths.
+ * Resolução de caminhos no Kire, tratando namespaces e extensões.
  */
-export function resolvePath(filepath: string, config: any, platform: any): string {
+export function resolvePath(this: Kire<any>, filepath: string): string {
     if (!filepath || filepath.startsWith('http')) return filepath;
     
     let path = filepath.replace(/\\/g, '/');
-    const ext = '.' + config.extension;
-    const namespaces = config.namespaces;
+    const ext = '.' + this.$extension;
+    const namespaces = this.$namespaces;
 
     // 1. Handle Namespaces (e.g., ns/path or ns.path)
     for (const ns in namespaces) {
         if (path.startsWith(ns + '/') || path.startsWith(ns + '.')) {
-            const target = namespaces[ns];
+            const target = namespaces[ns]!;
             let suffix = path.slice(ns.length + 1);
             if (!suffix.endsWith(ext)) {
                 suffix = suffix.replace(/\./g, '/') + ext;
             }
-            return platform.join(target, suffix);
+            return this.$platform.join(target, suffix);
         }
     }
 
     // 2. Legacy/Dot resolution
     if (path.includes('.')) {
         const parts = path.split('.');
-        const ns = parts[0];
+        const ns = parts[0]!;
         if (namespaces[ns]) {
-            const target = namespaces[ns];
+            const target = namespaces[ns]!;
             let suffix = parts.slice(1).join('/');
             if (!suffix.endsWith(ext)) suffix += ext;
-            return platform.join(target, suffix);
+            return this.$platform.join(target, suffix);
         }
         
         // Pure view path like "auth.login" (no slashes, no leading dot)
@@ -47,9 +47,14 @@ export function resolvePath(filepath: string, config: any, platform: any): strin
     }
 
     // 3. Final normalization
-    if (!platform.isAbsolute(path)) {
-        path = platform.resolve(config.root, path);
+    if (!this.$platform.isAbsolute(path)) {
+        path = this.$platform.resolve(this.$root, path);
     }
     
     return path;
+}
+
+export function namespace(this: Kire<any>, name: string, path: string) {
+    this.$namespaces[name] = this.$platform.resolve(this.$root, path);
+    return this;
 }

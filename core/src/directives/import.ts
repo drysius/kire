@@ -18,7 +18,7 @@ export default (kire: Kire<any>) => {
                 const _oldProps = $props;
                 $props = Object.assign(Object.create($globals), _oldProps, ${locals});
                 const _dep = ${depId};
-                const res = _dep.call(this, $props, $globals); 
+                const res = _dep.call(this, $props, $globals, _dep); 
                 ${dep.meta.async ? `$kire_response += await res;` : `$kire_response += res;`}
                 $props = _oldProps;
             }`);
