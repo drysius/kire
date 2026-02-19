@@ -136,6 +136,9 @@ export class Kire<Asyncronos extends boolean = true> {
     public get $elementsPattern() { return this.$elements.pattern; }
     public get $directivesPattern() { return this.$directives.pattern; }
 
+    /** Wire Plugin State Accessor */
+    public get $wire(): any { return this.$kire["~wire"]; }
+
     /** Aliases for ~store (readonly) */
     public readonly $globals!: Record<string, any>;
     public readonly $props!: Record<string, any>;
@@ -481,9 +484,9 @@ export class Kire<Asyncronos extends boolean = true> {
                 dependencies[path] = id;
             }
 
-            const AsyncFunc = (async () => {}).constructor as new (...args: any[]) => Function;
+            const AsyncFunc = (async () => {}).constructor;
             const coreFunction = async 
-                ? new AsyncFunc("$props, $globals, $kire", code)
+                ? new (AsyncFunc as any)("$props, $globals, $kire", code)
                 : new Function("$props, $globals, $kire", code);
 
             const fn = this.$runtime.createKireFunction(this, coreFunction, {

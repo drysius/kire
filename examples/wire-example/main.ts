@@ -1,5 +1,5 @@
 import path from "node:path";
-import { Wired } from "@kirejs/wire";
+import { wirePlugin } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 
@@ -12,12 +12,12 @@ const app = new Elysia({
 	serve: {
 		maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB
 	},
-}).derive(() => ({ wireKey: "", user: {}, kire:kire.fork() }));
+}).derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
+
 void (async () => {
 	// allow to use wired
-	kire.plugin(Wired.plugin, {
-		route: "/_wired",
-		adapter: "http",
+	kire.plugin(wirePlugin, {
+		route: "/_wire",
 		secret: "change-me-in-production",
 		expire: "2h",
 	});
@@ -41,9 +41,8 @@ void (async () => {
 		}
 
 		// Use session ID + IP for secure identifier
-		const ip =
-			context.server?.requestIP(context.request)?.address || "127.0.0.1";
-		const wireKey = Wired.keystore(session.value as string, ip);
+		const ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
+		const wireKey = kire.wireKeystore(session.value as string, ip);
 
 		console.log(`[Middleware] Path: ${context.request.url} | Session: ${session.value} | IP: ${ip} | WireKey: ${wireKey}`);
 
@@ -54,128 +53,37 @@ void (async () => {
 		};
 		context.kire.$global("isActive", isActive);
 		context.kire.$global('request', context);
+		context.kire.$global('$wireToken', wireKey);
 		return {
 			user: { id: session.value, name: "Guest" },
-			wireKey,
 		};
 	});
 
-	// Main Route
-	app.get("/", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-
-		// Pass the wireKey as $wireToken so initial render checksum matches server expectations
-		return await context.kire.view("pages.index", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/chat", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.chat", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/search", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.search", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/infinity", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.infinity", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/toast", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.toast", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/upload", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.upload", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/todo", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.todo", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/users", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.users", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/stream", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.stream", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-	app.get("/lazy", async (context) => {
-		context.set.headers["Content-Type"] = "text/html";
-		return await context.kire.view("pages.lazy", {
-			$wireToken: context.wireKey,
-			user: context.user,
-		});
-	});
-
-    app.get("/features", async (context) => {
-        context.set.headers["Content-Type"] = "text/html";
-        return await context.kire.view("pages.features", {
-            $wireToken: context.wireKey,
-            user: context.user,
+	// Routes
+	const routes = ["/", "/chat", "/search", "/infinity", "/toast", "/upload", "/todo", "/users", "/stream", "/lazy", "/features", "/stress", "/textarea"];
+    
+    for (const route of routes) {
+        const viewName = route === "/" ? "pages.index" : `pages.${route.slice(1)}`;
+        app.get(route, async (context) => {
+            context.set.headers["Content-Type"] = "text/html";
+            
+            return await context.kire.view(viewName, {
+                user: context.user,
+            });
         });
-    });
-
-    app.get("/stress", async (context) => {
-        context.set.headers["Content-Type"] = "text/html";
-        return await context.kire.view("pages.stress", {
-            $wireToken: context.wireKey,
-            user: context.user,
-        });
-    });
-
-	app.get("/textarea", async (context) => {
-        context.set.headers["Content-Type"] = "text/html";
-        return await context.kire.view("pages.textarea", {
-            $wireToken: context.wireKey,
-            user: context.user,
-        });
-    });
+    }
 
 	// Unified Wired Handler
-	app.all(`${Wired.options.route}*`, async (context) => {
+    const wireRoute = kire.$kire["~wire"].options.route;
+	app.all(`${wireRoute}*`, async (context) => {
 		const url = new URL(context.request.url);
-        const res = await context.kire.WireRequest({
+        const res = await context.kire.wireRequest({
             path: url.pathname,
             method: context.request.method,
             query: context.query,
             body: context.body,
-            token: context.wireKey
+            token: context.wireKey,
+            locals: { wireToken: context.wireKey }
         });
 
         if (res.code === "not_wired") {

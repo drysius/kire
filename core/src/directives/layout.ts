@@ -5,16 +5,20 @@ export default (kire: Kire<any>) => {
     kire.existVar('__kire_stack', (api) => {
         api.prologue(`${api.editable ? 'let' : 'const'} __kire_stack = new this.NullProtoObj;`);
         api.epilogue(`
-            $kire_response = $kire_response.replace(/<!-- KIRE:stack\\(.*?\\) -->/g, "");
+            if (typeof $kire_response === 'string') {
+                $kire_response = $kire_response.replace(/<!-- KIRE:stack\\(.*?\\) -->/g, "");
+            }
         `);
     }, true);
 
     kire.existVar('__kire_defines', (api) => {
         api.prologue(`${api.editable ? 'let' : 'const'} __kire_defines = new this.NullProtoObj;`);
         api.epilogue(`
-            $kire_response = $kire_response.replace(/<!-- KIRE:defined\\((.*?)\\) -->([\\s\\S]*?)<!-- KIRE:enddefined -->/g, (match, name, fallback) => {
-                return __kire_defines[name] !== undefined ? __kire_defines[name] : fallback;
-            });
+            if (typeof $kire_response === 'string') {
+                $kire_response = $kire_response.replace(/<!-- KIRE:defined\\((.*?)\\) -->([\\s\\S]*?)<!-- KIRE:enddefined -->/g, (match, name, fallback) => {
+                    return (__kire_defines && __kire_defines[name] !== undefined) ? __kire_defines[name] : fallback;
+                });
+            }
         `);
     }, true);
 

@@ -122,17 +122,11 @@ describe("Kire existVar System", () => {
 
         kire.$files[kire.resolvePath("dep")] = "{{ UNIQUE_VAR }}";
         
-        // UNIQUE_VAR is used in dependency 'dep', but it should NOT trigger because unique=true and it's a dependency
-        // It will throw ReferenceError because UNIQUE_VAR is not defined in dep scope
-        try {
-            await kire.render("@include('dep')");
-        } catch (e) {}
+        // UNIQUE_VAR is used in dependency 'dep'. 
+        // With the new compiler, it SHOULD trigger in the main scope even if only used in dependency.
+        const result = await kire.render("@include('dep')");
         
-        expect(triggeredCount).toBe(0);
-        
-        // Now use it in main template
-        const result2 = await kire.render("{{ UNIQUE_VAR }}");
-        expect(triggeredCount).toBe(1); // Triggered for main template
-        expect(result2).toBe("unique");
+        expect(triggeredCount).toBe(1);
+        expect(result).toBe("unique");
     });
 });

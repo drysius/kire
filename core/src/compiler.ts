@@ -17,6 +17,8 @@ import {
     createVarThenRegex
 } from "./utils/regex";
 
+import { escapeHtml } from "./utils/html";
+
 export class Compiler {
     private body: string[] = [];
     private header: string[] = [];
@@ -42,7 +44,7 @@ export class Compiler {
     private markAsync() { this._async = true; }
 
     private esc(str: string): string {
-        return "'" + str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/\n/g, "\\n").replace(/\r/g, "\\r") + "'";
+        return "`" + str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$") + "`";
     }
 
     private flushText() {
@@ -77,7 +79,8 @@ export class Compiler {
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
 
-        this.collectIdentifiers(nodes, this.identifiers);
+        // Deep identifier collection (including dependencies)
+        this.deepCollectIdentifiers(nodes, this.identifiers, new Set());
         if (extraGlobals) extraGlobals.forEach(g => this.identifiers.add(g));
 
         const localDecls = new Set<string>();
@@ -87,7 +90,7 @@ export class Compiler {
             if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             if (typeof (globalThis as any)[id] !== 'undefined') continue;
             
-            // Skip variables that have existVar handlers
+            // Skip variables that have existVar handlers (they will be injected by the loop below)
             if (this.kire.$kire["~handlers"].exists_vars.has(id)) continue;
 
             this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'];`);
@@ -108,7 +111,7 @@ export class Compiler {
             changed = false;
             // Join everything to scan for variable usage
             const rawAllCode = this.header.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
-            // Strip strings to avoid false positives
+            // Strip strings to avoid false positives, but keep symbols
             const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
 
             for (const [name, entries] of this.kire.$kire["~handlers"].exists_vars) {
@@ -116,7 +119,7 @@ export class Compiler {
                 if (triggered.has(nameStr)) continue;
 
                 for (const entry of entries) {
-                    // If unique is true, only trigger if it's NOT a dependency
+                    // unique variables only trigger in the root monolithic function
                     if (entry.unique && this._isDependency) {
                          triggered.add(nameStr);
                          continue;
@@ -124,6 +127,7 @@ export class Compiler {
 
                     const regex = createVarThenRegex(typeof entry.name === 'string' ? entry.name : entry.name.source);
                     
+                    // Trigger if identifier found in deep scan OR found in generated code
                     if (this.identifiers.has(nameStr) || regex.test(cleanCode)) {
                         entry.callback?.(this.createCompilerApi({ type: 'directive', name: 'existVar', loc: { line: 0, column: 0 } } as any, {}, true));
                         triggered.add(nameStr);
@@ -133,8 +137,9 @@ export class Compiler {
             }
         }
 
+        // Finalize dependencies as Closures
         if (Object.keys(this.dependencies).length > 0) {
-            this.header.push(`// Dependencies`);
+            const dependencyCodes: string[] = [];
             for (const path in this.dependencies) {
                 const id = this.dependencies[path]!;
                 const depNodes = this.kire.parse(this.kire.readFile(this.kire.resolvePath(path)));
@@ -142,17 +147,14 @@ export class Compiler {
                 const depCode = compilerInstance.compile(depNodes, [], true);
                 const asyncDep = compilerInstance.async;
                 
-                this.header.push(`// ${path}`);
-                this.header.push(`const ${id} = ${asyncDep ? 'async ' : ''}function($props = {}, $globals = {}) {`);
-                this.header.push(depCode);
-                this.header.push(`};`);
-                this.header.push(`${id}.meta = { async: ${asyncDep}, path: '${path}' };`);
+                dependencyCodes.push(`const ${id} = ${asyncDep ? 'async ' : ''}function($props = {}, $globals = {}) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: '${path}' };`);
             }
+            this.body.unshift(`// Dependencies`, ...dependencyCodes);
         }
 
         let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
-        if (!this.kire.production) {
+        if (!this.kire.$production) {
             const headerLines = (this.header.join("\n") + "\n" ).split("\n").length + 1; 
             const bodyLineOffsets: number[] = [];
             let currentLine = headerLines;
@@ -178,17 +180,41 @@ export class Compiler {
         return code;
     }
 
-    private collectIdentifiers(nodes: Node[], set: Set<string>) {
+    private deepCollectIdentifiers(nodes: Node[], set: Set<string>, visited: Set<string>) {
         const scan = (c: string) => { 
             let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
                 const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
             }
             JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; 
         };
+
         for (const n of nodes) {
             if (n.type === "interpolation" || n.type === "js") scan(n.content || "");
             if (n.args) n.args.forEach(a => typeof a === "string" && scan(a));
             
+            // Special Case: Layout/Include variables
+            if (n.type === "directive") {
+                if (n.name === "defined" || n.name === "define") set.add("__kire_defines");
+                if (n.name === "stack" || n.name === "push") set.add("__kire_stack");
+                
+                // Recursive scan for included templates
+                if (n.name === "layout" || n.name === "extends" || n.name === "include" || n.name === "component") {
+                    const rawPath = n.args?.[0];
+                    if (typeof rawPath === 'string') {
+                        const path = rawPath.replace(STRIP_QUOTES_REGEX, '');
+                        try {
+                            const resolved = this.kire.resolvePath(path);
+                            if (!visited.has(resolved)) {
+                                visited.add(resolved);
+                                const depContent = this.kire.readFile(resolved);
+                                const depNodes = this.kire.parse(depContent);
+                                this.deepCollectIdentifiers(depNodes, set, visited);
+                            }
+                        } catch(e) {}
+                    }
+                }
+            }
+
             if (n.type === "element") {
                 if (n.attributes) {
                     for (const [key, val] of Object.entries(n.attributes)) {
@@ -202,8 +228,8 @@ export class Compiler {
                 }
             }
 
-            if (n.children) this.collectIdentifiers(n.children, set);
-            if (n.related) this.collectIdentifiers(n.related, set);
+            if (n.children) this.deepCollectIdentifiers(n.children, set, visited);
+            if (n.related) this.deepCollectIdentifiers(n.related, set, visited);
         }
     }
 
@@ -256,7 +282,7 @@ export class Compiler {
                 case "interpolation":
                     this.flushText();
                     if (n.content && AWAIT_KEYWORD_REGEX.test(n.content)) this.markAsync();
-                    if (!this.kire.production && n.loc) {
+                    if (!this.kire.$production && n.loc) {
                         this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                         this.body.push(`// kire-line: ${n.loc.line}`);
                     }
@@ -265,7 +291,7 @@ export class Compiler {
                 case "js": 
                     this.flushText();
                     if (n.content && AWAIT_KEYWORD_REGEX.test(n.content)) this.markAsync(); 
-                    if (!this.kire.production && n.content && n.loc) {
+                    if (!this.kire.$production && n.content && n.loc) {
                         const lines = n.content.split("\n");
                         for (let i = 0; i < lines.length; i++) {
                             const currentLine = n.loc.line + i;
@@ -289,7 +315,7 @@ export class Compiler {
     private processDirective(n: Node) {
         const d = this.kire.getDirective(n.name!);
         if (d) {
-            if (!this.kire.production) {
+            if (!this.kire.$production) {
                 this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                 if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
             }
@@ -319,7 +345,7 @@ export class Compiler {
                         this.flushText();
                         const dirDef = this.kire.getDirective(key.slice(1));
                         if (dirDef) {
-                            if (!this.kire.production) {
+                            if (!this.kire.$production) {
                                 this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                                 if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
                             }
@@ -327,13 +353,13 @@ export class Compiler {
                         }
                     } else {
                         if (INTERPOLATION_START_REGEX.test(val)) {
-                            this.textBuffer += ` ${key}='`;
+                            this.textBuffer += ` ${key}="`;
                             this.flushText();
                             const code = this.parseAttrCode(val);
                             this.body.push(`$kire_response += ${code};`);
-                            this.textBuffer += `'`;
+                            this.textBuffer += '"';
                         } else {
-                            this.textBuffer += ` ${key}='${val}'`;
+                            this.textBuffer += ` ${key}="${escapeHtml(val)}"`;
                         }
                     }
                 }
@@ -345,7 +371,7 @@ export class Compiler {
         }
         
         this.flushText();
-        if (!this.kire.production) {
+        if (!this.kire.$production) {
             this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
             if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
         }
@@ -384,12 +410,9 @@ export class Compiler {
             depend: (p: string) => {
                 const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
                 let r = this.kire.resolvePath(cleanPath);
-                
-                // If it's within kire root, make it relative for better portability
                 if (r.startsWith(this.kire.$root)) {
                     r = relative(this.kire.$root, r).replace(/\\/g, '/');
                 }
-
                 if (this.dependencies[r]) return this.dependencies[r]!;
                 const id = `_dep${Object.keys(this.dependencies).length}`;
                 this.dependencies[r] = id; return id;

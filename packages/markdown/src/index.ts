@@ -31,7 +31,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 		kire.mdview = async (path: string, locals: Record<string, any> = {}) => {
 			const cacheKey = `file:${path}`;
 
-			if (kire.production && _fnCache[cacheKey]) {
+			if (kire.$production && _fnCache[cacheKey]) {
 				return kire.run(_fnCache[cacheKey], locals) as any;
 			}
 
@@ -41,7 +41,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 				const htmlTemplate = await marked.parse(content);
 				const entry = kire.compile(htmlTemplate, resolved);
 
-				if (kire.production) _fnCache[cacheKey] = entry.fn;
+				if (kire.$production) _fnCache[cacheKey] = entry.fn;
 
 				return kire.run(entry.fn!, locals) as any;
 			} catch (e) {

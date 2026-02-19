@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kire Wire v2 - Demo</title>
+    
+    <!-- Estilização via Tailwind CDN para o exemplo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
+
+    <!-- O runtime do Wire (que serviremos via servidor) -->
+    <script type="module" src="/wire.js" defer></script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
+    <div class="max-w-2xl mx-auto py-20 px-4">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+                Kire <span class="text-indigo-600">Wire v2</span>
+            </h1>
+            <p class="mt-4 text-lg text-slate-600">
+                Reatividade granular no client com processamento stateless no servidor.
+            </p>
+        </header>
+
+        <main>
+            <!-- Renderiza o componente reativo -->
+            <wire:counter />
+        </main>
+
+        <footer class="mt-20 border-t border-slate-200 pt-8 text-center text-slate-400 text-sm">
+            <p>&copy; 2026 Kire Template Engine. Criado com foco em performance.</p>
+        </footer>
+    </div>
+</body>
+</html>

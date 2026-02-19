@@ -1,0 +1,8 @@
+{
+  "name": "wire-v2-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun main.ts"
+  }
+}

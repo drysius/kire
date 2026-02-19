@@ -1,0 +1,23 @@
+<div class="p-6 bg-white shadow rounded-lg border border-gray-200">
+    <h2 class="text-2xl font-extrabold text-gray-800">Contador: <span class="text-blue-600">{{ counter }}</span></h2>
+    
+    <div class="mt-6 flex items-center gap-3">
+        <button wire:click="decrement" class="px-5 py-2.5 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 active:scale-95 transition-all">
+            - Reduzir
+        </button>
+        
+        <button wire:click="increment" class="px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 active:scale-95 transition-all">
+            + Aumentar
+        </button>
+    </div>
+
+    <div class="mt-8 pt-6 border-t border-gray-100">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Sincronização Direta:</label>
+        <div class="flex items-center gap-4">
+            <input type="number" wire:model.live="counter" class="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+            <p class="text-xs text-gray-400 italic">
+                O valor acima usa <code class="bg-gray-100 px-1 rounded">wire:model.live</code> para atualizar o servidor em tempo real.
+            </p>
+        </div>
+    </div>
+</div>

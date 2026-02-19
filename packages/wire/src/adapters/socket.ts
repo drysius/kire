@@ -1,33 +1,25 @@
-import type { ClientAdapter } from "./http";
+import type { Kire } from "kire";
+import { processWireAction, type WirePayload } from "./http-sse";
 
-export class SocketAdapter implements ClientAdapter {
-	private socket: WebSocket;
-	private pending: Map<string, (val: any) => void> = new Map();
-
-	constructor(url: string) {
-		this.socket = new WebSocket(url);
-		this.socket.onmessage = (event) => {
-			const data = JSON.parse(event.data);
-			if (data.id && this.pending.has(data.id)) {
-				this.pending.get(data.id)!(data.response);
-				this.pending.delete(data.id);
-			}
-		};
-	}
-
-	async request(payload: any) {
-		if (this.socket.readyState !== WebSocket.OPEN) {
-			await new Promise((resolve) =>
-				this.socket.addEventListener("open", resolve),
-			);
-		}
-
-		const id = Math.random().toString(36).substr(2, 9);
-		const req = { id, ...payload };
-
-		return new Promise((resolve) => {
-			this.pending.set(id, resolve);
-			this.socket.send(JSON.stringify(req));
-		});
-	}
+/**
+ * WebSocket Adapter for Wire Server-Side.
+ * Integrates with WebSocket libraries to process component actions.
+ */
+export function setupSocketAdapter(kire: Kire, socket: any) {
+    /**
+     * Handle incoming actions from the client.
+     */
+    socket.on("wire:action", async (payload: WirePayload) => {
+        try {
+            const result = await processWireAction(kire, payload);
+            
+            /**
+             * Send the result back via the same socket.
+             */
+            socket.emit("wire:response", result);
+        } catch (error: any) {
+            console.error(`[Wire:Socket] Error processing action for component "${payload.component}":`, error.message);
+            socket.emit("wire:error", { id: payload.id, message: error.message });
+        }
+    });
 }
