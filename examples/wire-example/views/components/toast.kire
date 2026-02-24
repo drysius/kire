@@ -17,6 +17,7 @@
 
 <!-- Global Toast Container -->
 <div 
+    wire:ignore
     x-data="{ 
         toasts: [],
         add(type, message) {

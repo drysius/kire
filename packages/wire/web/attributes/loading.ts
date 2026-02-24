@@ -1,8 +1,6 @@
 import { registerWireHandler } from "../core/directives";
 
-registerWireHandler("loading", (el, { modifiers }, { cleanup, Alpine }) => {
-    // @ts-expect-error Alpine internal
-    const component = el._x_dataStack?.find((d: any) => d.__isLoading !== undefined);
+registerWireHandler("loading", (el, { modifiers }, { component, Alpine }) => {
     if (!component) return;
 
     let originalDisplay = el.style.display === 'none' ? '' : el.style.display;

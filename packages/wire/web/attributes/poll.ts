@@ -1,6 +1,6 @@
 import { registerWireHandler } from "../core/directives";
 
-registerWireHandler("poll", (el, { modifiers, expression }, { cleanup }) => {
+registerWireHandler("poll", (el, { modifiers, expression }, { component }) => {
     let interval: Timer;
     let duration = 2000;
 
@@ -13,8 +13,6 @@ registerWireHandler("poll", (el, { modifiers, expression }, { cleanup }) => {
     const keepAlive = modifiers.includes("keep-alive");
     const visibleOnly = modifiers.includes("visible");
 
-    // @ts-expect-error Alpine internal
-    const component = el._x_dataStack?.[0];
     if (!component) return;
 
     const pollFn = () => {
@@ -28,11 +26,26 @@ registerWireHandler("poll", (el, { modifiers, expression }, { cleanup }) => {
             const rect = el.getBoundingClientRect();
             if (rect.bottom < 0 || rect.top > window.innerHeight) return;
         }
-        if (component.__isLoading) return;
-
-        component.call(action);
+        let method = action;
+        let params: any[] = [];
+        const match = action.match(/^([^(]+)\((.*)\)$/);
+        if (match) {
+            method = match[1].trim();
+            const argsStr = match[2].trim();
+            if (argsStr) {
+                params = argsStr.split(",").map((arg: string) => {
+                    const val = arg.trim();
+                    if (val === "true") return true;
+                    if (val === "false") return false;
+                    if (val === "null") return null;
+                    if (!isNaN(Number(val))) return Number(val);
+                    if (/^['"].*['"]$/.test(val)) return val.slice(1, -1);
+                    return val;
+                });
+            }
+        }
+        component.call(method, ...params);
     };
 
     interval = setInterval(pollFn, duration);
-    cleanup(() => clearInterval(interval));
 });

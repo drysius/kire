@@ -1,5 +1,5 @@
 import { Kire } from "kire";
-import { wirePlugin } from "@kirejs/wire";
+import { Component, wirePlugin } from "@kirejs/wire";
 import { Counter } from "./components/counter";
 import { join } from "node:path";
 
@@ -20,7 +20,11 @@ kire.plugin(wirePlugin, {
 });
 
 // 2. Register Components
-kire.wireRegister("counter", Counter);
+kire.wireRegister('counter', (class extends Component {
+    render () {
+        return '';
+    }
+}))
 
 console.log("\n-----------------------------------------");
 console.log("🚀 Kire Wire v2 (Robust API) running at:");
@@ -33,30 +37,25 @@ Bun.serve({
     async fetch(req) {
         const url = new URL(req.url);
 
-        // Serve Client Runtime
-        if (url.pathname === "/wire.js") {
-            const clientPath = join(import.meta.dir, "../../packages/wire/dist/client/wire.js");
-            return new Response(Bun.file(clientPath));
-        }
-
         // --- MIDDLEWARE SIMULATION ---
-        // For each request, we fork Kire and set a unique session key
-        // In a real app, use req.headers['session-id'] or cookies
         const sessionID = "user-session-123"; 
         const fork = kire.fork().wireKey(sessionID);
-
-        // Handle Wire Requests (Unified Handler)
-        if (url.pathname.startsWith(kire.$wire.route)) {
-            const body = req.method === "POST" ? await req.json() : {};
+        console.log(fork.$wire.route)
+        // Handle ALL Wire Requests (Assets, Actions, Previews)
+        if (url.pathname.startsWith(fork.$wire.route)) {
+            const body = req.method === "POST" ? await req.json().catch(() => ({})) : {};
             const response = await fork.wireRequest({
                 url: req.url,
                 body: body,
                 query: Object.fromEntries(url.searchParams)
             });
 
-            return new Response(JSON.stringify(response.result), {
+            return new Response(response.result, {
                 status: response.status,
-                headers: { "Content-Type": "application/json" }
+                headers: { 
+                    "Content-Type": response.headers?.["Content-Type"] || "application/json",
+                    "Cache-Control": response.headers?.["Cache-Control"] || "no-cache"
+                }
             });
         }
 

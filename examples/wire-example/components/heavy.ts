@@ -1,17 +1,20 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Heavy extends WireComponent {
+export default class Heavy extends Component {
+	public loaded = false;
 	public data: string[] = [];
 
-	async mount(params: any) {
+	async load() {
+		if (this.loaded) return;
 		// Simulate heavy work
 		await new Promise((r) => setTimeout(r, 2000));
 		this.data = [
 			"Result A",
 			"Result B",
 			"Result C",
-			"Params: " + JSON.stringify(params),
+			"Loaded asynchronously after first paint",
 		];
+		this.loaded = true;
 	}
 	
 	render() {

@@ -25,6 +25,7 @@
     "@types/bun": "latest"
   },
   "dependencies": {
+    "@sinclair/typebox": "^0.34.48",
     "kire": "workspace:../../core"
   }
 }

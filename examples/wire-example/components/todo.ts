@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Todo extends WireComponent {
+export default class Todo extends Component {
 	public task = "";
 	public todos: string[] = ["Buy milk", "Walk the dog"];
 

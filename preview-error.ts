@@ -1,7 +1,7 @@
 import { Kire } from "./core/src/kire";
 
 const kire = new Kire({
-    production: false,
+    production: true,
     silent: true,
     files: {
         "test.kire": `

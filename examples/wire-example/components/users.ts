@@ -1,4 +1,4 @@
-import { WirePageComponent } from "@kirejs/wire";
+import { PageComponent } from "@kirejs/wire";
 
 // Mock data
 let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
@@ -6,7 +6,7 @@ let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
 	name: `User ${i + 1}`,
 }));
 
-export default class Users extends WirePageComponent {
+export default class Users extends PageComponent {
 	public search = "";
 
 	// Sync 'search' and 'page' with URL

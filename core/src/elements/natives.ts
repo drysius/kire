@@ -101,23 +101,40 @@ export default (kire: Kire<any>) => {
         name: /^x-/,
         onCall: (api) => {
             const tagName = api.node.tagName!;
-            if (tagName === "x-slot") {
-                const name = api.getAttribute("name") || "default";
+            if (tagName === "x-slot" || tagName.startsWith("x-slot:") || tagName.startsWith("x-slot.")) {
+                const inferred = tagName.slice("x-slot".length).replace(/^[:.]/, "");
+                const attrs = api.node.attributes || new NullProtoObj();
+                let nameExpr = inferred ? JSON.stringify(inferred) : JSON.stringify("default");
+
+                // Laravel-like behavior: x-slot name="header" is always literal.
+                // Dynamic expression can be forced with braces: name="{expr}".
+                if (typeof attrs.name === "string") {
+                    const raw = attrs.name.trim();
+                    if (raw.startsWith("{") && raw.endsWith("}") && raw.length > 2) {
+                        nameExpr = raw.slice(1, -1);
+                    } else {
+                        nameExpr = JSON.stringify(raw);
+                    }
+                }
                 const id = api.uid("slot");
                 api.write(`{
                     const _oldRes${id} = $kire_response; $kire_response = "";`);
                 api.renderChildren();
                 api.write(`
-                    if (typeof $slots !== 'undefined') $slots['${name}'] = $kire_response;
+                    if (typeof $slots !== 'undefined') $slots[${nameExpr}] = $kire_response;
                     $kire_response = _oldRes${id};
                 }`);
                 return;
             }
 
             const componentName = tagName.slice(2);
+            const hasComponentsNamespace = !!api.kire.$namespaces.components;
+            const componentPath = hasComponentsNamespace && !componentName.startsWith("components.")
+                ? `components.${componentName}`
+                : componentName;
             const id = api.uid('comp');
-            const depId = api.depend(componentName);
-            const dep = api.getDependency(componentName);
+            const depId = api.depend(componentPath);
+            const dep = api.getDependency(componentPath);
             
             const attrs = api.node.attributes || new NullProtoObj();
             const propsStr = Object.keys(attrs)

@@ -12,8 +12,8 @@
         [x-cloak] { display: none !important; }
     </style>
 
-    <!-- O runtime do Wire (que serviremos via servidor) -->
-    <script type="module" src="/wire.js" defer></script>
+    <!-- O runtime do Wire injetado automaticamente -->
+    @wireScripts()
 </head>
 <body class="bg-slate-50 font-sans text-slate-900 min-h-screen">
     <div class="max-w-2xl mx-auto py-20 px-4">

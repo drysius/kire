@@ -7,10 +7,7 @@
         <p class="text-base-content/70">The component below will only load after the page is ready.</p>
     </div>
 
-    @wire('heavy', {...request.params, id:123}, { 
-        lazy: true, 
-        placeholder: '<div class="alert alert-info shadow-sm"><span class="loading loading-spinner"></span> Loading heavy data...</div>' 
-    })
+    @wire('heavy', { id: 123 })
 
     <p class="mt-6 text-sm opacity-50">This text is rendered immediately.</p>
 </div>

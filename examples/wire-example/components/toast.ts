@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Toast extends WireComponent {
+export default class Toast extends Component {
 	// This component manages the global toast state on the server if needed,
 	// or simply acts as a dispatcher.
 	// Here we'll use it to dispatch random toasts to test the client listener.

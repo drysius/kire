@@ -116,4 +116,14 @@ describe("Kire Elements System (Pattern-based)", () => {
 		expect(result).toContain('<div class="header">My Header</div>');
 		expect(result).toContain('<div class="body">Main Content</div>');
 	});
+
+	it("should handle dotted x-* component names (x-ui.list)", async () => {
+		const kire = new Kire({ silent: true });
+		kire.namespace("components", kire.$root + "/components");
+		kire.$files[kire.resolvePath("components.ui.list")] = "<section>@yield('default')</section>";
+
+		const template = `<x-ui.list>Item</x-ui.list>`;
+		const result = await kire.render(template);
+		expect(result).toContain("<section>Item</section>");
+	});
 });

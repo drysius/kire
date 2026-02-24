@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Streamer extends WireComponent {
+export default class Streamer extends Component {
 	async addLog() {
 		const time = new Date().toLocaleTimeString();
 		this.stream(

@@ -2,15 +2,14 @@
     <div class="card-body">
         <h2 class="card-title mb-4">Todo List</h2>
 
-        <div x-data="{ task: $wire.entangle('task') }" class="join w-full">
+        <div class="join w-full">
             <input 
             type="text" 
-            x-model="task" 
-            @keydown.enter="$wire.add()"
+            wire:model.defer="task"
             placeholder="New Task..." 
             class="input input-bordered join-item w-full" 
             />
-            <button @click="$wire.add()" class="btn btn-primary join-item">Add</button>
+            <button wire:click="add" class="btn btn-primary join-item">Add</button>
         </div>
 
         @if(errors && errors.task)

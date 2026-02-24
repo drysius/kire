@@ -1,12 +1,14 @@
-import { WireComponent, WireFile, Rule } from "@kirejs/wire";
+import { Component, WireFile, Rule } from "@kirejs/wire";
 
-export default class Upload extends WireComponent {
+export default class Upload extends Component {
 	// Using WireFile for robust file handling
 	public file = new WireFile();
     public description = "";
 	public message = "";
 
 	async save() {
+        if (typeof this.description !== "string") this.description = "";
+
         // Example 1: Using this.rule helper with custom message
         const rules: any = {
             description: this.rule('string|required|min:3', 'A description is required (min 3 characters).'),

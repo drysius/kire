@@ -91,6 +91,18 @@ describe("Kire Directives & Elements", () => {
         expect(result.trim()).toBe("<h1>Title</h1>");
     });
 
+    test("@defined without @end should not capture following template", async () => {
+        const template = '@define("content")OK@enddefine [A] @defined("content") [B]';
+        const result = await kire.render(template);
+        expect(result.trim()).toBe("[A] OK [B]");
+    });
+
+    test("@defined with @end should support fallback block", async () => {
+        const template = '@defined("missing")Fallback@enddefined';
+        const result = await kire.render(template);
+        expect(result.trim()).toBe("Fallback");
+    });
+
     test("@unless directive", async () => {
         const template = "@unless(check)Show@endunless";
         expect(await kire.render(template, { check: false })).toBe("Show");

@@ -1,4 +1,4 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
 // Simple in-memory store for demo purposes
 const db = {
@@ -9,7 +9,7 @@ const db = {
 	}>,
 };
 
-export default class Chat extends WireComponent {
+export default class Chat extends Component {
 	public input = "";
 	public username = "Guest";
 

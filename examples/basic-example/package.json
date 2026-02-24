@@ -2,6 +2,7 @@
 	"name": "example-basic",
 	"private": true,
 	"dependencies": {
+		"@sinclair/typebox": "^0.34.48",
 		"elysia": "^1.0.0"
 	}
 }

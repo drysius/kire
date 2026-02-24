@@ -15,6 +15,10 @@ export function removeComponent(id: string) {
     components.delete(id);
 }
 
+export function allComponents() {
+    return [...components.values()];
+}
+
 /**
  * Robustly finds the nearest Wire component for an element.
  */

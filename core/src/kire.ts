@@ -49,6 +49,7 @@ export function kirePlugin<Options extends object>(
  * Handles configuration, compilation, and rendering of templates.
  */
 export class Kire<Asyncronos extends boolean = true> {
+    public __valor = "";
     /** 
      * The Root Engine Instance (Source of Truth).
      */
@@ -109,7 +110,6 @@ export class Kire<Asyncronos extends boolean = true> {
     public get $files(): Record<string, string | KireTplFunction> { 
         const stored = this["~store"].files;
         const cache = this.$cache.files;
-        
         return new Proxy(stored, {
             get: (target, prop) => {
                 if (typeof prop !== 'string') return Reflect.get(target, prop);
@@ -135,9 +135,6 @@ export class Kire<Asyncronos extends boolean = true> {
     public get $elementMatchers() { return this.$elements.matchers; }
     public get $elementsPattern() { return this.$elements.pattern; }
     public get $directivesPattern() { return this.$directives.pattern; }
-
-    /** Wire Plugin State Accessor */
-    public get $wire(): any { return this.$kire["~wire"]; }
 
     /** Aliases for ~store (readonly) */
     public readonly $globals!: Record<string, any>;
@@ -478,7 +475,7 @@ export class Kire<Asyncronos extends boolean = true> {
             const compilerInstance = new Compiler(this, filename);
             const code = compilerInstance.compile(nodes, extraGlobals, isDependency);
             const async = compilerInstance.async;
-            const dependencies: Record<string, string> = new NullProtoObj();
+            const dependencies = new NullProtoObj();
             
             for (const [path, id] of Object.entries(compilerInstance.getDependencies())) {
                 dependencies[path] = id;
@@ -564,7 +561,7 @@ export class Kire<Asyncronos extends boolean = true> {
                 effectiveProps = Object.assign(Object.create(this.$props), locals);
             }
             
-            const result = template.call(this, effectiveProps, effectiveGlobals, template);
+            const result = template.call(this, effectiveProps, effectiveGlobals, this as never);
             
             if (!this.$async && result instanceof Promise) {
                 throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);

@@ -1,4 +1,4 @@
 @include('layouts.app', { title: 'TextArea Test' })
 @define('content')
-    @wire('TextAreaTest')
+    @wire('textarea-test')
 @end

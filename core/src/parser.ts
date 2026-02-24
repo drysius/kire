@@ -154,7 +154,11 @@ export class Parser {
 
         this.addNode(node);
         const def = this.kire.getDirective(name);
-        if (!def || def.children !== false) this.stack.push(node);
+        if (!def || def.children === true) {
+            this.stack.push(node);
+        } else if (def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor)) {
+            this.stack.push(node);
+        }
         return true;
     }
 
@@ -318,6 +322,24 @@ export class Parser {
                 this.stack.splice(i); break;
             }
         }
+    }
+
+    private hasExplicitDirectiveEnd(name: string, fromCursor: number): boolean {
+        const rest = this.template.slice(fromCursor);
+        return this.findUnescapedDirective(rest, `end${name}`) !== -1 || this.findUnescapedDirective(rest, "end") !== -1;
+    }
+
+    private findUnescapedDirective(source: string, directiveName: string): number {
+        const token = `@${directiveName}`;
+        let idx = source.indexOf(token);
+        while (idx !== -1) {
+            const prev = idx > 0 ? source[idx - 1] : "";
+            const next = source[idx + token.length] || "";
+            const boundaryOk = !/[A-Za-z0-9_]/.test(next);
+            if (prev !== "@" && boundaryOk) return idx;
+            idx = source.indexOf(token, idx + token.length);
+        }
+        return -1;
     }
 
     private extractBracketedContent(open: string, close: string) {

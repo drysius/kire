@@ -46,6 +46,12 @@ export function resolvePath(filepath: string, config: any, platform: any): strin
         }
     }
 
+    // 2.1 Component namespace fallback: components/foo/bar.kire
+    if (!platform.isAbsolute(path) && namespaces.components) {
+        const inComponents = platform.join(namespaces.components, path);
+        if (platform.exists(inComponents)) return inComponents;
+    }
+
     // 3. Final normalization
     if (!platform.isAbsolute(path)) {
         path = platform.resolve(config.root, path);

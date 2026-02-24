@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Receiver extends WireComponent {
+export default class Receiver extends Component {
 	public message = "Waiting...";
 
 	public listeners = {

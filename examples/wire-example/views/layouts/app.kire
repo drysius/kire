@@ -10,7 +10,13 @@
     <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-    @wired
+    <script>
+    window.__WIRE_INITIAL_CONFIG__ = {
+        transport: "{{ sharedTransport || 'sse' }}"
+    };
+    </script>
+
+    @kirewire
 
     <style>
     :root:has(input.theme-controller[value=dark]:checked),
@@ -112,6 +118,8 @@
                         class="{{ isActive('/upload') ? 'bg-primary text-primary-content' : '' }}">File Upload</a></li>
                 <li><a href="/stream" wire:navigate
                         class="{{ isActive('/stream') ? 'bg-primary text-primary-content' : '' }}">Streaming</a></li>
+                <li><a href="/shared-components" wire:navigate
+                        class="{{ isActive('/shared-components') ? 'bg-primary text-primary-content' : '' }}">Shared Components</a></li>
                 <li><a href="/lazy" wire:navigate
                         class="{{ isActive('/lazy') ? 'bg-primary text-primary-content' : '' }}">Lazy Loading</a></li>
                 <li><a href="/toast" wire:navigate

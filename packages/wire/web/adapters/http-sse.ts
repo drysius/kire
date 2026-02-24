@@ -28,12 +28,26 @@ export async function sendHttpAction(payload: any) {
 export function connectSSE(url: string, onUpdate: (data: any) => void) {
     const eventSource = new EventSource(url);
 
-    eventSource.onmessage = (event) => {
+    const handleEvent = (event: MessageEvent) => {
         try {
             const data = JSON.parse(event.data);
             onUpdate(data);
         } catch (error) {
-            console.error("[Wire:SSE] Failed to parse message:", error);
+            if ((window as any).__WIRE_CONFIG__?.debug) {
+                console.debug("[Wire:SSE] non-json message", event.data);
+            }
+        }
+    };
+
+    eventSource.onmessage = handleEvent;
+    eventSource.addEventListener("wire:broadcast:connected", handleEvent as EventListener);
+    eventSource.addEventListener("wire:broadcast:snapshot", handleEvent as EventListener);
+    eventSource.addEventListener("wire:broadcast:update", handleEvent as EventListener);
+    eventSource.addEventListener("ping", handleEvent as EventListener);
+
+    eventSource.onerror = () => {
+        if ((window as any).__WIRE_CONFIG__?.debug) {
+            console.debug("[Wire:SSE] connection error", { url, state: eventSource.readyState });
         }
     };
 

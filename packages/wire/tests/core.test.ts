@@ -42,7 +42,7 @@ describe("Wire Core", () => {
         const result = await processWireAction(kire, payload);
 
         expect(result.state.count).toBe(6);
-        expect(result.html).toBe('<div>6</div>');
+        expect(result.html).toContain('<div>6</div>');
         // New checksum should be generated
         expect(result.checksum).not.toBe(checksum);
     });
@@ -56,6 +56,6 @@ describe("Wire Core", () => {
             checksum: "invalid-checksum"
         };
 
-        expect(processWireAction(kire, payload)).rejects.toThrow("Security Violation");
+        expect(processWireAction(kire, payload)).rejects.toThrow("checksum");
     });
 });

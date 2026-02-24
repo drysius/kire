@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class RegisterForm extends WireComponent {
+export default class RegisterForm extends Component {
 	public name = "";
 	public email = "";
 	public password = "";

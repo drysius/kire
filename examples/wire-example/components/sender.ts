@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Sender extends WireComponent {
+export default class Sender extends Component {
 	public text = "Hello World";
 
 	async send() {

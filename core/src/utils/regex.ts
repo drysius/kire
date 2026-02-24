@@ -10,8 +10,8 @@ export const NullProtoObj = function (this: any) {
 
 
 // Detecção de Tags e Atributos
-export const TAG_OPEN_REGEX = /^<([a-zA-Z0-9_\-:]+)/;
-export const TAG_CLOSE_REGEX = /^<\/([a-zA-Z0-9_\-:]+)>/;
+export const TAG_OPEN_REGEX = /^<([a-zA-Z0-9_\-:.]+)/;
+export const TAG_CLOSE_REGEX = /^<\/([a-zA-Z0-9_\-:.]+)>/;
 export const ATTR_NAME_BREAK_REGEX = /\s|=|>|\/|\(/;
 export const WHITESPACE_REGEX = /\s/;
 

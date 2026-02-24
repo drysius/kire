@@ -1,6 +1,6 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
-export default class Counter extends WireComponent {
+export default class Counter extends Component {
 	public count = 0;
 	public interval: NodeJS.Timeout
 	async increment() {

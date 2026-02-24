@@ -12,20 +12,15 @@
         </div>
 
         <x-ui.list>
-            <x-slot:header>
+            <x-slot name='header'>
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold">Usuários ({{ users.total }})</h2>
-
-                    <kire:if cond={true}>
-                        <button class="btn btn-sm btn-primary">
-                            Novo
-                        </button>
-                    </kire:if>
+                    <h2 class="text-lg font-semibold">Usuarios ({{ users.total }})</h2>
+                    <button class="btn btn-sm btn-primary">Novo</button>
                 </div>
-            </x-slot:header>
+            </x-slot>
 
             @for(user of users.data)
-                <x-ui.list.item key={user.id}>
+                <x-ui.list.item key=user.id>
                     <div class="flex items-center justify-between">
                         <div>
                             <div class="font-medium text-base-content">{{ user.name }}</div>
@@ -34,21 +29,31 @@
 
                         <div class="flex gap-2">
                             <button class="btn btn-ghost btn-xs">Editar</button>
-                            <button class="btn btn-error btn-xs btn-outline" wire:click={'delete(' + user.id + ')'}>Excluir</button>
+                            <button class="btn btn-error btn-xs btn-outline" wire:click="delete({{ user.id }})">Excluir</button>
                         </div>
                     </div>
                 </x-ui.list.item>
             @empty
                 <div class="p-8 text-center opacity-50">
-                    Nenhum usuário encontrado.
+                    Nenhum usuario encontrado.
                 </div>
             @end
         </x-ui.list>
 
         <div class="flex justify-between items-center mt-4">
-            <button wire:click="previousPage" class="btn btn-sm" {{ users.currentPage === 1 ? 'disabled' : '' }}>Previous</button>
+            @if(users.currentPage === 1)
+                <button wire:click="previousPage" class="btn btn-sm" disabled>Previous</button>
+            @else
+                <button wire:click="previousPage" class="btn btn-sm">Previous</button>
+            @end
+
             <span class="text-sm">Page {{ users.currentPage }} of {{ users.lastPage }}</span>
-            <button wire:click="nextPage" class="btn btn-sm" {{ !users.hasMore ? 'disabled' : '' }}>Next</button>
+
+            @if(!users.hasMore)
+                <button wire:click="nextPage" class="btn btn-sm" disabled>Next</button>
+            @else
+                <button wire:click="nextPage" class="btn btn-sm">Next</button>
+            @end
         </div>
     </div>
 </div>

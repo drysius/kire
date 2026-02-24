@@ -1,10 +1,14 @@
 import path from "node:path";
+import { createHash, randomUUID } from "node:crypto";
 import { wirePlugin } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { Kire } from "kire";
 
+const useSocket = process.argv.includes("--socket");
+
 // Initialize Kire
 const kire = new Kire({
+	root:path.join(process.cwd(), 'views'),
 	production: process.env.NODE_ENV === "production",
 });
 
@@ -15,11 +19,10 @@ const app = new Elysia({
 }).derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
 
 void (async () => {
-	// allow to use wired
+	// register server components from glob pattern
 	kire.plugin(wirePlugin, {
 		route: "/_wire",
 		secret: "change-me-in-production",
-		expire: "2h",
 	});
 
 	// add views namespace for .kire files
@@ -29,20 +32,23 @@ void (async () => {
 	kire.namespace("pages", path.join(process.cwd(), "views/pages"));
 
 	// register server components
-	await kire.wired("components/*.ts");
+	await kire.wireRegister("components/*.ts");
 
 	// Middleware to set Wired Context
 	app.derive({ as: "global" }, async (context) => {
 		const session = context.cookie.session;
 		if (!session.value) {
-			session.value = crypto.randomUUID();
+			session.value = randomUUID();
 			session.path = "/";
 			session.httpOnly = true;
 		}
 
-		// Use session ID + IP for secure identifier
+		// Build a stable per-user key used by wire checksum/hydration.
 		const ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
-		const wireKey = kire.wireKeystore(session.value as string, ip);
+		const wireKey = createHash("sha256")
+			.update(`${session.value}:${ip}`)
+			.digest("hex");
+		context.kire.wireKey(wireKey);
 
 		console.log(`[Middleware] Path: ${context.request.url} | Session: ${session.value} | IP: ${ip} | WireKey: ${wireKey}`);
 
@@ -54,13 +60,14 @@ void (async () => {
 		context.kire.$global("isActive", isActive);
 		context.kire.$global('request', context);
 		context.kire.$global('$wireToken', wireKey);
+		context.kire.$global('sharedTransport', useSocket ? "socket" : "sse");
 		return {
 			user: { id: session.value, name: "Guest" },
 		};
 	});
 
 	// Routes
-	const routes = ["/", "/chat", "/search", "/infinity", "/toast", "/upload", "/todo", "/users", "/stream", "/lazy", "/features", "/stress", "/textarea"];
+	const routes = ["/", "/chat", "/search", "/infinity", "/toast", "/upload", "/todo", "/users", "/stream", "/shared-components", "/lazy", "/features", "/stress", "/textarea"];
     
     for (const route of routes) {
         const viewName = route === "/" ? "pages.index" : `pages.${route.slice(1)}`;
@@ -75,20 +82,20 @@ void (async () => {
 
 	// Unified Wired Handler
     const wireRoute = kire.$kire["~wire"].options.route;
+
 	app.all(`${wireRoute}*`, async (context) => {
-		const url = new URL(context.request.url);
         const res = await context.kire.wireRequest({
-            path: url.pathname,
-            method: context.request.method,
+            url: context.request.url,
             query: context.query,
             body: context.body,
-            token: context.wireKey,
-            locals: { wireToken: context.wireKey }
         });
 
-        if (res.code === "not_wired") {
-            context.set.status = 404;
-            return "Not Found";
+        const status = res.status || 200;
+        const headers = (res.headers || {}) as Record<string, string>;
+
+        // SSE/stream responses should bypass Elysia's default body writer to avoid controller state races.
+        if (res.result instanceof ReadableStream || String(headers["Content-Type"] || "").includes("text/event-stream")) {
+            return new Response(res.result as any, { status, headers });
         }
 
         if (res.headers) {
@@ -96,10 +103,10 @@ void (async () => {
                 context.set.headers[k] = v;
             });
         }
-        context.set.status = res.status || 200;
-        return res.body;
+        context.set.status = status;
+        return res.result;
 	});
 
 	app.listen(3000);
-	console.log(`Check it out at http://localhost:3000`);
+	console.log(`Check it out at http://localhost:3000 (${useSocket ? "socket mode" : "http+sse mode"})`);
 })();

@@ -1,0 +1,12 @@
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title">Poll Stress</h2>
+        <p class="text-sm opacity-70">Count: {{ count }} | Last: {{ lastPoller }}</p>
+
+        <div wire:poll.100ms="increment('fast1')"></div>
+        <div wire:poll.100ms="increment('fast2')"></div>
+        <div wire:poll.500ms="increment('slow1')"></div>
+        <div wire:poll.500ms="increment('slow2')"></div>
+    </div>
+</div>
+

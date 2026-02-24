@@ -1,3 +1,11 @@
+export interface WireOptions {
+    route?: string;
+    secret?: string;
+    bus_delay?: number; // default 100ms
+    cachetime?: string; // default '7d'
+    directoryTmp?: string; // default node_modules/.wire-tmp
+}
+
 export interface WireSnapshot {
     id: string;
     name: string;
@@ -13,6 +21,12 @@ export interface WirePayload {
     state?: Record<string, any>;
     checksum?: string;
     updates?: Record<string, any>;
+    uploads?: string[]; // IDs of uploaded temp files
+}
+
+export interface WireBatchRequest {
+    _token?: string;
+    components: WirePayload[];
 }
 
 export interface WireResponse {
@@ -28,7 +42,10 @@ export interface WireEffects {
     streams: Array<WireStream>;
     redirect: string | null;
     errors: Record<string, string>;
+    listeners?: Record<string, string>;
     url?: string;
+    // For navigation/history
+    path?: string;
 }
 
 export interface WireStream {

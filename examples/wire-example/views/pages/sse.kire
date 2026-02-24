@@ -1,0 +1,12 @@
+@include('layouts.app', it)
+
+@define('content')
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold mb-2">Shared Components</h1>
+        <p class="text-base-content/70">
+            Esta rota antiga foi mantida por compatibilidade. Use <code>/shared-components</code>.
+        </p>
+    </div>
+
+    @wire('http')
+@end

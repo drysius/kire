@@ -1,5 +1,5 @@
 import { Kire } from "kire";
-import { wirePlugin, WireComponent } from "@kirejs/wire";
+import { wirePlugin, Component } from "@kirejs/wire";
 
 const kire = new Kire({
     production: false,
@@ -10,11 +10,11 @@ const kire = new Kire({
 kire.plugin(wirePlugin);
 
 // Mocking components
-kire.wireRegister('success', class extends WireComponent {
+kire.wireRegister('success', class extends Component {
     async render() { return "<div>I am working fine!</div>"; }
 });
 
-kire.wireRegister('error-js', class extends WireComponent {
+kire.wireRegister('error-js', class extends Component {
     async render() { 
         // @ts-ignore
         const fail = this.notExistentMethod();
@@ -22,7 +22,7 @@ kire.wireRegister('error-js', class extends WireComponent {
     }
 });
 
-kire.wireRegister('error-tpl', class extends WireComponent {
+kire.wireRegister('error-tpl', class extends Component {
     async render() { return "<div>{{ it.missing.nested.prop }}</div>"; }
 });
 

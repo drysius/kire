@@ -1,0 +1,19 @@
+<div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title">Textarea Test</h2>
+        <p class="text-sm opacity-70">Digite e clique em submit.</p>
+
+        <textarea
+            wire:model.defer="message"
+            placeholder="Type a message..."
+            class="textarea textarea-bordered w-full min-h-[6rem]"></textarea>
+
+        <div class="flex gap-2">
+            <button class="btn btn-primary" wire:click="submit">Submit</button>
+            <button class="btn btn-ghost" wire:click="$refresh">Refresh</button>
+        </div>
+
+        <div class="text-sm opacity-80">Last Sent: {{ lastSent }}</div>
+    </div>
+</div>
+

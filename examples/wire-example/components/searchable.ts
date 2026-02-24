@@ -1,4 +1,4 @@
-import { WireComponent } from "@kirejs/wire";
+import { Component } from "@kirejs/wire";
 
 interface User {
 	id: number;
@@ -15,7 +15,7 @@ const ALL_USERS: User[] = Array.from({ length: 50 }, (_, i) => ({
 	role: i % 3 === 0 ? "Admin" : "User",
 }));
 
-export default class Searchable extends WireComponent {
+export default class Searchable extends Component {
 	public search = "";
 	public roleFilter = "";
 
