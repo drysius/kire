@@ -3,6 +3,7 @@ import morph from "@alpinejs/morph";
 import WireAlpinePlugin from "./lifecycle";
 import { setupEntangle } from "./features/entangle";
 import { connectSSE, sendHttpAction } from "./adapters/http-sse";
+import { connectSocketBroadcast } from "./adapters/socket";
 
 // Handlers
 import "./attributes/model";
@@ -22,12 +23,15 @@ Alpine.plugin(WireAlpinePlugin);
 setupEntangle(Alpine);
 
 const Wire = {
-    start: (config: { endpoint?: string, production?: boolean, bus_delay?: number, transport?: "sse" | "socket" } = {}) => {
+    start: (config: { endpoint?: string, production?: boolean, bus_delay?: number, adapter?: "http" | "socket" | "fivem", transport?: "sse" | "socket", socket?: any } = {}) => {
+        const adapter = (config.adapter || ((config.transport === "socket") ? "socket" : "http")) as "http" | "socket" | "fivem";
         (window as any).__WIRE_CONFIG__ = { 
             endpoint: config.endpoint || "/_wire",
             production: config.production || false,
             bus_delay: config.bus_delay || 100,
-            transport: config.transport || "sse"
+            adapter,
+            transport: config.transport || (adapter === "socket" ? "socket" : "sse"),
+            socket: config.socket
         };
         Alpine.start();
     },
@@ -42,9 +46,9 @@ const Wire = {
             onUpdate: (data: any) => void
         ) => {
             const config = (window as any).__WIRE_CONFIG__ || {};
-            const transport = (config.transport || "sse").toLowerCase();
-            if (transport === "socket" || transport === "ws") {
-                console.warn("[Wire] Socket transport not yet implemented in web client, falling back to SSE.");
+            const adapter = String(config.adapter || (config.transport === "socket" ? "socket" : "http")).toLowerCase();
+            if (adapter === "socket" && typeof target !== "string") {
+                return connectSocketBroadcast(target, onUpdate);
             }
             const url = typeof target === "string"
                 ? target

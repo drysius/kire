@@ -6,6 +6,8 @@ import { allComponents } from "../store";
  * Robust Client-side Wire Component.
  */
 export class Component {
+    private static __instances = new Set<Component>();
+    private static __beforeUnloadBound = false;
     public id: string;
     public name: string;
     public state: any;
@@ -92,7 +94,15 @@ export class Component {
             transport: String((window as any).__WIRE_CONFIG__?.transport || "sse")
         });
         this._initListeners(this._readListenersFromEl());
-        window.addEventListener("beforeunload", () => this.disconnectShared(), { once: true });
+        Component.__instances.add(this);
+        if (!Component.__beforeUnloadBound) {
+            Component.__beforeUnloadBound = true;
+            window.addEventListener("beforeunload", () => {
+                for (const comp of Component.__instances) {
+                    comp.disconnectShared();
+                }
+            }, { once: true });
+        }
         queueMicrotask(() => this._autoConnectSharedFromRoot());
 
         return new Proxy(this, {
@@ -308,6 +318,11 @@ export class Component {
         this.shared.connected = false;
     }
 
+    destroy() {
+        this.disconnectShared();
+        Component.__instances.delete(this);
+    }
+
     setSharedPassword(password?: string) {
         this.shared.password = typeof password === "string" && password.length > 0 ? password : undefined;
     }
@@ -439,12 +454,7 @@ export class Component {
     }
 
     private _findCurrentRootEl(): HTMLElement | null {
-        const nodes = document.querySelectorAll("[wire\\:id]");
-        for (const node of nodes) {
-            if ((node as HTMLElement).getAttribute("wire:id") === this.id) {
-                return node as HTMLElement;
-            }
-        }
-        return null;
+        const escapedId = (window as any).CSS?.escape ? (window as any).CSS.escape(this.id) : this.id.replace(/"/g, '\\"');
+        return document.querySelector(`[wire\\:id="${escapedId}"]`) as HTMLElement | null;
     }
 }

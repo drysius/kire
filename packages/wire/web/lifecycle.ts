@@ -69,7 +69,7 @@ function processWireAttributes(el: HTMLElement, component: any, Alpine: any) {
 }
 
 function attachWireToDataScopes(el: HTMLElement, component: any) {
-    queueMicrotask(() => {
+    const bind = () => {
         const scopes = (el as any)._x_dataStack;
         if (!Array.isArray(scopes)) return;
 
@@ -82,5 +82,8 @@ function attachWireToDataScopes(el: HTMLElement, component: any) {
                 configurable: true,
             });
         }
-    });
+    };
+
+    if ((el as any)._x_dataStack) bind();
+    else queueMicrotask(bind);
 }

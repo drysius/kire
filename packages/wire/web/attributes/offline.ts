@@ -1,5 +1,18 @@
 import { registerWireHandler } from "../core/directives";
 
+const offlineSubscribers = new Set<() => void>();
+let offlineListenersBound = false;
+
+function ensureOfflineListeners() {
+    if (offlineListenersBound) return;
+    offlineListenersBound = true;
+    const notify = () => {
+        for (const run of offlineSubscribers) run();
+    };
+    window.addEventListener("online", notify);
+    window.addEventListener("offline", notify);
+}
+
 registerWireHandler("offline", (el, { modifiers }) => {
     let originalDisplay = el.style.display === 'none' ? '' : el.style.display;
     if (!modifiers.includes("class") && !modifiers.includes("attr")) {
@@ -7,6 +20,10 @@ registerWireHandler("offline", (el, { modifiers }) => {
     }
 
     const update = () => {
+        if (!document.body.contains(el)) {
+            offlineSubscribers.delete(update);
+            return;
+        }
         const isOffline = !navigator.onLine;
         if (modifiers.includes("class")) {
             const classList = el.getAttribute("wire:offline.class")?.split(" ") || [];
@@ -16,8 +33,7 @@ registerWireHandler("offline", (el, { modifiers }) => {
             el.style.display = isOffline ? originalDisplay : 'none';
         }
     };
-
-    window.addEventListener("online", update);
-    window.addEventListener("offline", update);
+    ensureOfflineListeners();
+    offlineSubscribers.add(update);
     update();
 });

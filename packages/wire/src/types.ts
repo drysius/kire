@@ -1,6 +1,8 @@
 export interface WireOptions {
     route?: string;
     secret?: string;
+    adapter?: "http" | "fivem" | "socket";
+    socket?: any; // socket instance (e.g. socket.io) when adapter is "socket"
     bus_delay?: number; // default 100ms
     cachetime?: string; // default '7d'
     directoryTmp?: string; // default node_modules/.wire-tmp

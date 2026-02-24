@@ -15,12 +15,24 @@ type BroadcastRoom = {
     state: Record<string, any>;
     components: Set<string>;
     listeners: Set<ReadableStreamDefaultController<string>>;
+    sockets: Set<any>;
     password?: string;
 };
 
 function ensureRooms(wire: any): Map<string, BroadcastRoom> {
     if (!wire.broadcasts) wire.broadcasts = new Map<string, BroadcastRoom>();
     return wire.broadcasts;
+}
+
+function createRoom(name: string, password?: string): BroadcastRoom {
+    return {
+        name,
+        state: new NullProtoObj(),
+        components: new Set<string>(),
+        listeners: new Set<ReadableStreamDefaultController<string>>(),
+        sockets: new Set<any>(),
+        password
+    };
 }
 
 export class WireBroadcast {
@@ -47,23 +59,17 @@ export class WireBroadcast {
         const rooms = ensureRooms(wire);
         let room = rooms.get(this.channel);
         if (!room) {
-            room = {
-                name: this.channel,
-                state: new NullProtoObj(),
-                components: new Set<string>(),
-                listeners: new Set<ReadableStreamDefaultController<string>>(),
-                password: this.options.password
-            };
+            room = createRoom(this.channel, this.options.password);
             rooms.set(this.channel, room);
         }
         if (!room.password && this.options.password) room.password = this.options.password;
 
-        if (this.options.maxconnections && room.listeners.size >= this.options.maxconnections) {
+        if (this.options.maxconnections && (room.listeners.size + room.sockets.size) >= this.options.maxconnections) {
             throw new Error("Broadcast room is full");
         }
 
         room.components.add(component.__id);
-        this.connections = room.listeners.size;
+        this.connections = room.listeners.size + room.sockets.size;
 
         // Shared room state is authoritative for included fields.
         // This keeps all clients/actions consistent even when a client has stale local state.
@@ -92,7 +98,7 @@ export class WireBroadcast {
         const room = rooms?.get(this.channel);
         if (!room) return;
         room.components.delete(this.component.__id);
-        this.connections = room.listeners.size;
+        this.connections = room.listeners.size + room.sockets.size;
         this.gcRoom(this.channel, room);
     }
 
@@ -101,12 +107,12 @@ export class WireBroadcast {
         const wire = this.kire.$kire?.["~wire"];
         const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
         const room = rooms?.get(this.channel);
-        if (!room || room.listeners.size === 0) {
+        if (!room || (room.listeners.size === 0 && room.sockets.size === 0)) {
             this.gcRoom(this.channel, room);
             return;
         }
 
-        const payload = { type: event, channel: this.channel, data, connections: room.listeners.size };
+        const payload = { type: event, channel: this.channel, data, connections: room.listeners.size + room.sockets.size };
         const stale: ReadableStreamDefaultController<string>[] = [];
         for (const controller of room.listeners) {
             try {
@@ -115,10 +121,22 @@ export class WireBroadcast {
                 stale.push(controller);
             }
         }
+        const staleSockets: any[] = [];
+        for (const socket of room.sockets) {
+            try {
+                socket.emit(event, payload);
+            } catch {
+                staleSockets.push(socket);
+            }
+        }
         if (stale.length > 0) {
             stale.forEach((c) => room.listeners.delete(c));
-            this.gcRoom(this.channel, room);
         }
+        if (staleSockets.length > 0) {
+            staleSockets.forEach((s) => room.sockets.delete(s));
+        }
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
     }
 
     public update(component: Component) {
@@ -133,13 +151,7 @@ export class WireBroadcast {
         const rooms = ensureRooms(wire);
         let room = rooms.get(this.channel);
         if (!room) {
-            room = {
-                name: this.channel,
-                state: new NullProtoObj(),
-                components: new Set<string>(),
-                listeners: new Set<ReadableStreamDefaultController<string>>(),
-                password: this.options.password
-            };
+            room = createRoom(this.channel, this.options.password);
             rooms.set(this.channel, room);
         }
         if (!room.password && this.options.password) room.password = this.options.password;
@@ -181,30 +193,44 @@ export class WireBroadcast {
         const rooms = ensureRooms(wire);
         let room = rooms.get(this.channel);
         if (!room) {
-            room = {
-                name: this.channel,
-                state: new NullProtoObj(),
-                components: new Set<string>(),
-                listeners: new Set<ReadableStreamDefaultController<string>>(),
-                password: this.options.password
-            };
+            room = createRoom(this.channel, this.options.password);
             rooms.set(this.channel, room);
         }
         room.listeners.add(controller);
-        this.connections = room.listeners.size;
+        this.connections = room.listeners.size + room.sockets.size;
         const snapshot = this.filterState(room.state);
         try {
             this.pushEvent(controller, "wire:broadcast:snapshot", {
                 type: "wire:broadcast:snapshot",
                 channel: this.channel,
                 data: snapshot,
-                connections: room.listeners.size
+                connections: room.listeners.size + room.sockets.size
             });
         } catch {
             room.listeners.delete(controller);
-            this.connections = room.listeners.size;
+            this.connections = room.listeners.size + room.sockets.size;
             this.gcRoom(this.channel, room);
         }
+    }
+
+    public connectSocket(socket: any) {
+        if (!this.kire || !socket) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
+        if (!room) {
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
+        }
+        room.sockets.add(socket);
+        this.connections = room.listeners.size + room.sockets.size;
+        const snapshot = this.filterState(room.state);
+        socket.emit("wire:broadcast:snapshot", {
+            type: "wire:broadcast:snapshot",
+            channel: this.channel,
+            data: snapshot,
+            connections: this.connections
+        });
     }
 
     public disconnectSSE(controller: ReadableStreamDefaultController<string>) {
@@ -214,7 +240,18 @@ export class WireBroadcast {
         const room = rooms?.get(this.channel);
         if (!room) return;
         room.listeners.delete(controller);
-        this.connections = room.listeners.size;
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
+    }
+
+    public disconnectSocket(socket: any) {
+        if (!this.kire || !socket) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        const room = rooms?.get(this.channel);
+        if (!room) return;
+        room.sockets.delete(socket);
+        this.connections = room.listeners.size + room.sockets.size;
         this.gcRoom(this.channel, room);
     }
 
@@ -224,13 +261,7 @@ export class WireBroadcast {
         const rooms = ensureRooms(wire);
         let room = rooms.get(this.channel);
         if (!room) {
-            room = {
-                name: this.channel,
-                state: new NullProtoObj(),
-                components: new Set<string>(),
-                listeners: new Set<ReadableStreamDefaultController<string>>(),
-                password: this.options.password
-            };
+            room = createRoom(this.channel, this.options.password);
             rooms.set(this.channel, room);
         }
         if (!room.password && this.options.password) room.password = this.options.password;
@@ -263,7 +294,7 @@ export class WireBroadcast {
     private gcRoom(name: string, room?: BroadcastRoom) {
         if (!this.options.autodelete || !this.kire || !room) return;
         // Keep room state across reconnects. Remove only empty inactive rooms.
-        if (room.listeners.size > 0) return;
+        if (room.listeners.size > 0 || room.sockets.size > 0) return;
         if (Object.keys(room.state || {}).length > 0) return;
         const wire = this.kire.$kire?.["~wire"];
         const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;

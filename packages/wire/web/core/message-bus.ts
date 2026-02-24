@@ -1,4 +1,6 @@
 import { WirePayload } from "../../src/types";
+import { sendFivemAction } from "../adapters/fivem";
+import { requestSocketAction } from "../adapters/socket";
 
 export class MessageBus {
     private queue: { id: string, payload: WirePayload, resolve: Function, reject: Function }[] = [];
@@ -28,7 +30,8 @@ export class MessageBus {
         if (batch.length === 0) return;
         this.inFlight = true;
 
-        const config = (window as any).__WIRE_CONFIG__ || { endpoint: "/_wire" };
+        const config = (window as any).__WIRE_CONFIG__ || { endpoint: "/_wire", adapter: "http" };
+        const adapter = String(config.adapter || "http").toLowerCase();
         const body = batch.length === 1
             ? batch[0]!.payload
             : { components: batch.map((b) => b.payload) };
@@ -37,22 +40,31 @@ export class MessageBus {
         }
 
         try {
-            const response = await fetch(config.endpoint, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
-            });
-
-            if (!response.ok) {
-                const error = new Error(`Request failed with status ${response.status}`);
-                batch.forEach(item => item.reject(error));
-                return;
+            let results: any[] = [];
+            if (adapter === "socket") {
+                results = await Promise.all(batch.map((item) => requestSocketAction(item.payload)));
+            } else if (adapter === "fivem") {
+                results = await Promise.all(batch.map(async (item) => {
+                    const res = await sendFivemAction(item.payload);
+                    if (!res) throw new Error("[Wire:FiveM] Empty response");
+                    return res;
+                }));
+            } else {
+                const response = await fetch(config.endpoint, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(body)
+                });
+                if (!response.ok) {
+                    const error = new Error(`Request failed with status ${response.status}`);
+                    batch.forEach(item => item.reject(error));
+                    return;
+                }
+                const data = await response.json();
+                results = data.results || (Array.isArray(data) ? data : [data]);
             }
-
-            const data = await response.json();
-            const results = data.results || (Array.isArray(data) ? data : [data]);
             if ((window as any).__WIRE_CONFIG__?.debug) {
-                console.debug("[Wire] queue response", { data, results });
+                console.debug("[Wire] queue response", { results, adapter });
             }
 
             const groupedResults = new Map<string, any[]>();

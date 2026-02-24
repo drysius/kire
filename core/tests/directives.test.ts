@@ -127,6 +127,42 @@ describe("Kire Directives & Elements", () => {
         expect(await kire.render(template, { val: false })).toBe("FALSE");
     });
 
+    test("@include should merge locals only inside dependency scope", async () => {
+        const k = new Kire({ production: true });
+        k.$files[k.resolvePath("partials.item")] = "{{ name }}";
+        const template = "@include('partials.item', { name: 'Inner' })|{{ typeof name }}";
+        const result = await k.render(template, { name: "Outer" });
+        expect(result).toBe("Inner|string");
+    });
+
+    test("@for should iterate object keys", async () => {
+        const template = "@for(key in data){{ key }};@endfor";
+        const result = await kire.render(template, { data: { a: 1, b: 2 } });
+        expect(result).toBe("a;b;");
+    });
+
+    test("@csrf should render token and throw when token is missing", async () => {
+        const withToken = new Kire({ production: true });
+        withToken.$global("csrf", "secure-token");
+        expect(await withToken.render("@csrf")).toBe('<input type="hidden" name="_token" value="secure-token">');
+
+        const noToken = new Kire({ production: true });
+        try {
+            await noToken.render("@csrf");
+            expect.unreachable("should throw when csrf token is missing");
+        } catch (e: any) {
+            expect(e.message).toContain("CSRF token not defined");
+        }
+    });
+
+    test("@component should pass named and default slots to @yield", async () => {
+        const k = new Kire({ production: true });
+        k.$files[k.resolvePath("layout.card")] = "<article>@yield('header', 'No header')|@yield('default')</article>";
+        const template = "@component('layout.card')@slot('header')Head@endslot@slot('default')Body@endslot@endcomponent";
+        const result = await k.render(template);
+        expect(result).toBe("<article>Head|Body</article>");
+    });
+
     test("escaped interpolation", async () => {
         const template = "@{{ escaped }} @{{{ raw_escaped }}}";
         expect(await kire.render(template)).toBe("{{ escaped }} {{{ raw_escaped }}}");

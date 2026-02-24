@@ -8,7 +8,12 @@ export function addComponent(id: string, component: any) {
 }
 
 export function findComponent(id: string) {
-    return components.get(id);
+    const comp = components.get(id);
+    if (comp?.el && !document.body.contains(comp.el)) {
+        components.delete(id);
+        return undefined;
+    }
+    return comp;
 }
 
 export function removeComponent(id: string) {
@@ -16,7 +21,23 @@ export function removeComponent(id: string) {
 }
 
 export function allComponents() {
+    for (const [id, comp] of components) {
+        if (!comp?.el || !document.body.contains(comp.el)) {
+            components.delete(id);
+        }
+    }
     return [...components.values()];
+}
+
+export function clearComponents() {
+    for (const comp of components.values()) {
+        if (comp && typeof comp.destroy === "function") {
+            try {
+                comp.destroy();
+            } catch {}
+        }
+    }
+    components.clear();
 }
 
 /**

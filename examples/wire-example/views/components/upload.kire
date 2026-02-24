@@ -35,31 +35,30 @@
             @end
         </div>
 
-        <div x-show="$wire && $wire.file && $wire.file.uploading && ($wire.file.uploading.percent ?? 100) < 100" 
-            x-cloak
+        <div x-show="$wire && $wire.file && $wire.file.uploading && ($wire.file.uploading.percent ?? 100) < 100" x-cloak
             class="w-full mt-4">
-            <progress class="progress progress-primary w-full" 
-                    :value="($wire && $wire.file && $wire.file.uploading && $wire.file.uploading.percent) ? $wire.file.uploading.percent : 0" 
-                    max="100"></progress>
-            <div x-text="`${($wire && $wire.file && $wire.file.uploading && $wire.file.uploading.percent) ? $wire.file.uploading.percent : 0}% Uploaded`" 
+            <progress class="progress progress-primary w-full"
+                :value="($wire && $wire.file && $wire.file.uploading && $wire.file.uploading.percent) ? $wire.file.uploading.percent : 0"
+                max="100"></progress>
+            <div x-text="`${($wire && $wire.file && $wire.file.uploading && $wire.file.uploading.percent) ? $wire.file.uploading.percent : 0}% Uploaded`"
                 class="text-center text-xs mt-1 opacity-70">
             </div>
         </div>
 
-        @if(file && file.file)
-        <div class="stats shadow mt-4 w-full">
-            <div class="stat">
-                <div class="stat-title">Selected File</div>
-                <div class="stat-value text-lg">{{ file.file.name }}</div>
-                <div class="stat-desc">{{ ((file.file.size || 0) / 1024).toFixed(2) }} KB</div>
-                @if(file.file.type && file.file.type.startsWith('image/'))
-                <div class="mt-2">
-                    <img src="{{ file.file.content }}" class="max-h-32 rounded-lg border border-base-300" />
+        <template x-if='file && file.file'>
+            <div class="stats shadow mt-4 w-full">
+                <div class="stat">
+                    <div class="stat-title">Selected File</div>
+                    <div :text='file.file.name' class="stat-value text-lg"></div>
+                    <div :text="((file.file.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
+                    <template x-if="file.file.type && file.file.type.startsWith('image/')">
+                        <div class="mt-2">
+                            <img :src="file.file.content" class="max-h-32 rounded-lg border border-base-300" />
+                        </div>
+                    </template>
                 </div>
-                @end
             </div>
-        </div>
-        @end
+        </template>
 
         <div class="card-actions justify-end mt-4">
             <button wire:click="save" class="btn btn-primary" wire:loading.attr="disabled">

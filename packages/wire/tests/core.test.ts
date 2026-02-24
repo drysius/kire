@@ -58,4 +58,19 @@ describe("Wire Core", () => {
 
         expect(processWireAction(kire, payload)).rejects.toThrow("checksum");
     });
+
+    test("should support adapter option in plugin state", async () => {
+        const k = new Kire();
+        k.plugin(wirePlugin, { secret: "test-secret", adapter: "socket" });
+        expect(k.$wire.adapter).toBe("socket");
+    });
+
+    test("@kirewire should expose frontend config with adapter", async () => {
+        const k = new Kire();
+        k.plugin(wirePlugin, { secret: "test-secret", adapter: "socket", route: "/_wirex", bus_delay: 75 });
+        const html = await k.render("@kirewire");
+        expect(html).toContain("__WIRE_INITIAL_CONFIG__");
+        expect(html).toContain('"adapter":"socket"');
+        expect(html).toContain('"endpoint":"/_wirex"');
+    });
 });

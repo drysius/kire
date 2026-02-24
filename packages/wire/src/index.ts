@@ -7,6 +7,8 @@ import { discoverComponents } from "./core/discovery";
 import { FileManager } from "./core/file";
 import { getAssetContent } from "./core/assets";
 import { WireBroadcast } from "./core/broadcast";
+import { setupFivemAdapter } from "./adapters/fivem";
+import { setupSocketAdapter } from "./adapters/socket";
 import type { WireOptions } from "./types";
 
 type WireComponentCtor = new () => Component;
@@ -41,6 +43,7 @@ function resolveWireComponent(input: unknown): WireComponentCtor | null {
  */
 export const wirePlugin = kirePlugin<WireOptions>({
     route: "/_wire",
+    adapter: "http",
 }, (kire, options) => {
     const secret = options.secret || randomUUID();
     
@@ -50,11 +53,20 @@ export const wirePlugin = kirePlugin<WireOptions>({
             checksum: new ChecksumManager(secret),
             files: undefined,
             broadcasts: undefined,
-            options: { ...options, secret }
+            options: { route: "/_wire", adapter: "http", ...options, secret }
         };
     }
 
     const wire = kire.$kire["~wire"];
+    wire.options = { ...wire.options, ...options, secret };
+    const selectedAdapter = String(wire.options.adapter || "http").toLowerCase() as "http" | "socket" | "fivem";
+
+    if (selectedAdapter === "fivem") {
+        setupFivemAdapter(kire);
+    } else if (selectedAdapter === "socket" && wire.options.socket) {
+        setupSocketAdapter(kire, wire.options.socket);
+    }
+
     const renderWireComponentCode = (nameExpr: string, paramsExpr: string) => `{
         const $name = ${nameExpr};
         const $params = ${paramsExpr};
@@ -93,7 +105,17 @@ export const wirePlugin = kirePlugin<WireOptions>({
         children: false,
         onCall: (api) => {
             const route = wire.options.route || "/_wire";
+            const adapter = wire.options.adapter || "http";
+            const busDelay = Number(wire.options.bus_delay || 100);
+            const clientConfig = JSON.stringify({
+                endpoint: route,
+                adapter,
+                bus_delay: busDelay,
+                production: !!api.kire.$production,
+                transport: adapter === "socket" ? "socket" : "sse"
+            });
             const suffix = api.kire.$production ? "" : `?v=${Date.now()}`;
+            api.append(`<script>window.__WIRE_INITIAL_CONFIG__ = Object.assign({}, window.__WIRE_INITIAL_CONFIG__ || {}, ${clientConfig});</script>`);
             api.append(`<script type="module" src="${route}/wire.js${suffix}" defer></script>`);
         }
     });
