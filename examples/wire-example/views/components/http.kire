@@ -1,4 +1,4 @@
-<div id="http-demo" wire:ignore class="card bg-base-100 shadow-xl">
+<div id="http-demo" wire:broadcast="shared-counter" class="card bg-base-100 shadow-xl">
     <div class="card-body">
         <h2 class="card-title">WireBroadcast (HTTP)</h2>
         <p class="opacity-70 text-sm">
@@ -6,12 +6,13 @@
         </p>
 
         <div class="divider my-2"></div>
-
-        <div class="text-xs opacity-60">Connection: <span id="http-status">connecting...</span></div>
+        <div class="text-xs opacity-60">Connection: <span x-text="$wire.shared.connected ? 'connected' : 'connecting...'"></span></div>
+        <div class="text-xs opacity-60">Channel: <span x-text="$wire.shared.channel || 'shared-counter'"></span></div>
+        <div class="text-xs opacity-60">Connections: <span x-text="$wire.shared.connections"></span></div>
         <div class="stats shadow mt-3">
             <div class="stat">
                 <div class="stat-title">Shared Counter</div>
-                <div id="http-counter" class="stat-value">{{ counter }}</div>
+                <div x-text="$wire.counter" class="stat-value"></div>
                 <div class="stat-desc">shared across clients</div>
             </div>
         </div>
@@ -19,74 +20,9 @@
             <button wire:click="increment" class="btn btn-primary btn-sm">Increment Shared Counter</button>
         </div>
         <div class="mockup-code bg-neutral text-neutral-content h-64 overflow-y-auto mt-3">
-            <div id="http-log"></div>
+            <template x-for="(chunk, index) in $wire.shared.chunks" :key="index + '-' + chunk">
+                <pre data-prefix=">"><code x-text="chunk"></code></pre>
+            </template>
         </div>
     </div>
 </div>
-
-<script type="module">
-(() => {
-    const root = document.getElementById("http-demo");
-    if (!root || root.dataset.broadcastReady === "1") return;
-    root.dataset.broadcastReady = "1";
-
-    const host = root.closest("[wire\\:id]");
-    if (!host) return;
-
-    const statusEl = document.getElementById("http-status");
-    const counterEl = document.getElementById("http-counter");
-    const logEl = document.getElementById("http-log");
-    const wireId = host.getAttribute("wire:id");
-    const wireComponent = host.getAttribute("wire:component");
-
-    const append = (line) => {
-        if (!logEl) return;
-        const row = document.createElement("pre");
-        row.dataset.prefix = ">";
-        const code = document.createElement("code");
-        code.textContent = line;
-        row.appendChild(code);
-        logEl.prepend(row);
-    };
-
-    if (!wireComponent || !wireId || !window.Wire?.events?.connect) {
-        if (statusEl) statusEl.textContent = "adapter not found";
-        return;
-    }
-
-    const store = (window.__WIRE_BROADCAST_CONNECTIONS ||= new Map());
-    const prev = store.get(wireId);
-    if (typeof prev === "function") {
-        try { prev(); } catch {}
-    }
-
-    if (statusEl) statusEl.textContent = "connected";
-    const close = window.Wire.events.connect({
-        component: wireComponent,
-        id: wireId,
-        channel: "shared-counter"
-    }, (msg) => {
-        if (msg?.type === "wire:broadcast:connected") {
-            if (statusEl) statusEl.textContent = "connected";
-            append(`[wire:broadcast:connected] ${JSON.stringify(msg)}`);
-            return;
-        }
-        const payload = msg?.data ?? {};
-        if (msg?.type === "wire:broadcast:snapshot" || msg?.type === "wire:broadcast:update") {
-            if (counterEl && payload && typeof payload.counter !== "undefined") {
-                counterEl.textContent = String(payload.counter);
-            }
-            append(`[${msg.type}] ${JSON.stringify(payload)}`);
-            return;
-        }
-        append(`[event] ${JSON.stringify(msg)}`);
-    });
-
-    store.set(wireId, close);
-
-    window.addEventListener("beforeunload", () => {
-        try { close(); } catch {}
-        store.delete(wireId);
-    }, { once: true });
-})();
-</script>

@@ -8,7 +8,7 @@ export default class Http extends Component {
 		includes: ["counter"],
 	});
 
-	async hydrate() {
+	async mount() {
 		this.shared.hydrate(this);
 	}
 

@@ -5,7 +5,7 @@ import { Elysia } from "elysia";
 import { Kire } from "kire";
 
 const useSocket = process.argv.includes("--socket");
-
+console.log(useSocket)
 // Initialize Kire
 const kire = new Kire({
 	root:path.join(process.cwd(), 'views'),
@@ -23,6 +23,7 @@ void (async () => {
 	kire.plugin(wirePlugin, {
 		route: "/_wire",
 		secret: "change-me-in-production",
+		bus_delay:10,
 	});
 
 	// add views namespace for .kire files

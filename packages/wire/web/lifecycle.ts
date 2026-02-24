@@ -36,6 +36,7 @@ export default function WireAlpinePlugin(Alpine: any) {
             // B. Process wire:* attributes manually for this element
             const component = findComponentByEl(el);
             if (component) {
+                attachWireToDataScopes(el, component);
                 processWireAttributes(el, component, Alpine);
             }
         })
@@ -65,4 +66,21 @@ function processWireAttributes(el: HTMLElement, component: any, Alpine: any) {
             });
         }
     }
+}
+
+function attachWireToDataScopes(el: HTMLElement, component: any) {
+    queueMicrotask(() => {
+        const scopes = (el as any)._x_dataStack;
+        if (!Array.isArray(scopes)) return;
+
+        for (const scope of scopes) {
+            if (!scope || typeof scope !== "object") continue;
+            if (Object.prototype.hasOwnProperty.call(scope, "$wire")) continue;
+            Object.defineProperty(scope, "$wire", {
+                get: () => component,
+                enumerable: false,
+                configurable: true,
+            });
+        }
+    });
 }

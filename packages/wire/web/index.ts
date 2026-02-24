@@ -14,6 +14,7 @@ import "./attributes/loading";
 import "./attributes/dirty";
 import "./attributes/init";
 import "./attributes/offline";
+import "./attributes/broadcast";
 
 // Register Plugins
 Alpine.plugin(morph);
@@ -37,7 +38,7 @@ const Wire = {
     },
     events: {
         connect: (
-            target: string | { component: string; id: string; channel?: string },
+            target: string | { component: string; id: string; channel?: string; password?: string },
             onUpdate: (data: any) => void
         ) => {
             const config = (window as any).__WIRE_CONFIG__ || {};
@@ -49,7 +50,13 @@ const Wire = {
                 ? target
                 : (() => {
                     const endpoint = String(config.endpoint || "/_wire").replace(/\/+$/, "");
-                    return `${window.location.origin}${endpoint}/broadcast?component=${encodeURIComponent(target.component)}&id=${encodeURIComponent(target.id)}&channel=${encodeURIComponent(target.channel || "global")}`;
+                    const params = new URLSearchParams({
+                        component: String(target.component),
+                        id: String(target.id),
+                        channel: String(target.channel || "global"),
+                    });
+                    if (target.password) params.set("password", String(target.password));
+                    return `${window.location.origin}${endpoint}/broadcast?${params.toString()}`;
                 })();
             return connectSSE(url, onUpdate);
         }

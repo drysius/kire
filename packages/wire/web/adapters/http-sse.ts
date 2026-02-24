@@ -30,8 +30,12 @@ export function connectSSE(url: string, onUpdate: (data: any) => void) {
 
     const handleEvent = (event: MessageEvent) => {
         try {
-            const data = JSON.parse(event.data);
-            onUpdate(data);
+            const parsed = JSON.parse(event.data);
+            if (parsed && typeof parsed === "object") {
+                onUpdate({ type: (parsed as any).type || event.type || "message", ...parsed });
+            } else {
+                onUpdate({ type: event.type || "message", data: parsed });
+            }
         } catch (error) {
             if ((window as any).__WIRE_CONFIG__?.debug) {
                 console.debug("[Wire:SSE] non-json message", event.data);

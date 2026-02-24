@@ -214,6 +214,7 @@ export const wirePlugin = kirePlugin<WireOptions>({
                 }
 
                 const room = String(req.query?.channel || "global");
+                const password = req.query?.password != null ? String(req.query.password) : undefined;
                 const instanceComp = new ComponentClass();
                 instanceComp._setKire(instance);
                 instanceComp.__name = componentName;
@@ -226,6 +227,9 @@ export const wirePlugin = kirePlugin<WireOptions>({
                 if (!selected) {
                     return { status: 404, result: "No WireBroadcast found in component" };
                 }
+                if (!selected.verifyPassword(password)) {
+                    return { status: 403, result: "Invalid broadcast password" };
+                }
 
                 selected.hydrate(instanceComp, room);
                 let currentController: ReadableStreamDefaultController<string> | null = null;
@@ -235,11 +239,14 @@ export const wirePlugin = kirePlugin<WireOptions>({
                         currentController = controller;
                         try {
                             controller.enqueue(`retry: 3000\n`);
-                            controller.enqueue(`event: wire:broadcast:connected\n`);
-                            controller.enqueue(`data: ${JSON.stringify({ channel: room, component: componentName })}\n\n`);
-                        } catch {}
-                        try {
                             selected.connectSSE(controller);
+                            controller.enqueue(`event: wire:broadcast:connected\n`);
+                            controller.enqueue(`data: ${JSON.stringify({
+                                type: "wire:broadcast:connected",
+                                channel: selected.getChannel(),
+                                component: componentName,
+                                connections: selected.connections
+                            })}\n\n`);
                         } catch {}
                         heartbeat = setInterval(() => {
                             try {
