@@ -2,7 +2,7 @@
 
 This report compares **Kire** with other popular template engines in various scenarios. Benchmarks are executed in isolated worker processes to ensure fair comparisons.
 
-Generated on: Tue, 24 Feb 2026 16:27:57 GMT
+Generated on: Tue, 24 Feb 2026 17:03:09 GMT
 
 ## Runtime: BUN
 
@@ -10,28 +10,28 @@ Generated on: Tue, 24 Feb 2026 16:27:57 GMT
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 777,056 | **Fastest** | `████████████████████` |
-| kire | 412,111 | 53.0% | `███████████░░░░░░░░░` |
-| ejs | 22,046 | 2.8% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 12,567 | 1.6% | `░░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 667,965 | **Fastest** | `████████████████████` |
+| kire | 369,441 | 55.3% | `███████████░░░░░░░░░` |
+| ejs | 21,546 | 3.2% | `█░░░░░░░░░░░░░░░░░░░` |
+| edge.js | 13,229 | 2.0% | `░░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Medium Data (100 items, 1000 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 112,379 | **Fastest** | `████████████████████` |
-| kire | 109,537 | 97.5% | `███████████████████░` |
-| ejs | 5,676 | 5.1% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 5,672 | 5.0% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 112,793 | **Fastest** | `████████████████████` |
+| kire | 112,418 | 99.7% | `████████████████████` |
+| ejs | 5,365 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
+| edge.js | 4,963 | 4.4% | `█░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Large Data (1000 items, 100 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire | 14,299 | **Fastest** | `████████████████████` |
-| kire_elements | 10,442 | 73.0% | `███████████████░░░░░` |
-| edge.js | 1,113 | 7.8% | `██░░░░░░░░░░░░░░░░░░` |
-| ejs | 651 | 4.6% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 13,956 | **Fastest** | `████████████████████` |
+| kire | 12,954 | 92.8% | `███████████████████░` |
+| edge.js | 1,076 | 7.7% | `██░░░░░░░░░░░░░░░░░░` |
+| ejs | 667 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
 
 ---
 *Note: Benchmarks performed using automated GitHub Actions in isolated workers. Performance may vary between environments.*
