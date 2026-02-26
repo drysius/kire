@@ -2,7 +2,7 @@
 
 This report compares **Kire** with other popular template engines in various scenarios. Benchmarks are executed in isolated worker processes to ensure fair comparisons.
 
-Generated on: Tue, 24 Feb 2026 17:03:09 GMT
+Generated on: Thu, 26 Feb 2026 09:09:23 GMT
 
 ## Runtime: BUN
 
@@ -10,28 +10,28 @@ Generated on: Tue, 24 Feb 2026 17:03:09 GMT
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 667,965 | **Fastest** | `████████████████████` |
-| kire | 369,441 | 55.3% | `███████████░░░░░░░░░` |
-| ejs | 21,546 | 3.2% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 13,229 | 2.0% | `░░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 652,027 | **Fastest** | `████████████████████` |
+| kire | 297,522 | 45.6% | `█████████░░░░░░░░░░░` |
+| ejs | 22,662 | 3.5% | `█░░░░░░░░░░░░░░░░░░░` |
+| edge.js | 12,520 | 1.9% | `░░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Medium Data (100 items, 1000 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 112,793 | **Fastest** | `████████████████████` |
-| kire | 112,418 | 99.7% | `████████████████████` |
-| ejs | 5,365 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 4,963 | 4.4% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire | 90,143 | **Fastest** | `████████████████████` |
+| kire_elements | 81,192 | 90.1% | `██████████████████░░` |
+| ejs | 5,652 | 6.3% | `█░░░░░░░░░░░░░░░░░░░` |
+| edge.js | 5,583 | 6.2% | `█░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Large Data (1000 items, 100 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 13,956 | **Fastest** | `████████████████████` |
-| kire | 12,954 | 92.8% | `███████████████████░` |
-| edge.js | 1,076 | 7.7% | `██░░░░░░░░░░░░░░░░░░` |
-| ejs | 667 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire | 10,611 | **Fastest** | `████████████████████` |
+| kire_elements | 10,235 | 96.5% | `███████████████████░` |
+| edge.js | 1,257 | 11.8% | `██░░░░░░░░░░░░░░░░░░` |
+| ejs | 690 | 6.5% | `█░░░░░░░░░░░░░░░░░░░` |
 
 ---
 *Note: Benchmarks performed using automated GitHub Actions in isolated workers. Performance may vary between environments.*
