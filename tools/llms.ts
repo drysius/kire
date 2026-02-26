@@ -15,8 +15,8 @@ class LLMSBuilder {
 			join(normalizedPath, "src", "**", "*.ts"),
 			join(normalizedPath, "src", "**", "*.tsx"),
 			join(normalizedPath, "lib", "**", "*.ts"),
-			// Avoid greedy patterns that might catch too much if structure is standard
-			// join(normalizedPath, '**', '*.ts'),
+			join(normalizedPath, "web", "**", "*.ts"),
+			join(normalizedPath, "web", "**", "*.js"),
 		];
 
 		console.log(`   🔍 Searching in: ${normalizedPath}`);
@@ -32,6 +32,7 @@ class LLMSBuilder {
 						"**/tests/**",
 						"**/node_modules/**",
 						"**/dist/**",
+						"**/bin/**",
 						"**/.git/**",
 						"**/llms.txt",
 					],

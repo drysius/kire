@@ -7,10 +7,6 @@ export default class Counter extends Component {
 		this.count++;
 	}
 
-	async hydrated(): Promise<void> {
-		console.log(this.count);
-	}
-
 	async decrement() {
 		this.count--;
 	}
