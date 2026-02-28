@@ -27,7 +27,7 @@ void (async () => {
 	// register server components from glob pattern
 	kire.plugin(new wirePlugin({
 		secret: "change-me-in-production",
-		busDelay: 10,
+		bus_delay: 10,
 		adapter: useSocket ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" })
 	}));
 
@@ -50,13 +50,12 @@ void (async () => {
 		}
 
 		// Build a stable per-user key used by wire checksum/hydration.
-		const ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
+		let ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
+        if (ip === "::1" || ip === "::ffff:127.0.0.1") ip = "127.0.0.1"; // Standardize loopback
+
 		const wireKey = createHash("sha256")
 			.update(`${session.value}:${ip}`)
 			.digest("hex");
-		// context.kire.wireKey(wireKey); // No longer needed as we pass it to wireRequest
-
-		console.log(`[Middleware] Path: ${context.request.url} | Session: ${session.value} | IP: ${ip} | WireKey: ${wireKey}`);
 
 		const url = new URL(context.request.url);
         const pageId = createHash("md5").update(url.pathname).digest("hex");
@@ -65,13 +64,17 @@ void (async () => {
 			if (path === "/") return url.pathname === "/";
 			return url.pathname.startsWith(path);
 		};
+        
+        const user = { id: session.value, name: "Guest" };
 		context.kire.$global("isActive", isActive);
 		context.kire.$global('request', context);
-		context.kire.$global('$wireToken', wireKey);
+		context.kire.$global('wireKey', wireKey);
         context.kire.$global('pageId', pageId);
+        context.kire.$global('user', user);
 		context.kire.$global('sharedTransport', useSocket ? "socket" : "sse");
+
 		return {
-			user: { id: session.value, name: "Guest" },
+			user,
             wireKey: wireKey,
             pageId: pageId
 		};

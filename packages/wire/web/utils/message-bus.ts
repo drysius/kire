@@ -12,7 +12,11 @@ export class MessageBus {
     private timer: any = null;
     private inFlight = false;
 
-    constructor(private delay: number = 100) {}
+    constructor(private delay: number = 10) {}
+
+    public setDelay(ms: number) {
+        this.delay = ms;
+    }
 
     public enqueue(payload: WirePayload): Promise<any> {
         console.log(`[Kirewire] MessageBus enqueuing action "${payload.method}" for component "${payload.id}"`);

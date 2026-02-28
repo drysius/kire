@@ -20,46 +20,119 @@ export class KirewireClient {
     private directives = new Map<string, WireClientDirective>();
     public components = new Map<string, any>();
     public pageId: string = 'default';
+    public bus = bus;
 
     constructor() {}
 
-    /**
-     * Registers a new client-side wire directive.
-     */
     public directive(name: string, handler: WireClientDirective) {
-        console.log(`[Kirewire] Registering directive: wire:${name}`);
         this.directives.set(name, handler);
     }
 
     public start(Alpine: any) {
-        console.log(`[Kirewire] Starting Alpine integration...`);
+        console.log(`[Kirewire] Booting Alpine integration...`);
         (window as any).Alpine = Alpine;
         Alpine.plugin(morph);
 
-        // Magic $wire: allows access to the component instance from Alpine
+        // 1. Magic $wire variable
         Alpine.magic('wire', (el: HTMLElement) => {
+            return this.getComponentProxy(el);
+        });
+
+        // 2. Add root selector for [wire:id]
+        // This tells Alpine that wire:id is a component boundary
+        Alpine.addRootSelector(() => "[wire\\:id]");
+
+        // 3. Intercept every element initialization
+        Alpine.interceptInit(Alpine.skipDuringClone((el: HTMLElement) => {
             const componentId = this.getComponentId(el);
-            console.log(`[Kirewire] Magic $wire accessed for component: ${componentId}`);
-            return componentId ? this.components.get(componentId) : null;
-        });
+            if (!componentId) return;
 
-        Alpine.directive('wire', (el: HTMLElement, { value, expression, modifiers }: any, { cleanup }: any) => {
-            console.log(`[Kirewire] Binding wire:${value}="${expression}" on`, el);
-            const handler = this.directives.get(value);
-            if (handler) {
-                handler({ el, value, expression, modifiers, cleanup, wire: this });
-            } else {
-                console.warn(`[Kirewire] No handler found for directive: wire:${value}`);
+            // Initialize component proxy if not exists
+            if (!this.components.has(componentId)) {
+                this.components.set(componentId, this.createProxy(componentId, el));
             }
-        });
 
-        // Start Alpine if not already started
+            // Inject $wire into data stack for this element and children
+            this.attachWireToDataScopes(el, componentId);
+
+            // Process wire:* attributes
+            this.processWireAttributes(el);
+        }));
+
         if (!(window as any).Alpine.started) {
             console.log(`[Kirewire] Forcing Alpine.start()`);
             Alpine.start();
         }
 
         this.$emit('wire:ready', {});
+    }
+
+    private processWireAttributes(el: HTMLElement) {
+        if ((el as any)._kirewire_init) return;
+        (el as any)._kirewire_init = true;
+
+        const attrs = el.getAttributeNames();
+        for (const attrName of attrs) {
+            if (!attrName.startsWith('wire:')) continue;
+
+            const parts = attrName.slice(5).split('.');
+            const value = parts[0]!;
+            const modifiers = parts.slice(1);
+            const expression = el.getAttribute(attrName) || '';
+
+            console.log(`[Kirewire] Processing ${attrName} on`, el);
+
+            const handler = this.directives.get(value);
+            if (handler) {
+                handler({ 
+                    el, value, expression, modifiers, 
+                    cleanup: (fn) => { /* Cleanup handled by Alpine lifecycle if needed */ }, 
+                    wire: this 
+                });
+            }
+        }
+    }
+
+    private attachWireToDataScopes(el: HTMLElement, componentId: string) {
+        const bind = () => {
+            const scopes = (el as any)._x_dataStack;
+            if (!Array.isArray(scopes)) return;
+
+            const proxy = this.components.get(componentId);
+            for (const scope of scopes) {
+                if (!scope || typeof scope !== "object") continue;
+                if (Object.prototype.hasOwnProperty.call(scope, "$wire")) continue;
+                Object.defineProperty(scope, "$wire", {
+                    get: () => proxy,
+                    enumerable: false,
+                    configurable: true,
+                });
+            }
+        };
+
+        if ((el as any)._x_dataStack) bind();
+        else queueMicrotask(bind);
+    }
+
+    private getComponentProxy(el: HTMLElement) {
+        const id = this.getComponentId(el);
+        return id ? this.components.get(id) : null;
+    }
+
+    private createProxy(id: string, el: HTMLElement) {
+        const wire = this;
+        return new Proxy({}, {
+            get(target, prop: string) {
+                if (prop === '$id') return id;
+                if (prop === '$el') return el;
+                
+                // Return a function that calls wire.call
+                return (...args: any[]) => {
+                    const root = document.querySelector(`[wire\\:id="${id}"]`);
+                    if (root) return wire.call(root as HTMLElement, prop, args);
+                };
+            }
+        });
     }
 
     /**
@@ -72,7 +145,7 @@ export class KirewireClient {
             return;
         }
 
-        console.log(`[Kirewire] Calling "${method}" on component "${meta.id}" with params:`, params);
+        console.log(`[Kirewire] Calling "${method}" on component "${meta.id}"`);
         this.$emit('component:call', { id: meta.id, method, params });
 
         try {
@@ -86,21 +159,13 @@ export class KirewireClient {
             });
 
             if (result.success) {
-                console.log(`[Kirewire] Action "${method}" succeeded for "${meta.id}". Updating DOM.`);
-                // Update state and checksum on the element
                 meta.el.setAttribute('wire:state', JSON.stringify(result.state));
                 meta.el.setAttribute('wire:checksum', result.checksum);
-                
-                if (result.html) {
-                    this.patch(meta.el, result.html);
-                }
-
+                if (result.html) this.patch(meta.el, result.html);
                 this.$emit('component:update', { id: meta.id, state: result.state, checksum: result.checksum });
-            } else if (result.error) {
-                console.error(`[Kirewire] Server returned error for "${method}":`, result.error);
             }
         } catch (e) {
-            console.error(`[Kirewire] Action "${method}" failed at transport level:`, e);
+            console.error(`[Kirewire] Action failed:`, e);
             this.$emit('component:error', { id: meta.id, error: e });
         } finally {
             this.$emit('component:finished', { id: meta.id });
@@ -131,7 +196,6 @@ export class KirewireClient {
     public $on(event: string, callback: (data: any) => void): () => void {
         const names = event.split(',').map(n => n.trim());
         const unregisters: Array<() => void> = [];
-
         for (const name of names) {
             if (!this.events.has(name)) this.events.set(name, []);
             const handlers = this.events.get(name)!;
@@ -141,7 +205,6 @@ export class KirewireClient {
                 if (idx !== -1) handlers.splice(idx, 1);
             });
         }
-
         return () => unregisters.forEach(u => u());
     }
 
@@ -151,7 +214,15 @@ export class KirewireClient {
     }
 
     public patch(el: HTMLElement, newHtml: string) {
-        (window as any).Alpine.morph(el, newHtml);
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(newHtml, "text/html");
+        const newEl = doc.body.firstElementChild as HTMLElement;
+
+        if (newEl) {
+            (window as any).Alpine.morph(el, newEl);
+        } else {
+            console.warn(`[Kirewire] Failed to parse patch HTML for element:`, el);
+        }
     }
 }
 

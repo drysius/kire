@@ -40,12 +40,12 @@ export class KirewirePlugin {
             onCall: (api) => {
                 const id = api.getAttribute('id');
                 const state = api.getAttribute('state') || '{}';
-                const sessionId = api.getArgument(0) || '$globals.wireKey || "default"'; 
                 
                 api.write(`{
                     const $state = ${state};
                     const $id = ${id};
-                    const $sessionId = ${sessionId};
+                    const $sessionId = $globals.wireKey || "default"; 
+                    
                     const $checksum = this.wire.generateChecksum($state, $sessionId);
                     const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
                     $kire_response += \` wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}"\`;
@@ -56,25 +56,30 @@ export class KirewirePlugin {
         kire.directive({
             name: 'kirewire',
             onCall: (api) => {
-                const pageId = (api as any).$globals?.pageId || 'default-page';
-                
-                api.append(`
-                    <script type="module" src="/dist/client/wire.js"></script>
-                    <script type="module">
-                        const init = () => {
-                            if (window.Kirewire && window.Alpine) {
-                                Kirewire.start(window.Alpine);
-                                new Kirewire.HttpClientAdapter({ 
-                                    url: '/_wire', 
-                                    pageId: '${pageId}' 
-                                });
-                            } else {
-                                setTimeout(init, 10);
-                            }
-                        };
-                        init();
-                    </script>
-                `);
+                api.write(`{
+                    const $pageId = $globals.pageId || 'default-page';
+                    const $busDelay = ${this.wire.options.bus_delay || 10};
+                    $kire_response += \`
+                        <script type="module" src="/dist/client/wire.js"></script>
+                        <script type="module">
+                            const init = () => {
+                                if (window.Kirewire && window.Alpine) {
+                                    Kirewire.start(window.Alpine);
+                                    if (window.Kirewire.bus) {
+                                        window.Kirewire.bus.setDelay(\${$busDelay});
+                                    }
+                                    new Kirewire.HttpClientAdapter({ 
+                                        url: '/_wire', 
+                                        pageId: '\${$pageId}' 
+                                    });
+                                } else {
+                                    setTimeout(init, 10);
+                                }
+                            };
+                            init();
+                        </script>
+                    \`;
+                }`);
             }
         });
 
@@ -121,11 +126,11 @@ export class KirewirePlugin {
                             }
                         }
                         
-                        Object.assign($instance, $locals);
                         await $instance.mount();
                         $page.components.set($id, $instance);
 
-                        const $html = await $instance.render();
+                        const $rendered = await $instance.render();
+                        const $html = $rendered.toString();
                         const $state = {};
                         for (const key of Object.keys($instance)) {
                             if (!key.startsWith('$') && !key.startsWith('_') && typeof $instance[key] !== 'function') {
@@ -136,8 +141,8 @@ export class KirewirePlugin {
                         const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
 
                         $kire_response += \`<div wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}">\${$html}</div>\`;
-                    }
-                }`);
+                        }
+                        }`);
             }
         });
 

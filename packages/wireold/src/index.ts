@@ -106,7 +106,7 @@ export const wirePlugin = kirePlugin<WireOptions>({
         onCall: (api) => {
             const route = wire.options.route || "/_wire";
             const adapter = wire.options.adapter || "http";
-            const busDelay = Number(wire.options.bus_delay || 100);
+            const busDelay = Number(wire.options.bus_delay || 10);
             const clientConfig = JSON.stringify({
                 endpoint: route,
                 adapter,

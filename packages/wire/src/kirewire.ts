@@ -5,8 +5,8 @@ import type { Component } from "./component";
 
 export interface KirewireOptions {
     secret: string;
-    busDelay?: number;
-    expireSession?: string | number;
+    bus_delay?: number;
+    expire_session?: string | number;
     adapter?: any;
 }
 
@@ -19,16 +19,18 @@ export class Kirewire {
 
     constructor(public options: KirewireOptions) {
         this.secret = options.secret;
-        const expireMs = typeof options.expireSession === 'string' 
-            ? this.parseDuration(options.expireSession) 
-            : (options.expireSession || 60000);
+        const expireMs = typeof options.expire_session === 'string' 
+            ? this.parseDuration(options.expire_session) 
+            : (options.expire_session || 60000);
         
         this.sessions = new SessionManager(expireMs);
     }
 
     public generateChecksum(state: any, sessionId: string): string {
         const data = JSON.stringify(state) + sessionId + this.secret;
-        return createHash("sha256").update(data).digest("hex");
+        const hash = createHash("sha256").update(data).digest("hex");
+        // console.log(`[Kirewire] Checksum for session ${sessionId}: ${hash.substring(0, 8)}...`);
+        return hash;
     }
 
     public async $emit(event: string, data: any) {

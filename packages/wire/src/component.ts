@@ -58,6 +58,15 @@ export abstract class Component {
     };
 
     /**
+     * Resets all pending effects.
+     */
+    public $clearEffects() {
+        this.__effects.events = [];
+        this.__effects.redirect = null;
+        this.__effects.streams = [];
+    }
+
+    /**
      * Emits an event to the browser and other components on the same page.
      */
     public emit(name: string, ...params: any[]) {
