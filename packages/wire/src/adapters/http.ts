@@ -71,7 +71,7 @@ export class HttpAdapter extends Adapter {
         };
     }
 
-    private getPublicState(instance: any): any {
+    public getPublicState(instance: any): any {
         const state: any = {};
         for (const key of Object.keys(instance)) {
             if (!key.startsWith('$') && !key.startsWith('_') && typeof instance[key] !== 'function') {

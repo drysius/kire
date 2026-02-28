@@ -26,7 +26,6 @@ export default (kire: Kire<any>) => {
 		name: `define`,
 		params: [`name:string`],
 		children: true,
-        closeBy: [`enddefine`, `end`],
 		onCall: (api) => {
 			let name = api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
@@ -44,7 +43,6 @@ export default (kire: Kire<any>) => {
 		name: `defined`,
 		params: [`name:string`],
 		children: `auto`,
-        closeBy: [`enddefined`, `end`],
 		onCall: (api) => {
 			let name = api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);

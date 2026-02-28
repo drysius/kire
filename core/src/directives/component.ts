@@ -6,7 +6,6 @@ export default (kire: Kire<any>) => {
 		name: `slot`,
 		params: [`name:string`],
 		children: true,
-        closeBy: [`endslot`, `end`],
 		onCall: (api) => {
 			let name = api.getAttribute("name") || api.getArgument(0);
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
@@ -43,7 +42,6 @@ export default (kire: Kire<any>) => {
         name: 'component',
         params: ['path:string', 'locals:object'],
         children: true,
-        closeBy: [`endcomponent`, `end`],
         isDependency: (args) => {
             const rawPath = args[0];
             if (typeof rawPath === 'string') {
@@ -79,7 +77,6 @@ export default (kire: Kire<any>) => {
 
     kire.directive({ 
         name: 'layout', 
-        closeBy: [`endlayout`, `end`],
         isDependency: (args) => {
             const rawPath = args[0];
             if (typeof rawPath === 'string') {
@@ -91,7 +88,6 @@ export default (kire: Kire<any>) => {
     });
     kire.directive({ 
         name: 'extends', 
-        closeBy: [`endextends`, `end`],
         isDependency: (args) => {
             const rawPath = args[0];
             if (typeof rawPath === 'string') {
@@ -103,7 +99,6 @@ export default (kire: Kire<any>) => {
     });
     kire.directive({ 
         name: 'section', 
-        closeBy: [`endsection`, `end`],
         onCall: (api) => kire.getDirective('slot')?.onCall(api) 
     });
 };

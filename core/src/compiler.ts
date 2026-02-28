@@ -333,12 +333,15 @@ export class Compiler {
 
     private processDirective(n: Node) {
         const d = this.kire.getDirective(n.name!);
+        if (!this.kire.$production) {
+            this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+            if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
+        }
         if (d) {
-            if (!this.kire.$production) {
-                this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
-                if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
-            }
             d.onCall(this.createCompilerApi(n, d));
+        } else {
+            // Keep unknown directives as text (e.g. @tailwindcss)
+            this.body.push(`$kire_response += "@${n.name}";`);
         }
     }
 
@@ -449,6 +452,23 @@ export class Compiler {
                 this.compileNodes(targetNodes);
             },
             uid: (p: string) => { this.uidCounter[p] = (this.uidCounter[p] || 0) + 1; return `_${p}${this.uidCounter[p]}`; },
+            renderAttributes: (attrs?: Record<string, string>) => {
+                const target = attrs || node.attributes;
+                if (!target) return;
+                for (const [key, val] of Object.entries(target)) {
+                    if (key.startsWith('@')) {
+                        // We don't render directives as attributes
+                        continue;
+                    }
+                    if (INTERPOLATION_START_REGEX.test(val)) {
+                        api.append(` ${key}="`);
+                        api.append(this.parseAttrCode(val));
+                        api.append('"');
+                    } else {
+                        api.append(` ${key}="${escapeHtml(val)}"`);
+                    }
+                }
+            },
             getAttribute: (n: string) => {
                 const val = node.type === "element" ? node.attributes?.[n] : undefined;
                 if (val !== undefined) return this.parseAttrCode(val);

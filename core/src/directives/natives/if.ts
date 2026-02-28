@@ -17,7 +17,7 @@ export default (kire: Kire<any>) => {
         name: `if`,
         params: [`cond:any`],
         children: true,
-        // closeBy: @endif / @end (default)
+        relatedTo: [],
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`if (${cond}) {`);
@@ -33,7 +33,6 @@ export default (kire: Kire<any>) => {
         ...elseDirective,
         name: `elseif`,
         params: [`cond:any`],
-        relatedTo: [`if`, `elseif`, `unless`], // Ensure relationship
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);

@@ -8,7 +8,9 @@ export default (kire: Kire<any>) => {
         name: 'style',
         raw: true,
         onCall: (api) => {
-            api.append('<style>');
+            api.append('<style');
+            api.renderAttributes();
+            api.append('>');
             api.renderChildren();
             api.append('</style>');
         }
@@ -18,7 +20,9 @@ export default (kire: Kire<any>) => {
         name: 'script',
         raw: true,
         onCall: (api) => {
-            api.append('<script>');
+            api.append('<script');
+            api.renderAttributes();
+            api.append('>');
             api.renderChildren();
             api.append('</script>');
         }

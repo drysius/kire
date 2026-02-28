@@ -112,26 +112,32 @@ export class Parser {
         
         // 1. Check Closure
         if (this.stack.length > 0) {
-            const current = this.stack[this.stack.length - 1]!;
-            const parentDef = current.type === 'directive' ? registered[current.name!] : null;
-            
-            let shouldPop = false;
-            if (parentDef?.closeBy) {
-                const closeBy = Array.isArray(parentDef.closeBy) ? parentDef.closeBy : [parentDef.closeBy];
-                for (const cb of closeBy) {
-                    if (rawName === cb || rawName.startsWith(cb)) {
-                        shouldPop = true; break;
+            for (let i = this.stack.length - 1; i >= 0; i--) {
+                const node = this.stack[i]!;
+                const def = registered[node.name!];
+                
+                let shouldPop = false;
+                if (def?.closeBy) {
+                    const closeBy = Array.isArray(def.closeBy) ? def.closeBy : [def.closeBy];
+                    if (closeBy.includes(rawName)) shouldPop = true;
+                }
+
+                if (!shouldPop) {
+                    if (rawName === "end") {
+                        shouldPop = true;
+                    } else if (node.type === 'directive') {
+                        const expectedEnd = `end${node.name}`;
+                        if (rawName === expectedEnd) {
+                            shouldPop = true;
+                        }
                     }
                 }
-            } 
-            if (!shouldPop && (rawName === "end" || (rawName.startsWith("end") && rawName.slice(3) === current.name))) {
-                shouldPop = true;
-            }
 
-            if (shouldPop) {
-                this.stack.pop();
-                this.advance(rawName.length + 1);
-                return true;
+                if (shouldPop) {
+                    this.stack.splice(i);
+                    this.advance(rawName.length + 1);
+                    return true;
+                }
             }
         }
 
@@ -217,7 +223,9 @@ export class Parser {
         if (!match) return false;
         
         const tagName = match[1]!;
-        if (!this.kire.$elementsPattern.test(tagName)) return false;
+        // Kernel: We handle any tag that starts with a letter, or is explicitly registered
+        const isLetter = /^[a-zA-Z]/.test(tagName);
+        if (!isLetter && !this.kire.$elementsPattern.test(tagName)) return false;
 
         this.advance(match[0]!.length);
         const attributes = this.parseAttributesState();
@@ -330,7 +338,11 @@ export class Parser {
         const match = this.template.slice(this.cursor).match(TAG_CLOSE_REGEX);
         if (!match) return false;
         const tagName = match[1]!;
-        if (!this.kire.$elementsPattern.test(tagName)) return false;
+        
+        // Kernel: Handle any tag closing that starts with a letter, or is explicitly registered
+        const isLetter = /^[a-zA-Z]/.test(tagName);
+        if (!isLetter && !this.kire.$elementsPattern.test(tagName)) return false;
+
         this.popStack(tagName);
         this.advance(match[0]!.length); return true;
     }
