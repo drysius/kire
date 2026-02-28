@@ -58,7 +58,7 @@ export class KirewirePlugin {
             onCall: (api) => {
                 api.write(`{
                     const $pageId = $globals.pageId || 'default-page';
-                    const $busDelay = ${this.wire.options.bus_delay || 10};
+                    const $busDelay = ${this.wire.options.busDelay || 100};
                     $kire_response += \`
                         <script type="module" src="/dist/client/wire.js"></script>
                         <script type="module">
@@ -110,39 +110,60 @@ export class KirewirePlugin {
                         $instance.$kire = this;
                         $instance.$wire_instance = this.wire;
                         
-                        // Register listeners
+                        // Centralized updater for SSE
+                        const $emitUpdate = async () => {
+                            const $state = {};
+                            for (const key of Object.keys($instance)) {
+                                if (!key.startsWith('$') && !key.startsWith('_') && typeof $instance[key] !== 'function') {
+                                    $state[key] = $instance[key];
+                                }
+                            }
+                            const $checksum = this.wire.generateChecksum($state, $sessionId);
+                            const $rendered = await $instance.render();
+                            const $html = $rendered.toString();
+                            const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
+                            const $fullHtml = \`<div wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}">\${$html}</div>\`;
+
+                            await this.wire.$emit('component:update', {
+                                userId: $userId, pageId: $pageId, id: $id, 
+                                html: $fullHtml,
+                                state: $state,
+                                checksum: $checksum
+                            });
+                        };
+
+                        // Register listeners for cross-component communication
                         if ($instance.listeners) {
                             for (const [event, method] of Object.entries($instance.listeners)) {
                                 this.wire.$on(\`event:\${event}\`, async (data) => {
                                     if (data.sourceId !== $id) {
-                                        await $instance[method](...data.params);
-                                        await this.wire.$emit('component:update', {
-                                            userId: $userId, pageId: $pageId, id: $id, 
-                                            html: (await $instance.render()).toString(),
-                                            state: this.wire.options.adapter.getPublicState($instance)
-                                        });
+                                        if (typeof $instance[method] === 'function') {
+                                            await $instance[method](...data.params);
+                                            await $emitUpdate();
+                                        }
                                     }
                                 });
                             }
                         }
                         
+                        Object.assign($instance, $locals);
                         await $instance.mount();
                         $page.components.set($id, $instance);
 
                         const $rendered = await $instance.render();
                         const $html = $rendered.toString();
-                        const $state = {};
+                        const $finalState = {};
                         for (const key of Object.keys($instance)) {
                             if (!key.startsWith('$') && !key.startsWith('_') && typeof $instance[key] !== 'function') {
-                                $state[key] = $instance[key];
+                                $finalState[key] = $instance[key];
                             }
                         }
-                        const $checksum = this.wire.generateChecksum($state, $sessionId);
-                        const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
+                        const $finalChecksum = this.wire.generateChecksum($finalState, $sessionId);
+                        const $finalStateStr = JSON.stringify($finalState).replace(/'/g, "&#39;");
 
-                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}">\${$html}</div>\`;
-                        }
-                        }`);
+                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}' wire:checksum="\${$finalChecksum}">\${$html}</div>\`;
+                    }
+                }`);
             }
         });
 

@@ -1,14 +1,13 @@
 import { Kirewire } from "../kirewire";
 
-Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
-    if (el instanceof HTMLInputElement && el.type === 'file') return; // Handled by file-upload feature
+Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
+    if (el instanceof HTMLInputElement && el.type === 'file') return;
 
     const isInput = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
     if (!isInput) return;
 
-    const meta = wire.getMetadata(el);
-    if (!meta) return;
-    const componentId = meta.id;
+    const componentId = wire.getComponentId(el);
+    if (!componentId) return;
 
     const eventType = (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) || el instanceof HTMLSelectElement 
         ? 'change' 
@@ -22,7 +21,13 @@ Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
             value = e.target.value;
         }
 
-        wire.call(el, '$set', [expression, value]);
+        if (modifiers.includes('defer')) {
+            // Store locally in the deferred map
+            wire.defer(componentId, expression, value);
+        } else {
+            // Call server immediately
+            wire.call(el, '$set', [expression, value]);
+        }
     };
 
     el.addEventListener(eventType, handler);

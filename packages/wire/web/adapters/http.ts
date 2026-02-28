@@ -27,30 +27,11 @@ export class HttpClientAdapter {
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
                 const results = await response.json();
-                console.log(`[Kirewire] HttpClientAdapter received response from server:`, results);
+                console.log(`[Kirewire] HttpClientAdapter action batch confirmed:`, results);
 
-                // results should be an array matching the batch indices
-                if (Array.isArray(results)) {
-                    results.forEach(res => {
-                        if (res.html) {
-                            const el = document.querySelector(`[wire\\:id="${res.id}"]`);
-                            if (el) {
-                                console.log(`[Kirewire] HttpClientAdapter patching component "${res.id}"`);
-                                el.setAttribute('wire:state', JSON.stringify(res.state));
-                                el.setAttribute('wire:checksum', res.checksum);
-                                Kirewire.patch(el as HTMLElement, res.html);
-                            } else {
-                                console.warn(`[Kirewire] HttpClientAdapter could not find element for component "${res.id}" to patch.`);
-                            }
-                        }
-                    });
-                    finish(results);
-                } else {
-                    console.log(`[Kirewire] HttpClientAdapter handling non-array response.`);
-                    finish([results]); // Fallback for single result
-                }
-            } catch (err) {
-                console.error("[Kirewire] HttpClientAdapter fetch error:", err);
+                // All DOM updates are expected via SSE channel
+                finish(results);
+                } catch (err) {                console.error("[Kirewire] HttpClientAdapter fetch error:", err);
                 error(err);
             }
         });

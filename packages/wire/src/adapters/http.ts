@@ -29,14 +29,12 @@ export class HttpAdapter extends Adapter {
                         } catch (e) {}
                     };
                     
-                    // Initial message to confirm connection
                     controller.enqueue(encoder.encode(': connected\n\n'));
 
                     const cleanup = this.wire.$on('component:update', (data) => {
                         if (data.userId === userId) send({ type: 'update', ...data });
                     });
 
-                    // Keep-alive heartbeat every 15s
                     const keepAlive = setInterval(() => {
                         try {
                             controller.enqueue(encoder.encode(': keep-alive\n\n'));
@@ -69,7 +67,7 @@ export class HttpAdapter extends Adapter {
                     'Content-Type': 'text/event-stream',
                     'Cache-Control': 'no-cache',
                     'Connection': 'keep-alive',
-                    'X-Accel-Buffering': 'no', // Disable buffering for proxies like Nginx
+                    'X-Accel-Buffering': 'no',
                 },
                 result: stream
             };
@@ -81,7 +79,7 @@ export class HttpAdapter extends Adapter {
         let result;
         if (reqBody.batch && Array.isArray(reqBody.batch)) {
             const results = [];
-            const hydrated = new Set<string>(); // Keep track of hydrated components in this batch
+            const hydrated = new Set<string>();
             for (const action of reqBody.batch) {
                 try {
                     const res = await this.processAction(action, userId, sessionId, reqBody.pageId || action.pageId, hydrated);
@@ -105,54 +103,54 @@ export class HttpAdapter extends Adapter {
     private async processAction(payload: any, userId: string, sessionId: string, pageId: string, hydratedSet?: Set<string>) {
         const { id, method, params, state, checksum } = payload;
 
-        // 2. Get Component Instance
-        console.log(`[Kirewire] Looking up component ${id} for User: ${userId}, Page: ${pageId}`);
         const page = this.wire.sessions.getPage(userId, pageId);
         const instance = page.components.get(id) as any;
 
         if (!instance) {
-            console.warn(`[Kirewire] Component ${id} not found in session for page ${pageId}. Available:`, Array.from(page.components.keys()));
             throw new Error(`Component ${id} not found.`);
         }
 
-        // 1. Verify and Hydrate ONLY ONCE per batch for the same component
-        // This prevents overwriting the updated server state with stale client state in multiple rapid actions
         if (!hydratedSet || !hydratedSet.has(id)) {
-            const expected = this.wire.generateChecksum(state, sessionId);
-            if (checksum !== expected) {
-                console.error(`[Kirewire] Checksum mismatch for component ${id}. Expected: ${expected}, Got: ${checksum}`);
-                throw new Error("Invalid state checksum.");
+            if (checksum) {
+                const expected = this.wire.generateChecksum(state, sessionId);
+                if (checksum !== expected) {
+                    console.error(`[Kirewire] Checksum mismatch for component ${id}. Expected: ${expected}, Got: ${checksum}`);
+                    throw new Error("Invalid state checksum.");
+                }
             }
 
-            // Hydrate state
             Object.assign(instance, state);
             if (hydratedSet) hydratedSet.add(id);
-            
-            // Clear effects for a fresh start of this request/batch
             if (instance.$clearEffects) instance.$clearEffects();
         }
 
-        // 4. Execute method
-        const result = await (instance as any)[method](...params);
+        // Execute method
+        const methodResult = await (instance as any)[method](...params);
 
-        // 5. Render
-        const rendered = await instance.render();
-        const htmlContent = rendered.toString();
+        // Prepare update for SSE
         const finalState = this.getPublicState(instance);
         const newChecksum = this.wire.generateChecksum(finalState, sessionId);
+        const rendered = await instance.render();
+        const htmlContent = rendered.toString();
         const stateStr = JSON.stringify(finalState).replace(/'/g, "&#39;");
-
-        // Wrap the content in the same root element structure as the initial render
         const fullHtml = `<div wire:id="${id}" wire:state='${stateStr}' wire:checksum="${newChecksum}">${htmlContent}</div>`;
 
-        return {
+        // Emit update via SSE
+        await this.wire.$emit('component:update', {
+            userId,
+            pageId,
             id,
-            success: true,
-            result,
             html: fullHtml,
             state: finalState,
             checksum: newChecksum,
             effects: (instance as any).__effects
+        });
+
+        // The HTTP response should NOT contain html/state/checksum to avoid client-side race conditions
+        return {
+            id,
+            success: true,
+            result: methodResult
         };
     }
 
