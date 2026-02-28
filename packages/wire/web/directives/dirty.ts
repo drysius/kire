@@ -1,7 +1,7 @@
 import { Kirewire } from "../kirewire";
 
 Kirewire.directive('dirty', ({ el, modifiers, wire }) => {
-    const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
+    const componentId = wire.getComponentId(el);
     if (!componentId) return;
 
     let originalDisplay = el.style.display;

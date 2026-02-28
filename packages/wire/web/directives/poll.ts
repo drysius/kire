@@ -10,9 +10,9 @@ Kirewire.directive('poll', ({ el, expression, modifiers, cleanup, wire }) => {
             clearInterval(timer);
             return;
         }
-        const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
-        if (componentId) {
-            wire.$emit('component:call', { id: componentId, method: expression || '$refresh' });
+        const meta = wire.getMetadata(el);
+        if (meta) {
+            wire.call(el, expression || '$refresh');
         }
     }, interval);
 

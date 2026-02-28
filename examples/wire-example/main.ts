@@ -94,13 +94,29 @@ void (async () => {
 	// Unified Wired Handler
 	app.all(`/_wire*`, async (context) => {
         const res = await (context.kire as any).wireRequest({
+            method: context.request.method,
             url: context.request.url,
             query: context.query,
             body: context.body,
             userId: context.user.id,
-            sessionId: context.wireKey
+            sessionId: context.wireKey,
+            signal: context.request.signal
         });
 
+        const status = res.status || 200;
+        const headers = (res.headers || {}) as Record<string, string>;
+
+        // SSE/stream responses should bypass Elysia's default body writer to avoid controller state races.
+        if (res.result instanceof ReadableStream || String(headers["Content-Type"] || "").includes("text/event-stream")) {
+            return new Response(res.result as any, { status, headers });
+        }
+
+        if (res.headers) {
+            Object.entries(res.headers).forEach(([k, v]) => {
+                context.set.headers[k] = v;
+            });
+        }
+        context.set.status = status;
         return res.result;
 	});
 

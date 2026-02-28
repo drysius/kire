@@ -15,9 +15,11 @@ export class MessageBus {
     constructor(private delay: number = 100) {}
 
     public enqueue(payload: WirePayload): Promise<any> {
+        console.log(`[Kirewire] MessageBus enqueuing action "${payload.method}" for component "${payload.id}"`);
         return new Promise((resolve, reject) => {
             this.queue.push({ payload, resolve, reject });
             if (!this.timer && !this.inFlight) {
+                console.log(`[Kirewire] MessageBus starting flush timer (${this.delay}ms)`);
                 this.timer = setTimeout(() => this.flush(), this.delay);
             }
         });
@@ -31,24 +33,29 @@ export class MessageBus {
         const batch = [...this.queue];
         this.queue = [];
 
+        console.log(`[Kirewire] MessageBus flushing batch of ${batch.length} actions.`);
+
         try {
             // The transport logic will be injected by the adapter
             const event = new CustomEvent('wire:bus:flush', { 
                 detail: { 
                     batch: batch.map(b => b.payload),
                     finish: (results: any[]) => {
+                        console.log(`[Kirewire] MessageBus batch finished with ${results.length} results.`);
                         batch.forEach((item, i) => {
                             if (results[i]?.error) item.reject(results[i].error);
                             else item.resolve(results[i]);
                         });
                     },
                     error: (err: any) => {
+                        console.error(`[Kirewire] MessageBus batch failed:`, err);
                         batch.forEach(item => item.reject(err));
                     }
                 } 
             });
             window.dispatchEvent(event);
         } catch (e) {
+            console.error(`[Kirewire] MessageBus critical error during dispatch:`, e);
             batch.forEach(item => item.reject(e));
         } finally {
             this.inFlight = false;

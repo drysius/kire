@@ -6,8 +6,9 @@ Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
     const isInput = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
     if (!isInput) return;
 
-    const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
-    if (!componentId) return;
+    const meta = wire.getMetadata(el);
+    if (!meta) return;
+    const componentId = meta.id;
 
     const eventType = (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) || el instanceof HTMLSelectElement 
         ? 'change' 
@@ -21,11 +22,7 @@ Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
             value = e.target.value;
         }
 
-        wire.$emit('component:call', {
-            id: componentId,
-            method: '$set',
-            params: [expression, value]
-        });
+        wire.call(el, '$set', [expression, value]);
     };
 
     el.addEventListener(eventType, handler);

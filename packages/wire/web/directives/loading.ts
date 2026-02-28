@@ -7,7 +7,7 @@ Kirewire.directive('loading', ({ el, modifiers, wire }) => {
     }
 
     wire.$on('component:call', (data) => {
-        const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
+        const componentId = wire.getComponentId(el);
         if (data.id === componentId) {
             if (modifiers.includes('class')) {
                 el.classList.add(modifiers[modifiers.indexOf('class') + 1] || 'wire-loading');
@@ -20,7 +20,7 @@ Kirewire.directive('loading', ({ el, modifiers, wire }) => {
     });
 
     wire.$on('component:update', (data) => {
-        const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
+        const componentId = wire.getComponentId(el);
         if (data.id === componentId) {
             if (modifiers.includes('class')) {
                 el.classList.remove(modifiers[modifiers.indexOf('class') + 1] || 'wire-loading');

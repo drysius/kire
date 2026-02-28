@@ -22,14 +22,13 @@ export class KirewirePlugin {
             instance.wireRegister = this.wire.wireRegister.bind(this.wire);
             instance.wireRequest = async (req: any) => {
                 if (this.wire.options.adapter && this.wire.options.adapter.handleRequest) {
-                    const result = await this.wire.options.adapter.handleRequest(
-                        req.body, 
+                    return await this.wire.options.adapter.handleRequest(
+                        { method: req.method || 'POST', url: req.url, body: req.body, signal: req.signal }, 
                         req.userId || 'guest', 
                         req.sessionId || 'default'
                     );
-                    return { result };
                 }
-                return { result: { error: 'No adapter configured' } };
+                return { status: 500, result: { error: 'No adapter configured' } };
             };
         };
 

@@ -40,12 +40,21 @@ export class Kirewire {
         }
     }
 
-    public $on(event: string, callback: (data: any) => void) {
+    public $on(event: string, callback: (data: any) => void): () => void {
         const names = event.split(',').map(n => n.trim());
+        const unregisters: Array<() => void> = [];
+
         for (const name of names) {
             if (!this.events.has(name)) this.events.set(name, []);
-            this.events.get(name)!.push(callback);
+            const handlers = this.events.get(name)!;
+            handlers.push(callback);
+            unregisters.push(() => {
+                const idx = handlers.indexOf(callback);
+                if (idx !== -1) handlers.splice(idx, 1);
+            });
         }
+
+        return () => unregisters.forEach(u => u());
     }
 
     public use(fn: (ctx: any) => void) {

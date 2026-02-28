@@ -7,7 +7,7 @@ Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
         const files = el.files;
         if (!files || files.length === 0) return;
 
-        const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
+        const componentId = wire.getComponentId(el);
         if (!componentId) return;
 
         const formData = new FormData();
@@ -33,11 +33,7 @@ Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
         xhr.addEventListener('load', () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 const result = JSON.parse(xhr.responseText);
-                wire.$emit('component:call', {
-                    id: componentId,
-                    method: '$set',
-                    params: [expression, { ...result, __is_wire_file: true }]
-                });
+                wire.call(el, '$set', [expression, { ...result, __is_wire_file: true }]);
                 wire.$emit('upload:finished', { componentId, property: expression });
             } else {
                 wire.$emit('upload:error', { componentId, property: expression, error: xhr.statusText });
