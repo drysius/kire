@@ -14,9 +14,13 @@ export type WireClientDirective = (ctx: WireClientContext) => void;
 export class KirewireClient {
     private events = new Map<string, Array<(data: any) => void>>();
     private directives = new Map<string, WireClientDirective>();
+    public components = new Map<string, any>();
 
     constructor() {}
 
+    /**
+     * Registers a new client-side wire directive.
+     */
     public directive(name: string, handler: WireClientDirective) {
         this.directives.set(name, handler);
     }
@@ -24,6 +28,12 @@ export class KirewireClient {
     public start(Alpine: any) {
         (window as any).Alpine = Alpine;
         Alpine.plugin(morph);
+
+        // Magic $wire: allows access to the component instance from Alpine
+        Alpine.magic('wire', (el: HTMLElement) => {
+            const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
+            return componentId ? this.components.get(componentId) : null;
+        });
 
         Alpine.directive('wire', (el: HTMLElement, { value, expression, modifiers }: any, { cleanup }: any) => {
             const handler = this.directives.get(value);
@@ -51,5 +61,5 @@ export class KirewireClient {
     }
 }
 
-export const wire = new KirewireClient();
-(window as any).Kirewire = wire;
+export const Kirewire = new KirewireClient();
+(window as any).Kirewire = Kirewire;

@@ -1,34 +1,51 @@
-import { wire } from "../kirewire";
+import { Kirewire } from "../kirewire";
 
-wire.directive('model', ({ el, value, expression, cleanup }) => {
+Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
     if (!(el instanceof HTMLInputElement) || el.type !== 'file') return;
 
     const handler = async () => {
-        const file = el.files?.[0];
-        if (!file) return;
+        const files = el.files;
+        if (!files || files.length === 0) return;
 
         const componentId = el.closest('[wire-id]')?.getAttribute('wire-id');
         if (!componentId) return;
 
-        // Upload process (simplified)
         const formData = new FormData();
-        formData.append('file', file);
-        formData.append('componentId', componentId);
-        formData.append('property', expression);
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files[]', files[i]!);
+        }
 
-        const response = await fetch('/_wire/upload', {
-            method: 'POST',
-            body: formData
-        });
-
-        const fileData = await response.json();
+        const xhr = new XMLHttpRequest();
         
-        // Notify the component that a file property has changed
-        wire.$emit('component:call', {
-            id: componentId,
-            method: '$set',
-            params: [expression, { ...fileData, __is_wire_file: true }]
+        // Progress tracking
+        xhr.upload.addEventListener('progress', (e) => {
+            if (e.lengthComputable) {
+                const progress = {
+                    loaded: e.loaded,
+                    total: e.total,
+                    percent: Math.round((e.loaded / e.total) * 100),
+                    status: 'uploading'
+                };
+                wire.$emit('upload:progress', { componentId, property: expression, ...progress });
+            }
         });
+
+        xhr.addEventListener('load', () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                const result = JSON.parse(xhr.responseText);
+                wire.$emit('component:call', {
+                    id: componentId,
+                    method: '$set',
+                    params: [expression, { ...result, __is_wire_file: true }]
+                });
+                wire.$emit('upload:finished', { componentId, property: expression });
+            } else {
+                wire.$emit('upload:error', { componentId, property: expression, error: xhr.statusText });
+            }
+        });
+
+        xhr.open('POST', '/_wire/upload');
+        xhr.send(formData);
     };
 
     el.addEventListener('change', handler);

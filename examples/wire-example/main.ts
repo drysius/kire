@@ -1,7 +1,8 @@
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { wirePlugin } from "@kirejs/wire";
+import { wirePlugin, HttpAdapter, SocketAdapter } from "@kirejs/wire";
 import { Elysia } from "elysia";
+import { staticPlugin } from "@elysiajs/static";
 import { Kire } from "kire";
 
 const useSocket = process.argv.includes("--socket");
@@ -15,16 +16,20 @@ const app = new Elysia({
 	serve: {
 		maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB
 	},
-}).derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
+})
+.use(staticPlugin({
+    assets: path.join(process.cwd(), "../../packages/wire/dist"),
+    prefix: "/dist"
+}))
+.derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
 
 void (async () => {
 	// register server components from glob pattern
-	kire.plugin(wirePlugin, {
-		route: "/_wire",
+	kire.plugin(new wirePlugin({
 		secret: "change-me-in-production",
-		bus_delay:10,
-		adapter:useSocket ? 'socket' : 'http'
-	});
+		busDelay: 10,
+		adapter: useSocket ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" })
+	}));
 
 	// add views namespace for .kire files
 	kire.namespace("views", path.join(process.cwd(), "views"));
@@ -33,7 +38,7 @@ void (async () => {
 	kire.namespace("pages", path.join(process.cwd(), "views/pages"));
 
 	// register server components
-	await kire.wireRegister("components/*.ts");
+	await (kire as any).wireRegister("components/*.ts", process.cwd());
 
 	// Middleware to set Wired Context
 	app.derive({ as: "global" }, async (context) => {
@@ -49,11 +54,13 @@ void (async () => {
 		const wireKey = createHash("sha256")
 			.update(`${session.value}:${ip}`)
 			.digest("hex");
-		context.kire.wireKey(wireKey);
+		// context.kire.wireKey(wireKey); // No longer needed as we pass it to wireRequest
 
 		console.log(`[Middleware] Path: ${context.request.url} | Session: ${session.value} | IP: ${ip} | WireKey: ${wireKey}`);
 
 		const url = new URL(context.request.url);
+        const pageId = createHash("md5").update(url.pathname).digest("hex");
+
 		const isActive = (path: string) => {
 			if (path === "/") return url.pathname === "/";
 			return url.pathname.startsWith(path);
@@ -61,9 +68,12 @@ void (async () => {
 		context.kire.$global("isActive", isActive);
 		context.kire.$global('request', context);
 		context.kire.$global('$wireToken', wireKey);
+        context.kire.$global('pageId', pageId);
 		context.kire.$global('sharedTransport', useSocket ? "socket" : "sse");
 		return {
 			user: { id: session.value, name: "Guest" },
+            wireKey: wireKey,
+            pageId: pageId
 		};
 	});
 
@@ -82,29 +92,15 @@ void (async () => {
     }
 
 	// Unified Wired Handler
-    const wireRoute = kire.$kire["~wire"].options.route;
-
-	app.all(`${wireRoute}*`, async (context) => {
-        const res = await context.kire.wireRequest({
+	app.all(`/_wire*`, async (context) => {
+        const res = await (context.kire as any).wireRequest({
             url: context.request.url,
             query: context.query,
             body: context.body,
+            userId: context.user.id,
+            sessionId: context.wireKey
         });
 
-        const status = res.status || 200;
-        const headers = (res.headers || {}) as Record<string, string>;
-
-        // SSE/stream responses should bypass Elysia's default body writer to avoid controller state races.
-        if (res.result instanceof ReadableStream || String(headers["Content-Type"] || "").includes("text/event-stream")) {
-            return new Response(res.result as any, { status, headers });
-        }
-
-        if (res.headers) {
-            Object.entries(res.headers).forEach(([k, v]) => {
-                context.set.headers[k] = v;
-            });
-        }
-        context.set.status = status;
         return res.result;
 	});
 

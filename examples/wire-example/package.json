@@ -2,6 +2,7 @@
 	"name": "example-wire-counter",
 	"private": true,
 	"dependencies": {
+		"@elysiajs/static": "^1.4.7",
 		"elysia": "^1.0.0"
 	}
 }

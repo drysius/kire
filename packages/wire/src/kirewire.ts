@@ -17,7 +17,7 @@ export class Kirewire {
     private events = new Map<string, Array<(data: any) => void>>();
     public secret: string;
 
-    constructor(options: KirewireOptions) {
+    constructor(public options: KirewireOptions) {
         this.secret = options.secret;
         const expireMs = typeof options.expireSession === 'string' 
             ? this.parseDuration(options.expireSession) 
@@ -50,6 +50,57 @@ export class Kirewire {
 
     public use(fn: (ctx: any) => void) {
         this.middlewares.push(fn);
+    }
+
+    /**
+     * Registers components using a glob-like pattern via node:fs.
+     */
+    public async wireRegister(pattern: string, rootDir: string = process.cwd()) {
+        const { existsSync, readdirSync, statSync } = await import("node:fs");
+        const { join, resolve, parse } = await import("node:path");
+        const { Component } = await import("./component");
+
+        const searchDir = resolve(rootDir, pattern.replace(/\*.*$/, ""));
+        if (!existsSync(searchDir)) return;
+
+        const walk = (dir: string): string[] => {
+            let results: string[] = [];
+            try {
+                const list = readdirSync(dir);
+                for (const file of list) {
+                    const path = join(dir, file);
+                    const stat = statSync(path);
+                    if (stat && stat.isDirectory()) results = results.concat(walk(path));
+                    else results.push(path);
+                }
+            } catch(e) {}
+            return results;
+        };
+
+        const files = walk(searchDir);
+        for (const file of files) {
+            if ((file.endsWith(".js") || file.endsWith(".ts")) && !file.endsWith(".d.ts")) {
+                try {
+                    const fullPath = resolve(file);
+                    const module = await import(fullPath);
+                    const componentClass = module.default || Object.values(module).find((e: any) => 
+                        typeof e === "function" && e.prototype instanceof Component
+                    );
+
+                    if (componentClass) {
+                        const relPath = file.slice(searchDir.length + 1);
+                        const parsed = parse(relPath);
+                        const dirParts = parsed.dir ? parsed.dir.split(/[\\\/]/) : [];
+                        const name = [...dirParts, parsed.name].join(".").toLowerCase();
+                        
+                        this.components.set(name, componentClass);
+                        console.log(`[Kirewire] Registered component: ${name}`);
+                    }
+                } catch (e) {
+                    console.error(`[Kirewire] Failed to register ${file}:`, e);
+                }
+            }
+        }
     }
 
     private parseDuration(duration: string): number {
