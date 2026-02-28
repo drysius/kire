@@ -5,7 +5,28 @@ import { NullProtoObj } from "../utils/regex";
 export default (kire: Kire<any>) => {
     
     kire.element({
+        name: 'style',
+        raw: true,
+        onCall: (api) => {
+            api.append('<style>');
+            api.renderChildren();
+            api.append('</style>');
+        }
+    });
+
+    kire.element({
+        name: 'script',
+        raw: true,
+        onCall: (api) => {
+            api.append('<script>');
+            api.renderChildren();
+            api.append('</script>');
+        }
+    });
+
+    kire.element({
         name: 'kire:else',
+        relatedTo: ['kire:if', 'kire:elseif'],
         onCall: (api) => {
             api.write(`} else {`);
             api.renderChildren();
@@ -14,7 +35,7 @@ export default (kire: Kire<any>) => {
 
     kire.element({
         name: 'kire:elseif',
-        related: ['kire:elseif', 'kire:else'],
+        relatedTo: ['kire:if', 'kire:elseif'],
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);
@@ -25,7 +46,6 @@ export default (kire: Kire<any>) => {
 
     kire.element({
         name: 'kire:if',
-        related: ['kire:elseif', 'kire:else'],
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`if (${cond}) {`);
@@ -37,7 +57,11 @@ export default (kire: Kire<any>) => {
 
     kire.element({
         name: 'kire:for',
-        related: ['kire:empty'],
+        scope: (args, attrs) => {
+            const as = attrs?.as || 'item';
+            const indexAs = attrs?.index || 'index';
+            return [as, indexAs, '$loop'];
+        },
         onCall: (api) => {
             const items = api.getAttribute("items") || api.getAttribute("each") || "[]";
             const as = api.getAttribute("as") || 'item';

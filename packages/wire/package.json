@@ -1,6 +1,6 @@
 {
   "name": "@kirejs/wire",
-  "description": "Linked Framework: Granular reactivity for Kire components.",
+  "description": "Kirewire framework inspirated in Livewire api with kire module.",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/cjs/index.js",
@@ -21,8 +21,7 @@
   },
   "devDependencies": {
     "@alpinejs/morph": "^3.15.4",
-    "alpinejs": "^3.15.4",
-    "@types/bun": "latest"
+    "alpinejs": "^3.15.4"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.48",

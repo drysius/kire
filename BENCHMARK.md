@@ -2,7 +2,7 @@
 
 This report compares **Kire** with other popular template engines in various scenarios. Benchmarks are executed in isolated worker processes to ensure fair comparisons.
 
-Generated on: Tue, 24 Feb 2026 17:03:09 GMT
+Generated on: Sat, 28 Feb 2026 10:29:02 GMT
 
 ## Runtime: BUN
 
@@ -10,28 +10,37 @@ Generated on: Tue, 24 Feb 2026 17:03:09 GMT
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 667,965 | **Fastest** | `████████████████████` |
-| kire | 369,441 | 55.3% | `███████████░░░░░░░░░` |
-| ejs | 21,546 | 3.2% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 13,229 | 2.0% | `░░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 932.792 | **Fastest** | `████████████████████` |
+| kire | 749.603 | 80.4% | `████████████████░░░░` |
+| ejs | 27.828 | 3.0% | `█░░░░░░░░░░░░░░░░░░░` |
+| edge.js | 17.021 | 1.8% | `░░░░░░░░░░░░░░░░░░░░` |
+| nunjucks | 10.501 | 1.1% | `░░░░░░░░░░░░░░░░░░░░` |
+| handlebars | 3.466 | 0.4% | `░░░░░░░░░░░░░░░░░░░░` |
+| pug | 1.361 | 0.1% | `░░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Medium Data (100 items, 1000 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 112,793 | **Fastest** | `████████████████████` |
-| kire | 112,418 | 99.7% | `████████████████████` |
-| ejs | 5,365 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
-| edge.js | 4,963 | 4.4% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire | 102.459 | **Fastest** | `████████████████████` |
+| kire_elements | 100.844 | 98.4% | `████████████████████` |
+| edge.js | 7.952 | 7.8% | `██░░░░░░░░░░░░░░░░░░` |
+| ejs | 6.924 | 6.8% | `█░░░░░░░░░░░░░░░░░░░` |
+| nunjucks | 6.531 | 6.4% | `█░░░░░░░░░░░░░░░░░░░` |
+| handlebars | 2.102 | 2.1% | `░░░░░░░░░░░░░░░░░░░░` |
+| pug | 1.091 | 1.1% | `░░░░░░░░░░░░░░░░░░░░` |
 
 ### Scenario: Large Data (1000 items, 100 iterations)
 
 | Engine | Ops/sec | Speed | Visual |
 | :--- | :--- | :--- | :--- |
-| kire_elements | 13,956 | **Fastest** | `████████████████████` |
-| kire | 12,954 | 92.8% | `███████████████████░` |
-| edge.js | 1,076 | 7.7% | `██░░░░░░░░░░░░░░░░░░` |
-| ejs | 667 | 4.8% | `█░░░░░░░░░░░░░░░░░░░` |
+| kire_elements | 11.398 | **Fastest** | `████████████████████` |
+| kire | 11.256 | 98.8% | `████████████████████` |
+| nunjucks | 2.022 | 17.7% | `████░░░░░░░░░░░░░░░░` |
+| edge.js | 1.782 | 15.6% | `███░░░░░░░░░░░░░░░░░` |
+| ejs | 845 | 7.4% | `█░░░░░░░░░░░░░░░░░░░` |
+| handlebars | 663 | 5.8% | `█░░░░░░░░░░░░░░░░░░░` |
+| pug | 606 | 5.3% | `█░░░░░░░░░░░░░░░░░░░` |
 
 ---
 *Note: Benchmarks performed using automated GitHub Actions in isolated workers. Performance may vary between environments.*

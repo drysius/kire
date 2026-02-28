@@ -192,16 +192,14 @@ export class Compiler {
             if (n.type === "interpolation" || n.type === "js") scan(n.content || "");
             if (n.args) n.args.forEach(a => typeof a === "string" && scan(a));
             
-            // Special Case: Layout/Include variables
             if (n.type === "directive") {
                 if (n.name === "defined" || n.name === "define") set.add("__kire_defines");
                 if (n.name === "stack" || n.name === "push") set.add("__kire_stack");
                 
-                // Recursive scan for included templates
-                if (n.name === "layout" || n.name === "extends" || n.name === "include" || n.name === "component") {
-                    const rawPath = n.args?.[0];
-                    if (typeof rawPath === 'string') {
-                        const path = rawPath.replace(STRIP_QUOTES_REGEX, '');
+                const def = this.kire.getDirective(n.name!);
+                if (def?.isDependency) {
+                    const paths = def.isDependency(n.args || [], n.attributes);
+                    for (const path of paths) {
                         try {
                             const resolved = this.kire.resolvePath(path);
                             if (!visited.has(resolved)) {
@@ -216,6 +214,28 @@ export class Compiler {
             }
 
             if (n.type === "element") {
+                let def = null;
+                for (const m of this.kire.$elementMatchers) {
+                    const d = m.def;
+                    if (typeof d.name === "string" && (d.name === n.tagName || (d.name.includes("*") && n.tagName?.match(new RegExp(`^${d.name.replace("*", "(.*)")}$`))))) { def = d; break; }
+                    else if (d.name instanceof RegExp && d.name.test(n.tagName!)) { def = d; break; }
+                }
+
+                if (def?.isDependency) {
+                    const paths = def.isDependency(n.args || [], n.attributes);
+                    for (const path of paths) {
+                        try {
+                            const resolved = this.kire.resolvePath(path);
+                            if (!visited.has(resolved)) {
+                                visited.add(resolved);
+                                const depContent = this.kire.readFile(resolved);
+                                const depNodes = this.kire.parse(depContent);
+                                this.deepCollectIdentifiers(depNodes, set, visited);
+                            }
+                        } catch(e) {}
+                    }
+                }
+
                 if (n.attributes) {
                     for (const [key, val] of Object.entries(n.attributes)) {
                         if (n.tagName?.startsWith('kire:') || key.startsWith('@')) {
@@ -242,27 +262,26 @@ export class Compiler {
         };
         for (const n of nodes) {
             if (n.type === "directive") {
-                if (n.name === "for") {
-                    const a = n.args?.[0]; if (typeof a === "string") {
-                        let asPart = a;
-                        const ofIdx = a.lastIndexOf(" of ");
-                        const inIdx = a.lastIndexOf(" in ");
-                        const idx = Math.max(ofIdx, inIdx);
-                        if (idx !== -1) asPart = a.slice(0, idx);
-                        scan(asPart);
-                    }
+                const def = this.kire.getDirective(n.name!);
+                if (def?.scope) {
+                    const vars = def.scope(n.args || [], n.attributes);
+                    for (const v of vars) scan(v);
                 }
-                if (n.name === "let" || n.name === "const") {
-                    const a = n.args?.[0]; if (typeof a === "string") {
-                        const first = a.split("=")[0];
-                        if (first) scan(first);
-                    }
+                if (def?.exposes) {
+                    for (const v of def.exposes) set.add(v);
                 }
-                if (n.name === "error") set.add("$message");
             }
-            if (n.type === "element" && n.tagName === "kire:for") {
-                const as = n.attributes?.['as']; if (as) scan(as);
-                const index = n.attributes?.['index'] || 'index'; set.add(index);
+            if (n.type === "element") {
+                let def = null;
+                for (const m of this.kire.$elementMatchers) {
+                    const d = m.def;
+                    if (typeof d.name === "string" && (d.name === n.tagName || (d.name.includes("*") && n.tagName?.match(new RegExp(`^${d.name.replace("*", "(.*)")}$`))))) { def = d; break; }
+                    else if (d.name instanceof RegExp && d.name.test(n.tagName!)) { def = d; break; }
+                }
+                if (def?.scope) {
+                    const vars = def.scope(n.args || [], n.attributes);
+                    for (const v of vars) scan(v);
+                }
             }
             if (n.type === "js" && n.content) {
                 const declRegex = /\b(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;

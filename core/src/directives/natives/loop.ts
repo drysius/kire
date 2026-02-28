@@ -5,6 +5,16 @@ export default (kire: Kire<any>) => {
         name: `for`,
         params: [`expr:any`],
         children: true,
+        // closeBy removed
+        scope: (args) => {
+            const rawExpr = args[0] || "[]";
+            const loopMatch = rawExpr.match(/^\s*(?:(\(([^,]+)\s*,\s*([^)]+)\))|(.+?))\s+(?:of|in)\s+(.+)$/);
+            if (loopMatch) {
+                if (loopMatch[1]) return [loopMatch[2].trim(), loopMatch[3].trim(), '$loop'];
+                return [loopMatch[4].trim(), 'index', '$loop'];
+            }
+            return ['item', 'index', '$loop'];
+        },
         onCall: (api) => {
             const rawExpr = api.getAttribute("expr") || api.getArgument(0) || "[]";
             const id = api.uid("i");
@@ -13,16 +23,13 @@ export default (kire: Kire<any>) => {
             let finalAs = "item";
             let finalIndex = "index";
 
-            // Regex para separar "item of items" ou "(item, index) of items"
             const loopMatch = rawExpr.match(/^\s*(?:(\(([^,]+)\s*,\s*([^)]+)\))|(.+?))\s+(?:of|in)\s+(.+)$/);
             
             if (loopMatch) {
                 if (loopMatch[1]) {
-                    // Formato (item, index)
                     finalAs = loopMatch[2].trim();
                     finalIndex = loopMatch[3].trim();
                 } else {
-                    // Formato simples
                     finalAs = loopMatch[4].trim();
                 }
                 items = loopMatch[5].trim();
@@ -49,6 +56,12 @@ export default (kire: Kire<any>) => {
         name: `each`,
         params: [`items:any`, `as:string`],
         children: true,
+        // closeBy removed
+        scope: (args) => {
+            const items = args[0] || "[]";
+            const as = args[1] || "item";
+            return [as, 'index', '$loop'];
+        },
         onCall: (api) => {
             const forDir = kire.getDirective("for");
             if (forDir) forDir.onCall(api);
@@ -58,6 +71,8 @@ export default (kire: Kire<any>) => {
     kire.directive({
         name: `empty`,
         children: true,
+        relatedTo: [`for`, `each`],
+        closeBy: [`endfor`, `endeach`, `end`],
         onCall: (api) => {
             api.renderChildren();
         }

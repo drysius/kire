@@ -102,39 +102,57 @@ export class Parser {
 
     private checkDirective(): boolean {
         const loc = this.getLoc();
+
         const slice = this.template.slice(this.cursor);
         const match = slice.match(DIRECTIVE_NAME_REGEX);
         if (!match) return false;
 
-        let name = match[1]!;
-        const isEnd = name.startsWith("end");
-        const baseName = isEnd ? (name === "end" ? null : name.slice(3)) : name;
+        const rawName = match[1]!;
+        const registered = this.kire.$directives.records;
         
-        // console.log("CHECK DIRECTIVE", name, "IS_END:", isEnd, "MATCHES:", new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(isEnd && baseName ? baseName : name));
-
-        if (!isEnd) {
-            if (!new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(name)) {
-                const registered = Object.keys(this.kire.$directives.records);
-                let found = false;
-                for (let i = name.length - 1; i > 0; i--) {
-                    const sub = name.slice(0, i);
-                    if (registered.includes(sub)) { name = sub; found = true; break; }
+        // 1. Check Closure
+        if (this.stack.length > 0) {
+            const current = this.stack[this.stack.length - 1]!;
+            const parentDef = current.type === 'directive' ? registered[current.name!] : null;
+            
+            let shouldPop = false;
+            if (parentDef?.closeBy) {
+                const closeBy = Array.isArray(parentDef.closeBy) ? parentDef.closeBy : [parentDef.closeBy];
+                for (const cb of closeBy) {
+                    if (rawName === cb || rawName.startsWith(cb)) {
+                        shouldPop = true; break;
+                    }
                 }
-                if (!found) return false;
+            } 
+            if (!shouldPop && (rawName === "end" || (rawName.startsWith("end") && rawName.slice(3) === current.name))) {
+                shouldPop = true;
             }
-        } else {
-            // For end directives, we check if the baseName is registered OR it's a generic @end
-            if (baseName && !new RegExp(`^(?:${this.kire.$directivesPattern.source})$`).test(baseName)) {
-                 // Might be a custom end directive not in pattern, but usually end + name
+
+            if (shouldPop) {
+                this.stack.pop();
+                this.advance(rawName.length + 1);
+                return true;
             }
         }
 
-        if (isEnd) {
-            this.popStack(baseName);
-            this.advance(name.length + 1); return true;
+        // 2. Find longest prefix
+        let matchedName = "";
+        for (let i = rawName.length; i > 0; i--) {
+            const sub = rawName.slice(0, i);
+            if (registered[sub]) { matchedName = sub; break; }
         }
 
+        if (!matchedName) {
+            if (this.template[this.cursor + 1] === "{") return false;
+            this.advance(rawName.length + 1);
+            this.addNode({ type: "directive", name: rawName, args: [], children: [], loc });
+            return true;
+        }
+
+        const name = matchedName;
+        const def = registered[name]!;
         this.advance(name.length + 1);
+
         let args: any[] = [];
         if (this.template[this.cursor] === "(") {
             const res = this.extractBracketedContent("(", ")");
@@ -143,20 +161,50 @@ export class Parser {
 
         const node: Node = { type: "directive", name, args, children: [], loc };
         
-        const current = this.stack[this.stack.length - 1];
-        if (current && (name === "else" || name === "elseif" || name === "empty")) {
-            if (!current.related) current.related = [];
-            current.related.push(node);
-            this.stack.pop(); 
-            this.stack.push(node); 
-            return true;
+        // 3. Chain Relationship Handling
+        if (this.stack.length > 0) {
+            let current = this.stack[this.stack.length - 1]!;
+            
+            // Check if related to current top
+            if (def.relatedTo?.includes(current.name!)) {
+                // If the current top is ALREADY a related node of its own parent, 
+                // we must find the absolute root of this relationship chain.
+                let rootNode = current;
+                let rootIdx = this.stack.length - 1;
+                
+                // We go backwards while the node is related to its parent
+                while (rootIdx > 0) {
+                    const candidate = this.stack[rootIdx]!;
+                    const parent = this.stack[rootIdx - 1]!;
+                    const candDef = registered[candidate.name!];
+                    if (candDef?.relatedTo?.includes(parent.name!)) {
+                        rootIdx--;
+                        rootNode = this.stack[rootIdx]!;
+                    } else {
+                        break;
+                    }
+                }
+
+                if (!rootNode.related) rootNode.related = [];
+                rootNode.related.push(node);
+                
+                // Pop all nodes until we reach the rootNode, then push the new node
+                // This keeps the rootNode (e.g. switch) in stack at the bottom, 
+                // and the current active related node at the top.
+                while (this.stack[this.stack.length - 1] !== rootNode) {
+                    this.stack.pop();
+                }
+                
+                // Root stays in stack, we push the new related node as the new active scope
+                if (def.children === true || (def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor))) {
+                    this.stack.push(node);
+                }
+                return true;
+            }
         }
 
         this.addNode(node);
-        const def = this.kire.getDirective(name);
-        if (!def || def.children === true) {
-            this.stack.push(node);
-        } else if (def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor)) {
+        if (def.children === true || (def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor))) {
             this.stack.push(node);
         }
         return true;
@@ -180,19 +228,30 @@ export class Parser {
 
         const node: Node = { type: "element", name: tagName, tagName, attributes, void: selfClosing, children: [], loc };
         
-        if (!selfClosing && (tagName === "style" || tagName === "script")) {
+        let def = null;
+        for (const m of this.kire.$elementMatchers) {
+            const d = m.def;
+            if (typeof d.name === "string") {
+                if (d.name === tagName) { def = d; break; }
+                if (d.name.includes('*')) {
+                    const p = d.name.replace("*", "(.*)");
+                    const m2 = tagName.match(new RegExp(`^${p}$`));
+                    if (m2) { node.wildcard = m2[1]; def = d; break; }
+                }
+            } else if (d.name instanceof RegExp && d.name.test(tagName)) {
+                def = d; break;
+            }
+        }
+
+        if (!selfClosing && def?.raw) {
             const closeTag = `</${tagName}>`;
             const endIdx = this.template.indexOf(closeTag, this.cursor);
             if (endIdx !== -1) {
                 const content = this.template.slice(this.cursor, endIdx);
-                
-                // Recursively parse content to support interpolation
                 const innerParser = new Parser(content, this.kire);
-                // Adjust inner parser's line/column to match current position
                 (innerParser as any).line = this.line;
                 (innerParser as any).column = this.column;
                 node.children = innerParser.parse();
-                
                 this.addNode(node);
                 this.advance(content.length + closeTag.length);
                 return true;
@@ -206,9 +265,9 @@ export class Parser {
             lastIdx--;
         }
         const lastSibling = siblings[lastIdx];
-        const isRelated = tagName.endsWith(":else") || tagName.endsWith(":elseif") || tagName.endsWith(":empty");
+        const isRelated = def?.relatedTo?.includes(lastSibling?.tagName!);
 
-        if (lastSibling && isRelated && (lastSibling.tagName === tagName.split(":")[0] || (lastSibling.tagName && (tagName.startsWith(lastSibling.tagName) || lastSibling.tagName.startsWith(tagName.split(":")[0]!))))) {
+        if (lastSibling && isRelated) {
              if (!lastSibling.related) lastSibling.related = [];
              lastSibling.related.push(node);
              if (!node.void) this.stack.push(node); 
@@ -270,10 +329,8 @@ export class Parser {
     private checkClosingTag(): boolean {
         const match = this.template.slice(this.cursor).match(TAG_CLOSE_REGEX);
         if (!match) return false;
-        
         const tagName = match[1]!;
         if (!this.kire.$elementsPattern.test(tagName)) return false;
-
         this.popStack(tagName);
         this.advance(match[0]!.length); return true;
     }
@@ -303,7 +360,6 @@ export class Parser {
         TEXT_SCAN_REGEX.lastIndex = this.cursor;
         const match = TEXT_SCAN_REGEX.exec(this.template);
         const end = match ? match.index : this.template.length;
-        
         if (end > this.cursor) {
             this.addNode({ type: "text", content: this.template.slice(this.cursor, end), loc });
             this.advance(end - this.cursor);
@@ -318,15 +374,24 @@ export class Parser {
         if (!name) { this.stack.pop(); return; }
         for (let i = this.stack.length - 1; i >= 0; i--) {
             const n = this.stack[i]!;
-            if (n.name === name || n.tagName === name || (name.startsWith("end") && (n.name === name.slice(3) || n.name === name))) {
+            if (n.name === name || n.tagName === name) {
                 this.stack.splice(i); break;
             }
         }
     }
 
     private hasExplicitDirectiveEnd(name: string, fromCursor: number): boolean {
+        const def = this.kire.getDirective(name);
+        if (!def || !def.closeBy) {
+             const rest = this.template.slice(fromCursor);
+             return this.findUnescapedDirective(rest, `end${name}`) !== -1 || this.findUnescapedDirective(rest, "end") !== -1;
+        }
+        const closeBy = Array.isArray(def.closeBy) ? def.closeBy : [def.closeBy];
         const rest = this.template.slice(fromCursor);
-        return this.findUnescapedDirective(rest, `end${name}`) !== -1 || this.findUnescapedDirective(rest, "end") !== -1;
+        for (const token of closeBy) {
+            if (this.findUnescapedDirective(rest, token) !== -1) return true;
+        }
+        return false;
     }
 
     private findUnescapedDirective(source: string, directiveName: string): number {
@@ -356,27 +421,17 @@ export class Parser {
     private parseArgs(argsStr: string): any[] {
         const args: string[] = [];
         let current = "";
-        let dPar = 0;
-        let dBra = 0;
-        let dCur = 0;
-        let inQ: string | null = null;
-
+        let dPar = 0; let dBra = 0; let dCur = 0; let inQ: string | null = null;
         for (let i = 0; i < argsStr.length; i++) {
             const c = argsStr[i]!;
-            if (inQ) {
-                if (c === inQ && argsStr[i - 1] !== "\\") inQ = null;
-            } else {
+            if (inQ) { if (c === inQ && argsStr[i - 1] !== "\\") inQ = null; } 
+            else {
                 if (c === '"' || c === "'") inQ = c;
-                else if (c === "(") dPar++;
-                else if (c === ")") dPar--;
-                else if (c === "[") dBra++;
-                else if (c === "]") dBra--;
-                else if (c === "{") dCur++;
-                else if (c === "}") dCur--;
+                else if (c === "(") dPar++; else if (c === ")") dPar--;
+                else if (c === "[") dBra++; else if (c === "]") dBra--;
+                else if (c === "{") dCur++; else if (c === "}") dCur--;
                 else if (c === "," && dPar === 0 && dBra === 0 && dCur === 0) {
-                    args.push(current.trim());
-                    current = "";
-                    continue;
+                    args.push(current.trim()); current = ""; continue;
                 }
             }
             current += c;

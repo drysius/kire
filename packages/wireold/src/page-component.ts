@@ -1,12 +1,12 @@
-import type { Kire } from "kire";
-import { WireComponent } from "./component";
+import { Component } from "./core/component";
 import { WithPagination } from "./traits/pagination";
 
-// Manual Mixin application because TS decorators are experimental
-//@ts-expect-error ignore this erros
-class BasePageComponent extends WireComponent {
-    constructor(kire: Kire) {
-        super(kire);
+class BasePageComponent extends Component {
+    public render(): string | Promise<string> {
+        return "";
     }
 }
-export const WirePageComponent = WithPagination(BasePageComponent);
+
+export const PageComponent = WithPagination(BasePageComponent);
+export const WirePageComponent = PageComponent;
+

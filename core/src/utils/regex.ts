@@ -16,7 +16,7 @@ export const ATTR_NAME_BREAK_REGEX = /\s|=|>|\/|\(/;
 export const WHITESPACE_REGEX = /\s/;
 
 // Parsing de Diretivas (@nome)
-export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_]+)/;
+export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_\-.:]+)/;
 
 // Validação e Extração de Identificadores JS
 export const JS_IDENTIFIER_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;

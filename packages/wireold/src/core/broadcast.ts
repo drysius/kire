@@ -1,154 +1,325 @@
-import { type Kire, NullProtoObj } from "kire";
-import type { WireComponent } from "../component";
+import { NullProtoObj } from "kire";
+import type { Component } from "./component";
 
 export interface BroadcastOptions {
     name?: string;
+    autodelete?: boolean;
     maxconnections?: number;
-    password?: string;
     excludes?: string[];
     includes?: string[];
+    password?: string;
 }
 
-/**
- * Manages real-time communication between components via SSE or Sockets.
- */
+type BroadcastRoom = {
+    name: string;
+    state: Record<string, any>;
+    components: Set<string>;
+    listeners: Set<ReadableStreamDefaultController<string>>;
+    sockets: Set<any>;
+    password?: string;
+};
+
+function ensureRooms(wire: any): Map<string, BroadcastRoom> {
+    if (!wire.broadcasts) wire.broadcasts = new Map<string, BroadcastRoom>();
+    return wire.broadcasts;
+}
+
+function createRoom(name: string, password?: string): BroadcastRoom {
+    return {
+        name,
+        state: new NullProtoObj(),
+        components: new Set<string>(),
+        listeners: new Set<ReadableStreamDefaultController<string>>(),
+        sockets: new Set<any>(),
+        password
+    };
+}
+
 export class WireBroadcast {
     public connections = 0;
-    private channel: string = "global";
-    private kire: Kire | undefined;
-    private component: WireComponent | undefined;
+    private channel = "global";
+    private component?: Component;
+    private kire: any;
+    private boundUpdateHook = false;
+    private dirtyKeys = new Set<string>();
 
-    constructor(private options: BroadcastOptions = {}) {}
-
-    /**
-     * Joins a specific channel.
-     */
-    public async join(channel: string, password?: string) {
-        if (this.options.password && this.options.password !== password) {
-            throw new Error("Invalid broadcast password");
-        }
-        this.channel = channel;
-        // In SSE mode, this will be handled by the session manager
+    constructor(private options: BroadcastOptions = {}) {
+        this.options.autodelete ??= true;
+        if (this.options.name) this.channel = this.options.name;
     }
 
-    /**
-     * Loads the broadcast for a component and channel.
-     */
-    public load(channel: string) {
-        this.channel = channel;
-    }
-
-    /**
-     * Synchronizes the component state with the broadcast room.
-     */
-    public sync(component: WireComponent) {
+    public hydrate(component: Component, channel?: string, applySharedState = true) {
         this.component = component;
-        this.kire = component.kire;
-        
-        // Register this instance in the Kire wire state
-        const wire = this.kire["~wire"];
+        this.kire = (component as any).kire;
+        if (channel) this.channel = channel;
+
+        const wire = this.kire?.$kire?.["~wire"];
         if (!wire) return;
 
-        let room = wire.rooms.get(this.channel);
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
         if (!room) {
-            room = {
-                name: this.channel,
-                state: new NullProtoObj(),
-                components: new Set()
-            };
-            wire.rooms.set(this.channel, room);
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
         }
+        if (!room.password && this.options.password) room.password = this.options.password;
 
-        if (this.options.maxconnections && room.components.size >= this.options.maxconnections) {
+        if (this.options.maxconnections && (room.listeners.size + room.sockets.size) >= this.options.maxconnections) {
             throw new Error("Broadcast room is full");
         }
 
         room.components.add(component.__id);
-        this.connections = room.components.size;
+        this.connections = room.listeners.size + room.sockets.size;
 
-        // Apply shared state to component (Initial Sync)
-        this.applySharedState(room.state);
+        // Shared room state is authoritative for included fields.
+        // This keeps all clients/actions consistent even when a client has stale local state.
+        if (applySharedState) {
+            const shared = this.filterState(room.state);
+            if (Object.keys(shared).length > 0) {
+                component.fill(shared);
+            }
+        }
 
-        // Hook into component updates to propagate changes
-        component.onUpdateState((updates) => {
-            this.propagate(updates);
+        if (!this.boundUpdateHook) {
+            component.onUpdateState((updates) => {
+                for (const key of Object.keys(updates || {})) {
+                    this.dirtyKeys.add(key);
+                }
+                this.propagate(updates);
+            });
+            this.boundUpdateHook = true;
+        }
+    }
+
+    public close() {
+        if (!this.component || !this.kire) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        const room = rooms?.get(this.channel);
+        if (!room) return;
+        room.components.delete(this.component.__id);
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
+    }
+
+    public emit(event: string, data: any) {
+        if (!this.kire) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        const room = rooms?.get(this.channel);
+        if (!room || (room.listeners.size === 0 && room.sockets.size === 0)) {
+            this.gcRoom(this.channel, room);
+            return;
+        }
+
+        const payload = { type: event, channel: this.channel, data, connections: room.listeners.size + room.sockets.size };
+        const stale: ReadableStreamDefaultController<string>[] = [];
+        for (const controller of room.listeners) {
+            try {
+                this.pushEvent(controller, event, payload);
+            } catch {
+                stale.push(controller);
+            }
+        }
+        const staleSockets: any[] = [];
+        for (const socket of room.sockets) {
+            try {
+                socket.emit(event, payload);
+            } catch {
+                staleSockets.push(socket);
+            }
+        }
+        if (stale.length > 0) {
+            stale.forEach((c) => room.listeners.delete(c));
+        }
+        if (staleSockets.length > 0) {
+            staleSockets.forEach((s) => room.sockets.delete(s));
+        }
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
+    }
+
+    public update(component: Component) {
+        if (!this.kire || this.component?.__id !== component.__id) {
+            // On first bind (e.g. SSR render for a fresh client), apply shared room state
+            // so we don't overwrite existing room values with component defaults.
+            this.hydrate(component, undefined, true);
+        }
+        if (!this.kire) return;
+
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
+        if (!room) {
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
+        }
+        if (!room.password && this.options.password) room.password = this.options.password;
+
+        const current = this.filterState(component.getPublicProperties());
+        if (Object.keys(current).length === 0) return;
+        const roomCurrent = this.filterState(room.state);
+        const roomHasState = Object.keys(roomCurrent).length > 0;
+        const dirtyCurrent = this.filterState(this.pickKeys(current, this.dirtyKeys));
+
+        // Prevent fresh joins/initial renders from overriding an existing room state.
+        // Only keys touched in this instance should be persisted when room already has data.
+        if (roomHasState && Object.keys(dirtyCurrent).length === 0) {
+            component.fill(roomCurrent);
+            return;
+        }
+
+        const source = roomHasState ? dirtyCurrent : current;
+        if (Object.keys(source).length === 0) return;
+
+        const changed: Record<string, any> = new NullProtoObj();
+        for (const [key, value] of Object.entries(source)) {
+            if (JSON.stringify((room.state as any)[key]) !== JSON.stringify(value)) {
+                changed[key] = value;
+            }
+        }
+
+        if (Object.keys(changed).length === 0) return;
+        Object.assign(room.state, changed);
+        this.emit("wire:broadcast:update", changed);
+        for (const key of Object.keys(changed)) {
+            this.dirtyKeys.delete(key);
+        }
+    }
+
+    public connectSSE(controller: ReadableStreamDefaultController<string>) {
+        if (!this.kire) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
+        if (!room) {
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
+        }
+        room.listeners.add(controller);
+        this.connections = room.listeners.size + room.sockets.size;
+        const snapshot = this.filterState(room.state);
+        try {
+            this.pushEvent(controller, "wire:broadcast:snapshot", {
+                type: "wire:broadcast:snapshot",
+                channel: this.channel,
+                data: snapshot,
+                connections: room.listeners.size + room.sockets.size
+            });
+        } catch {
+            room.listeners.delete(controller);
+            this.connections = room.listeners.size + room.sockets.size;
+            this.gcRoom(this.channel, room);
+        }
+    }
+
+    public connectSocket(socket: any) {
+        if (!this.kire || !socket) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
+        if (!room) {
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
+        }
+        room.sockets.add(socket);
+        this.connections = room.listeners.size + room.sockets.size;
+        const snapshot = this.filterState(room.state);
+        socket.emit("wire:broadcast:snapshot", {
+            type: "wire:broadcast:snapshot",
+            channel: this.channel,
+            data: snapshot,
+            connections: this.connections
         });
     }
 
-    /**
-     * Propagates local updates to the broadcast room.
-     */
-    private propagate(updates: Record<string, any>) {
-        if (!this.kire || !this.component) return;
-        const wire = this.kire["~wire"];
-        const room = wire?.rooms.get(this.channel);
+    public disconnectSSE(controller: ReadableStreamDefaultController<string>) {
+        if (!this.kire) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        const room = rooms?.get(this.channel);
         if (!room) return;
+        room.listeners.delete(controller);
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
+    }
+
+    public disconnectSocket(socket: any) {
+        if (!this.kire || !socket) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        const room = rooms?.get(this.channel);
+        if (!room) return;
+        room.sockets.delete(socket);
+        this.connections = room.listeners.size + room.sockets.size;
+        this.gcRoom(this.channel, room);
+    }
+
+    private propagate(updates: Record<string, any>) {
+        if (!this.kire) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = ensureRooms(wire);
+        let room = rooms.get(this.channel);
+        if (!room) {
+            room = createRoom(this.channel, this.options.password);
+            rooms.set(this.channel, room);
+        }
+        if (!room.password && this.options.password) room.password = this.options.password;
 
         const filtered = this.filterState(updates);
         if (Object.keys(filtered).length === 0) return;
 
-        // Update shared state
-        Object.assign(room.state, filtered);
-
-        // Emit to all components in the room except sender (if SSE/Socket active)
-        this.emit("wire:component-update", {
-            sender: this.component.__id,
-            updates: filtered
-        });
-    }
-
-    /**
-     * Emits an event to all components in the current channel.
-     */
-    public emit(event: string, data: any) {
-        if (!this.kire) return;
-        const wire = this.kire["~wire"];
-        const room = wire?.rooms.get(this.channel);
-        if (!room) return;
-
-        // Implementation will iterate through room components and push SSE events
-        for (const compId of room.components) {
-            const session = wire.sessions.get(compId);
-            if (session) {
-                session.emit(event, data);
+        const changed: Record<string, any> = new NullProtoObj();
+        for (const [key, value] of Object.entries(filtered)) {
+            if (JSON.stringify((room.state as any)[key]) !== JSON.stringify(value)) {
+                changed[key] = value;
             }
         }
-    }
 
-    /**
-     * Disconnects a specific component ID from the broadcast.
-     */
-    public disconnect(connid: string) {
-        if (!this.kire) return;
-        const room = this.kire["~wire"]?.rooms.get(this.channel);
-        if (room) {
-            room.components.delete(connid);
-            this.connections = room.components.size;
-        }
-    }
-
-    /**
-     * Closes the broadcast for this component.
-     */
-    public close() {
-        if (this.component) {
-            this.disconnect(this.component.__id);
-        }
-    }
-
-    private applySharedState(state: Record<string, any>) {
-        if (!this.component) return;
-        const filtered = this.filterState(state);
-        this.component.fill(filtered);
+        if (Object.keys(changed).length === 0) return;
+        Object.assign(room.state, changed);
+        this.emit("wire:broadcast:update", changed);
     }
 
     private filterState(state: Record<string, any>): Record<string, any> {
         const result: Record<string, any> = new NullProtoObj();
-        for (const [key, val] of Object.entries(state)) {
+        for (const [key, val] of Object.entries(state || {})) {
             if (this.options.excludes?.includes(key)) continue;
             if (this.options.includes && !this.options.includes.includes(key)) continue;
             result[key] = val;
         }
         return result;
+    }
+
+    private gcRoom(name: string, room?: BroadcastRoom) {
+        if (!this.options.autodelete || !this.kire || !room) return;
+        // Keep room state across reconnects. Remove only empty inactive rooms.
+        if (room.listeners.size > 0 || room.sockets.size > 0) return;
+        if (Object.keys(room.state || {}).length > 0) return;
+        const wire = this.kire.$kire?.["~wire"];
+        const rooms = wire?.broadcasts as Map<string, BroadcastRoom> | undefined;
+        rooms?.delete(name);
+    }
+
+    private pushEvent(controller: ReadableStreamDefaultController<string>, event: string, payload: any) {
+        controller.enqueue(`event: ${event}\n`);
+        controller.enqueue(`data: ${JSON.stringify(payload)}\n\n`);
+    }
+
+    private pickKeys(source: Record<string, any>, keys: Set<string>) {
+        const out: Record<string, any> = new NullProtoObj();
+        for (const key of keys) {
+            if (key in source) out[key] = source[key];
+        }
+        return out;
+    }
+
+    public verifyPassword(password?: string | null): boolean {
+        if (!this.options.password) return true;
+        return String(password || "") === String(this.options.password);
+    }
+
+    public getChannel(): string {
+        return this.channel;
     }
 }

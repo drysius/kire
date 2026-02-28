@@ -144,6 +144,13 @@ export interface ElementDefinition {
     // Runtime matching
     name: string | RegExp;
     onCall: KireHandler;
+
+    // Kernel Metadata
+    relatedTo?: string[];
+    closeBy?: string | string[];
+    raw?: boolean;
+    scope?: (args: any[], attributes?: Record<string, string>) => string[];
+    isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
     
     // Schema/Doc Metadata
     void?: boolean;
@@ -157,6 +164,12 @@ export interface DirectiveDefinition {
     // Runtime matching
     name: string;
     onCall: KireHandler;
+
+    // Kernel Metadata
+    relatedTo?: string[];
+    closeBy?: string | string[];
+    scope?: (args: any[], attributes?: Record<string, string>) => string[];
+    isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
     
     // Schema/Doc Metadata
     params?: string[];

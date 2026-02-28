@@ -8,10 +8,12 @@ export default (kire: Kire<any>) => {
         onCall: (api) => {
             const expr = api.getAttribute("expr");
             api.write(`switch (${api.transform(expr)}) {`);
-            if (api.node.children) {
-                const valid = api.node.children.filter((n: any) => n.type === "directive" && (n.name === "case" || n.name === "default"));
-                api.renderChildren(valid);
+            
+            // In Kernel mode, related nodes (case/default) are stored in node.related
+            if (api.node.related) {
+                api.renderChildren(api.node.related);
             }
+            
             api.write(`}`);
         },
     });
@@ -20,6 +22,7 @@ export default (kire: Kire<any>) => {
         name: `case`,
         params: [`val:any`],
         children: true,
+        relatedTo: [`switch`, `case`, `default`],
         onCall: (api) => {
             const val = api.getAttribute("val");
             api.write(`case ${api.transform(val)}: {`);
@@ -31,6 +34,7 @@ export default (kire: Kire<any>) => {
     kire.directive({
         name: `default`,
         children: true,
+        relatedTo: [`switch`, `case`, `default`],
         onCall: (api) => {
             api.write(`default: {`);
             api.renderChildren();

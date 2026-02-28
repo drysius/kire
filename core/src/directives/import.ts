@@ -5,6 +5,13 @@ export default (kire: Kire<any>) => {
         name: `include`,
         params: [`path:string`, `locals:object`],
         children: false, 
+        isDependency: (args) => {
+            const rawPath = args[0];
+            if (typeof rawPath === 'string') {
+                return [rawPath.replace(/['"]/g, '')];
+            }
+            return [];
+        },
         onCall: (api) => {
             const rawPath = api.getAttribute("path") || api.getArgument(0);
             const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";

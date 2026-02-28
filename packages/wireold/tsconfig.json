@@ -1,5 +1,14 @@
 {
-	"extends": "../tsconfig.base.json",
-	"include": ["src", "tests"],
-	"exclude": []
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "kire": ["../../core/src/index.ts"],
+      "@kirejs/wire": ["src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "web/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

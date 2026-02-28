@@ -3,28 +3,35 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Attempts to locate and read the content of a Kirewire client asset.
+ * Attempts to locate and read the content of a Wire client asset.
  */
-export async function getAssetContent(filename: string): Promise<string | null> {
+export async function getAssetContent(filename: string): Promise<{ content: string | Buffer, contentType: string } | null> {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    
     const pathsToTry = [
-        // Development and build output paths
-        resolve(dirname(fileURLToPath(import.meta.url)), "../../client", filename),
-        resolve(dirname(fileURLToPath(import.meta.url)), "../../dist/client", filename),
-        resolve(dirname(fileURLToPath(import.meta.url)), "../web", filename),
-        resolve(dirname(fileURLToPath(import.meta.url)), "../../../dist/client", filename),
-        join(process.cwd(), "packages/wire/dist/client", filename),
-        join(process.cwd(), "../packages/wire/dist/client", filename),
-        join(process.cwd(), "node_modules/@kirejs/wire/dist/client", filename),
+        // 1. Relative to this source file (development)
+        resolve(__dirname, "../../dist/client", filename),
+        resolve(__dirname, "../web", filename),
+        
+        // 2. Relative to process.cwd() (standard project layout)
+        resolve(process.cwd(), "packages/wire/dist/client", filename),
+        resolve(process.cwd(), "dist/client", filename),
+        
+        // 3. Node modules path
+        resolve(process.cwd(), "node_modules/@kirejs/wire/dist/client", filename),
     ];
 
     for (const p of pathsToTry) {
         if (existsSync(p)) {
             try {
-                return readFileSync(p, "utf-8");
+                const content = readFileSync(p);
+                const contentType = filename.endsWith(".js") ? "application/javascript" : "text/css";
+                return { content, contentType };
             } catch (e) {
-                // Silently fail and try next path
+                // Skip and try next path
             }
         }
     }
+    
     return null;
 }

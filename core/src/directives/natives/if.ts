@@ -5,6 +5,8 @@ export default (kire: Kire<any>) => {
     const elseDirective: DirectiveDefinition = {
         name: `else`,
         children: true,
+        relatedTo: [`if`, `elseif`, `unless`],
+        closeBy: [`endif`, `endunless`],
         onCall: (api) => {
             api.write(`} else {`);
             api.renderChildren();
@@ -15,7 +17,7 @@ export default (kire: Kire<any>) => {
         name: `if`,
         params: [`cond:any`],
         children: true,
-        related: ['else', 'elseif'], // METADADO
+        // closeBy: @endif / @end (default)
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`if (${cond}) {`);
@@ -31,6 +33,7 @@ export default (kire: Kire<any>) => {
         ...elseDirective,
         name: `elseif`,
         params: [`cond:any`],
+        relatedTo: [`if`, `elseif`, `unless`], // Ensure relationship
         onCall: (api) => {
             const cond = api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);
@@ -46,6 +49,9 @@ export default (kire: Kire<any>) => {
             const cond = api.getAttribute("cond");
             api.write(`if (!(${cond})) {`);
             api.renderChildren();
+            if (api.node.related && api.node.related.length > 0) {
+                api.renderChildren(api.node.related);
+            }
             api.write(`}`);
         },
     });

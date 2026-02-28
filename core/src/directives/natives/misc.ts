@@ -18,6 +18,8 @@ export default (kire: Kire<any>) => {
         name: `error`,
         params: [`field:string`],
         children: true,
+        closeBy: [`enderror`, `end`],
+        scope: () => [`$message`],
         onCall: (api) => {
             const field = api.getAttribute("field");
             api.write(`if ($props.errors && $props.errors[${field}]) {
@@ -54,6 +56,11 @@ export default (kire: Kire<any>) => {
         name: `const`,
         params: [`expr:string`],
         children: false,
+        scope: (args) => {
+            const expr = args[0] || "";
+            const first = expr.split("=")[0];
+            return first ? [first.trim()] : [];
+        },
         onCall: (api) => {
             api.write(`${api.getAttribute("expr")};`);
         },
@@ -63,6 +70,11 @@ export default (kire: Kire<any>) => {
         name: `let`,
         params: [`expr:string`],
         children: false,
+        scope: (args) => {
+            const expr = args[0] || "";
+            const first = expr.split("=")[0];
+            return first ? [first.trim()] : [];
+        },
         onCall: (api) => {
             api.write(`${api.getAttribute("expr")};`);
         },

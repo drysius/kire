@@ -1,44 +1,34 @@
-import type { ClientAdapter } from "./http";
+import type { Kire } from "kire";
+import { processWireAction, type WirePayload } from "./http-sse";
 
-export class FivemAdapter implements ClientAdapter {
-	private resourceName: string;
-	private pending: Map<string, (val: any) => void> = new Map();
+/**
+ * FiveM Adapter for Wire Server-Side.
+ * Listens for network events from clients and processes component actions.
+ */
+export function setupFivemAdapter(kire: Kire) {
+    // Detect if we are in a FiveM environment
+    const isFiveM = typeof (global as any).onNet === "function";
+    if (!isFiveM) return;
 
-	constructor(resourceName?: string) {
-		this.resourceName =
-			resourceName || (window as any).GetParentResourceName
-				? (window as any).GetParentResourceName()
-				: "kire";
+    const resourceName = (global as any).GetCurrentResourceName?.() || "kire";
 
-		window.addEventListener("message", (event) => {
-			const data = event.data;
-			if (
-				data.type === `${this.resourceName}:kirewire:response` &&
-				data.requestId
-			) {
-				if (this.pending.has(data.requestId)) {
-					this.pending.get(data.requestId)!(data.response);
-					this.pending.delete(data.requestId);
-				}
-			}
-		});
-	}
-
-	async request(payload: any) {
-		const requestId = Math.random().toString(36).substr(2, 9);
-
-		// Register promise first
-		const promise = new Promise((resolve) => {
-			this.pending.set(requestId, resolve);
-		});
-
-		// Send to Client Script
-		await fetch(`https://${this.resourceName}/kirewire-request`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ requestId, payload }),
-		});
-
-		return promise;
-	}
+    /**
+     * Listen for actions triggered by client-side NUI.
+     * The client script acts as a proxy: NUI -> Client Script -> Server Event.
+     */
+    (global as any).onNet(`${resourceName}:wire:action`, async (payload: WirePayload) => {
+        const src = (global as any).source;
+        
+        try {
+            const result = await processWireAction(kire, payload);
+            
+            /**
+             * Send the result back to the specific client.
+             * Client script will proxy this back to the NUI.
+             */
+            (global as any).TriggerClientEvent(`${resourceName}:wire:response`, src, result);
+        } catch (error: any) {
+            console.error(`[Wire:FiveM] Error processing action for component "${payload.component}":`, error.message);
+        }
+    });
 }

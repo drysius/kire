@@ -5,6 +5,7 @@ export default (kire: Kire<any>) => {
         name: `isset`,
         params: [`expr:any`],
         children: true,
+        closeBy: [`endisset`, `end`],
         onCall: (api) => {
             const expr = api.getAttribute("expr");
             api.write(`if (typeof ${api.transform(expr)} !== 'undefined' && ${api.transform(expr)} !== null) {`);
@@ -17,6 +18,7 @@ export default (kire: Kire<any>) => {
         name: `empty`,
         params: [`expr:any`],
         children: true,
+        closeBy: [`endempty`, `end`],
         onCall: (api) => {
             const expr = api.getAttribute("expr");
             api.write(`if (!${api.transform(expr)} || (Array.isArray(${api.transform(expr)}) && ${api.transform(expr)}.length === 0)) {`);
