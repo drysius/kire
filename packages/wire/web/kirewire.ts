@@ -1,8 +1,7 @@
 import morph from '@alpinejs/morph';
-import Alpine from 'alpinejs';
 import { bus } from "./utils/message-bus";
 
-(window as any).Alpine = Alpine;
+console.log("[Kirewire] wire.js loaded");
 
 export interface WireClientContext {
     el: HTMLElement;
@@ -22,21 +21,19 @@ export class KirewireClient {
     public pageId: string = 'default';
     public bus = bus;
     
-    /**
-     * Pending deferred updates for components.
-     * ComponentId -> { property: value }
-     */
     private deferredUpdates = new Map<string, Record<string, any>>();
 
     constructor() {}
 
     public directive(name: string, handler: WireClientDirective) {
-        console.log(`[Kirewire] Registering directive handler: ${name}`);
         this.directives.set(name, handler);
     }
 
     public start(Alpine: any) {
-        console.log(`[Kirewire] Booting Alpine integration...`);
+        if (!Alpine) {
+            console.error("[Kirewire] Alpine instance is required to start.");
+            return;
+        }
         (window as any).Alpine = Alpine;
         Alpine.plugin(morph);
 
@@ -58,7 +55,7 @@ export class KirewireClient {
             this.processWireAttributes(el);
         }));
 
-        if (!(window as any).Alpine.started) {
+        if (!Alpine.started) {
             Alpine.start();
         }
 
@@ -105,7 +102,6 @@ export class KirewireClient {
     }
 
     public defer(componentId: string, property: string, value: any) {
-        console.log(`[Kirewire] Deferring update for "${componentId}": ${property} =`, value);
         let updates = this.deferredUpdates.get(componentId);
         if (!updates) {
             updates = {};
@@ -114,47 +110,30 @@ export class KirewireClient {
         updates[property] = value;
     }
 
-    /**
-     * Centralized method to call a component action.
-     */
     public async call(el: HTMLElement, method: string, params: any[] = []) {
         const meta = this.getMetadata(el);
         if (!meta) return;
 
-        console.log(`[Kirewire] Preparing call: "${method}" on "${meta.id}"`);
-
-        // 1. Process deferred updates first
         const deferred = this.deferredUpdates.get(meta.id);
         if (deferred) {
-            console.log(`[Kirewire] Flushing deferred updates for "${meta.id}" before action.`);
             for (const [prop, val] of Object.entries(deferred)) {
-                // Enqueue $set actions into the same bus cycle
                 bus.enqueue({
-                    id: meta.id,
-                    method: '$set',
-                    params: [prop, val],
-                    state: meta.state,
-                    checksum: meta.checksum,
-                    pageId: this.pageId
+                    id: meta.id, method: '$set', params: [prop, val],
+                    state: meta.state, checksum: meta.checksum, pageId: this.pageId
                 });
             }
             this.deferredUpdates.delete(meta.id);
         }
 
-        // 2. Enqueue the main action
         this.$emit('component:call', { id: meta.id, method, params });
 
         try {
             const result = await bus.enqueue({
-                id: meta.id,
-                method,
-                params,
-                state: meta.state,
-                checksum: meta.checksum,
-                pageId: this.pageId
+                id: meta.id, method, params,
+                state: meta.state, checksum: meta.checksum, pageId: this.pageId
             });
 
-            if (result.success) {
+            if (result && result.success) {
                 if (result.state) meta.el.setAttribute('wire:state', JSON.stringify(result.state));
                 if (result.checksum) meta.el.setAttribute('wire:checksum', result.checksum);
                 if (result.html) this.patch(meta.el, result.html);
@@ -168,25 +147,6 @@ export class KirewireClient {
         }
     }
 
-    private getComponentId(el: HTMLElement): string | null {
-        const root = el.closest('[wire\\:id], [wire-id]');
-        return root?.getAttribute('wire:id') || root?.getAttribute('wire-id') || null;
-    }
-
-    private createProxy(id: string, el: HTMLElement) {
-        const wire = this;
-        return new Proxy({}, {
-            get(target, prop: string) {
-                if (prop === '$id') return id;
-                if (prop === '$el') return el;
-                return (...args: any[]) => {
-                    const root = document.querySelector(`[wire\\:id="${id}"]`);
-                    if (root) return wire.call(root as HTMLElement, prop, args);
-                };
-            }
-        });
-    }
-
     public getMetadata(el: HTMLElement) {
         const root = el.closest('[wire\\:id], [wire-id]');
         if (!root) return null;
@@ -196,6 +156,46 @@ export class KirewireClient {
             state: JSON.parse(root.getAttribute('wire:state') || '{}'),
             checksum: root.getAttribute('wire:checksum')
         };
+    }
+
+    public getComponentId(el: HTMLElement): string | null {
+        return el.closest('[wire\\:id], [wire-id]')?.getAttribute('wire:id') || el.closest('[wire\\:id], [wire-id]')?.getAttribute('wire-id') || null;
+    }
+
+    public getComponentState(el: HTMLElement): any {
+        const root = el.closest('[wire\\:id], [wire-id]');
+        return JSON.parse(root?.getAttribute('wire:state') || '{}');
+    }
+
+    private getComponentProxy(el: HTMLElement) {
+        const id = this.getComponentId(el);
+        return id ? this.components.get(id) : null;
+    }
+
+    private createProxy(id: string, el: HTMLElement) {
+        const wire = this;
+        return new Proxy({}, {
+            get(target, prop: string) {
+                if (prop === '$id') return id;
+                if (prop === '$el') return el;
+                const state = wire.getComponentState(el);
+                if (prop in state) return state[prop];
+                return (...args: any[]) => {
+                    const root = document.querySelector(`[wire\\:id="${id}"], [wire-id="${id}"]`);
+                    if (root) return wire.call(root as HTMLElement, prop, args);
+                };
+            },
+            set(target, prop: string, value: any) {
+                const root = document.querySelector(`[wire\\:id="${id}"], [wire-id="${id}"]`);
+                if (root) {
+                    wire.defer(id, prop, value);
+                    const state = wire.getComponentState(root as HTMLElement);
+                    state[prop] = value;
+                    root.setAttribute('wire:state', JSON.stringify(state));
+                }
+                return true;
+            }
+        });
     }
 
     public $on(event: string, callback: (data: any) => void): () => void {
@@ -216,6 +216,11 @@ export class KirewireClient {
     public $emit(event: string, data: any) {
         const handlers = this.events.get(event);
         if (handlers) { handlers.forEach(h => h(data)); }
+        
+        // Dispatch to window for JSDOM/Testing
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(`wire:${event}`, { detail: data }));
+        }
     }
 
     public patch(el: HTMLElement, newHtml: string) {
@@ -227,4 +232,4 @@ export class KirewireClient {
 }
 
 export const Kirewire = new KirewireClient();
-(window as any).Kirewire = Kirewire;
+(typeof global !== "undefined" ? global : window as any).Kirewire = Kirewire;

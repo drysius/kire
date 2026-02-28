@@ -20,7 +20,7 @@ describe("Kirewire Kernel", () => {
     });
 
     test("should parse durations correctly", () => {
-        const wire = new Kirewire({ secret: "s", expireSession: "2m" });
+        const wire = new Kirewire({ secret: "s", expire_session: "2m" });
         // @ts-ignore - access private for test
         expect(wire.sessions.expireMs).toBe(120000);
     });

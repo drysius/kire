@@ -1,3 +1,4 @@
+import Alpine from 'alpinejs';
 import { Kirewire } from './kirewire';
 import { HttpClientAdapter } from './adapters/http';
 import './directives/click';
@@ -11,6 +12,8 @@ import './directives/offline';
 import './features/file-upload';
 import './adapters/http';
 
+//@ts-expect-error ignore
+window.Alpine = Alpine;
 (Kirewire as any).HttpClientAdapter = HttpClientAdapter;
 
 export { Kirewire } from './kirewire';

@@ -21,11 +21,13 @@ Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
             value = e.target.value;
         }
 
+        console.log(`[Kirewire] model:input event on "${expression}" with value:`, value);
+
         if (modifiers.includes('defer')) {
-            // Store locally in the deferred map
+            console.log(`[Kirewire] model:defer detected for "${expression}". Calling wire.defer().`);
             wire.defer(componentId, expression, value);
         } else {
-            // Call server immediately
+            console.log(`[Kirewire] model:immediate detected for "${expression}". Calling wire.call().`);
             wire.call(el, '$set', [expression, value]);
         }
     };
