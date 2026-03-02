@@ -5,7 +5,7 @@ import { escapeHtml } from "./utils/html";
 import { NullProtoObj, createFastMatcher } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
 import { Compiler } from "./compiler";
-import { Parser } from "./parser";
+import { Lexer } from "./lexer";
 import { resolvePath as resolvePathUtil } from "./utils/resolve";
 
 import type {
@@ -466,7 +466,7 @@ export class Kire<Asyncronos extends boolean = true> {
     }
 
     public parse(content: string): Node[] {
-        return new Parser(content, this).parse();
+        return new Lexer(content, this).parse();
     }
 
     public compile(content: string, filename = "template.kire", extraGlobals: string[] = [], isDependency = false): KireCacheEntry {
@@ -546,6 +546,10 @@ export class Kire<Asyncronos extends boolean = true> {
             }
 
             this.$cache.files.set(resolved, entry);
+            if (this.$cache.files.size > this.$max_renders * 2) {
+                const first = this.$cache.files.keys().next().value;
+                if (first && first !== this["~render-symbol"]) this.$cache.files.delete(first);
+            }
             return entry.fn!;
         } finally {
             this.$kire["~compiling"].delete(resolved);
@@ -561,7 +565,7 @@ export class Kire<Asyncronos extends boolean = true> {
                 effectiveProps = Object.assign(Object.create(this.$props), locals);
             }
             
-            const result = template.call(this, effectiveProps, effectiveGlobals, this as never);
+            const result = template.call(this, effectiveProps, effectiveGlobals, template as never);
             
             if (!this.$async && result instanceof Promise) {
                 throw new Error(`Template ${template.meta.path} contains async code but was called synchronously.`);

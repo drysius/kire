@@ -77,6 +77,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({ 
         name: 'layout', 
+        children: true,
         isDependency: (args) => {
             const rawPath = args[0];
             if (typeof rawPath === 'string') {
@@ -88,6 +89,7 @@ export default (kire: Kire<any>) => {
     });
     kire.directive({ 
         name: 'extends', 
+        children: true,
         isDependency: (args) => {
             const rawPath = args[0];
             if (typeof rawPath === 'string') {
@@ -99,6 +101,7 @@ export default (kire: Kire<any>) => {
     });
     kire.directive({ 
         name: 'section', 
+        children: true,
         onCall: (api) => kire.getDirective('slot')?.onCall(api) 
     });
 };

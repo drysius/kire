@@ -5,7 +5,7 @@
 
 export * from "./compiler";
 export * from "./kire";
-export * from "./parser";
+export * from "./lexer";
 export * from "./types";
 export * from "./runtime";
 export { escapeHtml } from "./utils/html";

@@ -10,7 +10,7 @@ import {
     TEXT_SCAN_REGEX
 } from "./utils/regex";
 
-export class Parser {
+export class Lexer {
     private cursor = 0;
     private line = 1;
     private column = 1;
@@ -143,9 +143,9 @@ export class Parser {
 
         // 2. Find longest prefix
         let matchedName = "";
-        for (let i = rawName.length; i > 0; i--) {
-            const sub = rawName.slice(0, i);
-            if (registered[sub]) { matchedName = sub; break; }
+        const m = rawName.match(this.kire.$directivesPattern);
+        if (m && m.index === 0) {
+            matchedName = m[0];
         }
 
         if (!matchedName) {
@@ -256,7 +256,7 @@ export class Parser {
             const endIdx = this.template.indexOf(closeTag, this.cursor);
             if (endIdx !== -1) {
                 const content = this.template.slice(this.cursor, endIdx);
-                const innerParser = new Parser(content, this.kire);
+                const innerParser = new Lexer(content, this.kire);
                 (innerParser as any).line = this.line;
                 (innerParser as any).column = this.column;
                 node.children = innerParser.parse();

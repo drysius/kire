@@ -1,4 +1,3 @@
-import { resolve, join, isAbsolute, relative } from "node:path";
 import type { Kire } from "./kire";
 import type { CompilerApi, Node } from "./types";
 import { SourceMapGenerator } from "./utils/source-map";
@@ -80,11 +79,9 @@ export class Compiler {
         this.header.push(`const $escape = this.$escape;`);
 
         // Deep identifier collection (including dependencies)
-        this.deepCollectIdentifiers(nodes, this.identifiers, new Set());
-        if (extraGlobals) extraGlobals.forEach(g => this.identifiers.add(g));
-
         const localDecls = new Set<string>();
-        this.collectDeclarations(nodes, localDecls);
+        this.analyzeAst(nodes, this.identifiers, localDecls, new Set());
+        if (extraGlobals) extraGlobals.forEach(g => this.identifiers.add(g));
 
         for (const id of this.identifiers) {
             if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
@@ -107,33 +104,50 @@ export class Compiler {
         // We do this in a loop because one existVar might trigger another
         let changed = true;
         const triggered = new Set<string>();
+        const activeIdentifiers = new Set(this.identifiers);
+        
+        // Initial scan of generated code to detect identifiers injected by directives/elements
+        const scanGeneratedCode = () => {
+            const rawAllCode = this.header.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
+            const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
+            let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(cleanCode)) !== null) {
+                if (m[1]) activeIdentifiers.add(m[1]);
+            }
+            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0;
+        };
+
+        scanGeneratedCode();
+
         while (changed) {
             changed = false;
-            // Join everything to scan for variable usage
-            const rawAllCode = this.header.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
-            // Strip strings to avoid false positives, but keep symbols
-            const cleanCode = rawAllCode.replace(JS_STRINGS_REGEX, '""');
 
             for (const [name, entries] of this.kire.$kire["~handlers"].exists_vars) {
                 const nameStr = name.toString();
                 if (triggered.has(nameStr)) continue;
 
                 for (const entry of entries) {
-                    // unique variables only trigger in the root monolithic function
                     if (entry.unique && this._isDependency) {
                          triggered.add(nameStr);
                          continue;
                     }
 
-                    const regex = createVarThenRegex(typeof entry.name === 'string' ? entry.name : entry.name.source);
+                    let isUsed = activeIdentifiers.has(nameStr);
+                    if (!isUsed && entry.name instanceof RegExp) {
+                        for (const id of activeIdentifiers) {
+                            if (entry.name.test(id)) { isUsed = true; break; }
+                        }
+                    }
                     
-                    // Trigger if identifier found in deep scan OR found in generated code
-                    if (this.identifiers.has(nameStr) || regex.test(cleanCode)) {
+                    if (isUsed) {
                         entry.callback?.(this.createCompilerApi({ type: 'directive', name: 'existVar', loc: { line: 0, column: 0 } } as any, {}, true));
                         triggered.add(nameStr);
                         changed = true;
                     }
                 }
+            }
+            
+            if (changed) {
+                scanGeneratedCode();
             }
         }
 
@@ -180,35 +194,57 @@ export class Compiler {
         return code;
     }
 
-    private deepCollectIdentifiers(nodes: Node[], set: Set<string>, visited: Set<string>) {
-        const scan = (c: string) => { 
+    private analyzeAst(nodes: Node[], idents: Set<string>, decls: Set<string>, visited: Set<string>) {
+        const scanIdents = (c: string) => { 
             let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
-                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
+                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) idents.add(id);
+            }
+            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; 
+        };
+
+        const scanDecls = (c: string) => { 
+            let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
+                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) decls.add(id);
             }
             JS_EXTRACT_IDENTS_REGEX.lastIndex = 0; 
         };
 
         for (const n of nodes) {
-            if (n.type === "interpolation" || n.type === "js") scan(n.content || "");
-            if (n.args) n.args.forEach(a => typeof a === "string" && scan(a));
+            if (n.type === "interpolation" || n.type === "js") scanIdents(n.content || "");
+            if (n.args) n.args.forEach(a => typeof a === "string" && scanIdents(a));
+            if (n.type === "js" && n.content) {
+                const declRegex = /\b(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
+                let m; while ((m = declRegex.exec(n.content)) !== null) {
+                    if (m[1]) decls.add(m[1]);
+                }
+            }
             
             if (n.type === "directive") {
-                if (n.name === "defined" || n.name === "define") set.add("__kire_defines");
-                if (n.name === "stack" || n.name === "push") set.add("__kire_stack");
+                if (n.name === "defined" || n.name === "define") idents.add("__kire_defines");
+                if (n.name === "stack" || n.name === "push") idents.add("__kire_stack");
                 
                 const def = this.kire.getDirective(n.name!);
-                if (def?.isDependency) {
-                    const paths = def.isDependency(n.args || [], n.attributes);
-                    for (const path of paths) {
-                        try {
-                            const resolved = this.kire.resolvePath(path);
-                            if (!visited.has(resolved)) {
-                                visited.add(resolved);
-                                const depContent = this.kire.readFile(resolved);
-                                const depNodes = this.kire.parse(depContent);
-                                this.deepCollectIdentifiers(depNodes, set, visited);
-                            }
-                        } catch(e) {}
+                if (def) {
+                    if (def.isDependency) {
+                        const paths = def.isDependency(n.args || [], n.attributes);
+                        for (const path of paths) {
+                            try {
+                                const resolved = this.kire.resolvePath(path);
+                                if (!visited.has(resolved)) {
+                                    visited.add(resolved);
+                                    const depContent = this.kire.readFile(resolved);
+                                    const depNodes = this.kire.parse(depContent);
+                                    this.analyzeAst(depNodes, idents, decls, visited);
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                    if (def.scope) {
+                        const vars = def.scope(n.args || [], n.attributes);
+                        for (const v of vars) scanDecls(v);
+                    }
+                    if (def.exposes) {
+                        for (const v of def.exposes) decls.add(v);
                     }
                 }
             }
@@ -221,76 +257,41 @@ export class Compiler {
                     else if (d.name instanceof RegExp && d.name.test(n.tagName!)) { def = d; break; }
                 }
 
-                if (def?.isDependency) {
-                    const paths = def.isDependency(n.args || [], n.attributes);
-                    for (const path of paths) {
-                        try {
-                            const resolved = this.kire.resolvePath(path);
-                            if (!visited.has(resolved)) {
-                                visited.add(resolved);
-                                const depContent = this.kire.readFile(resolved);
-                                const depNodes = this.kire.parse(depContent);
-                                this.deepCollectIdentifiers(depNodes, set, visited);
-                            }
-                        } catch(e) {}
+                if (def) {
+                    if (def.isDependency) {
+                        const paths = def.isDependency(n.args || [], n.attributes);
+                        for (const path of paths) {
+                            try {
+                                const resolved = this.kire.resolvePath(path);
+                                if (!visited.has(resolved)) {
+                                    visited.add(resolved);
+                                    const depContent = this.kire.readFile(resolved);
+                                    const depNodes = this.kire.parse(depContent);
+                                    this.analyzeAst(depNodes, idents, decls, visited);
+                                }
+                            } catch(e) {}
+                        }
+                    }
+                    if (def.scope) {
+                        const vars = def.scope(n.args || [], n.attributes);
+                        for (const v of vars) scanDecls(v);
                     }
                 }
 
                 if (n.attributes) {
                     for (const [key, val] of Object.entries(n.attributes)) {
                         if (n.tagName?.startsWith('kire:') || key.startsWith('@')) {
-                            scan(val);
+                            scanIdents(val);
                         } else {
                             const code = this.parseAttrCode(val);
-                            if (code !== val) scan(code);
+                            if (code !== val) scanIdents(code);
                         }
                     }
                 }
             }
 
-            if (n.children) this.deepCollectIdentifiers(n.children, set, visited);
-            if (n.related) this.deepCollectIdentifiers(n.related, set, visited);
-        }
-    }
-
-    private collectDeclarations(nodes: Node[], set: Set<string>) {
-        const scan = (c: string) => { 
-            let m; while ((m = JS_EXTRACT_IDENTS_REGEX.exec(c)) !== null) {
-                const id = m[1]; if (id && !RESERVED_KEYWORDS_REGEX.test(id)) set.add(id);
-            }
-            JS_EXTRACT_IDENTS_REGEX.lastIndex = 0;
-        };
-        for (const n of nodes) {
-            if (n.type === "directive") {
-                const def = this.kire.getDirective(n.name!);
-                if (def?.scope) {
-                    const vars = def.scope(n.args || [], n.attributes);
-                    for (const v of vars) scan(v);
-                }
-                if (def?.exposes) {
-                    for (const v of def.exposes) set.add(v);
-                }
-            }
-            if (n.type === "element") {
-                let def = null;
-                for (const m of this.kire.$elementMatchers) {
-                    const d = m.def;
-                    if (typeof d.name === "string" && (d.name === n.tagName || (d.name.includes("*") && n.tagName?.match(new RegExp(`^${d.name.replace("*", "(.*)")}$`))))) { def = d; break; }
-                    else if (d.name instanceof RegExp && d.name.test(n.tagName!)) { def = d; break; }
-                }
-                if (def?.scope) {
-                    const vars = def.scope(n.args || [], n.attributes);
-                    for (const v of vars) scan(v);
-                }
-            }
-            if (n.type === "js" && n.content) {
-                const declRegex = /\b(?:const|let|var)\s+([a-zA-Z_$][a-zA-Z0-9_$]*)\b/g;
-                let m; while ((m = declRegex.exec(n.content)) !== null) {
-                    if (m[1]) set.add(m[1]);
-                }
-            }
-            if (n.children) this.collectDeclarations(n.children, set);
-            if (n.related) this.collectDeclarations(n.related, set);
+            if (n.children) this.analyzeAst(n.children, idents, decls, visited);
+            if (n.related) this.analyzeAst(n.related, idents, decls, visited);
         }
     }
 
@@ -433,7 +434,7 @@ export class Compiler {
                 const cleanPath = p.replace(STRIP_QUOTES_REGEX, '');
                 let r = this.kire.resolvePath(cleanPath);
                 if (r.startsWith(this.kire.$root)) {
-                    r = relative(this.kire.$root, r).replace(/\\/g, '/');
+                    r = this.kire.$platform.relative(this.kire.$root, r).replace(/\\/g, '/');
                 }
                 if (this.dependencies[r]) return this.dependencies[r]!;
                 const id = `_dep${Object.keys(this.dependencies).length}`;
