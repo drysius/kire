@@ -53,14 +53,14 @@ export class Compiler {
         }
     }
 
-    /** Converte valor de atributo HTML (possivelmente com {{}}) em expressão JS */
+    /** Converts an HTML attribute value (possibly with {{}}) into a JS expression */
     private parseAttrCode(val: string): string {
         if (!INTERPOLATION_START_REGEX.test(val)) return val;
-        // Se for puramente uma interpolação, extrai o miolo
+        // If it is a pure interpolation, extract the inner expression
         const pureMatch = val.match(INTERPOLATION_PURE_REGEX);
         if (pureMatch) return pureMatch[1]!;
         
-        // Se for texto misto, transforma em template literal ou concatenação
+        // If it is mixed text, convert to a template literal or concatenation
         let res = val.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${$escape(${expr})}`);
         return "`" + res + "`";
     }

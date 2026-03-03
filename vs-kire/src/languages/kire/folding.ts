@@ -25,12 +25,12 @@ export class KireFoldingRangeProvider implements vscode.FoldingRangeProvider {
 			const name = match[1] as string;
 
 			// -------------------------
-			// Fecha bloco: @end
+			// Closes block: @end
 			// -------------------------
 			if (name === "end") {
 				if (stack.length > 0) {
 					const current = stack.pop()!;
-					const endLine = i - 1; // NÃO incluir o @end, para ele continuar visível
+					const endLine = i - 1; // Do NOT include @end, so it stays visible
 
 					if (endLine > current.line) {
 						ranges.push(new vscode.FoldingRange(current.line, endLine));
@@ -44,26 +44,26 @@ export class KireFoldingRangeProvider implements vscode.FoldingRangeProvider {
 
 			// -------------------------
 			// Middle directives (ex: @else, @elseif...)
-			// devem "quebrar" a seção, mas não fecham o bloco inteiro.
+			// should "split" the section, but do not close the entire block.
 			// -------------------------
 			const isMiddle = state.parentDirectives.has(name);
 			if (isMiddle) {
 				if (stack.length > 0) {
 					const current = stack[stack.length - 1]!;
-					const endLine = i - 1; // dobra até a linha anterior do @else/@elseif
+					const endLine = i - 1; // fold until the line before @else/@elseif
 
 					if (endLine > current.line) {
 						ranges.push(new vscode.FoldingRange(current.line, endLine));
 					}
 
-					// Recomeça a seção a partir do middle (@else fica visível como "header" do fold)
+					// Restart the section from the middle (@else stays visible as the fold "header")
 					current.line = i;
 				}
 				continue;
 			}
 
 			// -------------------------
-			// Abertura de bloco (ex: @if, @for, ...)
+			// Block opening (e.g., @if, @for, ...)
 			// -------------------------
 			if (def.children) {
 				stack.push({ name, line: i });

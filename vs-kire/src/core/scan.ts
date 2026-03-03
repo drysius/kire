@@ -9,23 +9,23 @@ export async function loadSchemas(): Promise<void> {
 	kireStore.getState().clear();
 
 	try {
-		// Busca todos os arquivos kire-schema.json em paralelo
+		// Find all kire-schema.json files in parallel
 		const [workspaceFiles, nodeModuleFiles] = await Promise.all([
-			// Arquivos do workspace (exclui node_modules por padrão)
+			// Workspace files (exclude node_modules by default)
 			vscode.workspace.findFiles("**/kire-schema.json", "**/node_modules/**"),
-			// Arquivos dentro de node_modules (sem exclusões)
+			// Files inside node_modules (without exclusions)
 			vscode.workspace.findFiles("**/node_modules/**/kire-schema.json", null),
 		]);
 
-		// Combina e remove duplicados usando Map para preservar ordem
+		// Combine and deduplicate using Map to preserve order
 		const uniqueFiles = new Map<string, vscode.Uri>();
 
-		// Adiciona workspace files primeiro (mais importantes)
+		// Add workspace files first (higher priority)
 		for (const uri of workspaceFiles) {
 			uniqueFiles.set(uri.toString(), uri);
 		}
 
-		// Adiciona node modules depois
+		// Add node_modules files afterward
 		for (const uri of nodeModuleFiles) {
 			const key = uri.toString();
 			if (!uniqueFiles.has(key)) {
@@ -33,7 +33,7 @@ export async function loadSchemas(): Promise<void> {
 			}
 		}
 
-		// Processa arquivos em paralelo com limite de concorrência
+		// Process files in parallel with a concurrency limit
 		const batchSize = 5;
 		const uris = Array.from(uniqueFiles.values());
 

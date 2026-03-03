@@ -1,6 +1,6 @@
 /**
- * Expressões Regulares Pré-compiladas para o Kire.
- * Otimizadas para performance no V8.
+ * Precompiled regular expressions for Kire.
+ * Optimized for V8 performance.
  */
 
 // Optimized Object with Null Prototype
@@ -9,21 +9,21 @@ export const NullProtoObj = function (this: any) {
 } as unknown as { new <T = any>(): Record<string, T> };
 
 
-// Detecção de Tags e Atributos
+// Tag and Attribute Detection
 export const TAG_OPEN_REGEX = /^<([a-zA-Z0-9_\-:.]+)/;
 export const TAG_CLOSE_REGEX = /^<\/([a-zA-Z0-9_\-:.]+)>/;
 export const ATTR_NAME_BREAK_REGEX = /\s|=|>|\/|\(/;
 export const WHITESPACE_REGEX = /\s/;
 
-// Parsing de Diretivas (@nome)
+// Directive Parsing (@name)
 export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_\-.:]+)/;
 
-// Validação e Extração de Identificadores JS
+// JS Identifier Validation and Extraction
 export const JS_IDENTIFIER_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
 export const JS_EXTRACT_IDENTS_REGEX = /(?:['"`].*?['"`])|(?<=\.\s*)[a-zA-Z_$][a-zA-Z0-9_$]*|(?<![a-zA-Z0-9_$])([a-zA-Z_$][a-zA-Z0-9_$]*)(?![a-zA-Z0-9_$])/g;
 export const FOR_VAR_EXTRACT_REGEX = /^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/;
 
-// Interpolação e Atributos Dinâmicos
+// Interpolation and Dynamic Attributes
 export const INTERPOLATION_PURE_REGEX = /^\s*\{\{\s*(.*?)\s*\}\}\s*$/;
 export const INTERPOLATION_GLOBAL_REGEX = /\{\{\s*(.*?)\s*\}\}/g;
 

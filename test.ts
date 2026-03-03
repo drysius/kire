@@ -1,20 +1,20 @@
-// server.js - Arquivo único para teste de SSE
+// server.js - Single file for SSE testing
 const express = require('express');
 const app = express();
 const port = 3000;
 
-// Middleware para servir arquivos estáticos (opcional)
+// Middleware to serve static files (optional)
 app.use(express.static('public'));
 
-// Rota principal que retorna HTML com o cliente SSE
+// Main route that returns HTML with the SSE client
 app.get('/', (req, res) => {
     res.send(`
     <!DOCTYPE html>
-    <html lang="pt-BR">
+    <html lang="en-US">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Teste SSE - Server Sent Events</title>
+        <title>SSE Test - Server Sent Events</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -178,38 +178,38 @@ app.get('/', (req, res) => {
     </head>
     <body>
         <div class="container">
-            <h1>📡 Teste SSE - Server Sent Events</h1>
+            <h1>📡 SSE Test - Server Sent Events</h1>
             
             <div class="status-card">
                 <span class="status-indicator disconnected" id="statusIndicator"></span>
-                <span id="statusText">Desconectado</span>
+                <span id="statusText">Disconnected</span>
             </div>
             
             <div class="stats">
                 <div class="stat-item">
                     <div class="stat-value" id="eventCount">0</div>
-                    <div class="stat-label">Eventos Recebidos</div>
+                    <div class="stat-label">Events Received</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="lastEvent">-</div>
-                    <div class="stat-label">Último Evento</div>
+                    <div class="stat-label">Last Event</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value" id="connectionTime">0s</div>
-                    <div class="stat-label">Tempo Conectado</div>
+                    <div class="stat-label">Connected Time</div>
                 </div>
             </div>
             
             <div class="events-panel" id="events">
                 <div style="text-align: center; opacity: 0.5; padding: 20px;">
-                    Clique em "Conectar" para começar a receber eventos...
+                    Click "Connect" to start receiving events...
                 </div>
             </div>
             
             <div class="controls">
-                <button class="connect" onclick="connectSSE()">🔌 Conectar</button>
-                <button class="disconnect" onclick="disconnectSSE()">⏏️ Desconectar</button>
-                <button class="clear" onclick="clearEvents()">🗑️ Limpar Eventos</button>
+                <button class="connect" onclick="connectSSE()">🔌 Connect</button>
+                <button class="disconnect" onclick="disconnectSSE()">⏏️ Disconnect</button>
+                <button class="clear" onclick="clearEvents()">🗑️ Clear Events</button>
             </div>
         </div>
         
@@ -219,20 +219,20 @@ app.get('/', (req, res) => {
             let connectionTimer = null;
             let secondsConnected = 0;
             
-            // Função para conectar SSE
+            // Function to connect SSE
             function connectSSE() {
                 if (eventSource) {
                     disconnectSSE();
                 }
                 
-                // Criar nova conexão SSE para a rota /events
+                // Create a new SSE connection for the /events route
                 eventSource = new EventSource('/events');
                 
-                // Atualizar UI
+                // Update UI
                 document.getElementById('statusIndicator').className = 'status-indicator connected';
-                document.getElementById('statusText').textContent = 'Conectado';
+                document.getElementById('statusText').textContent = 'Connected';
                 
-                // Iniciar timer
+                // Start timer
                 secondsConnected = 0;
                 if (connectionTimer) clearInterval(connectionTimer);
                 connectionTimer = setInterval(() => {
@@ -240,7 +240,7 @@ app.get('/', (req, res) => {
                     document.getElementById('connectionTime').textContent = secondsConnected + 's';
                 }, 1000);
                 
-                // Evento genérico (para todos os tipos de evento)
+                // Generic event (for all event types)
                 eventSource.onmessage = function(event) {
                     try {
                         const data = JSON.parse(event.data);
@@ -250,33 +250,33 @@ app.get('/', (req, res) => {
                     }
                 };
                 
-                // Evento específico: notificação
+                // Specific event: notification
                 eventSource.addEventListener('notification', function(event) {
                     const data = JSON.parse(event.data);
                     addEventToPanel('notification', data, 'notification');
                 });
                 
-                // Evento específico: alerta
+                // Specific event: alert
                 eventSource.addEventListener('alert', function(event) {
                     const data = JSON.parse(event.data);
                     addEventToPanel('alert', data, 'alert');
                 });
                 
-                // Evento específico: atualização
+                // Specific event: update
                 eventSource.addEventListener('update', function(event) {
                     const data = JSON.parse(event.data);
                     addEventToPanel('update', data, 'update');
                 });
                 
-                // Evento de conexão aberta
+                // Open connection event
                 eventSource.onopen = function() {
-                    addEventToPanel('system', 'Conexão SSE estabelecida', 'success');
+                    addEventToPanel('system', 'SSE connection established', 'success');
                 };
                 
-                // Evento de erro
+                // Error event
                 eventSource.onerror = function(error) {
-                    console.error('Erro SSE:', error);
-                    addEventToPanel('error', 'Erro na conexão SSE', 'error');
+                    console.error('SSE error:', error);
+                    addEventToPanel('error', 'SSE connection error', 'error');
                     
                     if (eventSource.readyState === EventSource.CLOSED) {
                         disconnectSSE();
@@ -284,7 +284,7 @@ app.get('/', (req, res) => {
                 };
             }
             
-            // Função para desconectar
+            // Function to disconnect
             function disconnectSSE() {
                 if (eventSource) {
                     eventSource.close();
@@ -292,23 +292,23 @@ app.get('/', (req, res) => {
                 }
                 
                 document.getElementById('statusIndicator').className = 'status-indicator disconnected';
-                document.getElementById('statusText').textContent = 'Desconectado';
+                document.getElementById('statusText').textContent = 'Disconnected';
                 
                 if (connectionTimer) {
                     clearInterval(connectionTimer);
                     connectionTimer = null;
                 }
                 
-                addEventToPanel('system', 'Conexão SSE encerrada', 'warning');
+                addEventToPanel('system', 'SSE connection closed', 'warning');
             }
             
-            // Função para adicionar eventos ao painel
+            // Function to add events to the panel
             function addEventToPanel(type, data, className = '') {
                 const eventsDiv = document.getElementById('events');
                 const eventItem = document.createElement('div');
                 eventItem.className = 'event-item';
                 
-                const timestamp = new Date().toLocaleTimeString('pt-BR');
+                const timestamp = new Date().toLocaleTimeString('en-US');
                 
                 let dataHtml = '';
                 if (typeof data === 'object') {
@@ -327,28 +327,28 @@ app.get('/', (req, res) => {
                 
                 eventsDiv.insertBefore(eventItem, eventsDiv.firstChild);
                 
-                // Atualizar contador
+                // Update counter
                 eventCount++;
                 document.getElementById('eventCount').textContent = eventCount;
                 document.getElementById('lastEvent').textContent = timestamp;
                 
-                // Limitar número de eventos no painel
+                // Limit number of events in the panel
                 while (eventsDiv.children.length > 50) {
                     eventsDiv.removeChild(eventsDiv.lastChild);
                 }
             }
             
-            // Função para limpar eventos
+            // Function to clear events
             function clearEvents() {
                 document.getElementById('events').innerHTML = '';
                 eventCount = 0;
                 document.getElementById('eventCount').textContent = '0';
             }
             
-            // Verificar suporte do navegador
+            // Check browser support
             if (typeof EventSource === 'undefined') {
                 document.querySelector('.events-panel').innerHTML = 
-                    '<div style="color: #f44336; text-align: center;">⚠️ Seu navegador não suporta Server-Sent Events (SSE)</div>';
+                    '<div style="color: #f44336; text-align: center;">⚠️ Your browser does not support Server-Sent Events (SSE)</div>';
             }
         </script>
     </body>
@@ -356,11 +356,11 @@ app.get('/', (req, res) => {
     `);
 });
 
-// Rota SSE - separada do HTML principal
+// SSE route - separated from the main HTML
 app.get('/events', (req, res) => {
-    console.log('Nova conexão SSE estabelecida');
+    console.log('New SSE connection established');
     
-    // Configurar headers para SSE
+    // Configure headers for SSE
     res.writeHead(200, {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
@@ -368,38 +368,38 @@ app.get('/events', (req, res) => {
         'Access-Control-Allow-Origin': '*'
     });
 
-    // Enviar mensagem inicial
+    // Send initial message
     res.write('event: system\n');
-    res.write('data: Conexão estabelecida com o servidor\n\n');
+    res.write('data: Connection established with the server\n\n');
 
-    // Heartbeat a cada 15 segundos
+    // Heartbeat every 15 seconds
     const heartbeat = setInterval(() => {
         res.write('event: ping\n');
         res.write('data: heartbeat\n\n');
     }, 15000);
 
-    // Notificações periódicas
+    // Periodic notifications
     const notificationInterval = setInterval(() => {
         const notification = {
             id: Date.now(),
-            title: 'Nova Notificação',
-            message: `Notificação #${Math.floor(Math.random() * 1000)}`,
+            title: 'New Notification',
+            message: `Notification #${Math.floor(Math.random() * 1000)}`,
             timestamp: new Date().toISOString(),
-            level: Math.random() > 0.7 ? 'importante' : 'normal'
+            level: Math.random() > 0.7 ? 'important' : 'normal'
         };
         
         res.write('event: notification\n');
         res.write(`data: ${JSON.stringify(notification)}\n\n`);
     }, 5000);
 
-    // Alertas ocasionais
+    // Occasional alerts
     const alertInterval = setInterval(() => {
         if (Math.random() > 0.7) {
             const alert = {
                 id: Date.now(),
-                severity: ['baixo', 'médio', 'alto'][Math.floor(Math.random() * 3)],
-                message: 'Alerta do sistema',
-                details: `Código: AL-${Math.floor(Math.random() * 1000)}`
+                severity: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
+                message: 'System alert',
+                details: `Code: AL-${Math.floor(Math.random() * 1000)}`
             };
             
             res.write('event: alert\n');
@@ -407,7 +407,7 @@ app.get('/events', (req, res) => {
         }
     }, 8000);
 
-    // Atualizações de status
+    // Status updates
     const updateInterval = setInterval(() => {
         const update = {
             type: 'status',
@@ -421,11 +421,11 @@ app.get('/events', (req, res) => {
         res.write(`data: ${JSON.stringify(update)}\n\n`);
     }, 3000);
 
-    // Mensagens gerais
+    // General messages
     const messageInterval = setInterval(() => {
         const message = {
             type: 'general',
-            content: 'Mensagem do servidor',
+            content: 'Server message',
             value: Math.random().toFixed(4),
             timestamp: new Date().toISOString()
         };
@@ -433,9 +433,9 @@ app.get('/events', (req, res) => {
         res.write(`data: ${JSON.stringify(message)}\n\n`);
     }, 2000);
 
-    // Limpar intervalos quando a conexão fechar
+    // Clear intervals when the connection closes
     req.on('close', () => {
-        console.log('Conexão SSE fechada');
+        console.log('SSE connection closed');
         clearInterval(heartbeat);
         clearInterval(notificationInterval);
         clearInterval(alertInterval);
@@ -444,9 +444,9 @@ app.get('/events', (req, res) => {
     });
 });
 
-// Iniciar servidor
+// Start server
 app.listen(port, () => {
-    console.log(`🚀 Servidor de teste SSE rodando em http://localhost:${port}`);
-    console.log(`📡 Rota SSE: http://localhost:${port}/events`);
-    console.log(`🖥️  Interface web: http://localhost:${port}`);
+    console.log(`🚀 SSE test server running at http://localhost:${port}`);
+    console.log(`📡 SSE route: http://localhost:${port}/events`);
+    console.log(`🖥️  Web interface: http://localhost:${port}`);
 });

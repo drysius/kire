@@ -92,18 +92,18 @@ describe("wire-example component behaviors", () => {
         const events: any[] = [];
         sender.emit = (...args: any[]) => events.push(args);
 
-        sender.text = "Oi";
+        sender.text = "Hi";
         await sender.send();
 
         expect(events).toHaveLength(1);
-        expect(events[0]).toEqual(["hello", "Oi"]);
+        expect(events[0]).toEqual(["hello", "Hi"]);
         expect(sender.text).toBe("");
     });
 
     test("Receiver updates message from event payload", () => {
         const receiver = new Receiver();
-        receiver.updateMessage("Mensagem");
-        expect(receiver.message.startsWith("Received: Mensagem at ")).toBe(true);
+        receiver.updateMessage("Message");
+        expect(receiver.message.startsWith("Received: Message at ")).toBe(true);
     });
 
     test("Chat sends message and clears input", () => {
@@ -225,9 +225,9 @@ describe("wire-example component behaviors", () => {
 
     test("TextareaTest submit stores and clears message", async () => {
         const textarea = new TextareaTest();
-        textarea.message = "Texto de teste";
+        textarea.message = "Test text";
         await textarea.submit();
-        expect(textarea.lastSent).toBe("Texto de teste");
+        expect(textarea.lastSent).toBe("Test text");
         expect(textarea.message).toBe("");
     });
 
@@ -262,11 +262,11 @@ describe("wire-example component behaviors", () => {
 
     test("Upload handles no-file and file success paths", async () => {
         const upload = new Upload();
-        upload.description = "Arquivo de teste";
+        upload.description = "Test file";
         await upload.save();
         expect(upload.message).toBe("No file selected.");
 
-        upload.description = "Novo arquivo";
+        upload.description = "New file";
         upload.file = new WireFile({
             id: "file-1",
             name: "demo.txt",

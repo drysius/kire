@@ -16,7 +16,7 @@ export interface KireOptions<Asyncronos extends boolean = boolean> {
     silent?: boolean;
     local_variable?: string;
     max_renders?: number;
-    // Opção para definir o arquivo de cache/bundle inicial
+    // Option to define the initial cache/bundle file
     files?: Record<string, string | KireTplFunction>;
     // If true, doesn't load native elements and directives
     emptykire?: boolean;
@@ -74,7 +74,7 @@ export interface KireCacheEntry {
     time: number;
     dependencies: Record<string, string>;
     source: string;
-    // ID único para sourcemaps/debug
+    // Unique ID for sourcemaps/debug
     id?: string;
 }
 

@@ -9,7 +9,7 @@ const kire = new Kire({
 <body>
     <h1>Hello World</h1>
     <?js 
-        // Erro proposital aqui
+        // Intentional error here
         const x = it.user.nested.property; 
     ?>
 </body>
