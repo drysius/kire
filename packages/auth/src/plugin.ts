@@ -16,9 +16,26 @@ export const KireAuth = kirePlugin<AuthOptions>({
     kire.$global("$auth_getUser", options.getUser);
     kire.$global("$auth_can", options.canPerm);
 
-        // helper for else
+        // Keep @else compatible with native @if/@unless while also supporting auth directives.
+        const elseRelatedTo = [
+            "if",
+            "elseif",
+            "unless",
+            "auth",
+            "guest",
+            "notlogged",
+            "logged",
+            "authenticated",
+            "can",
+            "notcan",
+            "canany",
+            "noauth",
+        ];
         kire.directive({
             name: "else",
+            children: true,
+            relatedTo: elseRelatedTo,
+            closeBy: ["end", "endif", "endunless"],
             onCall(api) {
                 api.write("} else {");
                 api.renderChildren();
