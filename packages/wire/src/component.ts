@@ -21,9 +21,32 @@ export abstract class Component {
      * @param data Additional locals for rendering.
      */
     public view(view: string, data: Record<string, any> = {}): KireRendered {
-        // Merge this instance (properties and methods) with provided data
-        // Expose instance as $wire for compatibility with alpine magic
-        return this.$kire.view(view, { ...this, $wire: this, ...data });
+        const locals: Record<string, any> = { ...(this as any), ...data };
+
+        // Materialize computed getters as own props so they survive Kire fork
+        // prop-merging (which can drop prototype chain from locals).
+        let proto = Object.getPrototypeOf(this);
+        while (proto && proto !== Object.prototype) {
+            const descriptors = Object.getOwnPropertyDescriptors(proto);
+            for (const [key, descriptor] of Object.entries(descriptors)) {
+                if (key === "constructor" || key in locals) continue;
+                if (typeof descriptor.get === "function") {
+                    try {
+                        locals[key] = (this as any)[key];
+                    } catch {
+                        // Ignore failing computed getters during template hydration.
+                    }
+                }
+            }
+            proto = Object.getPrototypeOf(proto);
+        }
+
+        if (!Object.prototype.hasOwnProperty.call(locals, "errors")) {
+            locals.errors = this.__errors;
+        }
+
+        (locals as any).$wire = this;
+        return this.$kire.view(view, locals);
     }
 
     /**
@@ -62,6 +85,18 @@ export abstract class Component {
     public rule(ruleStr: string, message?: string): any {
         return { ruleStr, message };
     }
+
+    /**
+     * Error bag for form-like components.
+     */
+    protected __errors: Record<string, string> = {};
+
+    private static readonly __completedUpload = {
+        progress: 100,
+        percent: 100,
+        loaded: 0,
+        total: 0,
+    };
 
     /**
      * Internal tracking of side effects to be sent to the client.
@@ -106,12 +141,89 @@ export abstract class Component {
     /**
      * Sends a direct HTML stream update to a specific target.
      */
-    public stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
+    public stream(
+        target: string,
+        content: string,
+        methodOrReplace: 'update' | 'append' | 'prepend' | boolean = 'update',
+        legacyMethod?: 'update' | 'append' | 'prepend'
+    ) {
+        const method = typeof methodOrReplace === "boolean"
+            ? (legacyMethod || 'update')
+            : methodOrReplace;
         this.__effects.streams.push({ target, content, method });
     }
 
     public $stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
         this.stream(target, content, method);
+    }
+
+    public addError(field: string, message: string) {
+        this.__errors[field] = message;
+    }
+
+    public clearErrors(field?: string) {
+        if (field) delete this.__errors[field];
+        else this.__errors = {};
+    }
+
+    /**
+     * Fills component state from serialized client payload while preserving
+     * special runtime objects like WireBroadcast and WireFile.
+     */
+    public fill(state: Record<string, any>) {
+        for (const [key, value] of Object.entries(state || {})) {
+            if (!(key in this)) continue;
+
+            const current = (this as any)[key];
+
+            // Never replace broadcast instances with plain objects from the client.
+            if (this.isBroadcastLike(current)) continue;
+
+            // Keep WireFile instances and only refresh its serializable fields.
+            if (this.isWireFileLike(current) && value && typeof value === "object" && (value as any)._wire_type === "WireFile") {
+                current.options = (value as any).options || {};
+                current.files = (value as any).files || [];
+                current.uploading = (value as any).uploading || { ...Component.__completedUpload };
+                continue;
+            }
+
+            if (typeof current === "string" && value && typeof value === "object") {
+                (this as any)[key] = "";
+                continue;
+            }
+
+            (this as any)[key] = value;
+        }
+    }
+
+    /**
+     * Returns only serializable/public state for hydration roundtrips.
+     */
+    public getPublicState(): Record<string, any> {
+        const state: Record<string, any> = {};
+        for (const key of Object.keys(this as any)) {
+            const value = (this as any)[key];
+            if (key.startsWith("$") || key.startsWith("_")) continue;
+            if (typeof value === "function") continue;
+            if (this.isBroadcastLike(value)) continue;
+            state[key] = value;
+        }
+        return state;
+    }
+
+    protected isBroadcastLike(value: any): boolean {
+        return !!value
+            && typeof value === "object"
+            && typeof value.hydrate === "function"
+            && typeof value.update === "function"
+            && typeof value.getChannel === "function";
+    }
+
+    protected isWireFileLike(value: any): boolean {
+        return !!value
+            && typeof value === "object"
+            && Array.isArray(value.files)
+            && typeof value.populate === "function";
     }
 
     /**

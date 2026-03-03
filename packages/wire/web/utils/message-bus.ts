@@ -2,8 +2,6 @@ export interface WirePayload {
     id: string;
     method: string;
     params: any[];
-    state: any;
-    checksum: string | null;
     pageId: string;
 }
 

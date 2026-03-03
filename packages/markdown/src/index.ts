@@ -1,4 +1,4 @@
-import { kirePlugin, type Kire, type KirePlugin, type KireTplFunction } from "kire";
+import { kirePlugin, type Kire } from "kire";
 import { marked } from "marked";
 
 declare module "kire" {
@@ -9,6 +9,116 @@ declare module "kire" {
 }
 
 export type MarkdownOptions = {};
+
+const IGNORED_SCAN_DIRS = new Set([
+	".git",
+	"node_modules",
+	"dist",
+	"coverage",
+	"publish",
+	"test-results",
+	"playwright-report",
+]);
+
+function normalizePath(path: string): string {
+	return path.replaceAll("\\", "/");
+}
+
+function globToRegExp(pattern: string): RegExp {
+	const normalized = normalizePath(pattern);
+	const tokenized = normalized
+		.replaceAll("**", "__GLOBSTAR__")
+		.replaceAll("*", "__STAR__");
+	const escaped = tokenized.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+	const source = escaped
+		.replaceAll("__GLOBSTAR__", ".*")
+		.replaceAll("__STAR__", "[^/]*");
+	return new RegExp(`^${source}$`);
+}
+
+function getScanRoot(kire: Kire<any>, pattern: string): string {
+	const normalizedPattern = normalizePath(pattern);
+	const wildcardIndex = normalizedPattern.search(/\*/);
+	const staticPrefix =
+		wildcardIndex >= 0
+			? normalizedPattern.slice(0, wildcardIndex)
+			: normalizedPattern;
+	const lastSlash = staticPrefix.lastIndexOf("/");
+	const base = lastSlash >= 0 ? staticPrefix.slice(0, lastSlash) : "";
+	if (!base) return kire.$root;
+	return normalizePath(kire.$platform.resolve(kire.$root, base));
+}
+
+function collectFiles(kire: Kire<any>, dir: string, out: string[]) {
+	let entries: string[] = [];
+	try {
+		entries = kire.$platform.readDir(dir);
+	} catch {
+		return;
+	}
+
+	for (const entry of entries) {
+		const fullPath = normalizePath(kire.$platform.join(dir, entry));
+		try {
+			const stats = kire.$platform.stat(fullPath);
+			if (stats?.isDirectory?.()) {
+				if (IGNORED_SCAN_DIRS.has(entry)) continue;
+				collectFiles(kire, fullPath, out);
+				continue;
+			}
+			if (stats?.isFile?.()) out.push(fullPath);
+		} catch {}
+	}
+}
+
+function findMarkdownFiles(kire: Kire<any>, pattern: string): string[] {
+	const normalizedPattern = normalizePath(pattern);
+	const match = globToRegExp(normalizedPattern);
+	const absolutePattern = kire.$platform.isAbsolute(normalizedPattern);
+	const scanRoot = getScanRoot(kire, normalizedPattern);
+
+	const files: string[] = [];
+	collectFiles(kire, scanRoot, files);
+
+	const results = new Set<string>();
+	for (const file of files) {
+		if (!(file.endsWith(".md") || file.endsWith(".markdown"))) continue;
+		const candidate = absolutePattern
+			? file
+			: normalizePath(kire.$platform.relative(kire.$root, file));
+		if (match.test(candidate)) results.add(candidate);
+	}
+
+	for (const rawFile of Object.keys(kire.$files)) {
+		const file = normalizePath(rawFile);
+		if (!(file.endsWith(".md") || file.endsWith(".markdown"))) continue;
+
+		if (absolutePattern) {
+			if (!kire.$platform.isAbsolute(file)) continue;
+			if (match.test(file)) results.add(file);
+			continue;
+		}
+
+		const relative = kire.$platform.isAbsolute(file)
+			? normalizePath(kire.$platform.relative(kire.$root, file))
+			: file;
+		if (match.test(relative)) results.add(relative);
+	}
+
+	return [...results].sort();
+}
+
+function resolveMarkdownPath(kire: Kire<any>, path: string): string {
+	const normalized = normalizePath(path);
+	const direct = kire.$platform.isAbsolute(normalized)
+		? normalized
+		: normalizePath(kire.$platform.resolve(kire.$root, normalized));
+	const legacy = normalizePath(kire.resolvePath(normalized));
+
+	if (kire.$platform.exists(direct) || direct in kire.$files) return direct;
+	if (kire.$platform.exists(legacy) || legacy in kire.$files) return legacy;
+	return legacy;
+}
 
 export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
     kire.kireSchema({
@@ -36,7 +146,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 			}
 
 			try {
-				const resolved = kire.resolvePath(path);
+				const resolved = resolveMarkdownPath(kire, path);
 				const content = kire.readFile(resolved);
 				const htmlTemplate = await marked.parse(content);
 				const entry = kire.compile(htmlTemplate, resolved);
@@ -51,7 +161,14 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 		};
 
 		kire.$global("$readdir", async (pattern: string) => {
-			return [];
+			const cacheKey = `glob:${pattern}`;
+			if (kire.$production && Array.isArray(_fnCache[cacheKey])) {
+				return _fnCache[cacheKey];
+			}
+
+			const files = findMarkdownFiles(kire, pattern);
+			if (kire.$production) _fnCache[cacheKey] = files;
+			return files;
 		});
 
 		kire.$global("$mdrender", async (source: string) => {

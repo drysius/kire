@@ -29,6 +29,7 @@ describe("Kirewire Full Integration (Client + Server)", () => {
     let serverWire: Kirewire;
     let adapter: HttpAdapter;
     let clientWire: KirewireClient;
+    let busFlushHandler: ((e: Event) => Promise<void>) | null = null;
     const SECRET = "test-secret";
 
     beforeEach(() => {
@@ -62,12 +63,36 @@ describe("Kirewire Full Integration (Client + Server)", () => {
             };
         };
 
+        // Ensure tests do not accumulate multiple listeners across runs.
+        if (busFlushHandler) {
+            window.removeEventListener('wire:bus:flush' as any, busFlushHandler as EventListener);
+        }
+
         // Connect Bus to our Mock Fetch
-        window.addEventListener('wire:bus:flush' as any, async (e: any) => {
-            const { batch, finish } = e.detail;
+        busFlushHandler = async (e: Event) => {
+            const custom = e as CustomEvent;
+            const { batch, finish } = custom.detail;
             const res = await fetch('/_wire', { method: 'POST', body: JSON.stringify({ batch, pageId: 'page-1' }) });
             finish(await res.json());
-        });
+        };
+        window.addEventListener('wire:bus:flush' as any, busFlushHandler as EventListener);
+    });
+
+    test("Client payload should not send state/checksum", async () => {
+        const fetchSpy = spyOn(global as any, "fetch");
+
+        const page = serverWire.sessions.getPage('user-1', 'page-1');
+        const instance = new CounterComponent();
+        instance.$id = 'c1';
+        page.components.set('c1', instance);
+
+        document.body.innerHTML = `<div id="root" wire:id="c1" wire:state='{"count": 0}' wire:checksum="legacy"></div>`;
+        await clientWire.call(document.getElementById('root')!, 'increment');
+
+        const body = JSON.parse(fetchSpy.mock.calls[0]![1].body);
+        expect(body.batch[0].state).toBeUndefined();
+        expect(body.batch[0].checksum).toBeUndefined();
+        fetchSpy.mockRestore();
     });
 
     test("Full Cycle: Client increments counter on Server and patches DOM", async () => {
@@ -77,11 +102,8 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         instance.$kire = kire;
         page.components.set('c1', instance);
 
-        const state = { count: 0 };
-        const checksum = serverWire.generateChecksum(state, 'session-1');
-        
         document.body.innerHTML = `
-            <div id="root" wire:id="c1" wire:state='${JSON.stringify(state)}' wire:checksum="${checksum}">
+            <div id="root" wire:id="c1" wire:state='{"count": 0}' wire:checksum="legacy">
                 Count: 0
             </div>
         `;
@@ -91,17 +113,21 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         expect(instance.count).toBe(1);
     });
 
-    test("Security: Server should reject tampered state", async () => {
+    test("Security: Client state tampering must not override server state", async () => {
+        const page = serverWire.sessions.getPage('user-1', 'page-1');
+        const instance = new CounterComponent();
+        instance.$id = 'c1';
+        instance.count = 2;
+        page.components.set('c1', instance);
+
+        // Client claims a forged state, but server must ignore it.
         document.body.innerHTML = `
             <div id="root" wire:id="c1" wire:state='{"count": 999}' wire:checksum="WRONG"></div>
         `;
         const root = document.getElementById('root')!;
 
-        try {
-            await clientWire.call(root, 'increment');
-        } catch (e: any) {
-            expect(e.message).toBe("Invalid state checksum.");
-        }
+        await clientWire.call(root, 'increment');
+        expect(instance.count).toBe(3);
     });
 
     test("Side Effects: Redirect and Events", async () => {
@@ -119,8 +145,7 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         instance.$id = 'e1';
         page.components.set('e1', instance);
 
-        const checksum = serverWire.generateChecksum({}, 'session-1');
-        document.body.innerHTML = `<div id="root" wire:id="e1" wire:state='{}' wire:checksum="${checksum}"></div>`;
+        document.body.innerHTML = `<div id="root" wire:id="e1" wire:state='{}' wire:checksum="legacy"></div>`;
 
         const result = await clientWire.call(document.getElementById('root')!, 'doSomething');
 
@@ -137,9 +162,8 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         instance.$id = 'c1';
         page.components.set('c1', instance);
 
-        const checksum = serverWire.generateChecksum({count: 0}, 'session-1');
         document.body.innerHTML = `
-            <div id="root" wire:id="c1" wire:state='{"count": 0}' wire:checksum="${checksum}" wire:poll="increment"></div>
+            <div id="root" wire:id="c1" wire:state='{"count": 0}' wire:checksum="legacy" wire:poll="increment"></div>
         `;
         const root = document.getElementById('root')!;
         
@@ -158,6 +182,9 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         expect(fetchSpy).toHaveBeenCalled();
         const body = JSON.parse(fetchSpy.mock.calls[0]![1].body);
         expect(body.batch[0].method).toBe('increment');
+        expect(body.batch[0].state).toBeUndefined();
+        expect(body.batch[0].checksum).toBeUndefined();
+        fetchSpy.mockRestore();
     });
 
     test("State Persistence: Server updates state and client reflects it", async () => {
@@ -167,9 +194,7 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         instance.count = 5;
         page.components.set('c1', instance);
 
-        const state = { count: 5 };
-        const checksum = serverWire.generateChecksum(state, 'session-1');
-        document.body.innerHTML = `<div id="root" wire:id="c1" wire:state='${JSON.stringify(state)}' wire:checksum="${checksum}"></div>`;
+        document.body.innerHTML = `<div id="root" wire:id="c1" wire:state='{"count": 999}' wire:checksum="legacy"></div>`;
 
         await clientWire.call(document.getElementById('root')!, 'increment');
         expect(instance.count).toBe(6);

@@ -13,22 +13,19 @@ export class SocketAdapter extends Adapter {
     /**
      * Called when a socket message arrives from a client.
      */
-    public async onMessage(socketId: string, userId: string, sessionId: string, message: any) {
+    public async onMessage(_socketId: string, userId: string, _sessionId: string, message: any) {
         const { event, payload } = message;
 
         if (event === 'call') {
-            const { id, method, params, state, checksum, pageId } = payload;
-            
-            // Reuses logic from HTTP but over socket
-            const expected = this.wire.generateChecksum(state, sessionId);
-            if (checksum !== expected) return;
+            const { id, method, params, pageId } = payload;
 
             const page = this.wire.sessions.getPage(userId, pageId);
             const instance = page.components.get(id);
             if (!instance) return;
+            if (typeof (instance as any)[method] !== "function") return;
+            const callParams = Array.isArray(params) ? params : [];
 
-            Object.assign(instance, state);
-            await (instance as any)[method](...params);
+            await (instance as any)[method](...callParams);
 
             // The update event will be caught by setup() listener and pushed back
         }

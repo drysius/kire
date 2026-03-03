@@ -1,0 +1,12 @@
+<main id="app">
+    @if(show)
+        <h1>Hello {{ name }}</h1>
+    @else
+        <h1>Hidden</h1>
+    @end
+    <ul>
+        @for(item of items)
+            <li class="item">{{ item }}</li>
+        @end
+    </ul>
+</main>

@@ -1,5 +1,4 @@
-import { createHash } from "node:crypto";
-import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
+import { kirePlugin } from "kire";
 import { compileCSSWithTailwind } from "./compiler";
 import { loadModule, loadStylesheet } from "./loader";
 import type { TailwindCompileOptions } from "./types";
@@ -48,15 +47,18 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
                     try {
                         const $id = ${JSON.stringify(id)};
                         const $tailwindCache = this.cached("@kirejs/tailwind");
+                        const $compiledCssCache =
+                            $tailwindCache.__compiled || ($tailwindCache.__compiled = {});
                         
                         let $tailwind_content = ${contentExpr};
                         if (!$tailwind_content.includes('@import "tailwindcss"')) {
                             $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
                         }
 
+                        const $cacheKey = $id ? "id:" + String($id) : "css:" + $tailwind_content;
                         let $processedCSS = "";
-                        if (this.production && $id && $tailwindCache[$id]) {
-                            $processedCSS = $tailwindCache[$id];
+                        if (this.$production && $compiledCssCache[$cacheKey]) {
+                            $processedCSS = $compiledCssCache[$cacheKey];
                         } else {
                             const $candidates = []; 
                             $processedCSS = await this.compileCSSWithTailwind(
@@ -64,8 +66,8 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
                                 $tailwindCache.options,
                                 $candidates
                             );
-                            if (this.production && $id) {
-                                $tailwindCache[$id] = $processedCSS;
+                            if (this.$production) {
+                                $compiledCssCache[$cacheKey] = $processedCSS;
                             }
                         }
 
@@ -124,11 +126,22 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
                             $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
                         }
 
-                        const $processedCSS = await this.compileCSSWithTailwind(
-                            $tailwind_content,
-                            $tailwindCache.options,
-                            []
-                        );
+                        const $compiledCssCache =
+                            $tailwindCache.__compiled || ($tailwindCache.__compiled = {});
+                        const $cacheKey = "css:" + $tailwind_content;
+                        let $processedCSS = "";
+                        if (this.$production && $compiledCssCache[$cacheKey]) {
+                            $processedCSS = $compiledCssCache[$cacheKey];
+                        } else {
+                            $processedCSS = await this.compileCSSWithTailwind(
+                                $tailwind_content,
+                                $tailwindCache.options,
+                                []
+                            );
+                            if (this.$production) {
+                                $compiledCssCache[$cacheKey] = $processedCSS;
+                            }
+                        }
 
                         if (typeof __kire_assets !== 'undefined') {
                             const { createHash } = await import("node:crypto");

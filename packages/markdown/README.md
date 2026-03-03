@@ -4,8 +4,9 @@ Adds Markdown rendering capabilities directly to Kire templates.
 
 ## Features
 
-- **@markdown Directive**: Render markdown blocks seamlessly.
-- **Configurable**: Support for common markdown options.
+- **`@markdown()` directive** for inline markdown or file paths.
+- **Wildcard support** via patterns like `posts/*.md`.
+- **`@mdslots()` directive** to preload markdown collections.
 
 ## Installation
 
@@ -18,11 +19,11 @@ bun add @kirejs/markdown
 ## Usage
 
 ```html
-@markdown
-# Hello World
+@markdown("# Hello World")
+@markdown("content/post.md")
+@markdown("content/*.md")
 
-This is **bold** text rendered from markdown.
-@end
+@mdslots("posts/*.md", "posts")
 ```
 
 ## License

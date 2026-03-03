@@ -62,4 +62,40 @@ describe("@Kirejs/Tailwind", () => {
 		// Cache size should still be 1 (deduplicated)
 		expect(Object.keys(cache).length).toBe(1);
 	});
+
+	it("should cache directive output in production mode", async () => {
+		const kire = new Kire({ silent: true, production: true });
+		kire.plugin(KireTailwind);
+
+		const originalCompile = (kire as any).compileCSSWithTailwind.bind(kire);
+		let compileCalls = 0;
+		(kire as any).compileCSSWithTailwind = async (...args: any[]) => {
+			compileCalls++;
+			return originalCompile(...args);
+		};
+
+		const tpl = `@tailwind().tw-cache-test { color: green; }@end`;
+		await kire.render(tpl);
+		await kire.render(tpl);
+
+		expect(compileCalls).toBe(1);
+	});
+
+	it("should cache element output in production mode using id", async () => {
+		const kire = new Kire({ silent: true, production: true });
+		kire.plugin(KireTailwind);
+
+		const originalCompile = (kire as any).compileCSSWithTailwind.bind(kire);
+		let compileCalls = 0;
+		(kire as any).compileCSSWithTailwind = async (...args: any[]) => {
+			compileCalls++;
+			return originalCompile(...args);
+		};
+
+		const tpl = `<tailwind id="main-cache">.el-cache-test { color: purple; }</tailwind>`;
+		await kire.render(tpl);
+		await kire.render(tpl);
+
+		expect(compileCalls).toBe(1);
+	});
 });

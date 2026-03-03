@@ -11,7 +11,7 @@
 		"url": "git+https://github.com/drysius/kire.git"
 	},
 	"scripts": {
-		"test": "bun test && npx --no-install node tools/playwright.ts",
+		"test": "bun test && bun tools/playwright.ts",
 		"benchmark": "bun run benchmark/create.ts",
 		"schema": "bun run tools/schema.ts",
 		"build": "bun run tools/build.ts",
@@ -44,6 +44,11 @@
 	],
 	"dependencies": {
 		"@biomejs/biome": "^2.3.11",
-		"express": "^5.2.1"
+		"@playwright/test": "^1.58.2",
+		"express": "^5.2.1",
+		"handlebars": "^4.7.8",
+		"nunjucks": "^3.2.4",
+		"playwright-core": "^1.58.2",
+		"pug": "^3.0.3"
 	}
 }

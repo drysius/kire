@@ -1,4 +1,4 @@
-import { Kire } from "../../src/kire";
+import { Kire } from "../src/kire";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -32,11 +32,12 @@ const server = Bun.serve({
         const url = new URL(req.url);
 
         if (url.pathname === "/inline") {
+            const message = url.searchParams.get("message") || "core e2e";
             const html = await kire.render(
                 `<section id="inline">
     <p class="msg">{{ message.toUpperCase() }}</p>
 </section>`,
-                { message: "core e2e" },
+                { message },
             );
 
             return new Response(html as string, {
@@ -44,10 +45,20 @@ const server = Bun.serve({
             });
         }
 
+        const showParam = url.searchParams.get("show");
+        const nameParam = url.searchParams.get("name");
+        const itemsParam = url.searchParams.get("items");
+
+        const show = showParam === null ? true : showParam !== "0";
+        const name = nameParam || "Playwright";
+        const items = itemsParam
+            ? itemsParam.split(",").map((item) => item.trim()).filter(Boolean)
+            : ["A", "B", "C"];
+
         const html = await kire.view("page", {
-            name: "Playwright",
-            show: true,
-            items: ["A", "B", "C"],
+            name,
+            show,
+            items,
         });
 
         return new Response(html.toString(), {
@@ -68,4 +79,3 @@ const shutdown = () => {
 
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
-

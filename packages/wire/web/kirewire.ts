@@ -165,8 +165,6 @@ export class KirewireClient {
                     id: componentId, 
                     method: '$set', 
                     params: [prop, val],
-                    state: meta.state, 
-                    checksum: meta.checksum, 
                     pageId: this.pageId
                 });
             }
@@ -178,8 +176,6 @@ export class KirewireClient {
             id: componentId, 
             method: actionMethod, 
             params: actionParams,
-            state: meta.state, 
-            checksum: meta.checksum, 
             pageId: this.pageId
         });
 
@@ -195,11 +191,6 @@ export class KirewireClient {
             // The result of the call is usually the last promise (the main method)
             const results = await Promise.all(promises);
             const mainResult = results[results.length - 1];
-
-            // 3. Process side effects (Events, Redirects, etc.)
-            if (mainResult && mainResult.effects) {
-                this.processEffects(mainResult.effects, componentId);
-            }
 
             console.log(`[Kirewire] --- ACTION CALL FINISHED: "${actionMethod}" on "${componentId}" ---`);
             return mainResult;
@@ -294,16 +285,32 @@ export class KirewireClient {
 
         // 2. Handle Events (Emits)
         if (Array.isArray(effects.events)) {
-            for (const event of effects.events) {
-                console.log(`[Kirewire] Server emitted event: "${event.name}" with params:`, event.params);
-                this.$emit(event.name, ...event.params);
+            const dispatchEvents = () => {
+                for (const event of effects.events) {
+                    console.log(`[Kirewire] Server emitted event: "${event.name}" with params:`, event.params);
+                    const payload = Array.isArray(event.params)
+                        ? (event.params.length <= 1 ? event.params[0] : event.params)
+                        : event.params;
+                    this.$emit(event.name, payload);
+                }
+            };
+
+            // Delay to next frame so Alpine listeners in morphed DOM are ready.
+            if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+                window.requestAnimationFrame(dispatchEvents);
+            } else {
+                dispatchEvents();
             }
         }
 
         // 3. Handle DOM Streams
         if (Array.isArray(effects.streams)) {
             for (const stream of effects.streams) {
-                const target = document.querySelector(stream.target);
+                let target = document.querySelector(stream.target);
+                if (!target && typeof stream.target === "string") {
+                    const value = stream.target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+                    target = document.querySelector(`[wire\\:stream="${value}"]`);
+                }
                 if (target) {
                     console.log(`[Kirewire] Streaming update to "${stream.target}" using method "${stream.method}"`);
                     if (stream.method === 'update') target.innerHTML = stream.content;
@@ -412,6 +419,7 @@ export class KirewireClient {
         if (handlers) { handlers.forEach(h => h(data)); }
         
         if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent(event, { detail: data }));
             window.dispatchEvent(new CustomEvent(`wire:${event}`, { detail: data }));
         }
     }

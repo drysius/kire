@@ -1,19 +1,28 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { unlink, writeFile } from "node:fs/promises";
+import { mkdir, rm, unlink, writeFile } from "node:fs/promises";
 import { Kire } from "kire";
 import { KireMarkdown } from "../src/index";
 
 const TEMP_MD = "temp_test.md";
 const TEMP_MD_CONTENT = "# Hello File\n\nThis is a file test.";
+const TEMP_GLOB_DIR = "temp_md_glob";
+const TEMP_GLOB_FILE_A = `${TEMP_GLOB_DIR}/a.md`;
+const TEMP_GLOB_FILE_B = `${TEMP_GLOB_DIR}/b.md`;
 
 describe("KireMarkdown", () => {
 	beforeAll(async () => {
 		await writeFile(TEMP_MD, TEMP_MD_CONTENT);
+		await mkdir(TEMP_GLOB_DIR, { recursive: true });
+		await writeFile(TEMP_GLOB_FILE_A, "# Glob A");
+		await writeFile(TEMP_GLOB_FILE_B, "# Glob B");
 	});
 
 	afterAll(async () => {
 		try {
 			await unlink(TEMP_MD);
+		} catch {} // Ignore errors during cleanup
+		try {
+			await rm(TEMP_GLOB_DIR, { recursive: true, force: true });
 		} catch {} // Ignore errors during cleanup
 	});
 
@@ -92,5 +101,14 @@ describe("KireMarkdown", () => {
 		const tpl = `@markdown('missing_file.md')`;
 		const result = await kire.render(tpl);
 		expect(result).toContain("<p>missing_file.md</p>");
+	});
+
+	it("should resolve wildcard files without overriding $readdir", async () => {
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+		const tpl = `@markdown('${TEMP_GLOB_DIR}/*.md')`;
+		const result = await kire.render(tpl);
+
+		expect(result).toContain("<h1>Glob A</h1>");
+		expect(result).toContain("<h1>Glob B</h1>");
 	});
 });

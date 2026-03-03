@@ -31,30 +31,27 @@ export class HttpAdapter extends Adapter {
         const pageId = reqBody.pageId || actions[0]?.pageId;
         const results = [];
         const modifiedComponents = new Set<string>();
-        const hydratedComponents = new Set<string>();
+        const preparedComponents = new Set<string>();
 
         // 1. Execute all actions in order
         for (const action of actions) {
             try {
-                const { id, method, params, state, checksum } = action;
+                const { id, method, params } = action;
                 const page = this.wire.sessions.getPage(userId, pageId);
                 const instance = page.components.get(id) as any;
 
                 if (!instance) throw new Error(`Component ${id} not found.`);
+                if (typeof instance[method] !== "function") throw new Error(`Method "${method}" not found on component ${id}.`);
+                const callParams = Array.isArray(params) ? params : [];
 
-                // Hydrate only once per component in the same batch
-                if (!hydratedComponents.has(id)) {
-                    if (checksum) {
-                        const expected = this.wire.generateChecksum(state, sessionId);
-                        if (checksum !== expected) throw new Error("Invalid state checksum.");
-                    }
-                    Object.assign(instance, state);
-                    hydratedComponents.add(id);
+                // Reset side effects only once per component in each batch.
+                if (!preparedComponents.has(id)) {
+                    preparedComponents.add(id);
                     if (instance.$clearEffects) instance.$clearEffects();
                 }
 
                 // Execute logic
-                const methodResult = await instance[method](...params);
+                const methodResult = await instance[method](...callParams);
                 modifiedComponents.add(id);
 
                 results.push({ id, success: true, result: methodResult });
@@ -125,9 +122,19 @@ export class HttpAdapter extends Adapter {
     }
 
     public getPublicState(instance: any): any {
+        if (typeof instance.getPublicState === "function") {
+            return instance.getPublicState();
+        }
+
         const state: any = {};
         for (const key of Object.keys(instance)) {
-            if (!key.startsWith('$') && !key.startsWith('_') && typeof instance[key] !== 'function') {
+            const value = instance[key];
+            const broadcastLike = value
+                && typeof value === "object"
+                && typeof value.hydrate === "function"
+                && typeof value.update === "function"
+                && typeof value.getChannel === "function";
+            if (!key.startsWith('$') && !key.startsWith('_') && typeof value !== 'function' && !broadcastLike) {
                 state[key] = instance[key];
             }
         }

@@ -4,8 +4,10 @@ Tailwind CSS integration helpers for Kire. Streamlines the usage of utility clas
 
 ## Features
 
-- **Directives**: Simplifies conditional class merging.
-- **Integration**: Designed to work seamlessly with standard Tailwind CSS setups.
+- **`@tailwind ... @end` directive** to compile CSS on render.
+- **`<tailwind>...</tailwind>` element** support.
+- **Production cache** for compiled CSS.
+- **Optional integration with `@kirejs/assets`** for hashed CSS output.
 
 ## Installation
 
@@ -13,6 +15,18 @@ Tailwind CSS integration helpers for Kire. Streamlines the usage of utility clas
 npm install @kirejs/tailwind
 # or
 bun add @kirejs/tailwind
+```
+
+## Usage
+
+```html
+@tailwind
+.btn-primary { @apply px-4 py-2 bg-blue-600 text-white rounded; }
+@end
+
+<tailwind id="layout-css">
+.card { @apply p-4 border rounded-lg; }
+</tailwind>
 ```
 
 ## License

@@ -1,4 +1,4 @@
-import playwrightTest from "../../examples/wire-example/node_modules/@playwright/test/index.js";
+import { test, expect } from "@playwright/test";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +9,6 @@ const coreDir = resolve(repoRoot, "core");
 const bunBin = process.platform === "win32" ? "bun.exe" : "bun";
 const port = 3210;
 const baseUrl = `http://127.0.0.1:${port}`;
-const { test, expect } = playwrightTest as any;
 const isPlaywrightRuntime =
     process.env.PLAYWRIGHT_SUITE_DIR !== undefined ||
     process.argv.some((arg) => arg.toLowerCase().includes("playwright")) ||
@@ -51,7 +50,7 @@ test.describe("Core E2E (Playwright)", () => {
     test.beforeAll(async () => {
         serverProcess = spawn(bunBin, ["run", "tests/core-e2e-server.ts"], {
             cwd: coreDir,
-            shell: process.platform === "win32",
+            shell: false,
             stdio: "pipe",
             env: {
                 ...process.env,
@@ -76,9 +75,33 @@ test.describe("Core E2E (Playwright)", () => {
         await expect(page.locator("li.item").nth(2)).toHaveText("C");
     });
 
+    test("permite alterar estado por querystring (show/items)", async ({ page }) => {
+        await page.goto(`${baseUrl}/?show=0`);
+        await expect(page.locator("h1")).toHaveText("Hidden");
+
+        await page.goto(`${baseUrl}/?name=QueryTest&items=X,Y`);
+        await expect(page.locator("h1")).toHaveText("Hello QueryTest");
+        await expect(page.locator("li.item")).toHaveCount(2);
+        await expect(page.locator("li.item").nth(0)).toHaveText("X");
+        await expect(page.locator("li.item").nth(1)).toHaveText("Y");
+    });
+
+    test("escapa interpolacao de nome no HTML", async ({ page }) => {
+        const unsafeName = "<script>pw</script>";
+        await page.goto(`${baseUrl}/?name=${encodeURIComponent(unsafeName)}`);
+
+        await expect(page.locator("h1")).toHaveText(`Hello ${unsafeName}`);
+        await expect(page.locator("script")).toHaveCount(0);
+    });
+
     test("renderiza template inline com expressao JS", async ({ page }) => {
         await page.goto(`${baseUrl}/inline`);
         await expect(page.locator(".msg")).toHaveText("CORE E2E");
+    });
+
+    test("renderiza template inline com mensagem customizada por query", async ({ page }) => {
+        await page.goto(`${baseUrl}/inline?message=playwright ok`);
+        await expect(page.locator(".msg")).toHaveText("PLAYWRIGHT OK");
     });
 });
 }

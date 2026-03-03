@@ -25,6 +25,17 @@ describe("RouteManager", () => {
         expect(route.is("/foo/*/baz")).toBe(true);
     });
 
+    test("Optional Params", () => {
+        const route = new RouteManager();
+        route.set("/users");
+        expect(route.is("/users/{id?}")).toBe(true);
+        expect(route.params("/users/{id?}")).toEqual({});
+
+        route.set("/users/42");
+        expect(route.is("/users/{id?}")).toBe(true);
+        expect(route.params("/users/{id?}")).toEqual({ id: "42" });
+    });
+
     test("RegExp Matching", () => {
         const route = new RouteManager();
         route.set("/users/123");

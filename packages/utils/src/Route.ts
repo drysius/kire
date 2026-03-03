@@ -55,7 +55,7 @@ export class RouteManager {
 
     /**
      * Determine if the current route matches a given pattern.
-     * @param patterns One or more patterns to match against. 
+     * @param patterns One or more patterns to match against.
      *                 Wildcards (*) are supported. Also accepts RegExp objects.
      *                 Supports Laravel-like patterns with parameters.
      */
@@ -79,7 +79,6 @@ export class RouteManager {
             // 2. Laravel-like parameter patterns ({param})
             // 3. Optional parameters ({param?})
             // 4. Parameter constraints ({id:\d+})
-            
             const regexString = this.patternToRegex(pattern);
             const regex = new RegExp(regexString);
 
@@ -105,37 +104,53 @@ export class RouteManager {
             return `^${this.escapeRegex(pattern)}$`;
         }
 
-        // Escape the entire string first
-        let regex = this.escapeRegex(pattern);
-        
-        // Replace wildcards (*) with .*
-        regex = regex.replace(/\\\*/g, '.*');
-        
-        // Replace Laravel-style parameters
-        // {param} → matches any non-slash character sequence
-        // {param?} → optional parameter
-        // {id:\d+} → parameter with regex constraint
-        regex = regex.replace(/\\\{([^}]+)\\\}/g, (match, param: string) => {
-            // Check for optional parameter
-            const isOptional = param.endsWith('?');
-            if (isOptional) {
-                param = param.slice(0, -1);
-            }
-            
-            // Check for custom regex constraint
-            const parts = param.split(':');
-            if (parts.length === 2) {
-                // Has custom regex: {id:\d+}
-                const constraint = parts[1];
-                return `(${constraint})${isOptional ? '?' : ''}`;
-            }
-            
-            // Default: match any non-slash characters
-            const paramName = parts[0];
-            return `([^/]+)${isOptional ? '?' : ''}`;
-        });
+        let regex = "^";
+        let index = 0;
 
-        return `^${regex}$`;
+        while (index < pattern.length) {
+            const char = pattern[index]!;
+
+            if (char === '*') {
+                regex += ".*";
+                index++;
+                continue;
+            }
+
+            if (char === '{') {
+                const end = pattern.indexOf("}", index + 1);
+                if (end === -1) {
+                    regex += this.escapeRegex(char);
+                    index++;
+                    continue;
+                }
+
+                const raw = pattern.slice(index + 1, end);
+                const isOptional = raw.endsWith('?');
+                const token = isOptional ? raw.slice(0, -1) : raw;
+
+                const separator = token.indexOf(":");
+                const constraint =
+                    separator >= 0 ? token.slice(separator + 1) : "";
+                const capture = constraint ? `(${constraint})` : "([^/]+)";
+
+                // Optional params after "/" should make the full segment optional:
+                // "/users/{id?}" -> "^/users(?:/([^/]+))?$"
+                if (isOptional && index > 0 && pattern[index - 1] === "/") {
+                    if (regex.endsWith("/")) regex = regex.slice(0, -1);
+                    regex += `(?:/${capture})?`;
+                } else {
+                    regex += isOptional ? `(?:${capture})?` : capture;
+                }
+
+                index = end + 1;
+                continue;
+            }
+
+            regex += this.escapeRegex(char);
+            index++;
+        }
+
+        return `${regex}$`;
     }
 
     /**

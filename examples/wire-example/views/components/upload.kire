@@ -18,8 +18,8 @@
                 <span class="label-text">Description</span>
             </div>
             <input type="text" wire:model.defer="description"
-                class="input input-bordered w-full {{ errors.description ? 'input-error' : '' }}" />
-            @if(errors.description)
+                class="input input-bordered w-full {{ errors && errors.description ? 'input-error' : '' }}" />
+            @if(errors && errors.description)
             <span class="text-error text-sm mt-1">{{ errors.description }}</span>
             @end
         </div>
@@ -29,8 +29,8 @@
                 <span class="label-text">Pick a file</span>
             </div>
             <input type="file" wire:model.live="file"
-                class="file-input file-input-bordered w-full {{ errors.file ? 'file-input-error' : '' }}" />
-            @if(errors.file)
+                class="file-input file-input-bordered w-full {{ errors && errors.file ? 'file-input-error' : '' }}" />
+            @if(errors && errors.file)
             <span class="text-error text-sm mt-1">{{ errors.file }}</span>
             @end
         </div>
@@ -45,15 +45,15 @@
             </div>
         </div>
 
-        <template x-if='file && file.file'>
+        <template x-if='$wire && $wire.file && $wire.file.file'>
             <div class="stats shadow mt-4 w-full">
                 <div class="stat">
                     <div class="stat-title">Selected File</div>
-                    <div :text='file.file.name' class="stat-value text-lg"></div>
-                    <div :text="((file.file.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
-                    <template x-if="file.file.type && file.file.type.startsWith('image/')">
+                    <div x-text="$wire.file.file.name" class="stat-value text-lg"></div>
+                    <div x-text="(($wire.file.file.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
+                    <template x-if="$wire.file.file.type && $wire.file.file.type.startsWith('image/')">
                         <div class="mt-2">
-                            <img :src="file.file.content" class="max-h-32 rounded-lg border border-base-300" />
+                            <img :src="$wire.file.file.content" class="max-h-32 rounded-lg border border-base-300" />
                         </div>
                     </template>
                 </div>

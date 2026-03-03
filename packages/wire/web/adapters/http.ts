@@ -95,11 +95,6 @@ export class HttpClientAdapter {
                     // Keep form controls in sync even when morph preserves focused inputs.
                     syncModelElements(el as HTMLElement, data.state || {});
                     
-                    // NEW: Process effects from SSE
-                    if (data.effects) {
-                        Kirewire.processEffects(data.effects, data.id);
-                    }
-
                     // Keep client-side bindings in sync with server-pushed state.
                     Kirewire.$emit('component:update', {
                         id: data.id,

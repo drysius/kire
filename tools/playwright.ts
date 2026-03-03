@@ -6,8 +6,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
-const playwrightCli = resolve(repoRoot, "examples/wire-example/node_modules/playwright/cli.js");
-const nodeBin = process.platform === "win32" ? "node.exe" : "node";
+const exampleDir = resolve(repoRoot, "examples/wire-example");
+const bunBin = process.platform === "win32" ? "bun.exe" : "bun";
 const ignoredDirs = new Set([".git", "node_modules", "dist", "coverage", "playwright-report", "test-results"]);
 
 function normalizePath(path: string) {
@@ -58,10 +58,10 @@ export default {
 
     writeFileSync(configPath, configSource, "utf8");
 
-    const result = spawnSync(nodeBin, [playwrightCli, "test", "-c", configPath], {
-        cwd: repoRoot,
+    const result = spawnSync(bunBin, ["x", "playwright", "test", "-c", configPath], {
+        cwd: exampleDir,
         stdio: "inherit",
-        shell: process.platform === "win32",
+        shell: false,
         env: {
             ...process.env,
             PLAYWRIGHT_SUITE_DIR: testFolder,
@@ -72,9 +72,8 @@ export default {
     return result.status ?? 1;
 }
 
-if (!existsSync(playwrightCli)) {
-    console.error(`[playwright] CLI not found: ${playwrightCli}`);
-    console.error("[playwright] Run `bun install` inside examples/wire-example first.");
+if (!existsSync(resolve(exampleDir, "package.json"))) {
+    console.error(`[playwright] Example directory not found: ${exampleDir}`);
     process.exit(1);
 }
 

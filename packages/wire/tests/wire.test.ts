@@ -1,5 +1,6 @@
 import { expect, test, describe } from "bun:test";
 import { Kirewire } from "../src/kirewire";
+import { Component } from "../src/component";
 import { FileStore } from "../src/features/file-store";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -23,6 +24,37 @@ describe("Kirewire Kernel", () => {
         const wire = new Kirewire({ secret: "s", expire_session: "2m" });
         // @ts-ignore - access private for test
         expect(wire.sessions.expireMs).toBe(120000);
+    });
+
+    test("component view should expose computed getters in template locals", () => {
+        class ViewComponent extends Component {
+            numbers = [1, 2];
+
+            get doubled() {
+                return this.numbers.map((n) => n * 2);
+            }
+
+            render() {
+                return "";
+            }
+        }
+
+        const component = new ViewComponent() as any;
+        let capturedLocals: Record<string, any> | null = null;
+        component.$kire = {
+            view: (_view: string, locals: Record<string, any>) => {
+                capturedLocals = locals;
+                return "ok";
+            },
+        };
+
+        component.view("components.fake", { extra: true });
+
+        expect(capturedLocals).not.toBeNull();
+        expect(capturedLocals!.$wire).toBe(component);
+        expect(capturedLocals!.extra).toBe(true);
+        expect(capturedLocals!.numbers).toEqual([1, 2]);
+        expect(capturedLocals!.doubled).toEqual([2, 4]);
     });
 });
 

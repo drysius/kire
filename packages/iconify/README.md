@@ -4,8 +4,10 @@ Integration with Iconify for Kire templates. Allows you to easily render thousan
 
 ## Features
 
-- **Icon Directive/Component**: Easy syntax to include icons.
-- **On-demand Loading**: Efficiently loads icon data.
+- **`<iconify />` element** with `i`/`icon` attribute.
+- **`@icon()` directive** for inline rendering.
+- **On-demand loading + cache** to avoid repeated fetches.
+- **Attribute pass-through** (`width`, `height`, `class`, etc.).
 
 ## Installation
 
@@ -18,8 +20,8 @@ bun add @kirejs/iconify
 ## Usage
 
 ```html
-<!-- Example usage assuming a directive or component is provided -->
-<kire:icon name="mdi:home" />
+<iconify i="mdi:home" class="text-red-500" />
+@icon("mdi:check", "text-green-500", { width: "20", height: "20" })
 ```
 
 ## License

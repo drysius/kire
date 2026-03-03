@@ -107,4 +107,10 @@ describe("KireAuth", () => {
 		});
 		expect(htmlLogged.trim()).toBe("Logged");
 	});
+
+	test("@if remains compatible when auth plugin is installed", async () => {
+		const kire = createKire();
+		const html = await kire.render("@if(true) A @else B @end");
+		expect(html.trim()).toBe("A");
+	});
 });
