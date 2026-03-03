@@ -1,11 +1,15 @@
 import { Adapter } from "../adapter";
+import { randomUUID } from "node:crypto";
+import { FileStore } from "../features/file-store";
 
 export class HttpAdapter extends Adapter {
     private route: string;
+    private fileStore: FileStore;
 
-    constructor(options: { route?: string } = {}) {
+    constructor(options: { route?: string, fileStore?: FileStore, tempDir?: string } = {}) {
         super();
         this.route = options.route || '/_wire';
+        this.fileStore = options.fileStore || new FileStore(options.tempDir || ".kirewire_uploads");
     }
 
     setup() {
@@ -22,6 +26,11 @@ export class HttpAdapter extends Adapter {
         if (req.method === 'GET' && url.pathname.endsWith('/sse')) {
             // ... (rest of SSE logic)
             return this.handleSse(req, userId);
+        }
+
+        // Handle multipart uploads used by wire:model.live on file inputs.
+        if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
+            return await this.handleUpload(req.body);
         }
 
         const reqBody = req.body;
@@ -99,6 +108,67 @@ export class HttpAdapter extends Adapter {
             headers: { 'Content-Type': 'application/json' },
             result: reqBody.batch ? results : results[0]
         };
+    }
+
+    private async handleUpload(body: any) {
+        const files = this.extractFilesFromBody(body);
+        if (!files.length) {
+            return {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+                result: { error: "No files uploaded" },
+            };
+        }
+
+        const file = files[0]!;
+        const name = String((file as any).name || "upload.bin");
+        const size = Number((file as any).size || 0);
+        const mime = String((file as any).type || "application/octet-stream");
+        let id = randomUUID();
+
+        try {
+            if (typeof (file as any).arrayBuffer === "function") {
+                const buffer = Buffer.from(await (file as any).arrayBuffer());
+                id = this.fileStore.store(name, buffer);
+            }
+        } catch (e) {
+            // Fallback to in-memory metadata only if storage fails.
+        }
+
+        return {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+            result: { id, name, size, mime },
+        };
+    }
+
+    private extractFilesFromBody(body: any): any[] {
+        if (!body) return [];
+
+        // Browser/FormData request.
+        if (typeof FormData !== "undefined" && body instanceof FormData) {
+            const fromFilesArray = body.getAll("files[]");
+            const fromFiles = body.getAll("files");
+            return [...fromFilesArray, ...fromFiles].filter(Boolean);
+        }
+
+        // Server frameworks may parse multipart into plain objects.
+        if (body && typeof body === "object") {
+            const candidates = [
+                (body as any)["files[]"],
+                (body as any).files,
+                (body as any).file,
+            ];
+            const out: any[] = [];
+            for (const candidate of candidates) {
+                if (!candidate) continue;
+                if (Array.isArray(candidate)) out.push(...candidate);
+                else out.push(candidate);
+            }
+            return out.filter(Boolean);
+        }
+
+        return [];
     }
 
     private handleSse(req: any, userId: string) {

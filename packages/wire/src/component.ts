@@ -1,4 +1,5 @@
 import type { Kire, KireRendered } from "kire";
+import { WireFile } from "./features/file-upload";
 
 /**
  * Base Component class for Kirewire.
@@ -55,7 +56,8 @@ export abstract class Component {
      */
     public $set(property: string, value: any) {
         if (!property.includes('.')) {
-            (this as any)[property] = value;
+            const current = (this as any)[property];
+            (this as any)[property] = this.normalizeIncomingValue(current, value);
             return;
         }
 
@@ -68,7 +70,8 @@ export abstract class Component {
             }
             obj = obj[part];
         }
-        obj[parts[parts.length - 1]!] = value;
+        const leaf = parts[parts.length - 1]!;
+        obj[leaf] = this.normalizeIncomingValue(obj[leaf], value);
     }
 
     /**
@@ -179,11 +182,14 @@ export abstract class Component {
             // Never replace broadcast instances with plain objects from the client.
             if (this.isBroadcastLike(current)) continue;
 
-            // Keep WireFile instances and only refresh its serializable fields.
-            if (this.isWireFileLike(current) && value && typeof value === "object" && (value as any)._wire_type === "WireFile") {
-                current.options = (value as any).options || {};
-                current.files = (value as any).files || [];
-                current.uploading = (value as any).uploading || { ...Component.__completedUpload };
+            // Keep WireFile instances and refresh from serialized payload.
+            if (
+                this.isWireFileLike(current) &&
+                value &&
+                typeof value === "object" &&
+                ((value as any).__is_wire_file || (value as any)._wire_type === "WireFile")
+            ) {
+                (this as any)[key] = this.normalizeIncomingValue(current, value);
                 continue;
             }
 
@@ -222,8 +228,29 @@ export abstract class Component {
     protected isWireFileLike(value: any): boolean {
         return !!value
             && typeof value === "object"
-            && Array.isArray(value.files)
-            && typeof value.populate === "function";
+            && (
+                (value as any).__is_wire_file === true ||
+                (
+                    Array.isArray((value as any).files)
+                    && typeof (value as any).populate === "function"
+                )
+            );
+    }
+
+    protected normalizeIncomingValue(current: any, value: any): any {
+        if (
+            value &&
+            typeof value === "object" &&
+            ((value as any).__is_wire_file || (value as any)._wire_type === "WireFile")
+        ) {
+            return new WireFile({
+                id: (value as any).id || "",
+                name: (value as any).name || "",
+                size: Number((value as any).size || 0),
+                mime: (value as any).mime || "",
+            });
+        }
+        return value;
     }
 
     /**

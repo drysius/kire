@@ -275,6 +275,10 @@ export class KirewireClient {
      */
     public processEffects(effects: any, componentId?: string) {
         if (!effects) return;
+        const scopeRoot = componentId
+            ? (document.querySelector(`[wire\\:id="${componentId}"], [wire-id="${componentId}"]`) as HTMLElement | null)
+            : null;
+        const queryScope: ParentNode = scopeRoot || document;
 
         // 1. Handle Redirect
         if (effects.redirect) {
@@ -306,10 +310,10 @@ export class KirewireClient {
         // 3. Handle DOM Streams
         if (Array.isArray(effects.streams)) {
             for (const stream of effects.streams) {
-                let target = document.querySelector(stream.target);
+                let target = queryScope.querySelector(stream.target);
                 if (!target && typeof stream.target === "string") {
                     const value = stream.target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-                    target = document.querySelector(`[wire\\:stream="${value}"]`);
+                    target = queryScope.querySelector(`[wire\\:stream="${value}"]`);
                 }
                 if (target) {
                     console.log(`[Kirewire] Streaming update to "${stream.target}" using method "${stream.method}"`);

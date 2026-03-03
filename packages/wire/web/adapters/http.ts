@@ -1,6 +1,35 @@
 import { Kirewire } from "../kirewire";
 import { syncModelElements } from "../utils/model-sync";
 
+function findStreamTarget(root: ParentNode, target: string): HTMLElement | null {
+    let element = root.querySelector(target) as HTMLElement | null;
+    if (!element) {
+        const value = target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+        element = root.querySelector(`[wire\\:stream="${value}"]`) as HTMLElement | null;
+    }
+    return element;
+}
+
+function snapshotStreams(root: HTMLElement, effects: any): Map<string, string> {
+    const snapshots = new Map<string, string>();
+    if (!Array.isArray(effects?.streams)) return snapshots;
+
+    for (const stream of effects.streams) {
+        if (!stream?.target || snapshots.has(stream.target)) continue;
+        const target = findStreamTarget(root, stream.target);
+        if (target) snapshots.set(stream.target, target.innerHTML);
+    }
+
+    return snapshots;
+}
+
+function restoreStreams(root: HTMLElement, snapshots: Map<string, string>) {
+    for (const [targetKey, html] of snapshots.entries()) {
+        const target = findStreamTarget(root, targetKey);
+        if (target) target.innerHTML = html;
+    }
+}
+
 export class HttpClientAdapter {
     constructor(private options: { url: string, pageId: string }) {
         Kirewire.pageId = options.pageId;
@@ -40,10 +69,14 @@ export class HttpClientAdapter {
                     if (res && res.success && res.html && !processedIds.has(res.id)) {
                         const el = document.querySelector(`[wire\\:id="${res.id}"]`);
                         if (el) {
+                            const streamSnapshots = snapshotStreams(el as HTMLElement, res.effects);
+
                             console.log(`[Kirewire] Patching component "${res.id}" from HTTP response`);
                             el.setAttribute('wire:state', JSON.stringify(res.state));
                             el.setAttribute('wire:checksum', res.checksum);
                             Kirewire.patch(el as HTMLElement, res.html);
+
+                            restoreStreams(el as HTMLElement, streamSnapshots);
 
                             // Force model-bound controls to reflect authoritative server state.
                             syncModelElements(el as HTMLElement, res.state || {});
@@ -87,10 +120,14 @@ export class HttpClientAdapter {
             if (data.type === 'update') {
                 const el = document.querySelector(`[wire\\:id="${data.id}"]`);
                 if (el) {
+                    const streamSnapshots = snapshotStreams(el as HTMLElement, data.effects);
+
                     console.log(`[Kirewire] SSE patching component "${data.id}" with new HTML`);
                     el.setAttribute('wire:state', JSON.stringify(data.state));
                     el.setAttribute('wire:checksum', data.checksum);
                     Kirewire.patch(el as HTMLElement, data.html);
+
+                    restoreStreams(el as HTMLElement, streamSnapshots);
 
                     // Keep form controls in sync even when morph preserves focused inputs.
                     syncModelElements(el as HTMLElement, data.state || {});
