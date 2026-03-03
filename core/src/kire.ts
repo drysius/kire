@@ -1,4 +1,4 @@
-import { platform as nodePlatform } from "./utils/node";
+import { platform as browserPlatform } from "./utils/browser";
 import { createKireFunction } from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { escapeHtml } from "./utils/html";
@@ -29,6 +29,42 @@ import type {
 
 export interface ElementMatcher {
     def: ElementDefinition;
+}
+
+function createNodePlatformFromRuntime(): KirePlatform | null {
+    const runtimeRequire = typeof require === "function" ? require : undefined;
+    if (typeof runtimeRequire !== "function") return null;
+
+    try {
+        const fs = runtimeRequire("node:fs");
+        const path = runtimeRequire("node:path");
+        return {
+            readFile: (filePath: string) => fs.readFileSync(filePath, "utf-8"),
+            exists: (filePath: string) => fs.existsSync(filePath),
+            readDir: (filePath: string) => fs.readdirSync(filePath),
+            stat: (filePath: string) => fs.statSync(filePath),
+            writeFile: (filePath: string, data: string) => fs.writeFileSync(filePath, data, "utf-8"),
+            resolve: (...args: string[]) => path.resolve(...args).replace(/\\/g, "/"),
+            join: (...args: string[]) => path.join(...args).replace(/\\/g, "/"),
+            isAbsolute: (filePath: string) => path.isAbsolute(filePath),
+            relative: (from: string, to: string) => path.relative(from, to).replace(/\\/g, "/"),
+            cwd: () => process.cwd().replace(/\\/g, "/"),
+            env: (key: string) => process.env[key],
+            isProd: () => process.env.NODE_ENV === "production",
+        };
+    } catch {
+        return null;
+    }
+}
+
+let kireDefaultPlatform: KirePlatform = createNodePlatformFromRuntime() || (browserPlatform as KirePlatform);
+
+export function setDefaultKirePlatform(platform: KirePlatform) {
+    kireDefaultPlatform = platform;
+}
+
+export function getDefaultKirePlatform(): KirePlatform {
+    return kireDefaultPlatform;
 }
 
 /**
@@ -213,7 +249,7 @@ export class Kire<Asyncronos extends boolean = true> {
         run.createKireFunction = createKireFunction;
 
         const plat = this["~store"].platform;
-        Object.assign(plat, nodePlatform);
+        Object.assign(plat, getDefaultKirePlatform(), options.platform || {});
 
         const conf = this["~store"].config;
         conf.production = options.production ?? plat.isProd();

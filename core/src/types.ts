@@ -18,6 +18,8 @@ export interface KireOptions<Asyncronos extends boolean = boolean> {
     max_renders?: number;
     // Option to define the initial cache/bundle file
     files?: Record<string, string | KireTplFunction>;
+    // Override default platform APIs (filesystem/path/env/runtime)
+    platform?: Partial<KirePlatform>;
     // If true, doesn't load native elements and directives
     emptykire?: boolean;
     // Internal use for forking

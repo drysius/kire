@@ -26,5 +26,6 @@
 			"@kirejs/*": ["../packages/*/src/index.ts"],
 			"kire": ["./src/index.ts"]
 		}
-	}
+	},
+	"exclude": ["dist", "node_modules"]
 }

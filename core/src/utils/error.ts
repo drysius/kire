@@ -1,6 +1,7 @@
 import type { Kire } from "../kire";
 import type { KireTplFunction } from "../types";
 import { resolveSourceLocation } from "./source-map";
+import { decodeBase64 } from "./base64";
 
 export class KireError extends Error {
 	public originalError: Error;
@@ -30,7 +31,7 @@ export class KireError extends Error {
             if (mapUrlIndex !== -1) {
                 try {
                     const base64 = this.template.code.slice(mapUrlIndex + 64).trim();
-                    this.template.map = JSON.parse(Buffer.from(base64, 'base64').toString());
+                    this.template.map = JSON.parse(decodeBase64(base64));
                     return this.template.map;
                 } catch (e) {
                     // Ignore parse errors
@@ -115,7 +116,7 @@ export function renderErrorHtml(e: any, kire?: Kire<any>, ctx?: any): string {
                      const mapUrlIndex = template.code.lastIndexOf('//# sourceMappingURL=data:application/json;charset=utf-8;base64,');
                      if (mapUrlIndex !== -1) try { 
                          const base64 = template.code.slice(mapUrlIndex + 64).trim();
-                         map = JSON.parse(Buffer.from(base64, 'base64').toString()); 
+                         map = JSON.parse(decodeBase64(base64)); 
                      } catch(_){}
                 }
 
@@ -140,7 +141,7 @@ export function renderErrorHtml(e: any, kire?: Kire<any>, ctx?: any): string {
 				location = `${template.path}:${sourceLine + 1}`;
 				const sourceLines = template.source.split("\n");
 				const start = Math.max(0, sourceLine - 5), end = Math.min(sourceLines.length, sourceLine + 6);
-				snippet = sourceLines.slice(start, end).map((l, i) => {
+				snippet = sourceLines.slice(start, end).map((l: string, i: number) => {
 					const cur = start + i + 1;
 					return `<div class="line ${cur === sourceLine + 1 ? "active" : ""}"><span>${cur}</span><pre>${l.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre></div>`;
 				}).join("");

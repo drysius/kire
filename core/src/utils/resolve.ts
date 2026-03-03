@@ -26,7 +26,7 @@ export function resolvePath(filepath: string, config: any, platform: any): strin
     if (path.includes('.')) {
         const parts = path.split('.');
         const ns = parts[0];
-        if (namespaces[ns]) {
+        if (ns && namespaces[ns]) {
             const target = namespaces[ns];
             let suffix = parts.slice(1).join('/');
             if (!suffix.endsWith(ext)) suffix += ext;

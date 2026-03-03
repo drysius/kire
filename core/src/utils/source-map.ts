@@ -2,6 +2,7 @@
  * Minimal Source Map Generator (VLQ Encoder)
  * Based on Source Map Revision 3
  */
+import { encodeBase64 } from "./base64";
 
 const BASE64_CHARS =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -123,7 +124,7 @@ export class SourceMapGenerator {
 	}
 
 	public toDataUri(): string {
-		const base64 = Buffer.from(this.toString()).toString("base64");
+		const base64 = encodeBase64(this.toString());
 		return `data:application/json;charset=utf-8;base64,${base64}`;
 	}
 }

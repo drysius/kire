@@ -6,11 +6,18 @@
   "module": "dist/mjs/index.js",
   "types": "dist/types/index.d.ts",
   "typings": "dist/types/index.d.ts",
+  "scripts": {
+    "prebuild": "bun run build.ts"
+  },
   "exports": {
     ".": {
       "types": "./dist/types/index.d.ts",
       "import": "./dist/mjs/index.js",
       "require": "./dist/cjs/index.cjs"
+    },
+    "./browser": {
+      "types": "./dist/types/browser.d.ts",
+      "import": "./dist/browser/kire.js"
     }
   },
   "type": "module",

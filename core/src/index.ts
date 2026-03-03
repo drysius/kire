@@ -1,12 +1,8 @@
-/**
- * Kire Engine Core
- * Um motor de templates JIT ultra-rápido focado em geração de JS puro.
- */
+import { setDefaultKirePlatform } from "./kire";
+import { platform as nodePlatform } from "./utils/node";
 
-export * from "./compiler";
-export * from "./kire";
-export * from "./lexer";
-export * from "./types";
-export * from "./runtime";
-export { escapeHtml } from "./utils/html";
-export { NullProtoObj } from "./utils/regex";
+// Node entrypoint uses Node platform APIs by default.
+setDefaultKirePlatform(nodePlatform);
+
+export * from "./public";
+
