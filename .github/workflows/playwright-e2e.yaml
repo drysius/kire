@@ -1,0 +1,47 @@
+name: Playwright E2E
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Workspace Dependencies
+        run: bun run install:all
+
+      - name: Install Wire Example Dependencies
+        working-directory: examples/wire-example
+        run: bun install
+
+      - name: Install Playwright Browser
+        working-directory: examples/wire-example
+        run: bun run test:e2e:install
+
+      - name: Run Playwright E2E
+        run: bun tools/playwright.ts
+
+      - name: Upload Playwright Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-artifacts
+          path: |
+            playwright-report
+            test-results
+            examples/wire-example/playwright-report
+            examples/wire-example/test-results
+          if-no-files-found: ignore

@@ -11,7 +11,7 @@
 		"url": "git+https://github.com/drysius/kire.git"
 	},
 	"scripts": {
-		"test": "bun test",
+		"test": "bun test && npx --no-install node tools/playwright.ts",
 		"benchmark": "bun run benchmark/create.ts",
 		"schema": "bun run tools/schema.ts",
 		"build": "bun run tools/build.ts",

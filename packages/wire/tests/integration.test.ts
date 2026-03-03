@@ -6,7 +6,9 @@ import { KirewireClient } from "../web/kirewire";
 import { MessageBus } from "../web/utils/message-bus";
 
 // --- MOCK ENVIRONMENT ---
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
+const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
+    url: "http://localhost/"
+});
 (global as any).window = dom.window;
 (global as any).document = dom.window.document;
 (global as any).HTMLElement = dom.window.HTMLElement;

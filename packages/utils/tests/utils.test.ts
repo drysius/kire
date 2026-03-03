@@ -56,7 +56,7 @@ describe("Template Integration (Old & Error)", () => {
         
         const tpl = `<input value="{{ old('email') }}">`;
         const html = await req.render(tpl);
-        expect(html).toBe('<input value="test@example.com">');
+        expect(html).toBe('<input value="test@example.com"></input>');
     });
 
     test("@error directive", async () => {

@@ -1,4 +1,5 @@
 import { Kirewire } from "../kirewire";
+import { syncModelElements } from "../utils/model-sync";
 
 export class HttpClientAdapter {
     constructor(private options: { url: string, pageId: string }) {
@@ -43,6 +44,9 @@ export class HttpClientAdapter {
                             el.setAttribute('wire:state', JSON.stringify(res.state));
                             el.setAttribute('wire:checksum', res.checksum);
                             Kirewire.patch(el as HTMLElement, res.html);
+
+                            // Force model-bound controls to reflect authoritative server state.
+                            syncModelElements(el as HTMLElement, res.state || {});
                             
                             if (res.effects) {
                                 Kirewire.processEffects(res.effects, res.id);
@@ -62,7 +66,7 @@ export class HttpClientAdapter {
                 }
 
                 finish(results);
-                } catch (err) {
+            } catch (err) {
                 console.error("[Kirewire] HttpClientAdapter fetch error:", err);
                 error(err);
             }
@@ -87,6 +91,9 @@ export class HttpClientAdapter {
                     el.setAttribute('wire:state', JSON.stringify(data.state));
                     el.setAttribute('wire:checksum', data.checksum);
                     Kirewire.patch(el as HTMLElement, data.html);
+
+                    // Keep form controls in sync even when morph preserves focused inputs.
+                    syncModelElements(el as HTMLElement, data.state || {});
                     
                     // NEW: Process effects from SSE
                     if (data.effects) {
@@ -106,4 +113,5 @@ export class HttpClientAdapter {
                 }
             }
         };
-    }                }
+    }
+}
