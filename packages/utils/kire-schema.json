@@ -1,24 +1,38 @@
 {
-    "name": "@kirejs/utils",
-    "directives": {
-        "error": {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/utils",
+    "version": "0.1.2",
+    "author": "drysius",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/drysius/kire.git"
+    },
+    "dependencies": [
+        "kire"
+    ],
+    "directives": [
+        {
+            "name": "error",
+            "description": "Renders the block if there are validation errors for the given field.",
             "params": [
                 "name"
             ],
             "children": true,
-            "description": "Renders the block if there are validation errors for the given field.",
             "example": "@error('email')\n  <span class='error'>{{ $message }}</span>\n@end"
         },
-        "old": {
+        {
+            "name": "old",
+            "description": "Outputs the old input value for the given field.",
             "params": [
                 "name",
                 "default"
             ],
-            "description": "Outputs the old input value for the given field.",
             "example": "<input type='text' name='email' value='@old(\"email\")' />"
         }
+    ],
+    "elements": [],
+    "attributes": {
+        "global": {}
     },
-    "elements": {},
-    "attributes": {},
-    "types": []
+    "globals": []
 }

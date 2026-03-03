@@ -1,30 +1,43 @@
 {
-    "name": "@kirejs/assets",
-    "directives": {
-        "svg": {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/assets",
+    "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
+    "dependencies": [
+        "kire"
+    ],
+    "directives": [
+        {
+            "name": "svg",
+            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
             "params": [
                 "path",
                 "attrs"
             ],
-            "description": "Loads an SVG and renders it as an <img> tag pointing to the asset.",
             "example": "@svg('./icons/logo.svg', { class: 'h-4 w-4' })"
         },
-        "assets": {
-            "children": false,
+        {
+            "name": "assets",
             "description": "Injects the assets placeholder where scripts and styles will be output.",
+            "children": false,
             "example": "@assets()"
         }
-    },
-    "elements": {
-        "style": {
+    ],
+    "elements": [
+        {
+            "name": "style",
             "description": "Captures inline styles to be injected via @assets.",
             "example": "<style>body { color: red; }</style>"
         },
-        "script": {
+        {
+            "name": "script",
             "description": "Captures inline scripts to be injected via @assets.",
             "example": "<script>console.log('hello');</script>"
         }
+    ],
+    "attributes": {
+        "global": {}
     },
-    "attributes": {},
-    "types": []
+    "globals": []
 }

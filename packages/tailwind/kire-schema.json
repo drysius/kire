@@ -1,24 +1,33 @@
 {
-    "name": "@kirejs/tailwind",
-    "directives": {
-        "tailwind": {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/tailwind",
+    "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
+    "dependencies": [
+        "kire",
+        "tailwindcss"
+    ],
+    "directives": [
+        {
+            "name": "tailwind",
+            "description": "Processes CSS content within the block using Tailwind CSS.",
             "params": [
                 "code"
             ],
             "children": true,
-            "description": "Processes CSS content within the block using Tailwind CSS.",
             "example": "@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end"
         }
-    },
-    "elements": {
-        "tailwind": {
+    ],
+    "elements": [
+        {
+            "name": "tailwind",
             "description": "Processes CSS content within the block using Tailwind CSS.",
             "example": "<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>"
         }
+    ],
+    "attributes": {
+        "global": {}
     },
-    "attributes": {},
-    "types": [],
-    "author": "Drysius",
-    "repository": "https://github.com/drysius/kire",
-    "version": "0.1.0"
+    "globals": []
 }

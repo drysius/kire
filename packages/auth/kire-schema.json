@@ -1,71 +1,86 @@
 {
-    "name": "@kirejs/auth",
-    "directives": {
-        "else": {},
-        "auth": {
-            "children": true,
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/auth",
+    "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
+    "dependencies": [
+        "kire"
+    ],
+    "directives": [
+        {
+            "name": "auth",
             "description": "Renders the block if the user is authenticated.",
+            "children": true,
             "example": "@auth\n  <p>Welcome back!</p>\n@end"
         },
-        "guest": {
-            "children": true,
+        {
+            "name": "guest",
             "description": "Renders the block if the user is NOT authenticated.",
+            "children": true,
             "example": "@guest\n  <a href='/login'>Login</a>\n@end"
         },
-        "notlogged": {
-            "children": true,
+        {
+            "name": "notlogged",
             "description": "Renders the block if the user is NOT authenticated.",
+            "children": true,
             "example": "@notlogged\n  <a href='/login'>Login</a>\n@end"
         },
-        "logged": {
-            "children": true,
+        {
+            "name": "logged",
             "description": "Alias for @auth. Renders the block if the user is authenticated.",
+            "children": true,
             "example": "@logged\n  <p>You are logged in.</p>\n@end"
         },
-        "authenticated": {
-            "children": true,
+        {
+            "name": "authenticated",
             "description": "Alias for @auth. Renders the block if the user is authenticated.",
+            "children": true,
             "example": "@authenticated\n  <p>You are logged in.</p>\n@end"
         },
-        "user": {
-            "children": false,
+        {
+            "name": "user",
             "description": "Injects the current user object into a variable named 'user'.",
+            "children": false,
             "example": "@user\n<p>Hello, {{ user.name }}</p>"
         },
-        "can": {
+        {
+            "name": "can",
+            "description": "Checks if the user has a specific permission.",
             "params": [
                 "perm"
             ],
             "children": true,
-            "description": "Checks if the user has a specific permission.",
             "example": "@can('edit_posts')\n  <button>Edit</button>\n@end"
         },
-        "notcan": {
+        {
+            "name": "notcan",
+            "description": "Checks if the user DOES NOT have a specific permission.",
             "params": [
                 "perm"
             ],
             "children": true,
-            "description": "Checks if the user DOES NOT have a specific permission.",
             "example": "@notcan('view_admin')\n  <p>Access Denied</p>\n@end"
         },
-        "canany": {
+        {
+            "name": "canany",
+            "description": "Checks if the user has ANY of the provided permissions.",
             "params": [
                 "perms"
             ],
             "children": true,
-            "description": "Checks if the user has ANY of the provided permissions.",
             "example": "@canany(['edit', 'delete'])\n  <button>Manage</button>\n@end"
         },
-        "noauth": {
-            "children": true,
+        {
+            "name": "noauth",
             "description": "Renders the block if the user is NOT authenticated. Alias for @guest.",
+            "children": true,
             "example": "@noauth\n  <p>Please log in.</p>\n@end"
         }
+    ],
+    "elements": [],
+    "attributes": {
+        "global": {}
     },
-    "elements": {},
-    "attributes": {},
-    "types": [],
-    "author": "Drysius",
-    "repository": "https://github.com/drysius/kire",
-    "version": "0.1.0"
+    "globals": []
 }

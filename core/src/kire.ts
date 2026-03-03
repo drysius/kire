@@ -443,7 +443,7 @@ export class Kire<Asyncronos extends boolean = true> {
             params: def.params,
             children: def.children,
             example: def.example,
-            related: def.related,
+            related: def.related ?? def.relatedTo,
             exposes: def.exposes
         });
         return this;
@@ -465,7 +465,7 @@ export class Kire<Asyncronos extends boolean = true> {
                 void: def.void,
                 attributes: def.attributes,
                 example: def.example,
-                related: def.related
+                related: def.related ?? def.relatedTo
             });
         }
         return this;

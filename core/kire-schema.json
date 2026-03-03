@@ -1,257 +1,391 @@
 {
-    "name": "kire-core",
-    "directives": {
-        "define": {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "kire",
+    "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
+    "dependencies": [],
+    "directives": [
+        {
+            "name": "define",
             "params": [
                 "name:string"
             ],
             "children": true
         },
-        "defined": {
+        {
+            "name": "defined",
             "params": [
                 "name:string"
             ],
             "children": "auto"
         },
-        "stack": {
+        {
+            "name": "stack",
             "params": [
                 "name:string"
             ],
             "children": false
         },
-        "push": {
+        {
+            "name": "push",
             "params": [
                 "name:string"
             ],
             "children": true
         },
-        "if": {
+        {
+            "name": "if",
+            "params": [
+                "cond:any"
+            ],
+            "children": true,
+            "related": []
+        },
+        {
+            "name": "elseif",
             "params": [
                 "cond:any"
             ],
             "children": true,
             "related": [
-                "else",
-                "elseif"
+                "if",
+                "elseif",
+                "unless"
+            ],
+            "parents": [
+                {
+                    "name": "if",
+                    "children": true
+                },
+                {
+                    "name": "elseif",
+                    "children": true
+                },
+                {
+                    "name": "unless",
+                    "params": [
+                        "cond:any"
+                    ],
+                    "children": true
+                }
             ]
         },
-        "elseif": {
-            "params": [
-                "cond:any"
-            ],
+        {
+            "name": "unless",
             "children": true
         },
-        "unless": {
-            "params": [
-                "cond:any"
-            ],
-            "children": true
+        {
+            "name": "else",
+            "children": true,
+            "parents": [
+                {
+                    "name": "if",
+                    "children": true
+                },
+                {
+                    "name": "elseif",
+                    "children": true
+                },
+                {
+                    "name": "unless",
+                    "children": true
+                }
+            ]
         },
-        "else": {
-            "children": true
-        },
-        "for": {
+        {
+            "name": "for",
             "params": [
                 "expr:any"
             ],
             "children": true
         },
-        "each": {
+        {
+            "name": "each",
             "params": [
                 "items:any",
                 "as:string"
             ],
             "children": true
         },
-        "empty": {
+        {
+            "name": "isset",
             "params": [
                 "expr:any"
             ],
             "children": true
         },
-        "isset": {
+        {
+            "name": "empty",
             "params": [
                 "expr:any"
             ],
-            "children": true
+            "children": true,
+            "related": [
+                "for",
+                "each"
+            ],
+            "parents": [
+                {
+                    "name": "for",
+                    "children": true
+                },
+                {
+                    "name": "each",
+                    "children": true
+                }
+            ]
         },
-        "class": {
+        {
+            "name": "class",
             "params": [
                 "classes:any"
             ]
         },
-        "style": {
+        {
+            "name": "style",
             "params": [
                 "styles:any"
             ]
         },
-        "checked": {
+        {
+            "name": "checked",
             "params": [
                 "cond:any"
             ]
         },
-        "selected": {
+        {
+            "name": "selected",
             "params": [
                 "cond:any"
             ]
         },
-        "disabled": {
+        {
+            "name": "disabled",
             "params": [
                 "cond:any"
             ]
         },
-        "readonly": {
+        {
+            "name": "readonly",
             "params": [
                 "cond:any"
             ]
         },
-        "switch": {
+        {
+            "name": "switch",
             "params": [
                 "expr:any"
             ],
             "children": true
         },
-        "case": {
+        {
+            "name": "case",
             "params": [
                 "val:any"
             ],
+            "children": true,
+            "related": [
+                "switch",
+                "case",
+                "default"
+            ],
+            "parents": [
+                {
+                    "name": "switch",
+                    "children": true
+                },
+                {
+                    "name": "case",
+                    "children": true
+                },
+                {
+                    "name": "default",
+                    "children": true
+                }
+            ]
+        },
+        {
+            "name": "default",
+            "children": true,
+            "related": [
+                "switch",
+                "case",
+                "default"
+            ],
+            "parents": [
+                {
+                    "name": "switch",
+                    "children": true
+                },
+                {
+                    "name": "case",
+                    "children": true
+                },
+                {
+                    "name": "default",
+                    "children": true
+                }
+            ]
+        },
+        {
+            "name": "once",
             "children": true
         },
-        "default": {
-            "children": true
-        },
-        "once": {
-            "children": true
-        },
-        "error": {
+        {
+            "name": "error",
             "params": [
                 "field:string"
             ],
             "children": true
         },
-        "csrf": {
+        {
+            "name": "csrf",
             "children": false
         },
-        "method": {
+        {
+            "name": "method",
             "params": [
                 "method:string"
             ],
             "children": false
         },
-        "const": {
+        {
+            "name": "const",
             "params": [
                 "expr:string"
             ],
             "children": false
         },
-        "let": {
+        {
+            "name": "let",
             "params": [
                 "expr:string"
             ],
             "children": false
         },
-        "include": {
+        {
+            "name": "include",
             "params": [
                 "path:string",
                 "locals:object"
             ],
             "children": false
         },
-        "slot": {
+        {
+            "name": "slot",
             "params": [
                 "name:string"
             ],
             "children": true
         },
-        "yield": {
+        {
+            "name": "yield",
             "params": [
                 "name:string",
                 "default:string"
             ],
             "children": false
         },
-        "component": {
+        {
+            "name": "component",
             "params": [
                 "path:string",
                 "locals:object"
             ],
             "children": true
         },
-        "layout": {},
-        "extends": {},
-        "section": {}
+        {
+            "name": "layout",
+            "children": true
+        },
+        {
+            "name": "extends",
+            "children": true
+        },
+        {
+            "name": "section",
+            "children": true
+        }
+    ],
+    "elements": [
+        {
+            "name": "style"
+        },
+        {
+            "name": "script"
+        },
+        {
+            "name": "kire:else",
+            "related": [
+                "kire:if",
+                "kire:elseif"
+            ]
+        },
+        {
+            "name": "kire:elseif",
+            "related": [
+                "kire:if",
+                "kire:elseif"
+            ]
+        },
+        {
+            "name": "kire:if"
+        },
+        {
+            "name": "kire:for"
+        },
+        {
+            "name": "kire:empty"
+        },
+        {
+            "name": "kire:switch"
+        },
+        {
+            "name": "kire:case"
+        },
+        {
+            "name": "kire:default"
+        }
+    ],
+    "attributes": {
+        "global": {}
     },
-    "elements": {
-        "kire:else": {},
-        "kire:elseif": {
-            "related": [
-                "kire:elseif",
-                "kire:else"
-            ]
-        },
-        "kire:if": {
-            "related": [
-                "kire:elseif",
-                "kire:else"
-            ]
-        },
-        "kire:for": {
-            "related": [
-                "kire:empty"
-            ]
-        },
-        "kire:empty": {},
-        "kire:switch": {},
-        "kire:case": {},
-        "kire:default": {},
-        "^x-": {}
-    },
-    "attributes": {},
-    "types": [
+    "globals": [
         {
             "variable": "kire",
-            "type": "global",
-            "comment": "The Kire template engine instance.",
-            "tstype": "import('kire').Kire"
+            "type": "import('kire').Kire",
+            "comment": "The Kire template engine instance."
         },
         {
             "variable": "$kire",
-            "type": "context",
-            "comment": "The Kire template engine instance (context alias).",
-            "tstype": "import('kire').Kire"
+            "type": "import('kire').Kire",
+            "comment": "The Kire template engine instance (context alias)."
         },
         {
             "variable": "$props",
-            "type": "context",
-            "comment": "Local variables passed to the template.",
-            "tstype": "Record<string, any>"
+            "type": "Record<string, any>",
+            "comment": "Local variables passed to the template."
         },
         {
             "variable": "it",
-            "type": "context",
-            "comment": "Reference to the local variables (props). Alias for $props.",
-            "tstype": "Record<string, any>"
+            "type": "Record<string, any>",
+            "comment": "Reference to the local variables (props). Alias for $props."
         },
         {
             "variable": "$globals",
-            "type": "context",
-            "comment": "Global variables accessible in all templates.",
-            "tstype": "Record<string, any>"
+            "type": "Record<string, any>",
+            "comment": "Global variables accessible in all templates."
         },
         {
             "variable": "$kire_response",
-            "type": "context",
-            "comment": "The output buffer string. Can be modified directly.",
-            "tstype": "string"
+            "type": "string",
+            "comment": "The output buffer string. Can be modified directly."
         },
         {
             "variable": "$escape",
-            "type": "context",
-            "comment": "Function to escape HTML content.",
-            "tstype": "(v: any) => string"
+            "type": "(v: any) => string",
+            "comment": "Function to escape HTML content."
         }
-    ],
-    "author": "Drysius",
-    "repository": "https://github.com/drysius/kire",
-    "version": "0.1.2"
+    ]
 }

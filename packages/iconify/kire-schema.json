@@ -1,25 +1,33 @@
 {
-    "name": "@kirejs/iconify",
-    "directives": {
-        "icon": {
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/iconify",
+    "version": "0.1.2",
+    "author": "Drysius",
+    "repository": "https://github.com/drysius/kire",
+    "dependencies": [
+        "kire"
+    ],
+    "directives": [
+        {
+            "name": "icon",
+            "description": "Renders an Iconify icon SVG.",
             "params": [
                 "name",
                 "className",
                 "attrs"
             ],
-            "description": "Renders an Iconify icon SVG.",
             "example": "@icon('mdi:home', 'text-blue-500', { width: '24' })"
         }
-    },
-    "elements": {
-        "iconify": {
-            "void": true,
-            "description": "Renders an Iconify icon."
+    ],
+    "elements": [
+        {
+            "name": "iconify",
+            "description": "Renders an Iconify icon.",
+            "void": true
         }
+    ],
+    "attributes": {
+        "global": {}
     },
-    "attributes": {},
-    "types": [],
-    "author": "Drysius",
-    "repository": "https://github.com/drysius/kire",
-    "version": "0.1.0"
+    "globals": []
 }

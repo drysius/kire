@@ -9,17 +9,46 @@ import { getPackages, type PackageInfo } from "./utils"; // Shared utils
 
 // Generate Root Schema
 const kire = new Kire();
+kire.kireSchema({
+	author: pkg.author,
+	repository: pkg.repository,
+	version: pkg.version,
+});
+
+const rootAttributes = Object.fromEntries(
+	(kire.$schema.attributes || []).map((attr) => [
+		attr.name,
+		{
+			type: attr.type ?? "string",
+			comment: attr.description,
+			example: attr.example,
+		},
+	]),
+);
+
+const rootGlobals = (kire.$schema.types || []).map((typeDef) => ({
+	variable: typeDef.variable,
+	type: typeDef.tstype,
+	comment: typeDef.comment,
+}));
+
+const rootSchema = {
+	$schema:
+		"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+	package: pkg.name,
+	version: pkg.version,
+	author: pkg.author,
+	repository: pkg.repository,
+	dependencies: Object.keys(pkg.dependencies || {}),
+	directives: kire.$schema.directives || [],
+	elements: kire.$schema.elements || [],
+	attributes: { global: rootAttributes },
+	globals: rootGlobals,
+};
+
 writeFileSync(
 	"kire-schema.json",
-	JSON.stringify(
-		kire.kireSchema({
-			name:pkg.name, 
-			repository:pkg.repository.url,
-			version:pkg.version
-		}),
-		null,
-		3,
-	),
+	JSON.stringify(rootSchema, null, 3),
 );
 
 class Builder {

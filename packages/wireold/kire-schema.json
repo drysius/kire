@@ -1,0 +1,28 @@
+{
+    "$schema": "https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
+    "package": "@kirejs/wirold",
+    "version": "0.1.0",
+    "dependencies": [
+        "@sinclair/typebox",
+        "kire"
+    ],
+    "directives": [
+        {
+            "name": "kirewire",
+            "children": false
+        },
+        {
+            "name": "wire",
+            "children": false
+        },
+        {
+            "name": "live",
+            "children": false
+        }
+    ],
+    "elements": [],
+    "attributes": {
+        "global": {}
+    },
+    "globals": []
+}

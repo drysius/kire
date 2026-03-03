@@ -33,7 +33,7 @@ export function directive(this: Kire<any>, def: DirectiveDefinition) {
         params: def.params,
         children: def.children,
         example: def.example,
-        related: def.related,
+        related: def.related ?? def.relatedTo,
         exposes: def.exposes
     });
     return this;
@@ -51,7 +51,7 @@ export function element(this: Kire<any>, def: ElementDefinition) {
             void: def.void,
             attributes: def.attributes,
             example: def.example,
-            related: def.related
+            related: def.related ?? def.relatedTo
         });
     }
     return this;
