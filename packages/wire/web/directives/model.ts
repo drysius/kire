@@ -6,14 +6,18 @@ Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
     const isInput = el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
     if (!isInput) return;
 
-    const componentId = wire.getComponentId(el);
-    if (!componentId) return;
-
-    const eventType = (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) || el instanceof HTMLSelectElement 
-        ? 'change' 
-        : 'input';
+    // Detect event type dynamically
+    const getEventType = () => {
+        if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio')) return 'change';
+        if (el instanceof HTMLSelectElement) return 'change';
+        return 'input';
+    };
 
     const handler = (e: any) => {
+        // IMPORTANT: Always get the FRESH component ID at the moment of input
+        const componentId = wire.getComponentId(el);
+        if (!componentId) return;
+
         let value: any;
         if (el instanceof HTMLInputElement && el.type === 'checkbox') {
             value = el.checked;
@@ -21,29 +25,30 @@ Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
             value = e.target.value;
         }
 
-        console.log(`[Kirewire] model:input event on "${expression}" with value:`, value);
-
         if (modifiers.includes('defer')) {
-            console.log(`[Kirewire] model:defer detected for "${expression}". Calling wire.defer().`);
             wire.defer(componentId, expression, value);
         } else {
-            console.log(`[Kirewire] model:immediate detected for "${expression}". Calling wire.call().`);
             wire.call(el, '$set', [expression, value]);
         }
     };
 
+    const eventType = getEventType();
     el.addEventListener(eventType, handler);
     cleanup(() => el.removeEventListener(eventType, handler));
 
-    // Initial sync from component to DOM
-    wire.$on('component:update', (data) => {
-        if (data.id === componentId && data.state[expression] !== undefined) {
+    // Sync from server to DOM
+    const unbind = wire.$on('component:update', (data) => {
+        const currentId = wire.getComponentId(el);
+        if (data.id === currentId && data.state[expression] !== undefined) {
             const newValue = data.state[expression];
             if (el instanceof HTMLInputElement && el.type === 'checkbox') {
                 el.checked = !!newValue;
             } else {
-                (el as any).value = newValue;
+                if ((el as any).value !== newValue) {
+                    (el as any).value = newValue;
+                }
             }
         }
     });
+    cleanup(unbind);
 });

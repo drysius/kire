@@ -72,6 +72,8 @@ export class Compiler {
         this.mappings = [];
         this._async = false;
         this.textBuffer = "";
+        this.fullBody = "";
+        this.allIdentifiers = new Set();
         this.identifiers.clear();
 
         this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
@@ -82,6 +84,8 @@ export class Compiler {
         const localDecls = new Set<string>();
         this.analyzeAst(nodes, this.identifiers, localDecls, new Set());
         if (extraGlobals) extraGlobals.forEach(g => this.identifiers.add(g));
+        this.allIdentifiers = new Set(this.identifiers);
+        this.fullBody = this.buildFullBody(nodes);
 
         for (const id of this.identifiers) {
             if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
@@ -192,6 +196,31 @@ export class Compiler {
         }
 
         return code;
+    }
+
+    private buildFullBody(nodes: Node[]): string {
+        let out = "";
+        const walk = (list: Node[]) => {
+            for (const n of list) {
+                if (typeof n.content === "string") out += `${n.content}\n`;
+                if (typeof n.name === "string") out += `${n.name}\n`;
+                if (typeof n.tagName === "string") out += `${n.tagName}\n`;
+                if (n.args) {
+                    for (const arg of n.args) {
+                        if (typeof arg === "string") out += `${arg}\n`;
+                    }
+                }
+                if (n.attributes) {
+                    for (const [k, v] of Object.entries(n.attributes)) {
+                        out += `${k}\n${v}\n`;
+                    }
+                }
+                if (n.children) walk(n.children);
+                if (n.related) walk(n.related);
+            }
+        };
+        walk(nodes);
+        return out;
     }
 
     private analyzeAst(nodes: Node[], idents: Set<string>, decls: Set<string>, visited: Set<string>) {

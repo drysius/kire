@@ -18,9 +18,14 @@ export default (kire: Kire<any>) => {
         name: `empty`,
         params: [`expr:any`],
         children: true,
-        closeBy: [`endempty`, `end`],
+        relatedTo: [`for`, `each`],
+        closeBy: [`endempty`, `endfor`, `endeach`, `end`],
         onCall: (api) => {
-            const expr = api.getAttribute("expr");
+            const expr = api.getAttribute("expr") || api.getArgument(0);
+            if (!expr) {
+                api.renderChildren();
+                return;
+            }
             api.write(`if (!${api.transform(expr)} || (Array.isArray(${api.transform(expr)}) && ${api.transform(expr)}.length === 0)) {`);
             api.renderChildren();
             api.write(`}`);

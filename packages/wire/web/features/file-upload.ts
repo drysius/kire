@@ -1,7 +1,14 @@
 import { Kirewire } from "../kirewire";
 
-Kirewire.directive('model', ({ el, expression, cleanup, wire }) => {
-    if (!(el instanceof HTMLInputElement) || el.type !== 'file') return;
+const baseModelDirective = Kirewire.getDirective('model');
+
+Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
+    if (!(el instanceof HTMLInputElement) || el.type !== 'file') {
+        if (baseModelDirective) {
+            baseModelDirective({ el, value: 'model', expression, modifiers, cleanup, wire });
+        }
+        return;
+    }
 
     const handler = async () => {
         const files = el.files;

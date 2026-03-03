@@ -87,7 +87,7 @@ export class KireError extends Error {
 }
 
 export function renderErrorHtml(e: any, kire?: Kire<any>, ctx?: any): string {
-	const isProduction = kire?.production ?? false;
+	const isProduction = (kire as any)?.$production ?? (kire as any)?.production ?? false;
     if (isProduction) return `<html><body style="background:#000;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;font-family:sans-serif"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><h1 style="font-size:1.5rem;margin-top:1rem;letter-spacing:0.05em">INTERNAL SERVER ERROR</h1></body></html>`;
 
     // Support KireError or generic Error with context

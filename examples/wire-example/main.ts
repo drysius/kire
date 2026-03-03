@@ -12,6 +12,7 @@ const kire = new Kire({
 	production: process.env.NODE_ENV === "production",
 });
 
+console.log(path.join(process.cwd(), "../../packages/wire/dist"))
 const app = new Elysia({
 	serve: {
 		maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB

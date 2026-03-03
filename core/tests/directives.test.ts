@@ -141,6 +141,18 @@ describe("Kire Directives & Elements", () => {
         expect(result).toBe("a;b;");
     });
 
+    test("@for should support @empty fallback", async () => {
+        const template = "@for(item of items){{ item }};@emptyNO_ITEMS@endfor";
+        expect(await kire.render(template, { items: [1, 2] })).toBe("1;2;");
+        expect(await kire.render(template, { items: [] })).toBe("NO_ITEMS");
+    });
+
+    test("@for should expose index and $loop when used", async () => {
+        const template = "@for((item, i) of items){{ i }}:{{ $loop.first ? 'F' : 'N' }}-{{ item }};@endfor";
+        const result = await kire.render(template, { items: [10, 20] });
+        expect(result).toBe("0:F-10;1:N-20;");
+    });
+
     test("@csrf should render token and throw when token is missing", async () => {
         const withToken = new Kire({ production: true });
         withToken.$global("csrf", "secure-token");

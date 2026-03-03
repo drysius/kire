@@ -28,9 +28,24 @@ export abstract class Component {
 
     /**
      * Helper to set property values from the client.
+     * Supports dot notation for nested properties.
      */
     public $set(property: string, value: any) {
-        (this as any)[property] = value;
+        if (!property.includes('.')) {
+            (this as any)[property] = value;
+            return;
+        }
+
+        const parts = property.split('.');
+        let obj = this as any;
+        for (let i = 0; i < parts.length - 1; i++) {
+            const part = parts[i]!;
+            if (!(part in obj) || obj[part] === null || typeof obj[part] !== 'object') {
+                obj[part] = {};
+            }
+            obj = obj[part];
+        }
+        obj[parts[parts.length - 1]!] = value;
     }
 
     /**
@@ -77,6 +92,8 @@ export abstract class Component {
         }
     }
 
+    public $emit(name: string, ...params: any[]) { this.emit(name, ...params); }
+
     /**
      * Redirects the user to a new URL.
      */
@@ -84,11 +101,17 @@ export abstract class Component {
         this.__effects.redirect = url;
     }
 
+    public $redirect(url: string) { this.redirect(url); }
+
     /**
      * Sends a direct HTML stream update to a specific target.
      */
     public stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
         this.__effects.streams.push({ target, content, method });
+    }
+
+    public $stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
+        this.stream(target, content, method);
     }
 
     /**

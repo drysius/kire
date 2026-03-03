@@ -71,6 +71,8 @@ export default (kire: Kire<any>) => {
             const as = api.getAttribute("as") || 'item';
             const indexAs = api.getAttribute("index") || 'index';
             const id = api.uid('i');
+            const shouldExposeIndex = api.fullBody.includes(indexAs) || api.allIdentifiers.has(indexAs);
+            const shouldExposeLoop = api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
             api.write(`{
                 const _r${id} = ${items};
                 const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || this.NullProtoObj);
@@ -79,8 +81,8 @@ export default (kire: Kire<any>) => {
                 while (${id} < _len${id}) {
                     const _e${id} = _it${id}[${id}];
                     let ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
-                    ${api.fullBody.includes('index') || api.allIdentifiers.has('index') ? `let ${indexAs} = ${id};` : ''}
-                    ${api.fullBody.includes('$loop') || api.allIdentifiers.has('$loop') ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ''}`);
+                    ${shouldExposeIndex ? `let ${indexAs} = ${id};` : ''}
+                    ${shouldExposeLoop ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ''}`);
             api.renderChildren();
             api.write(`    ${id}++;
                 }

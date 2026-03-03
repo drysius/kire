@@ -22,9 +22,15 @@ export class MessageBus {
         console.log(`[Kirewire] MessageBus enqueuing action "${payload.method}" for component "${payload.id}"`);
         return new Promise((resolve, reject) => {
             this.queue.push({ payload, resolve, reject });
+            
             if (!this.timer && !this.inFlight) {
-                console.log(`[Kirewire] MessageBus starting flush timer (${this.delay}ms)`);
-                this.timer = setTimeout(() => this.flush(), this.delay);
+                // Wait for the current synchronous execution to finish before starting the timer
+                queueMicrotask(() => {
+                    if (!this.timer && this.queue.length > 0) {
+                        console.log(`[Kirewire] MessageBus starting flush timer (${this.delay}ms)`);
+                        this.timer = setTimeout(() => this.flush(), this.delay);
+                    }
+                });
             }
         });
     }
