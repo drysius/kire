@@ -5,7 +5,7 @@ export class SocketAdapter extends Adapter {
         console.log(`[Kirewire] SocketAdapter initialized.`);
         
         // Listen for internal updates to push to clients
-        this.wire.$on('component:update', (data) => {
+        this.wire.on('component:update', (data) => {
             this.pushToClient(data.userId, 'update', data);
         });
     }
@@ -33,6 +33,7 @@ export class SocketAdapter extends Adapter {
 
     private pushToClient(userId: string, event: string, data: any) {
         // Implementation provided by the user's socket server (e.g. io.to(userId).emit(...))
-        this.wire.$emit('socket:push', { userId, event, data });
+        this.wire.emit('socket:push', { userId, event, data });
     }
 }
+

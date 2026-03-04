@@ -2,22 +2,23 @@ import { expect, test, describe } from "bun:test";
 import { Kirewire } from "../src/kirewire";
 import { Component } from "../src/component";
 import { FileStore } from "../src/features/file-store";
+import { WireProperty } from "../src/wire-property";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { existsSync, readFileSync } from "node:fs";
 
 describe("Kirewire Kernel", () => {
-    test("should generate consistent checksums", () => {
-        const wire = new Kirewire({ secret: "test-secret" });
-        const state = { count: 0 };
-        const session = "session-123";
-        
-        const hash1 = wire.generateChecksum(state, session);
-        const hash2 = wire.generateChecksum(state, session);
-        const hash3 = wire.generateChecksum({ count: 1 }, session);
+    test("should register custom wire property classes", () => {
+        class DummyProperty extends WireProperty {
+            public readonly __wire_type = "dummy";
+            public hydrate(_value: any): void {}
+            public dehydrate(): any { return null; }
+        }
 
-        expect(hash1).toBe(hash2);
-        expect(hash1).not.toBe(hash3);
+        const wire = new Kirewire({ secret: "test-secret" });
+        wire.class("dummy", DummyProperty as any);
+
+        expect(wire.propertyClasses.get("dummy")).toBe(DummyProperty as any);
     });
 
     test("should parse durations correctly", () => {

@@ -1,6 +1,7 @@
 import type { FileStore } from "./file-store";
 import { Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
+import { WireProperty } from "../wire-property";
 
 type FileLike = {
     id?: string;
@@ -25,16 +26,20 @@ function normalizeFileList(value: any): FileLike[] {
     if (!value) return [];
 
     if (Array.isArray(value)) {
-        return value
-            .filter(Boolean)
-            .map((file) => ({
+        const out: FileLike[] = [];
+        for (let i = 0; i < value.length; i++) {
+            const file = value[i];
+            if (!file) continue;
+            const entry = {
                 id: String((file as any).id || ""),
                 name: String((file as any).name || ""),
                 size: Number((file as any).size || 0),
                 mime: String((file as any).mime || (file as any).type || ""),
                 type: String((file as any).type || (file as any).mime || ""),
-            }))
-            .filter((file) => file.name || file.id);
+            };
+            if (entry.name || entry.id) out.push(entry);
+        }
+        return out;
     }
 
     if (value && typeof value === "object" && Array.isArray((value as any).files)) {
@@ -63,36 +68,59 @@ function matchesMimeRule(file: FileLike, allowed: string[]): boolean {
         .split(".")
         .pop() || "";
 
-    return allowed.some((token) => {
+    for (let i = 0; i < allowed.length; i++) {
+        const token = allowed[i];
         const normalized = token.toLowerCase().trim();
-        if (!normalized) return false;
+        if (!normalized) continue;
 
         if (normalized.includes("/")) {
             if (normalized.endsWith("/*")) {
                 const prefix = normalized.split("/")[0];
-                return mime.startsWith(`${prefix}/`);
+                if (mime.startsWith(`${prefix}/`)) return true;
+            } else if (mime === normalized) {
+                return true;
             }
-            return mime === normalized;
+        } else if (extension === normalized) {
+            return true;
         }
-
-        return extension === normalized;
-    });
+    }
+    return false;
 }
 
-export class WireFile {
+export class WireFile extends WireProperty {
     public id: string = '';
     public name: string = '';
     public size: number = 0;
     public mime: string = '';
-    public __is_wire_file = true;
+    public readonly __wire_type = 'file';
 
     constructor(data?: { id: string, name: string, size: number, mime: string }) {
+        super();
         if (data) {
             this.id = data.id;
             this.name = data.name;
             this.size = data.size;
             this.mime = data.mime;
         }
+    }
+
+    public hydrate(value: any): void {
+        if (value && typeof value === 'object') {
+            this.id = String(value.id || '');
+            this.name = String(value.name || '');
+            this.size = Number(value.size || 0);
+            this.mime = String(value.mime || '');
+        }
+    }
+
+    public dehydrate(): any {
+        return {
+            id: this.id,
+            name: this.name,
+            size: this.size,
+            mime: this.mime,
+            __wire_type: this.__wire_type
+        };
     }
 
     public get file() {
@@ -182,7 +210,8 @@ export class Rule {
         }
 
         if (this.maxSizeKb !== undefined) {
-            for (const file of files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 if (file.size / 1024 > this.maxSizeKb) {
                     return {
                         success: false,
@@ -196,7 +225,8 @@ export class Rule {
         }
 
         if (this.allowedMimes.length > 0) {
-            for (const file of files) {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 if (!matchesMimeRule(file, this.allowedMimes)) {
                     return {
                         success: false,
@@ -210,18 +240,3 @@ export class Rule {
     }
 }
 
-export const fileUploadMiddleware = (store: FileStore) => (ctx: any) => {
-    // Middleware logic to detect WireFile instances in component state
-    if (ctx['component:create'] || ctx['component:update']) {
-        const data = ctx['component:create'] || ctx['component:update'];
-        const component = data.component || data.instance;
-        
-        if (component) {
-            for (const key of Object.keys(component)) {
-                if (component[key] && component[key].__is_wire_file) {
-                    component[key] = new WireFile(component[key]);
-                }
-            }
-        }
-    }
-};

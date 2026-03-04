@@ -573,8 +573,8 @@ function canvasPointFromPointer(event: PointerEvent, canvas: HTMLCanvasElement):
 }
 
 function emitCanvasInput(binding: CanvasBinding, payload: WireCanvasInput) {
-    Kirewire.$emit("canvas:input", payload);
-    Kirewire.$emit(`canvas:input:${binding.channel}`, payload);
+    Kirewire.emit("canvas:input", payload);
+    Kirewire.emit(`canvas:input:${binding.channel}`, payload);
 
     if (!binding.method) return;
     const root = findComponentRoot(binding.componentId);
@@ -779,11 +779,11 @@ Kirewire.directive("canvas", ({ el, expression, wire }) => {
     bindCanvas(el, parsed.channel, parsed.method, componentId, readRootState(root));
 });
 
-Kirewire.$on("wire:ready", () => {
+Kirewire.on("wire:ready", () => {
     bootstrapCanvases(document);
 });
 
-Kirewire.$on("component:update", (payload) => {
+Kirewire.on("component:update", (payload) => {
     const componentId = String(payload?.id || "");
     if (!componentId) return;
 
@@ -804,7 +804,7 @@ Kirewire.$on("component:update", (payload) => {
     }
 });
 
-Kirewire.$on("canvas", (payload) => {
+Kirewire.on("canvas", (payload) => {
     const channel = parseChannel(toRecord(payload).channel);
     if (!channel) return;
 
@@ -842,7 +842,7 @@ const canvasApi: WireCanvasApi = {
     },
     emit(channel, payload = {}) {
         if (!CHANNEL_PATTERN.test(channel)) return;
-        Kirewire.$emit("canvas", { ...payload, channel });
+        Kirewire.emit("canvas", { ...payload, channel });
     },
 };
 

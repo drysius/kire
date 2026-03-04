@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "downlevelIteration":true,
     "rootDir": "src",
     "outDir": "dist",
     "baseUrl": ".",

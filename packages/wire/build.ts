@@ -1,13 +1,21 @@
 import { $ } from "bun";
-import { existsSync, mkdirSync, renameSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
  * Script to build the client-side Wire runtime.
  */
 const outDir = join(import.meta.dir, "dist/client");
+const esmDir = join(import.meta.dir, "dist/esm");
+const cjsDir = join(import.meta.dir, "dist/cjs");
 if (!existsSync(outDir)) {
     mkdirSync(outDir, { recursive: true });
+}
+if (!existsSync(esmDir)) {
+    mkdirSync(esmDir, { recursive: true });
+}
+if (!existsSync(cjsDir)) {
+    mkdirSync(cjsDir, { recursive: true });
 }
 
 console.log("🚀 Building Wire Client (Web)...");
@@ -35,6 +43,23 @@ try {
         console.error("❌ Wire Client build failed!");
         process.exit(1);
     }
+
+    const esm = await $`bun build ./src/index.ts --outdir ${esmDir} --format esm --target node --packages external`;
+    if (esm.exitCode !== 0) {
+        console.error("❌ Wire server ESM build failed!");
+        process.exit(1);
+    }
+
+    const cjs = await $`bun build ./src/index.ts --outdir ${cjsDir} --format cjs --target node --packages external`;
+    if (cjs.exitCode !== 0) {
+        console.error("❌ Wire server CJS build failed!");
+        process.exit(1);
+    }
+
+    writeFileSync(join(esmDir, "package.json"), JSON.stringify({ type: "module" }));
+    writeFileSync(join(cjsDir, "package.json"), JSON.stringify({ type: "commonjs" }));
+
+    console.log("✅ Wire Server built successfully at dist/esm and dist/cjs");
 } catch (error) {
     console.error("❌ Error during build:", error);
     process.exit(1);

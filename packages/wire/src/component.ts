@@ -1,5 +1,5 @@
 import type { Kire, KireRendered } from "kire";
-import { Rule as FileRule, WireFile } from "./features/file-upload";
+import { WireProperty } from "./wire-property";
 import {
     type ComponentRuleDescriptor,
     type ValidationResult,
@@ -8,6 +8,11 @@ import {
     validateRuleString,
     validateTypeBoxSchema,
 } from "./validation/rule";
+
+export type WireEffect = {
+    type: string;
+    payload: any;
+};
 
 /**
  * Base Component class for Kirewire.
@@ -37,8 +42,11 @@ export abstract class Component {
         let proto = Object.getPrototypeOf(this);
         while (proto && proto !== Object.prototype) {
             const descriptors = Object.getOwnPropertyDescriptors(proto);
-            for (const [key, descriptor] of Object.entries(descriptors)) {
+            const keys = Object.keys(descriptors);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
                 if (key === "constructor" || key in locals) continue;
+                const descriptor = descriptors[key];
                 if (typeof descriptor.get === "function") {
                     try {
                         locals[key] = (this as any)[key];
@@ -87,7 +95,6 @@ export abstract class Component {
             string,
             | string
             | ComponentRuleDescriptor
-            | FileRule
             | ((value: any, state?: Record<string, any>) => boolean | string | undefined)
             | any[]
         >,
@@ -122,39 +129,33 @@ export abstract class Component {
      */
     protected __errors: Record<string, string> = {};
 
-    private static readonly __completedUpload = {
-        progress: 100,
-        percent: 100,
-        loaded: 0,
-        total: 0,
-    };
-
     /**
      * Internal tracking of side effects to be sent to the client.
      */
-    public __effects = {
-        events: [] as Array<{ name: string, params: any[] }>,
-        redirect: null as string | null,
-        streams: [] as Array<{ target: string, content: string, method: string }>
-    };
+    public __effects: Array<WireEffect> = [];
 
     /**
      * Resets all pending effects.
      */
     public $clearEffects() {
-        this.__effects.events = [];
-        this.__effects.redirect = null;
-        this.__effects.streams = [];
+        this.__effects = [];
+    }
+
+    /**
+     * Emits an effect to the browser.
+     */
+    public $effect(type: string, payload: any) {
+        this.__effects.push({ type, payload });
     }
 
     /**
      * Emits an event to the browser and other components on the same page.
      */
     public emit(name: string, ...params: any[]) {
-        this.__effects.events.push({ name, params });
-        // Also trigger internal server-side emit if wire instance is available
+        this.$effect("event", { name, params });
+        // Trigger internal server-side emit if wire instance is available
         if ((this as any).$wire_instance) {
-            (this as any).$wire_instance.$emit(`event:${name}`, { params, sourceId: this.$id });
+            (this as any).$wire_instance.emit(`event:${name}`, { params, sourceId: this.$id });
         }
     }
 
@@ -164,7 +165,7 @@ export abstract class Component {
      * Redirects the user to a new URL.
      */
     public redirect(url: string) {
-        this.__effects.redirect = url;
+        this.$effect("redirect", url);
     }
 
     public $redirect(url: string) { this.redirect(url); }
@@ -175,13 +176,9 @@ export abstract class Component {
     public stream(
         target: string,
         content: string,
-        methodOrReplace: 'update' | 'append' | 'prepend' | boolean = 'update',
-        legacyMethod?: 'update' | 'append' | 'prepend'
+        method: 'update' | 'append' | 'prepend' = 'update'
     ) {
-        const method = typeof methodOrReplace === "boolean"
-            ? (legacyMethod || 'update')
-            : methodOrReplace;
-        this.__effects.streams.push({ target, content, method });
+        this.$effect("stream", { target, content, method });
     }
 
     public $stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
@@ -199,34 +196,23 @@ export abstract class Component {
 
     /**
      * Fills component state from serialized client payload while preserving
-     * special runtime objects like WireBroadcast and WireFile.
+     * specialized WireProperty objects.
      */
     public fill(state: Record<string, any>) {
-        for (const [key, value] of Object.entries(state || {})) {
+        if (!state) return;
+        const keys = Object.keys(state);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
             if (!(key in this)) continue;
 
             const current = (this as any)[key];
+            const value = state[key];
 
-            // Never replace broadcast instances with plain objects from the client.
-            if (this.isBroadcastLike(current)) continue;
-
-            // Keep WireFile instances and refresh from serialized payload.
-            if (
-                this.isWireFileLike(current) &&
-                value &&
-                typeof value === "object" &&
-                ((value as any).__is_wire_file || (value as any)._wire_type === "WireFile")
-            ) {
-                (this as any)[key] = this.normalizeIncomingValue(current, value);
-                continue;
+            if (current instanceof WireProperty) {
+                current.hydrate(value);
+            } else {
+                (this as any)[key] = value;
             }
-
-            if (typeof current === "string" && value && typeof value === "object") {
-                (this as any)[key] = "";
-                continue;
-            }
-
-            (this as any)[key] = value;
         }
     }
 
@@ -234,49 +220,28 @@ export abstract class Component {
      * Returns only serializable/public state for hydration roundtrips.
      */
     public getPublicState(): Record<string, any> {
-        const state: Record<string, any> = {};
-        for (const key of Object.keys(this as any)) {
+        const state: Record<string, any> = Object.create(null);
+        const keys = Object.keys(this);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i];
+            if (key.charCodeAt(0) === 36 || key.charCodeAt(0) === 95) continue; // Skip $ and _
+            
             const value = (this as any)[key];
-            if (key.startsWith("$") || key.startsWith("_")) continue;
             if (typeof value === "function") continue;
-            if (this.isBroadcastLike(value)) continue;
-            state[key] = value;
+            
+            if (value instanceof WireProperty) {
+                state[key] = value.dehydrate();
+            } else {
+                state[key] = value;
+            }
         }
         return state;
     }
 
-    protected isBroadcastLike(value: any): boolean {
-        return !!value
-            && typeof value === "object"
-            && typeof value.hydrate === "function"
-            && typeof value.update === "function"
-            && typeof value.getChannel === "function";
-    }
-
-    protected isWireFileLike(value: any): boolean {
-        return !!value
-            && typeof value === "object"
-            && (
-                (value as any).__is_wire_file === true ||
-                (
-                    Array.isArray((value as any).files)
-                    && typeof (value as any).populate === "function"
-                )
-            );
-    }
-
     protected normalizeIncomingValue(current: any, value: any): any {
-        if (
-            value &&
-            typeof value === "object" &&
-            ((value as any).__is_wire_file || (value as any)._wire_type === "WireFile")
-        ) {
-            return new WireFile({
-                id: (value as any).id || "",
-                name: (value as any).name || "",
-                size: Number((value as any).size || 0),
-                mime: (value as any).mime || "",
-            });
+        if (current instanceof WireProperty) {
+            current.hydrate(value);
+            return current;
         }
         return value;
     }
@@ -297,13 +262,14 @@ export abstract class Component {
             return validateRuleString(this.normalizeValidationValue(value), validator);
         }
 
-        if (validator instanceof FileRule) {
-            const result = validator.validate(value);
-            if (result.success) return { success: true };
-            return { success: false, error: result.errors[0] || "Invalid file." };
-        }
-
         if (validator && typeof validator === "object") {
+            // Check for file rule or other specialized validators via duck typing or instanceof
+            if (typeof validator.validate === "function") {
+                const result = validator.validate(value);
+                if (result.success) return { success: true };
+                return { success: false, error: result.errors?.[0] || "Invalid." };
+            }
+
             if ("ruleStr" in validator && "schema" in validator) {
                 const helper = validator as ComponentRuleDescriptor;
                 return validateRuleString(this.normalizeValidationValue(value), helper.ruleStr, helper.message);
@@ -318,9 +284,8 @@ export abstract class Component {
     }
 
     private normalizeValidationValue(value: any): any {
-        if (this.isWireFileLike(value)) {
-            const hasFileMeta = Boolean((value as any).id || (value as any).name);
-            return hasFileMeta ? value : "";
+        if (value instanceof WireProperty) {
+            return value.dehydrate();
         }
         return value;
     }
@@ -332,11 +297,11 @@ export abstract class Component {
 
         const parts = path.split(".");
         let current: any = this;
-        for (const part of parts) {
+        for (let i = 0; i < parts.length; i++) {
             if (current === undefined || current === null) {
                 return undefined;
             }
-            current = current[part];
+            current = current[parts[i]];
         }
         return current;
     }
@@ -358,3 +323,4 @@ export abstract class Component {
      */
     abstract render(): KireRendered;
 }
+

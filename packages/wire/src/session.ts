@@ -64,6 +64,20 @@ export class SessionManager {
         return page;
     }
 
+    public hasActiveSession(userId: string): boolean {
+        const session = this.sessions.get(userId);
+        if (!session) return false;
+        if (session.expireAt && Date.now() > session.expireAt) return false;
+        return true;
+    }
+
+    public hasActivePage(userId: string, pageId: string): boolean {
+        const session = this.sessions.get(userId);
+        if (!session) return false;
+        if (session.expireAt && Date.now() > session.expireAt) return false;
+        return session.pages.has(pageId);
+    }
+
     public getUserIdByPublicId(publicId: string): string | undefined {
         return this.findByPublicId.get(publicId);
     }

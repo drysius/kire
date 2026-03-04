@@ -4,8 +4,9 @@ import { Component } from "./component";
 import { HttpAdapter } from "./adapters/http";
 import { SocketAdapter } from "./adapters/socket";
 import { FileStore } from "./features/file-store";
-import { fileUploadMiddleware, WireFile, Rule } from "./features/file-upload";
+import { WireFile, Rule } from "./features/file-upload";
 import { WireBroadcast, type WireBroadcastOptions } from "./features/wire-broadcast";
+import { validateRuleString as validateRule, type ValidationResult } from "./validation/rule";
 
 export class KirewirePlugin {
     public wire!: Kirewire;
@@ -15,26 +16,21 @@ export class KirewirePlugin {
         this.options = options;
     }
 
-    public load(kire: Kire, options: KirewireOptions) {
-        this.wire = new Kirewire(options);
+    public load(kire: Kire) {
+        this.wire = new Kirewire(this.options);
+        (kire as any).$wire = this.wire;
         
         const setup = (instance: any) => {
             instance.wire = this.wire;
-            instance.wireRegister = this.wire.wireRegister.bind(this.wire);
-            instance.wireRequest = async (req: any) => {
-                if (this.wire.options.adapter && this.wire.options.adapter.handleRequest) {
-                    return await this.wire.options.adapter.handleRequest(
-                        { method: req.method || 'POST', url: req.url, body: req.body, signal: req.signal }, 
-                        req.userId || 'guest', 
-                        req.sessionId || 'default'
-                    );
-                }
-                return { status: 500, result: { error: 'No adapter configured' } };
-            };
+            instance.$wire = this.wire;
         };
 
         setup(kire);
         kire.onFork(setup);
+
+        // Register default properties
+        this.wire.class('file', WireFile);
+        this.wire.class('broadcast', WireBroadcast);
 
         kire.directive({
             name: 'wire:id',
@@ -45,11 +41,8 @@ export class KirewirePlugin {
                 api.write(`{
                     const $state = ${state};
                     const $id = ${id};
-                    const $sessionId = $globals.wireKey || "default"; 
-                    
-                    const $checksum = this.wire.generateChecksum($state, $sessionId);
                     const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
-                    $kire_response += \` wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}"\`;
+                    $kire_response += \` wire:id="\${$id}" wire:state='\${$stateStr}'\`;
                 }`);
             }
         });
@@ -59,20 +52,33 @@ export class KirewirePlugin {
             onCall: (api) => {
                 api.write(`{
                     const $pageId = $globals.pageId || 'default-page';
-                    const $busDelay = ${this.wire.options.busDelay || 100};
+                    const $busDelay = ${this.wire.options.bus_delay || 100};
+                    const $transport = $globals.sharedTransport || 'sse';
+                    const $wireUrl = (this.wire.options.adapter && typeof this.wire.options.adapter.getClientUrl === 'function')
+                        ? this.wire.options.adapter.getClientUrl()
+                        : '/_wire';
+                    const $uploadUrl = (this.wire.options.adapter && typeof this.wire.options.adapter.getUploadUrl === 'function')
+                        ? this.wire.options.adapter.getUploadUrl()
+                        : ($wireUrl.replace(/\\/+$/, '') + '/upload');
                     $kire_response += \`
                         <script type="module" src="/dist/client/wire.js"></script>
                         <script type="module">
+                            window.__WIRE_INITIAL_CONFIG__ = Object.assign({}, window.__WIRE_INITIAL_CONFIG__ || {}, {
+                                pageId: \${JSON.stringify($pageId)},
+                                url: \${JSON.stringify($wireUrl)},
+                                uploadUrl: \${JSON.stringify($uploadUrl)},
+                                transport: \${JSON.stringify($transport)},
+                                busDelay: \${Number($busDelay) || 0}
+                            });
                             const init = () => {
                                 if (window.Kirewire && window.Alpine) {
+                                    if (window.Kirewire.configure) {
+                                        window.Kirewire.configure(window.__WIRE_INITIAL_CONFIG__ || {});
+                                    }
                                     Kirewire.start(window.Alpine);
                                     if (window.Kirewire.bus) {
-                                        window.Kirewire.bus.setDelay(\${$busDelay});
+                                        window.Kirewire.bus.setDelay(Number(\${$busDelay}) || 0);
                                     }
-                                    new Kirewire.HttpClientAdapter({ 
-                                        url: '/_wire', 
-                                        pageId: '\${$pageId}' 
-                                    });
                                 } else {
                                     setTimeout(init, 10);
                                 }
@@ -97,7 +103,6 @@ export class KirewirePlugin {
                     const $locals = ${localsExpr};
                     const $userId = $globals.user?.id || 'guest';
                     const $pageId = $globals.pageId || 'default-page';
-                    const $sessionId = $globals.wireKey || 'default-session';
 
                     const $componentClass = this.wire.components.get($name);
                     if (!$componentClass) {
@@ -110,52 +115,27 @@ export class KirewirePlugin {
                         $instance.$id = $id;
                         $instance.$kire = this;
                         $instance.$wire_instance = this.wire;
-                        $instance.$wire_session_id = $sessionId;
-                        $instance.$wire_user_id = $userId;
-                        $instance.$wire_page_id = $pageId;
-                        $instance.$wire_scope_id = $userId + ":" + $pageId;
                         
-                        // Centralized updater for SSE
-                        const $emitUpdate = async () => {
-                            const $state = typeof $instance.getPublicState === 'function'
-                                ? $instance.getPublicState()
-                                : (() => {
-                                    const $fallback = {};
-                                    for (const key of Object.keys($instance)) {
-                                        const value = $instance[key];
-                                        const broadcastLike = value
-                                            && typeof value === 'object'
-                                            && typeof value.hydrate === 'function'
-                                            && typeof value.update === 'function'
-                                            && typeof value.getChannel === 'function';
-                                        if (!key.startsWith('$') && !key.startsWith('_') && typeof value !== 'function' && !broadcastLike) {
-                                            $fallback[key] = value;
-                                        }
-                                    }
-                                    return $fallback;
-                                })();
-                            const $checksum = this.wire.generateChecksum($state, $sessionId);
-                            const $rendered = await $instance.render();
-                            const $html = $rendered.toString();
-                            const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
-                            const $fullHtml = \`<div wire:id="\${$id}" wire:state='\${$stateStr}' wire:checksum="\${$checksum}">\${$html}</div>\`;
-
-                            await this.wire.$emit('component:update', {
-                                userId: $userId, pageId: $pageId, id: $id, 
-                                html: $fullHtml,
-                                state: $state,
-                                checksum: $checksum
-                            });
-                        };
-
                         // Register listeners for cross-component communication
                         if ($instance.listeners) {
                             for (const [event, method] of Object.entries($instance.listeners)) {
-                                this.wire.$on(\`event:\${event}\`, async (data) => {
+                                this.wire.on(\`event:\${event}\`, async (data) => {
                                     if (data.sourceId !== $id) {
                                         if (typeof $instance[method] === 'function') {
                                             await $instance[method](...data.params);
-                                            await $emitUpdate();
+                                            
+                                            const $state = $instance.getPublicState();
+                                            const $rendered = await $instance.render();
+                                            const $html = $rendered.toString();
+                                            const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
+                                            const $fullHtml = \`<div wire:id="\${$id}" wire:state='\${$stateStr}'>\${$html}</div>\`;
+
+                                            await this.wire.emit('component:update', {
+                                                userId: $userId, pageId: $pageId, id: $id, 
+                                                html: $fullHtml,
+                                                state: $state,
+                                                effects: $instance.__effects
+                                            });
                                         }
                                     }
                                 });
@@ -168,27 +148,10 @@ export class KirewirePlugin {
 
                         const $rendered = await $instance.render();
                         const $html = $rendered.toString();
-                        const $finalState = typeof $instance.getPublicState === 'function'
-                            ? $instance.getPublicState()
-                            : (() => {
-                                const $fallback = {};
-                                for (const key of Object.keys($instance)) {
-                                    const value = $instance[key];
-                                    const broadcastLike = value
-                                        && typeof value === 'object'
-                                        && typeof value.hydrate === 'function'
-                                        && typeof value.update === 'function'
-                                        && typeof value.getChannel === 'function';
-                                    if (!key.startsWith('$') && !key.startsWith('_') && typeof value !== 'function' && !broadcastLike) {
-                                        $fallback[key] = value;
-                                    }
-                                }
-                                return $fallback;
-                            })();
-                        const $finalChecksum = this.wire.generateChecksum($finalState, $sessionId);
+                        const $finalState = $instance.getPublicState();
                         const $finalStateStr = JSON.stringify($finalState).replace(/'/g, "&#39;");
 
-                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}' wire:checksum="\${$finalChecksum}">\${$html}</div>\`;
+                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}'>\${$html}</div>\`;
                     }
                 }`);
             }
@@ -207,4 +170,5 @@ export class PageComponent extends Component {
 }
 
 export const wirePlugin = KirewirePlugin;
-export { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, fileUploadMiddleware, WireFile, Rule, WireBroadcast, type WireBroadcastOptions };
+export { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule, type ValidationResult, type WireBroadcastOptions };
+export default { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule }

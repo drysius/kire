@@ -1,6 +1,28 @@
 import { Adapter } from "../adapter";
 import { randomUUID } from "node:crypto";
 import { FileStore } from "../features/file-store";
+import { WireProperty } from "../wire-property";
+
+type HandleRequestInput = {
+    method: string;
+    url: string;
+    body?: any;
+    signal?: AbortSignal;
+};
+
+type ActionPayload = {
+    id: string;
+    method: string;
+    params?: any[];
+    pageId?: string;
+};
+
+function normalizeRoute(route: string): string {
+    const value = String(route || "/_wire").trim();
+    if (!value) return "/_wire";
+    const withSlash = value.startsWith("/") ? value : `/${value}`;
+    return withSlash.replace(/\/+$/, "");
+}
 
 export class HttpAdapter extends Adapter {
     private route: string;
@@ -8,7 +30,7 @@ export class HttpAdapter extends Adapter {
 
     constructor(options: { route?: string, fileStore?: FileStore, tempDir?: string } = {}) {
         super();
-        this.route = options.route || '/_wire';
+        this.route = normalizeRoute(options.route || "/_wire");
         this.fileStore = options.fileStore || new FileStore(options.tempDir || "node_modules/.kirewire_uploads");
     }
 
@@ -16,58 +38,71 @@ export class HttpAdapter extends Adapter {
         console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
     }
 
+    public getClientUrl() {
+        return this.route;
+    }
+
+    public getUploadUrl() {
+        return `${this.route}/upload`;
+    }
+
     /**
      * Entry point for requests. Handles single, batch actions or SSE.
      */
-    public async handleRequest(req: { method: string, url: string, body?: any, signal?: AbortSignal }, userId: string, sessionId: string) {
-        const url = new URL(req.url, 'http://localhost');
+    public async handleRequest(req: HandleRequestInput, userId: string, _sessionId: string) {
+        const url = new URL(req.url, "http://localhost");
         
-        // SSE implementation remains the same...
-        if (req.method === 'GET' && url.pathname.endsWith('/sse')) {
-            // ... (rest of SSE logic)
-            return this.handleSse(req, userId);
+        if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
+            const pageId = String(url.searchParams.get("pageId") || "");
+            return this.handleSse(req, userId, pageId);
         }
 
-        // Handle multipart uploads used by wire:model.live on file inputs.
+        if (req.method === "GET" && url.pathname === `${this.route}/session`) {
+            const pageId = String(url.searchParams.get("pageId") || "");
+            return this.handleSessionStatus(userId, pageId);
+        }
+
         if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
             return await this.handleUpload(req.body);
         }
 
+        if (req.method !== "POST") {
+            return { status: 405, result: { error: "Method not allowed" } };
+        }
+
         const reqBody = req.body;
-        if (!reqBody) return { status: 400, result: { error: 'Empty request body' } };
+        if (!reqBody) return { status: 400, result: { error: "Empty request body" } };
 
         const actions = reqBody.batch && Array.isArray(reqBody.batch) ? reqBody.batch : [reqBody];
         const pageId = String(reqBody.pageId || actions[0]?.pageId || "default-page");
-        const results = [];
+        const results: Array<Record<string, any>> = [];
         const modifiedComponents = new Set<string>();
         const preparedComponents = new Set<string>();
         const touchedBroadcastRooms = new Set<string>();
         const modifiedRefs = new Set<string>();
 
         // 1. Execute all actions in order
-        for (const action of actions) {
+        for (let i = 0; i < actions.length; i++) {
+            const action = actions[i] as ActionPayload;
             try {
                 const { id, method, params } = action;
                 const page = this.wire.sessions.getPage(userId, pageId);
                 const instance = page.components.get(id) as any;
 
                 if (!instance) throw new Error(`Component ${id} not found.`);
-                if (typeof instance[method] !== "function") throw new Error(`Method "${method}" not found on component ${id}.`);
-                const callParams = Array.isArray(params) ? params : [];
-
+                
                 // Reset side effects only once per component in each batch.
                 if (!preparedComponents.has(id)) {
                     preparedComponents.add(id);
                     if (instance.$clearEffects) instance.$clearEffects();
                 }
 
-                // Execute logic
-                const methodResult = await instance[method](...callParams);
+                await this.invokeComponentAction(instance, method, params);
+                
                 modifiedComponents.add(id);
-
-                results.push({ id, success: true, result: methodResult });
+                results.push({ id, success: true });
             } catch (e: any) {
-                results.push({ id: action.id, error: e.message });
+                results.push({ id: action?.id, error: e?.message || "Unknown error" });
             }
         }
 
@@ -77,31 +112,30 @@ export class HttpAdapter extends Adapter {
             const instance = page.components.get(id) as any;
             if (!instance) continue;
 
-            const payload = await this.renderComponentPayload(id, instance, sessionId);
-            for (const roomId of this.getBroadcastRoomIds(instance)) {
-                touchedBroadcastRooms.add(roomId);
-            }
+            const payload = await this.renderComponentPayload(id, instance);
+            const roomIds = this.getBroadcastRoomIds(instance);
+            for (let j = 0; j < roomIds.length; j++) touchedBroadcastRooms.add(roomIds[j]);
 
             // Emit single update per component
-            await this.wire.$emit('component:update', {
+            await this.wire.emit("component:update", {
                 userId, pageId, id,
                 ...payload
             });
             modifiedRefs.add(this.buildComponentRef(userId, pageId, id));
 
-            // Attach only side-effects to the final action result.
-            // DOM/state updates are delivered via SSE to keep action responses lightweight.
             for (let i = results.length - 1; i >= 0; i--) {
                 if (results[i].id === id && !results[i].error) {
                     Object.assign(results[i], {
-                        effects: instance.__effects
+                        effects: instance.__effects,
+                        state: payload.state,
+                        html: payload.html
                     });
                     break;
                 }
             }
         }
 
-        // 3. Refresh components bound to changed broadcast rooms (cross-session via same SSE route).
+        // 3. Refresh components bound to changed broadcast rooms
         if (touchedBroadcastRooms.size > 0) {
             await this.emitBroadcastUpdatesForAllPages({
                 roomIds: touchedBroadcastRooms,
@@ -111,7 +145,7 @@ export class HttpAdapter extends Adapter {
 
         return {
             status: 200,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { "Content-Type": "application/json" },
             result: reqBody.batch ? results : results[0]
         };
     }
@@ -119,82 +153,125 @@ export class HttpAdapter extends Adapter {
     private async handleUpload(body: any) {
         const files = this.extractFilesFromBody(body);
         if (!files.length) {
-            return {
-                status: 400,
-                headers: { "Content-Type": "application/json" },
-                result: { error: "No files uploaded" },
-            };
+            return { status: 400, result: { error: "No files uploaded" } };
         }
 
-        const file = files[0]!;
-        const name = String((file as any).name || "upload.bin");
-        const size = Number((file as any).size || 0);
-        const mime = String((file as any).type || "application/octet-stream");
-        let id = randomUUID();
+        const uploaded: Array<{ id: string; name: string; size: number; mime: string; type: string }> = [];
 
-        try {
-            if (typeof (file as any).arrayBuffer === "function") {
-                const buffer = Buffer.from(await (file as any).arrayBuffer());
-                id = this.fileStore.store(name, buffer);
-            }
-        } catch (e) {
-            // Fallback to in-memory metadata only if storage fails.
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i]!;
+            const name = String((file as any).name || "upload.bin");
+            const size = Number((file as any).size || 0);
+            const mime = String((file as any).type || "application/octet-stream");
+            let id = randomUUID();
+
+            try {
+                if (typeof (file as any).arrayBuffer === "function") {
+                    const buffer = Buffer.from(await (file as any).arrayBuffer());
+                    id = this.fileStore.store(name, buffer);
+                }
+            } catch {}
+
+            uploaded.push({ id, name, size, mime, type: mime });
         }
 
-        return {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-            result: { id, name, size, mime },
-        };
+        return { status: 200, result: { files: uploaded } };
     }
 
     private extractFilesFromBody(body: any): any[] {
         if (!body) return [];
-
-        // Browser/FormData request.
         if (typeof FormData !== "undefined" && body instanceof FormData) {
-            const fromFilesArray = body.getAll("files[]");
-            const fromFiles = body.getAll("files");
-            return [...fromFilesArray, ...fromFiles].filter(Boolean);
+            return [...body.getAll("files[]"), ...body.getAll("files")].filter(Boolean);
         }
-
-        // Server frameworks may parse multipart into plain objects.
         if (body && typeof body === "object") {
-            const candidates = [
-                (body as any)["files[]"],
-                (body as any).files,
-                (body as any).file,
-            ];
+            const candidates = [body["files[]"], body.files, body.file];
             const out: any[] = [];
-            for (const candidate of candidates) {
-                if (!candidate) continue;
-                if (Array.isArray(candidate)) out.push(...candidate);
-                else out.push(candidate);
+            for (let i = 0; i < candidates.length; i++) {
+                const c = candidates[i];
+                if (!c) continue;
+                if (Array.isArray(c)) out.push(...c);
+                else out.push(c);
             }
             return out.filter(Boolean);
         }
-
         return [];
     }
 
-    private handleSse(req: any, userId: string) {
+    private async invokeComponentAction(instance: any, method: string, params: any) {
+        const name = String(method || "").trim();
+        const callParams = Array.isArray(params) ? params : [];
+
+        if (name === "$set") {
+            instance.$set(callParams[0], callParams[1]);
+            return;
+        }
+
+        if (name === "$refresh" || name === "$commit") {
+            return;
+        }
+
+        if (!name) {
+            throw new Error("Action method is required.");
+        }
+
+        if (name.startsWith("_")) {
+            throw new Error(`Method "${name}" is not callable.`);
+        }
+
+        if (name.startsWith("$")) {
+            throw new Error(`Internal method "${name}" is not callable.`);
+        }
+
+        if (typeof instance[name] !== "function") {
+            throw new Error(`Method "${name}" not found on component ${instance.$id}.`);
+        }
+
+        await instance[name](...callParams);
+    }
+
+    private handleSse(req: HandleRequestInput, userId: string, pageId?: string) {
         const encoder = new TextEncoder();
         const stream = new ReadableStream({
             start: (controller) => {
                 const send = (data: any) => {
                     try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`)); } catch (e) {}
                 };
-                controller.enqueue(encoder.encode(': connected\n\n'));
-                const cleanup = this.wire.$on('component:update', (data) => {
-                    if (data.userId === userId) send({ type: 'update', ...data });
+                controller.enqueue(encoder.encode(": connected\n\n"));
+                const cleanup = this.wire.on("component:update", (data: any) => {
+                    if (data.userId !== userId) return;
+                    if (pageId && data.pageId !== pageId) return;
+                    send({ type: "update", ...data });
                 });
                 const keepAlive = setInterval(() => {
-                    try { controller.enqueue(encoder.encode(': keep-alive\n\n')); } catch (e) { clearInterval(keepAlive); cleanup(); }
+                    try { controller.enqueue(encoder.encode(": keep-alive\n\n")); } catch (e) { clearInterval(keepAlive); cleanup(); }
                 }, 15000);
                 req.signal?.addEventListener('abort', () => { clearInterval(keepAlive); cleanup(); try { controller.close(); } catch(e) {} });
             }
         });
-        return { status: 200, headers: { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' }, result: stream };
+        return {
+            status: 200,
+            headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                Connection: "keep-alive",
+            },
+            result: stream,
+        };
+    }
+
+    private handleSessionStatus(userId: string, pageId?: string) {
+        const active = this.wire.sessions.hasActiveSession(userId);
+        const pageActive = pageId ? this.wire.sessions.hasActivePage(userId, pageId) : active;
+        const status = active && pageActive ? 200 : 410;
+
+        return {
+            status,
+            headers: { "Content-Type": "application/json" },
+            result: {
+                active,
+                pageActive,
+            },
+        };
     }
 
     private async emitBroadcastUpdatesForAllPages(params: {
@@ -204,110 +281,73 @@ export class HttpAdapter extends Adapter {
         const { roomIds, skipRefs } = params;
         const activePages = this.wire.sessions.getActivePages();
 
-        for (const activePage of activePages) {
-            const { userId, pageId, page } = activePage;
+        for (let i = 0; i < activePages.length; i++) {
+            const { userId, pageId, page } = activePages[i];
+            const entries = Array.from(page.components.entries());
 
-            for (const [id, instance] of page.components.entries()) {
+            for (let j = 0; j < entries.length; j++) {
+                const [id, instance] = entries[j];
                 const ref = this.buildComponentRef(userId, pageId, id);
                 if (skipRefs.has(ref)) continue;
-                if (!this.hasMatchingBroadcastRoom(instance, roomIds)) continue;
+                
+                const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
+                if (matchedRooms.length === 0) continue;
 
-                // Avoid replaying stale effects from previous requests.
-                if (typeof instance.$clearEffects === "function") {
-                    instance.$clearEffects();
+                if (typeof instance.$clearEffects === "function") instance.$clearEffects();
+
+                // Call serverHydrate on each broadcast property
+                const keys = Object.keys(instance);
+                for (let k = 0; k < keys.length; k++) {
+                    const val = instance[keys[k]];
+                    if (val instanceof WireProperty && val.__wire_type === 'broadcast') {
+                        const roomId = (val as any).getRoomId?.();
+                        if (roomIds.has(roomId)) {
+                            (val as any).serverHydrate?.(instance);
+                        }
+                    }
                 }
 
-                this.hydrateBroadcastRooms(instance, roomIds);
-                const targetSessionId = String((instance as any).$wire_session_id || "default-session");
-                const payload = await this.renderComponentPayload(id, instance, targetSessionId);
-                await this.wire.$emit("component:update", {
-                    userId,
-                    pageId,
-                    id,
-                    ...payload,
-                });
+                const payload = await this.renderComponentPayload(id, instance);
+                await this.wire.emit("component:update", { userId, pageId, id, ...payload });
             }
         }
     }
 
-    private async renderComponentPayload(id: string, instance: any, sessionId: string) {
-        const state = this.getPublicState(instance);
-        const checksum = this.wire.generateChecksum(state, sessionId);
+    private async renderComponentPayload(id: string, instance: any) {
+        const state = instance.getPublicState();
         const rendered = await instance.render();
         const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-        const html = `<div wire:id="${id}" wire:state='${stateStr}' wire:checksum="${checksum}">${rendered.toString()}</div>`;
-        return {
-            html,
-            state,
-            checksum,
-            effects: instance.__effects,
-        };
+        const html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
+        return { html, state, effects: instance.__effects };
     }
 
     private getBroadcastRoomIds(instance: any): string[] {
         const out: string[] = [];
-        for (const value of Object.values(instance || {})) {
-            if (!this.isBroadcastLike(value)) continue;
-            const roomId = typeof value.getRoomId === "function"
-                ? String(value.getRoomId() || "")
-                : String(value.getChannel?.() || "");
-            if (!roomId) continue;
-            out.push(roomId);
+        const keys = Object.keys(instance);
+        for (let i = 0; i < keys.length; i++) {
+            const value = instance[keys[i]];
+            if (value instanceof WireProperty && value.__wire_type === 'broadcast') {
+                const roomId = value.getRoomId();
+                if (roomId) out.push(roomId);
+            }
         }
         return out;
     }
 
-    private hasMatchingBroadcastRoom(instance: any, roomIds: Set<string>): boolean {
-        for (const value of Object.values(instance || {})) {
-            if (!this.isBroadcastLike(value)) continue;
-            const roomId = typeof value.getRoomId === "function"
-                ? String(value.getRoomId() || "")
-                : String(value.getChannel?.() || "");
-            if (roomIds.has(roomId)) return true;
+    private getMatchingBroadcastRooms(instance: any, roomIds: Set<string>): string[] {
+        const out: string[] = [];
+        const keys = Object.keys(instance);
+        for (let i = 0; i < keys.length; i++) {
+            const value = instance[keys[i]];
+            if (value instanceof WireProperty && value.__wire_type === 'broadcast') {
+                const roomId = value.getRoomId();
+                if (roomId && roomIds.has(roomId)) out.push(roomId);
+            }
         }
-        return false;
-    }
-
-    private hydrateBroadcastRooms(instance: any, roomIds: Set<string>) {
-        for (const value of Object.values(instance || {})) {
-            if (!this.isBroadcastLike(value)) continue;
-            const roomId = typeof value.getRoomId === "function"
-                ? String(value.getRoomId() || "")
-                : String(value.getChannel?.() || "");
-            if (!roomIds.has(roomId)) continue;
-            value.hydrate(instance, value.getChannel?.());
-        }
-    }
-
-    private isBroadcastLike(value: any): boolean {
-        return !!value
-            && typeof value === "object"
-            && typeof value.hydrate === "function"
-            && typeof value.update === "function"
-            && typeof value.getChannel === "function";
+        return out;
     }
 
     private buildComponentRef(userId: string, pageId: string, id: string) {
         return `${userId}::${pageId}::${id}`;
-    }
-
-    public getPublicState(instance: any): any {
-        if (typeof instance.getPublicState === "function") {
-            return instance.getPublicState();
-        }
-
-        const state: any = {};
-        for (const key of Object.keys(instance)) {
-            const value = instance[key];
-            const broadcastLike = value
-                && typeof value === "object"
-                && typeof value.hydrate === "function"
-                && typeof value.update === "function"
-                && typeof value.getChannel === "function";
-            if (!key.startsWith('$') && !key.startsWith('_') && typeof value !== 'function' && !broadcastLike) {
-                state[key] = instance[key];
-            }
-        }
-        return state;
     }
 }

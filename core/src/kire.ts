@@ -382,8 +382,15 @@ export class Kire<Asyncronos extends boolean = true> {
     }
 
     public plugin<Options extends object>(plugin: KirePlugin<Options>, opts?: Partial<Options>) {
-        const merged = Object.assign({}, plugin.options, opts);
-        plugin.load(this, merged as Options); 
+        const baseOptions = (plugin as any).options || {};
+        const merged = Object.assign({}, baseOptions, opts);
+        
+        if (typeof plugin.load === 'function') {
+            plugin.load(this, merged as Options);
+        } else if (typeof plugin === 'function') {
+            (plugin as any)(this, merged);
+        }
+        
         return this;
     }
 
@@ -402,6 +409,10 @@ export class Kire<Asyncronos extends boolean = true> {
     public $global(key: string, value: any) { 
         this.$globals[key] = value; 
         return this; 
+    }
+
+    public $ctx(key: string, value: any) {
+        return this.$global(key, value);
     }
 
     public $prop(key: string, value: any) { 

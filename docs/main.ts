@@ -29,11 +29,13 @@ const app = new Elysia({
 
 void (async () => {
 	// register server components from glob pattern
-	kire.plugin(new wirePlugin({
+	const wire = new wirePlugin({
 		secret: "change-me-in-production",
 		bus_delay: 10,
 		adapter: useSocket ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" })
-	}));
+	});
+
+	kire.plugin(wire);
 
 	// add views namespace for .kire files
 	kire.namespace("views", path.join(appRoot, "views"));
@@ -41,8 +43,8 @@ void (async () => {
 	kire.namespace("components", path.join(appRoot, "views/components"));
 	kire.namespace("pages", path.join(appRoot, "views/pages"));
 
-	// register server components
-	await (kire as any).wireRegister("components/*.ts", appRoot);
+	// register server components using the new $wire instance
+	await (kire as any).$wire.wireRegister("components/*.ts", appRoot);
 
 	// Middleware to set Wired Context
 	app.derive({ as: "global" }, async (context) => {
@@ -100,7 +102,13 @@ void (async () => {
 
 	// Unified Wired Handler
 	app.all(`/_wire*`, async (context) => {
-        const res = await (context.kire as any).wireRequest({
+        const wireEngine = (context.kire as any).$wire || (context.kire as any).wire;
+        if (!wireEngine?.options?.adapter) {
+            context.set.status = 500;
+            return { error: "Wire adapter is not configured for this request." };
+        }
+
+        const res = await wireEngine.options.adapter.handleRequest({
             method: context.request.method,
             url: context.request.url,
             query: context.query,
@@ -108,7 +116,7 @@ void (async () => {
             userId: context.user.id,
             sessionId: context.wireKey,
             signal: context.request.signal
-        });
+        }, context.user.id, context.wireKey);
 
         const status = res.status || 200;
         const headers = (res.headers || {}) as Record<string, string>;
@@ -120,12 +128,13 @@ void (async () => {
 
         if (res.headers) {
             Object.entries(res.headers).forEach(([k, v]) => {
-                context.set.headers[k] = v;
+                context.set.headers[k] = v as any;
             });
         }
         context.set.status = status;
         return res.result;
 	});
+
 
 	app.listen(3000);
 	console.log(`[docs] serving wire assets from ${wireDistDir}`);

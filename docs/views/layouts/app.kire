@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="caramellatte">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,7 +17,7 @@
     <script>
         (() => {
             const STORAGE_KEY = "kire-docs-theme";
-            const LIGHT_THEME = "caramellatte";
+            const LIGHT_THEME = "light";
             const DARK_THEME = "business";
 
             const syncLabels = (theme) => {
@@ -54,6 +54,39 @@
     </script>
     @kirewire
     <style>
+        :root:has(input.theme-controller[value=light]:checked),
+        [data-theme="light"] {
+            color-scheme: light;
+            --color-base-100: oklch(98% 0 0);
+            --color-base-200: oklch(96% 0.001 286.375);
+            --color-base-300: oklch(92% 0.004 286.32);
+            --color-base-content: oklch(21% 0.006 285.885);
+            --color-primary: oklch(58% 0.233 277.117);
+            --color-primary-content: oklch(96% 0.018 272.314);
+            --color-secondary: oklch(62% 0.214 259.815);
+            --color-secondary-content: oklch(97% 0.014 254.604);
+            --color-accent: oklch(68% 0.169 237.323);
+            --color-accent-content: oklch(97% 0.013 236.62);
+            --color-neutral: oklch(44% 0.017 285.786);
+            --color-neutral-content: oklch(98% 0 0);
+            --color-info: oklch(68% 0.169 237.323);
+            --color-info-content: oklch(97% 0.013 236.62);
+            --color-success: oklch(72% 0.219 149.579);
+            --color-success-content: oklch(98% 0.018 155.826);
+            --color-warning: oklch(79% 0.184 86.047);
+            --color-warning-content: oklch(98% 0.026 102.212);
+            --color-error: oklch(64% 0.246 16.439);
+            --color-error-content: oklch(96% 0.015 12.422);
+            --radius-selector: 0.5rem;
+            --radius-field: 0.5rem;
+            --radius-box: 0.5rem;
+            --size-selector: 0.25rem;
+            --size-field: 0.25rem;
+            --border: 1px;
+            --depth: 1;
+            --noise: 0;
+        }
+
         :root {
             --docs-glow: color-mix(in oklab, oklch(78% 0.13 225) 28%, transparent);
             --docs-grid: color-mix(in oklab, oklch(22% 0.03 250) 10%, transparent);

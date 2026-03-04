@@ -14,6 +14,7 @@ class LLMSBuilder {
 		const possiblePatterns = [
 			join(normalizedPath, "src", "**", "*.ts"),
 			join(normalizedPath, "src", "**", "*.tsx"),
+			join(normalizedPath, "views", "**", "*.kire"),
 			join(normalizedPath, "lib", "**", "*.ts"),
 			join(normalizedPath, "web", "**", "*.ts"),
 			join(normalizedPath, "web", "**", "*.js"),

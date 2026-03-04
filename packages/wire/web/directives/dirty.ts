@@ -1,6 +1,6 @@
 import { Kirewire } from "../kirewire";
 
-Kirewire.directive('dirty', ({ el, modifiers, wire }) => {
+Kirewire.directive('dirty', ({ el, modifiers, wire, cleanup }) => {
     const componentId = wire.getComponentId(el);
     if (!componentId) return;
 
@@ -11,7 +11,7 @@ Kirewire.directive('dirty', ({ el, modifiers, wire }) => {
         el.style.display = 'none';
     }
 
-    wire.$on('component:dirty', (data) => {
+    const off = wire.$on('component:dirty', (data) => {
         if (data.id === componentId) {
             const isDirty = data.isDirty;
             if (modifiers.includes('class')) {
@@ -25,4 +25,6 @@ Kirewire.directive('dirty', ({ el, modifiers, wire }) => {
             }
         }
     });
+
+    cleanup(off);
 });

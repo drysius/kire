@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import type { Kire } from "kire";
+import { EventController } from "./event-controller";
 import { SessionManager } from "./session";
 import type { Component } from "./component";
+import type { WireProperty } from "./wire-property";
 
 export interface KirewireOptions {
     secret: string;
@@ -10,14 +11,15 @@ export interface KirewireOptions {
     adapter?: any;
 }
 
-export class Kirewire {
+export class Kirewire extends EventController {
     public components = new Map<string, typeof Component>();
+    public propertyClasses = new Map<string, new (...args: any[]) => WireProperty>();
     public sessions: SessionManager;
     private middlewares: Array<(ctx: any) => void> = [];
-    private events = new Map<string, Array<(data: any) => void>>();
     public secret: string;
 
     constructor(public options: KirewireOptions) {
+        super();
         this.secret = options.secret;
         const expireMs = typeof options.expire_session === 'string' 
             ? this.parseDuration(options.expire_session) 
@@ -26,37 +28,16 @@ export class Kirewire {
         this.sessions = new SessionManager(expireMs);
     }
 
+    /**
+     * Registers a specialized WireProperty class.
+     */
+    public class(name: string, PropertyClass: new (...args: any[]) => WireProperty) {
+        this.propertyClasses.set(name, PropertyClass);
+    }
+
     public generateChecksum(state: any, sessionId: string): string {
         const data = JSON.stringify(state) + sessionId + this.secret;
-        const hash = createHash("sha256").update(data).digest("hex");
-        // console.log(`[Kirewire] Checksum for session ${sessionId}: ${hash.substring(0, 8)}...`);
-        return hash;
-    }
-
-    public async $emit(event: string, data: any) {
-        const handlers = this.events.get(event);
-        const ctx = { [event]: data, kirewire: this };
-        for (const mw of this.middlewares) { mw(ctx); }
-        if (handlers) {
-            for (const handler of handlers) { await handler(data); }
-        }
-    }
-
-    public $on(event: string, callback: (data: any) => void): () => void {
-        const names = event.split(',').map(n => n.trim());
-        const unregisters: Array<() => void> = [];
-
-        for (const name of names) {
-            if (!this.events.has(name)) this.events.set(name, []);
-            const handlers = this.events.get(name)!;
-            handlers.push(callback);
-            unregisters.push(() => {
-                const idx = handlers.indexOf(callback);
-                if (idx !== -1) handlers.splice(idx, 1);
-            });
-        }
-
-        return () => unregisters.forEach(u => u());
+        return createHash("sha256").update(data).digest("hex");
     }
 
     public use(fn: (ctx: any) => void) {
@@ -78,7 +59,8 @@ export class Kirewire {
             let results: string[] = [];
             try {
                 const list = readdirSync(dir);
-                for (const file of list) {
+                for (let i = 0; i < list.length; i++) {
+                    const file = list[i];
                     const path = join(dir, file);
                     const stat = statSync(path);
                     if (stat && stat.isDirectory()) results = results.concat(walk(path));
@@ -89,7 +71,8 @@ export class Kirewire {
         };
 
         const files = walk(searchDir);
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
             if ((file.endsWith(".js") || file.endsWith(".ts")) && !file.endsWith(".d.ts")) {
                 try {
                     const fullPath = resolve(file);
@@ -127,3 +110,4 @@ export class Kirewire {
         }
     }
 }
+

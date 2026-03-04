@@ -1,12 +1,62 @@
-import { Kirewire } from "../kirewire";
+import { Kirewire, type WireClientContext } from "../kirewire";
 
-const baseModelDirective = Kirewire.getDirective('model');
+function setPathValue(target: Record<string, any>, path: string, value: any) {
+    const parts = path.split(".").map((part) => part.trim()).filter(Boolean);
+    if (parts.length === 0) return;
 
-Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
-    if (!(el instanceof HTMLInputElement) || el.type !== 'file') {
-        if (baseModelDirective) {
-            baseModelDirective({ el, value: 'model', expression, modifiers, cleanup, wire });
+    let current: Record<string, any> = target;
+    for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i]!;
+        const next = current[part];
+        if (!next || typeof next !== "object") {
+            current[part] = {};
         }
+        current = current[part];
+    }
+    current[parts[parts.length - 1]!] = value;
+}
+
+function getPathValue(source: any, path: string): any {
+    if (!source) return undefined;
+    const parts = path.split(".").map((part) => part.trim()).filter(Boolean);
+    let current = source;
+
+    for (let i = 0; i < parts.length; i++) {
+        if (current == null || typeof current !== "object") return undefined;
+        current = current[parts[i]!];
+    }
+    return current;
+}
+
+function normalizeUploadResult(result: any, multiple: boolean): any {
+    const files = Array.isArray(result)
+        ? result
+        : Array.isArray(result?.files)
+            ? result.files
+            : (result ? [result] : []);
+
+    if (multiple) return files;
+    return files[0] || null;
+}
+
+function updateUploadState(ctx: WireClientContext, uploading: any) {
+    const proxy = ctx.wire.components.get(ctx.componentId) as any;
+    if (!proxy || !proxy.__target) return;
+
+    const target = proxy.__target as Record<string, any>;
+    const current =
+        getPathValue(target, ctx.expression) ??
+        getPathValue(ctx.wire.getComponentState(ctx.el), ctx.expression) ??
+        {};
+
+    const base = current && typeof current === "object" ? current : {};
+    setPathValue(target, ctx.expression, { ...base, uploading });
+}
+
+Kirewire.directive("model", (ctx) => {
+    const { el } = ctx;
+
+    if (!(el instanceof HTMLInputElement) || el.type !== "file") {
         return;
     }
 
@@ -14,43 +64,36 @@ Kirewire.directive('model', ({ el, expression, modifiers, cleanup, wire }) => {
         const files = el.files;
         if (!files || files.length === 0) return;
 
-        const componentId = wire.getComponentId(el);
+        const componentId = ctx.wire.getComponentId(el);
         if (!componentId) return;
-
-        const formData = new FormData();
-        for (let i = 0; i < files.length; i++) {
-            formData.append('files[]', files[i]!);
+        if (!ctx.wire.adapter || typeof ctx.wire.adapter.upload !== "function") {
+            throw new Error("[Kirewire] Missing upload-capable adapter.");
         }
 
-        const xhr = new XMLHttpRequest();
-        
-        // Progress tracking
-        xhr.upload.addEventListener('progress', (e) => {
-            if (e.lengthComputable) {
-                const progress = {
-                    loaded: e.loaded,
-                    total: e.total,
-                    percent: Math.round((e.loaded / e.total) * 100),
-                    status: 'uploading'
-                };
-                wire.$emit('upload:progress', { componentId, property: expression, ...progress });
-            }
-        });
+        ctx.wire.$emit("upload:started", { componentId, property: ctx.expression });
+        updateUploadState(ctx, { percent: 0, status: "uploading", loaded: 0, total: 0 });
 
-        xhr.addEventListener('load', () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                const result = JSON.parse(xhr.responseText);
-                wire.call(el, '$set', [expression, { ...result, __is_wire_file: true }]);
-                wire.$emit('upload:finished', { componentId, property: expression });
-            } else {
-                wire.$emit('upload:error', { componentId, property: expression, error: xhr.statusText });
-            }
-        });
+        try {
+            const result = await ctx.wire.adapter.upload(files, (progress) => {
+                updateUploadState(ctx, progress);
+                ctx.wire.$emit("upload:progress", { componentId, property: ctx.expression, ...progress });
+            });
 
-        xhr.open('POST', '/_wire/upload');
-        xhr.send(formData);
+            const value = normalizeUploadResult(result, !!el.multiple);
+            await ctx.wire.call(el, "$set", [ctx.expression, value]);
+
+            updateUploadState(ctx, undefined);
+            ctx.wire.$emit("upload:finished", { componentId, property: ctx.expression, result: value });
+        } catch (error: any) {
+            updateUploadState(ctx, undefined);
+            ctx.wire.$emit("upload:error", {
+                componentId,
+                property: ctx.expression,
+                error: error?.message || String(error),
+            });
+        }
     };
 
-    el.addEventListener('change', handler);
-    cleanup(() => el.removeEventListener('change', handler));
+    el.addEventListener("change", handler);
+    ctx.cleanup(() => el.removeEventListener("change", handler));
 });
