@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="caramellatte">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ title || 'KireWire Docs' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script>
+        window.__WIRE_INITIAL_CONFIG__ = {
+            transport: "{{ sharedTransport || 'sse' }}"
+        };
+    </script>
+    <script>
+        (() => {
+            const STORAGE_KEY = "kire-docs-theme";
+            const LIGHT_THEME = "caramellatte";
+            const DARK_THEME = "business";
+
+            const syncLabels = (theme) => {
+                document.querySelectorAll("[data-theme-toggle-label]").forEach((el) => {
+                    el.textContent = theme === DARK_THEME ? "Dark" : "Light";
+                });
+            };
+
+            const applyTheme = (theme) => {
+                document.documentElement.setAttribute("data-theme", theme);
+                try {
+                    localStorage.setItem(STORAGE_KEY, theme);
+                } catch {}
+                window.__kireDocsTheme = theme;
+                syncLabels(theme);
+            };
+
+            const resolveInitialTheme = () => {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved === LIGHT_THEME || saved === DARK_THEME) return saved;
+                } catch {}
+                return window.matchMedia("(prefers-color-scheme: dark)").matches ? DARK_THEME : LIGHT_THEME;
+            };
+
+            window.__setDocsTheme = applyTheme;
+            window.__toggleDocsTheme = () => {
+                const current = window.__kireDocsTheme || resolveInitialTheme();
+                applyTheme(current === DARK_THEME ? LIGHT_THEME : DARK_THEME);
+            };
+
+            applyTheme(resolveInitialTheme());
+        })();
+    </script>
+    @kirewire
+    <style>
+        :root {
+            --docs-glow: color-mix(in oklab, oklch(78% 0.13 225) 28%, transparent);
+            --docs-grid: color-mix(in oklab, oklch(22% 0.03 250) 10%, transparent);
+        }
+        body {
+            font-family: "Space Grotesk", "Segoe UI", sans-serif;
+            background:
+                radial-gradient(50rem 30rem at -10% -10%, var(--docs-glow), transparent 70%),
+                radial-gradient(40rem 24rem at 110% 0%, color-mix(in oklab, oklch(72% 0.11 168) 22%, transparent), transparent 75%),
+                linear-gradient(180deg, oklch(98% 0.005 250) 0%, oklch(95% 0.01 250) 100%);
+        }
+        .docs-surface {
+            background: color-mix(in oklab, var(--color-base-100) 85%, white);
+            border: 1px solid color-mix(in oklab, var(--color-base-content) 10%, transparent);
+            box-shadow: 0 18px 70px color-mix(in oklab, black 10%, transparent);
+            backdrop-filter: blur(12px);
+        }
+        .docs-active {
+            background: color-mix(in oklab, var(--color-primary) 20%, white);
+            color: color-mix(in oklab, var(--color-primary-content) 85%, black);
+            font-weight: 600;
+        }
+        .docs-grid {
+            background-image:
+                linear-gradient(to right, var(--docs-grid) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--docs-grid) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        html[data-theme="business"] body {
+            background:
+                radial-gradient(50rem 30rem at -10% -10%, color-mix(in oklab, oklch(40% 0.12 250) 35%, transparent), transparent 70%),
+                radial-gradient(40rem 24rem at 110% 0%, color-mix(in oklab, oklch(52% 0.1 170) 28%, transparent), transparent 75%),
+                linear-gradient(180deg, oklch(22% 0.02 250) 0%, oklch(18% 0.02 250) 100%);
+        }
+    </style>
+</head>
+<body class="docs-grid min-h-screen text-base-content">
+    <div class="drawer lg:drawer-open min-h-screen">
+        <input id="docs-drawer" type="checkbox" class="drawer-toggle" />
+        <div class="drawer-content flex min-h-screen flex-col">
+            <header class="sticky top-0 z-40 border-b border-base-300/60 bg-base-100/85 backdrop-blur">
+                <div class="navbar mx-auto w-full max-w-7xl px-4 lg:px-8">
+                    <div class="flex-none lg:hidden">
+                        <label for="docs-drawer" class="btn btn-square btn-ghost drawer-button" aria-label="Open navigation">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="h-5 w-5 stroke-current">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </label>
+                    </div>
+                    <div class="flex-1 gap-3">
+                        <img src="https://raw.githubusercontent.com/drysius/kire/refs/heads/main/vs-kire/icon.svg" alt="Kire" class="h-8 w-8 rounded" />
+                        <div>
+                            <p class="text-xs uppercase tracking-[0.22em] text-base-content/60">Documentation</p>
+                            <p class="text-lg font-semibold">KireWire</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-ghost border border-base-300/70"
+                            onclick="window.__toggleDocsTheme && window.__toggleDocsTheme()"
+                            aria-label="Toggle theme"
+                        >
+                            <span class="text-xs uppercase tracking-[0.12em] opacity-65">Theme</span>
+                            <span data-theme-toggle-label>Light</span>
+                        </button>
+                        <div class="badge badge-outline">{{ sharedTransport || 'sse' }}</div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8">
+                <div class="docs-surface rounded-3xl p-5 sm:p-8">
+                    @defined('content')
+                </div>
+            </main>
+        </div>
+
+        <aside class="drawer-side z-50">
+            <label for="docs-drawer" aria-label="Close navigation" class="drawer-overlay"></label>
+            <div class="min-h-full w-80 border-r border-base-300/60 bg-base-100 p-4 sm:p-6">
+                <div class="mb-6 rounded-2xl bg-base-200/70 p-4">
+                    <p class="text-xs uppercase tracking-[0.2em] text-base-content/50">Playground</p>
+                    <h2 class="mt-1 text-2xl font-semibold">Wire Example</h2>
+                    <p class="mt-2 text-sm text-base-content/70">Interactive demos used as docs for server-driven components.</p>
+                </div>
+
+                <ul class="menu gap-1 p-0">
+                    <li class="menu-title">Overview</li>
+                    <li><a wire:navigate href="/" class="{{ isActive('/') ? 'docs-active' : '' }}">Dashboard</a></li>
+                    <li><a wire:navigate href="/features" class="{{ isActive('/features') ? 'docs-active' : '' }}">Feature Tour</a></li>
+
+                    <li class="menu-title mt-4">Core Patterns</li>
+                    <li><a wire:navigate href="/todo" class="{{ isActive('/todo') ? 'docs-active' : '' }}">Todo List</a></li>
+                    <li><a wire:navigate href="/chat" class="{{ isActive('/chat') ? 'docs-active' : '' }}">Chat + Events</a></li>
+                    <li><a wire:navigate href="/users" class="{{ isActive('/users') ? 'docs-active' : '' }}">Users + Pagination</a></li>
+                    <li><a wire:navigate href="/search" class="{{ isActive('/search') ? 'docs-active' : '' }}">Search + Filters</a></li>
+                    <li><a wire:navigate href="/infinity" class="{{ isActive('/infinity') ? 'docs-active' : '' }}">Infinite Scroll</a></li>
+
+                    <li class="menu-title mt-4">Advanced</li>
+                    <li><a wire:navigate href="/upload" class="{{ isActive('/upload') ? 'docs-active' : '' }}">File Upload</a></li>
+                    <li><a wire:navigate href="/stream" class="{{ isActive('/stream') ? 'docs-active' : '' }}">Streaming</a></li>
+                    <li><a wire:navigate href="/shared-components" class="{{ isActive('/shared-components') || isActive('/sse') ? 'docs-active' : '' }}">Shared State</a></li>
+                    <li><a wire:navigate href="/battle-tank" class="{{ isActive('/battle-tank') ? 'docs-active' : '' }}">Battle Tank</a></li>
+                    <li><a wire:navigate href="/lazy" class="{{ isActive('/lazy') ? 'docs-active' : '' }}">Lazy Loading</a></li>
+                    <li><a wire:navigate href="/toast" class="{{ isActive('/toast') ? 'docs-active' : '' }}">Toasts</a></li>
+                    <li><a wire:navigate href="/textarea" class="{{ isActive('/textarea') ? 'docs-active' : '' }}">Textarea</a></li>
+                    <li><a wire:navigate href="/stress" class="{{ isActive('/stress') ? 'docs-active' : '' }}">Stress Poll</a></li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</body>
+</html>
