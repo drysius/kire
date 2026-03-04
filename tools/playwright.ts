@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "..");
-const exampleDir = resolve(repoRoot, "examples/wire-example");
+const exampleDir = resolve(repoRoot, "docs");
 const bunBin = process.platform === "win32" ? "bun.exe" : "bun";
 const ignoredDirs = new Set([".git", "node_modules", "dist", "coverage", "playwright-report", "test-results"]);
 

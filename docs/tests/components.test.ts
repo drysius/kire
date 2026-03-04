@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { WireFile } from "@kirejs/wire";
 
 import Chat from "../components/chat";
+import BattleTank from "../components/battle-tank";
 import Counter from "../components/counter";
 import RegisterForm from "../components/form";
 import Heavy from "../components/heavy";
@@ -40,6 +41,7 @@ function withViewStub<T extends { view: (view: string, data?: Record<string, any
 describe("wire-example component renders", () => {
     const cases = [
         { name: "chat", ctor: Chat, view: "components.chat" },
+        { name: "battle-tank", ctor: BattleTank, view: "components.battle-tank" },
         { name: "counter", ctor: Counter, view: "components.counter" },
         { name: "form", ctor: RegisterForm, view: "components.form" },
         { name: "heavy", ctor: Heavy, view: "components.heavy" },
@@ -85,6 +87,23 @@ describe("wire-example component behaviors", () => {
         expect(counter.count).toBe(1);
         await counter.reset();
         expect(counter.count).toBe(0);
+    });
+
+    test("BattleTank moves, shoots and ticks without crashing", () => {
+        const game = new BattleTank();
+        game.reset();
+
+        const beforeX = game.player.x;
+        game.moveLeft();
+        expect(game.player.x).toBeLessThanOrEqual(beforeX);
+
+        const beforeBullets = game.bullets.length;
+        game.shoot();
+        expect(game.bullets.length).toBeGreaterThanOrEqual(beforeBullets);
+
+        const beforeTick = game.tickCount;
+        game.tick();
+        expect(game.tickCount).toBe(beforeTick + 1);
     });
 
     test("Sender emits hello and clears text", async () => {
@@ -264,7 +283,8 @@ describe("wire-example component behaviors", () => {
         const upload = new Upload();
         upload.description = "Test file";
         await upload.save();
-        expect(upload.message).toBe("No file selected.");
+        expect(upload.message).toBe("Validation failed.");
+        expect((upload as any).__errors.file).toBe("Please select a file.");
 
         upload.description = "New file";
         upload.file = new WireFile({

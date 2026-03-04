@@ -7,7 +7,9 @@ const kire = new Kire({
 });
 
 // Setup plugin before registering components
-kire.plugin(wirePlugin);
+kire.plugin(new wirePlugin({
+    secret:"1a2s13as1as1das231"
+}), {});
 
 // Mocking components
 kire.wireRegister('success', class extends Component {

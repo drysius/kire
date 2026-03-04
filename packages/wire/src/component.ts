@@ -1,5 +1,13 @@
 import type { Kire, KireRendered } from "kire";
-import { WireFile } from "./features/file-upload";
+import { Rule as FileRule, WireFile } from "./features/file-upload";
+import {
+    type ComponentRuleDescriptor,
+    type ValidationResult,
+    isTypeBoxSchema,
+    makeRuleDescriptor,
+    validateRuleString,
+    validateTypeBoxSchema,
+} from "./validation/rule";
 
 /**
  * Base Component class for Kirewire.
@@ -74,19 +82,39 @@ export abstract class Component {
         obj[leaf] = this.normalizeIncomingValue(obj[leaf], value);
     }
 
-    /**
-     * Validation helper (Stub for compatibility)
-     */
-    public validate(rules: any): boolean {
-        console.warn("Validation is not yet fully implemented in Kirewire Kernel.");
-        return true;
+    public validate(
+        rules: Record<
+            string,
+            | string
+            | ComponentRuleDescriptor
+            | FileRule
+            | ((value: any, state?: Record<string, any>) => boolean | string | undefined)
+            | any[]
+        >,
+    ): boolean {
+        this.clearErrors();
+        let isValid = true;
+        const state = this.getPublicState();
+
+        for (const [field, validatorOrArray] of Object.entries(rules || {})) {
+            const value = this.getValueByPath(field);
+            const validators = Array.isArray(validatorOrArray) ? validatorOrArray : [validatorOrArray];
+
+            for (const validator of validators) {
+                const result = this.runValidator(value, validator, state);
+                if (!result.success) {
+                    this.addError(field, result.error || "Invalid");
+                    isValid = false;
+                    break;
+                }
+            }
+        }
+
+        return isValid;
     }
 
-    /**
-     * Rule helper (Stub for compatibility)
-     */
-    public rule(ruleStr: string, message?: string): any {
-        return { ruleStr, message };
+    public rule(ruleStr: string, message?: string): ComponentRuleDescriptor {
+        return makeRuleDescriptor(ruleStr, message);
     }
 
     /**
@@ -251,6 +279,66 @@ export abstract class Component {
             });
         }
         return value;
+    }
+
+    private runValidator(
+        value: any,
+        validator: any,
+        state: Record<string, any>,
+    ): ValidationResult {
+        if (typeof validator === "function") {
+            const result = validator(value, state);
+            if (result === false) return { success: false, error: "Invalid" };
+            if (typeof result === "string") return { success: false, error: result };
+            return { success: true };
+        }
+
+        if (typeof validator === "string") {
+            return validateRuleString(this.normalizeValidationValue(value), validator);
+        }
+
+        if (validator instanceof FileRule) {
+            const result = validator.validate(value);
+            if (result.success) return { success: true };
+            return { success: false, error: result.errors[0] || "Invalid file." };
+        }
+
+        if (validator && typeof validator === "object") {
+            if ("ruleStr" in validator && "schema" in validator) {
+                const helper = validator as ComponentRuleDescriptor;
+                return validateRuleString(this.normalizeValidationValue(value), helper.ruleStr, helper.message);
+            }
+
+            if (isTypeBoxSchema(validator)) {
+                return validateTypeBoxSchema(validator, this.normalizeValidationValue(value));
+            }
+        }
+
+        return { success: true };
+    }
+
+    private normalizeValidationValue(value: any): any {
+        if (this.isWireFileLike(value)) {
+            const hasFileMeta = Boolean((value as any).id || (value as any).name);
+            return hasFileMeta ? value : "";
+        }
+        return value;
+    }
+
+    private getValueByPath(path: string): any {
+        if (!path.includes(".")) {
+            return (this as any)[path];
+        }
+
+        const parts = path.split(".");
+        let current: any = this;
+        for (const part of parts) {
+            if (current === undefined || current === null) {
+                return undefined;
+            }
+            current = current[part];
+        }
+        return current;
     }
 
     /**

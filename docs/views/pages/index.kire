@@ -1,0 +1,81 @@
+@include('layouts.app', it)
+
+@define('content')
+    <section class="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
+        <div class="rounded-2xl border border-base-300/70 bg-base-100/70 p-6 sm:p-8">
+            <span class="badge badge-primary badge-outline">Server-Driven UI</span>
+            <h1 class="mt-4 text-4xl font-bold leading-tight sm:text-5xl">KireWire Playground</h1>
+            <p class="mt-4 max-w-xl text-base-content/70">
+                A lightweight docs playground to validate interactions, hydration, streaming, upload and shared state.
+                Every card below is a real component running with wire actions.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="/features" wire:navigate class="btn btn-primary">Open Feature Tour</a>
+                <a href="/todo" wire:navigate class="btn btn-ghost">Start with Todo</a>
+            </div>
+        </div>
+        <div class="rounded-2xl border border-base-300/70 bg-gradient-to-br from-primary/15 via-transparent to-secondary/20 p-6">
+            <p class="text-sm uppercase tracking-[0.2em] text-base-content/60">Quick Status</p>
+            <ul class="mt-4 space-y-3 text-sm">
+                <li class="flex items-center justify-between rounded-lg bg-base-100/70 px-3 py-2">
+                    <span>Transport</span>
+                    <span class="badge badge-outline">{{ sharedTransport || 'sse' }}</span>
+                </li>
+                <li class="flex items-center justify-between rounded-lg bg-base-100/70 px-3 py-2">
+                    <span>Hydration</span>
+                    <span class="text-success font-semibold">Active</span>
+                </li>
+                <li class="flex items-center justify-between rounded-lg bg-base-100/70 px-3 py-2">
+                    <span>Batching</span>
+                    <span class="text-success font-semibold">Enabled</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="card border border-base-300/70 bg-base-100/80 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Counter</h2>
+                <p class="text-base-content/70">Local state mutations with direct actions.</p>
+                <div class="card-actions justify-start">
+                    @wire('counter')
+                </div>
+            </div>
+        </div>
+
+        <div class="card border border-base-300/70 bg-base-100/80 shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Events</h2>
+                <p class="text-base-content/70">Cross-component communication through server events.</p>
+                <div class="flex flex-col gap-4">
+                    @wire('sender')
+                    @wire('receiver')
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <a wire:navigate href="/upload" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">File Upload</p>
+            <p class="text-sm text-base-content/70">Validate and store files with progress state.</p>
+        </a>
+        <a wire:navigate href="/stream" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">Streaming</p>
+            <p class="text-sm text-base-content/70">Send partial HTML fragments without full rerender.</p>
+        </a>
+        <a wire:navigate href="/shared-components" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">Shared State</p>
+            <p class="text-sm text-base-content/70">Synchronize UI blocks on the same channel.</p>
+        </a>
+        <a wire:navigate href="/stress" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">Poll Stress</p>
+            <p class="text-sm text-base-content/70">Observe batched polling behavior under load.</p>
+        </a>
+        <a wire:navigate href="/battle-tank" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">Battle Tank</p>
+            <p class="text-sm text-base-content/70">Canvas + emitter demo with game-like state loop.</p>
+        </a>
+    </section>
+@end

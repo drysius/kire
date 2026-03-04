@@ -11,6 +11,13 @@ export interface WireSession {
     expireAt: number | null;
 }
 
+export interface ActivePageEntry {
+    userId: string;
+    pageId: string;
+    session: WireSession;
+    page: WirePage;
+}
+
 export class SessionManager {
     /**
      * Map of UserId -> Session
@@ -59,6 +66,16 @@ export class SessionManager {
 
     public getUserIdByPublicId(publicId: string): string | undefined {
         return this.findByPublicId.get(publicId);
+    }
+
+    public getActivePages(): ActivePageEntry[] {
+        const entries: ActivePageEntry[] = [];
+        for (const [userId, session] of this.sessions.entries()) {
+            for (const [pageId, page] of session.pages.entries()) {
+                entries.push({ userId, pageId, session, page });
+            }
+        }
+        return entries;
     }
 
     private async cleanup() {

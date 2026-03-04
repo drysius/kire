@@ -9,6 +9,7 @@ export class MessageBus {
     private queue: Array<{ payload: WirePayload, resolve: Function, reject: Function }> = [];
     private timer: any = null;
     private inFlight = false;
+    private readonly flushTimeoutMs = 15000;
 
     constructor(private delay: number = 10) {}
 
@@ -43,30 +44,52 @@ export class MessageBus {
 
         console.log(`[Kirewire] MessageBus flushing batch of ${batch.length} actions.`);
 
+        let settled = false;
+        const finalize = () => {
+            if (settled) return;
+            settled = true;
+            this.inFlight = false;
+            if (!this.timer && this.queue.length > 0) {
+                this.timer = setTimeout(() => this.flush(), this.delay);
+            }
+        };
+
+        const failBatch = (err: any) => {
+            console.error(`[Kirewire] MessageBus batch failed:`, err);
+            batch.forEach(item => item.reject(err));
+            finalize();
+        };
+
+        const timeout = setTimeout(() => {
+            failBatch(new Error(`MessageBus timed out after ${this.flushTimeoutMs}ms`));
+        }, this.flushTimeoutMs);
+
         try {
             // The transport logic will be injected by the adapter
             const event = new CustomEvent('wire:bus:flush', { 
                 detail: { 
                     batch: batch.map(b => b.payload),
-                    finish: (results: any[]) => {
+                    finish: (rawResults: any) => {
+                        clearTimeout(timeout);
+                        const results = Array.isArray(rawResults) ? rawResults : [rawResults];
                         console.log(`[Kirewire] MessageBus batch finished with ${results.length} results.`);
                         batch.forEach((item, i) => {
-                            if (results[i]?.error) item.reject(results[i].error);
-                            else item.resolve(results[i]);
+                            const result = results[i] ?? results[results.length - 1];
+                            if (result?.error) item.reject(result.error);
+                            else item.resolve(result);
                         });
+                        finalize();
                     },
                     error: (err: any) => {
-                        console.error(`[Kirewire] MessageBus batch failed:`, err);
-                        batch.forEach(item => item.reject(err));
+                        clearTimeout(timeout);
+                        failBatch(err);
                     }
                 } 
             });
             window.dispatchEvent(event);
         } catch (e) {
-            console.error(`[Kirewire] MessageBus critical error during dispatch:`, e);
-            batch.forEach(item => item.reject(e));
-        } finally {
-            this.inFlight = false;
+            clearTimeout(timeout);
+            failBatch(e);
         }
     }
 }

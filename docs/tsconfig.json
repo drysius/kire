@@ -15,8 +15,8 @@
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,
 		"paths": {
-			"@kirejs/*": ["../../packages/*/src/index.ts"],
-			"kire": ["../../core/src/index.ts"]
+			"@kirejs/*": ["../packages/*/src/index.ts"],
+			"kire": ["../core/src/index.ts"]
 		}
 	}
 }

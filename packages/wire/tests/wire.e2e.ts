@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(__dirname, "../../..");
 const wireDir = resolve(repoRoot, "packages/wire");
-const exampleDir = resolve(repoRoot, "examples/wire-example");
+const exampleDir = resolve(repoRoot, "docs/wire");
 const baseUrl = "http://127.0.0.1:3000";
 const bunBin = process.platform === "win32" ? "bun.exe" : "bun";
 const isPlaywrightRuntime =

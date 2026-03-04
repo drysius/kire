@@ -26,6 +26,7 @@ import { MessageBus } from "../web/utils/message-bus";
 describe("Kirewire Client Unit Logic", () => {
     let wire: KirewireClient;
     let bus: MessageBus;
+    let busFlushHandler: ((e: any) => Promise<void>) | null = null;
 
     beforeEach(() => {
         bus = new MessageBus(10); // 10ms delay
@@ -50,11 +51,19 @@ describe("Kirewire Client Unit Logic", () => {
         };
 
         // Manual bus flush bridge
-        window.addEventListener('wire:bus:flush' as any, async (e: any) => {
+        busFlushHandler = async (e: any) => {
             const { batch, finish } = e.detail;
             const response = await fetch('', { method: 'POST', body: JSON.stringify({ batch }) });
             finish(await response.json());
-        });
+        };
+        window.addEventListener('wire:bus:flush' as any, busFlushHandler as any);
+    });
+
+    afterEach(() => {
+        if (busFlushHandler) {
+            window.removeEventListener('wire:bus:flush' as any, busFlushHandler as any);
+            busFlushHandler = null;
+        }
     });
 
     test("MessageBus should correctly batch actions", async () => {
@@ -139,5 +148,47 @@ describe("Kirewire Client Unit Logic", () => {
         
         // 3. Verify internal target update (for immediate UI feedback)
         expect(proxy.__target.count).toBe(10);
+    });
+
+    test("MessageBus should serialize flushes while a request is in-flight", async () => {
+        if (busFlushHandler) {
+            window.removeEventListener('wire:bus:flush' as any, busFlushHandler as any);
+            busFlushHandler = null;
+        }
+
+        const isolatedBus = new MessageBus(0);
+        let inFlight = 0;
+        let maxInFlight = 0;
+        let flushCount = 0;
+
+        const handler = (e: any) => {
+            flushCount++;
+            inFlight++;
+            maxInFlight = Math.max(maxInFlight, inFlight);
+
+            const { finish } = e.detail;
+            setTimeout(() => {
+                inFlight--;
+                finish([{ success: true }]);
+            }, 25);
+        };
+
+        window.addEventListener('wire:bus:flush' as any, handler);
+
+        try {
+            const p1 = isolatedBus.enqueue({ id: 'A', method: 'act1', params: [], pageId: 'p' } as any);
+            const p2 = isolatedBus.enqueue({ id: 'B', method: 'act2', params: [], pageId: 'p' } as any);
+
+            await new Promise(r => setTimeout(r, 5));
+            expect(inFlight).toBe(1);
+            const p3 = isolatedBus.enqueue({ id: 'C', method: 'act3', params: [], pageId: 'p' } as any);
+
+            await Promise.all([p1, p2, p3]);
+        } finally {
+            window.removeEventListener('wire:bus:flush' as any, handler);
+        }
+
+        expect(maxInFlight).toBe(1);
+        expect(flushCount).toBe(2);
     });
 });

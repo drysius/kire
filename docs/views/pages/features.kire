@@ -1,0 +1,59 @@
+@include('layouts.app', it)
+
+@define('content')
+    <section class="rounded-2xl border border-base-300/70 bg-base-100/70 p-6 sm:p-8">
+        <h1 class="text-3xl font-bold sm:text-4xl">Feature Tour</h1>
+        <p class="mt-3 max-w-3xl text-base-content/70">
+            This page groups interaction patterns you can copy into docs snippets:
+            action calls, event dispatching, inline assets and multi-instance batching.
+        </p>
+    </section>
+
+    <section class="mt-6 grid gap-6 lg:grid-cols-2">
+        <article class="rounded-2xl border border-base-300/70 bg-base-100/75 p-5">
+            <h2 class="text-xl font-semibold">1) Action Calls</h2>
+            <p class="mt-2 text-sm text-base-content/70">Buttons trigger methods directly on the server component.</p>
+            <div class="mt-4">
+                @wire('counter')
+            </div>
+        </article>
+
+        <article class="rounded-2xl border border-base-300/70 bg-base-100/75 p-5">
+            <h2 class="text-xl font-semibold">2) Event Bus</h2>
+            <p class="mt-2 text-sm text-base-content/70">Emit in one component, react in another.</p>
+            <div class="mt-4 grid gap-3">
+                @wire('sender')
+                @wire('receiver')
+            </div>
+        </article>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-base-300/70 bg-base-100/75 p-5">
+        <h2 class="text-xl font-semibold">3) Inline Assets</h2>
+        <p class="mt-2 text-sm text-base-content/70">Useful when docs pages need one-off scripts/styles for demos.</p>
+        <div id="feature-inline-demo" class="mt-4 rounded-xl border border-dashed border-base-300/70 bg-base-200/60 p-4">
+            <p class="font-medium">Inline script executed.</p>
+            <script>
+                console.log("KireWire docs: inline assets loaded.");
+                const demo = document.getElementById("feature-inline-demo");
+                if (demo) demo.style.borderColor = "oklch(70% 0.13 210)";
+            </script>
+            <style>
+                #feature-inline-demo {
+                    transition: border-color 240ms ease;
+                }
+            </style>
+        </div>
+    </section>
+
+    <section class="mt-6 rounded-2xl border border-base-300/70 bg-base-100/75 p-5">
+        <h2 class="text-xl font-semibold">4) Request Batching</h2>
+        <p class="mt-2 text-sm text-base-content/70">
+            Multiple instances can trigger updates while the client adapter groups actions in the same tick.
+        </p>
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            @wire('counter')
+            @wire('counter')
+        </div>
+    </section>
+@end

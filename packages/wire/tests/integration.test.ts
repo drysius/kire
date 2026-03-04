@@ -1,7 +1,7 @@
 import { expect, test, describe, beforeEach, spyOn } from "bun:test";
 import { JSDOM } from "jsdom";
 import { Kire } from "kire";
-import { Kirewire, Component, HttpAdapter } from "../src/index";
+import { Kirewire, Component, HttpAdapter, WireBroadcast } from "../src/index";
 import { KirewireClient } from "../web/kirewire";
 import { MessageBus } from "../web/utils/message-bus";
 
@@ -22,6 +22,24 @@ class CounterComponent extends Component {
     count = 0;
     async increment() { this.count++; }
     render() { return `Count: ${this.count}`; }
+}
+
+class SharedCounterComponent extends Component {
+    count = 0;
+    shared = new WireBroadcast({ name: "shared-counter", includes: ["count"] });
+
+    async mount() {
+        this.shared.hydrate(this);
+    }
+
+    async increment() {
+        this.count++;
+    }
+
+    render() {
+        this.shared.update(this);
+        return `Shared: ${this.count}`;
+    }
 }
 
 describe("Kirewire Full Integration (Client + Server)", () => {
@@ -198,5 +216,102 @@ describe("Kirewire Full Integration (Client + Server)", () => {
 
         await clientWire.call(document.getElementById('root')!, 'increment');
         expect(instance.count).toBe(6);
+    });
+
+    test("Broadcast components sync through SSE updates and not inline response html", async () => {
+        const page = serverWire.sessions.getPage('user-1', 'page-1');
+
+        const first = new SharedCounterComponent();
+        first.$id = "s1";
+        await first.mount();
+        page.components.set("s1", first);
+
+        const second = new SharedCounterComponent();
+        second.$id = "s2";
+        await second.mount();
+        page.components.set("s2", second);
+
+        const updates: any[] = [];
+        const off = serverWire.$on("component:update", (payload) => updates.push(payload));
+
+        try {
+            const response = await adapter.handleRequest({
+                method: "POST",
+                url: "/_wire",
+                body: {
+                    batch: [{ id: "s1", method: "increment", params: [], pageId: "page-1" }],
+                    pageId: "page-1",
+                },
+            }, "user-1", "session-1");
+
+            const result = Array.isArray(response.result) ? response.result[0] : response.result;
+            expect(result.html).toBeUndefined();
+            expect(result.effects).toBeDefined();
+
+            const byId = new Map(updates.map((u) => [u.id, u]));
+            expect(byId.get("s1")?.state?.count).toBe(1);
+            expect(byId.get("s2")?.state?.count).toBe(1);
+        } finally {
+            off();
+        }
+    });
+
+    test("Broadcast syncs across different user sessions through the same SSE pipeline", async () => {
+        const channel = `shared-cross-session-${Date.now()}`;
+        class CrossSessionSharedCounterComponent extends Component {
+            count = 0;
+            shared = new WireBroadcast({ name: channel, includes: ["count"] });
+
+            async mount() {
+                this.shared.hydrate(this);
+            }
+
+            async increment() {
+                this.count++;
+            }
+
+            render() {
+                this.shared.update(this);
+                return `Shared: ${this.count}`;
+            }
+        }
+
+        const pageUser1 = serverWire.sessions.getPage("user-1", "page-1");
+        const pageUser2 = serverWire.sessions.getPage("user-2", "page-2");
+
+        const first = new CrossSessionSharedCounterComponent() as any;
+        first.$id = "u1-1";
+        first.$wire_session_id = "session-1";
+        await first.mount();
+        pageUser1.components.set("u1-1", first);
+
+        const second = new CrossSessionSharedCounterComponent() as any;
+        second.$id = "u2-1";
+        second.$wire_session_id = "session-2";
+        await second.mount();
+        pageUser2.components.set("u2-1", second);
+
+        const updates: any[] = [];
+        const off = serverWire.$on("component:update", (payload) => updates.push(payload));
+
+        try {
+            await adapter.handleRequest({
+                method: "POST",
+                url: "/_wire",
+                body: {
+                    batch: [{ id: "u1-1", method: "increment", params: [], pageId: "page-1" }],
+                    pageId: "page-1",
+                },
+            }, "user-1", "session-1");
+
+            const user1Updates = updates.filter((entry) => entry.userId === "user-1" && entry.id === "u1-1");
+            const user2Updates = updates.filter((entry) => entry.userId === "user-2" && entry.id === "u2-1");
+
+            expect(user1Updates.length).toBeGreaterThan(0);
+            expect(user2Updates.length).toBeGreaterThan(0);
+            expect(user2Updates[user2Updates.length - 1]?.state?.count).toBe(1);
+        } finally {
+            off();
+        }
     });
 });

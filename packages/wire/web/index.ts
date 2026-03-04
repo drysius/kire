@@ -10,6 +10,8 @@ import './directives/ignore';
 import './directives/init';
 import './directives/offline';
 import './features/file-upload';
+import './features/wire-broadcast';
+import './features/game-canvas';
 import './adapters/http';
 
 //@ts-expect-error ignore

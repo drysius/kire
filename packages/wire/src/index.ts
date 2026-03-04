@@ -5,6 +5,7 @@ import { HttpAdapter } from "./adapters/http";
 import { SocketAdapter } from "./adapters/socket";
 import { FileStore } from "./features/file-store";
 import { fileUploadMiddleware, WireFile, Rule } from "./features/file-upload";
+import { WireBroadcast, type WireBroadcastOptions } from "./features/wire-broadcast";
 
 export class KirewirePlugin {
     public wire!: Kirewire;
@@ -109,6 +110,10 @@ export class KirewirePlugin {
                         $instance.$id = $id;
                         $instance.$kire = this;
                         $instance.$wire_instance = this.wire;
+                        $instance.$wire_session_id = $sessionId;
+                        $instance.$wire_user_id = $userId;
+                        $instance.$wire_page_id = $pageId;
+                        $instance.$wire_scope_id = $userId + ":" + $pageId;
                         
                         // Centralized updater for SSE
                         const $emitUpdate = async () => {
@@ -201,103 +206,5 @@ export class PageComponent extends Component {
     }
 }
 
-export interface WireBroadcastOptions {
-    name?: string;
-    autodelete?: boolean;
-    includes?: string[];
-    excludes?: string[];
-}
-
-type WireBroadcastRoom = {
-    state: Record<string, any>;
-    connections: number;
-};
-
-export class WireBroadcast {
-    private static rooms = new Map<string, WireBroadcastRoom>();
-    public connected = false;
-    public connections = 0;
-    public channel = "global";
-    public chunks: string[] = [];
-
-    constructor(private options: WireBroadcastOptions = {}) {
-        if (options.name) this.channel = options.name;
-    }
-
-    public hydrate(component: Record<string, any>, channel?: string) {
-        if (channel) this.channel = channel;
-        const room = this.getRoom();
-
-        room.connections = Math.max(1, room.connections);
-        this.connected = true;
-        this.connections = room.connections;
-
-        const snapshot = this.filterState(room.state);
-        for (const [key, value] of Object.entries(snapshot)) {
-            if (key in component && typeof component[key] !== "function") {
-                component[key] = value;
-            }
-        }
-
-        this.pushChunk(`Hydrated channel "${this.channel}"`);
-    }
-
-    public update(component: Record<string, any>) {
-        const room = this.getRoom();
-        room.connections = Math.max(1, room.connections);
-        this.connected = true;
-        this.connections = room.connections;
-
-        const current = this.filterState(component);
-        const changedKeys: string[] = [];
-
-        for (const [key, value] of Object.entries(current)) {
-            if (JSON.stringify(room.state[key]) !== JSON.stringify(value)) {
-                room.state[key] = value;
-                changedKeys.push(key);
-            }
-        }
-
-        if (changedKeys.length > 0) {
-            this.pushChunk(`Updated: ${changedKeys.join(", ")}`);
-        }
-    }
-
-    public verifyPassword(_password?: string | null): boolean {
-        return true;
-    }
-
-    public getChannel(): string {
-        return this.channel;
-    }
-
-    private getRoom(): WireBroadcastRoom {
-        let room = WireBroadcast.rooms.get(this.channel);
-        if (!room) {
-            room = { state: {}, connections: 0 };
-            WireBroadcast.rooms.set(this.channel, room);
-        }
-        return room;
-    }
-
-    private filterState(state: Record<string, any>): Record<string, any> {
-        const result: Record<string, any> = {};
-        for (const [key, value] of Object.entries(state || {})) {
-            if (key.startsWith("$") || key.startsWith("_")) continue;
-            if (typeof value === "function") continue;
-            if (this.options.excludes?.includes(key)) continue;
-            if (this.options.includes && !this.options.includes.includes(key)) continue;
-            result[key] = value;
-        }
-        return result;
-    }
-
-    private pushChunk(message: string) {
-        const line = `[${new Date().toLocaleTimeString()}] ${message}`;
-        this.chunks.unshift(line);
-        if (this.chunks.length > 50) this.chunks.length = 50;
-    }
-}
-
 export const wirePlugin = KirewirePlugin;
-export { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, fileUploadMiddleware, WireFile, Rule };
+export { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, fileUploadMiddleware, WireFile, Rule, WireBroadcast, type WireBroadcastOptions };

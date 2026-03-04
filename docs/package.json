@@ -1,14 +1,16 @@
 {
-	"name": "example-wire-counter",
+	"name": "docs-wire-playground",
 	"private": true,
 	"scripts": {
+		"dev": "bun run main.ts",
+		"start": "bun run main.ts",
 		"test": "bun test ./tests",
 		"test:e2e": "bun ../../tools/playwright.ts",
 		"test:e2e:install": "playwright install --with-deps chromium"
 	},
 	"dependencies": {
 		"@elysiajs/static": "^1.4.7",
-		"elysia": "^1.0.0"
+		"elysia": "^1.4.27"
 	},
 	"devDependencies": {
 		"@playwright/test": "^1.58.2"

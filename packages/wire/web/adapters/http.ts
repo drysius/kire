@@ -31,15 +31,25 @@ function restoreStreams(root: HTMLElement, snapshots: Map<string, string>) {
 }
 
 export class HttpClientAdapter {
+    private sse: EventSource | null = null;
+    private onBusFlush: ((e: CustomEvent) => Promise<void>) | null = null;
+
     constructor(private options: { url: string, pageId: string }) {
         Kirewire.pageId = options.pageId;
         this.setup();
     }
 
     setup() {
+        const globalObj = window as any;
+        const existing = globalObj.__kirewire_http_adapter as HttpClientAdapter | undefined;
+        if (existing && existing !== this) {
+            existing.destroy();
+        }
+        globalObj.__kirewire_http_adapter = this;
+
         console.log(`[Kirewire] HttpClientAdapter setting up listeners...`);
         // Handle batched requests from the MessageBus
-        window.addEventListener('wire:bus:flush' as any, async (e: CustomEvent) => {
+        this.onBusFlush = async (e: CustomEvent) => {
             const { batch, finish, error } = e.detail;
 
             console.log(`[Kirewire] HttpClientAdapter sending batch of ${batch.length} actions:`, batch);
@@ -103,15 +113,16 @@ export class HttpClientAdapter {
                 console.error("[Kirewire] HttpClientAdapter fetch error:", err);
                 error(err);
             }
-        });
+        };
+        window.addEventListener('wire:bus:flush' as any, this.onBusFlush as any);
 
         // Setup SSE for push updates
         console.log(`[Kirewire] HttpClientAdapter connecting to SSE at ${this.options.url}/sse`);
-        const sse = new EventSource(`${this.options.url}/sse`);
-        sse.onopen = () => console.log(`[Kirewire] SSE connection established.`);
-        sse.onerror = (err) => console.error(`[Kirewire] SSE connection error:`, err);
+        this.sse = new EventSource(`${this.options.url}/sse`);
+        this.sse.onopen = () => console.log(`[Kirewire] SSE connection established.`);
+        this.sse.onerror = (err) => console.error(`[Kirewire] SSE connection error:`, err);
 
-        sse.onmessage = (e) => {
+        this.sse.onmessage = (e) => {
             const data = JSON.parse(e.data);
             if (data.type === 'ping') return;
 
@@ -145,5 +156,16 @@ export class HttpClientAdapter {
                 }
             }
         };
+    }
+
+    destroy() {
+        if (this.onBusFlush) {
+            window.removeEventListener('wire:bus:flush' as any, this.onBusFlush as any);
+            this.onBusFlush = null;
+        }
+        if (this.sse) {
+            this.sse.close();
+            this.sse = null;
+        }
     }
 }

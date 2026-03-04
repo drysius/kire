@@ -1,25 +1,28 @@
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { wirePlugin, HttpAdapter, SocketAdapter } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { Kire } from "kire";
 
 const useSocket = process.argv.includes("--socket");
+const appRoot = path.dirname(fileURLToPath(import.meta.url));
+const wireDistDir = path.resolve(appRoot, "../packages/wire/dist");
+
 // Initialize Kire
 const kire = new Kire({
-	root:path.join(process.cwd(), 'views'),
+	root: path.join(appRoot, "views"),
 	production: process.env.NODE_ENV === "production",
 });
 
-console.log(path.join(process.cwd(), "../../packages/wire/dist"))
 const app = new Elysia({
 	serve: {
 		maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB
 	},
 })
 .use(staticPlugin({
-    assets: path.join(process.cwd(), "../../packages/wire/dist"),
+    assets: wireDistDir,
     prefix: "/dist"
 }))
 .derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
@@ -33,13 +36,13 @@ void (async () => {
 	}));
 
 	// add views namespace for .kire files
-	kire.namespace("views", path.join(process.cwd(), "views"));
-	kire.namespace("layouts", path.join(process.cwd(), "views/layouts"));
-	kire.namespace("components", path.join(process.cwd(), "views/components"));
-	kire.namespace("pages", path.join(process.cwd(), "views/pages"));
+	kire.namespace("views", path.join(appRoot, "views"));
+	kire.namespace("layouts", path.join(appRoot, "views/layouts"));
+	kire.namespace("components", path.join(appRoot, "views/components"));
+	kire.namespace("pages", path.join(appRoot, "views/pages"));
 
 	// register server components
-	await (kire as any).wireRegister("components/*.ts", process.cwd());
+	await (kire as any).wireRegister("components/*.ts", appRoot);
 
 	// Middleware to set Wired Context
 	app.derive({ as: "global" }, async (context) => {
@@ -82,7 +85,7 @@ void (async () => {
 	});
 
 	// Routes
-	const routes = ["/", "/chat", "/search", "/infinity", "/toast", "/upload", "/todo", "/users", "/stream", "/shared-components", "/lazy", "/features", "/stress", "/textarea"];
+	const routes = ["/", "/chat", "/search", "/infinity", "/toast", "/upload", "/todo", "/users", "/stream", "/shared-components", "/lazy", "/features", "/stress", "/textarea", "/battle-tank"];
     
     for (const route of routes) {
         const viewName = route === "/" ? "pages.index" : `pages.${route.slice(1)}`;
@@ -125,5 +128,6 @@ void (async () => {
 	});
 
 	app.listen(3000);
+	console.log(`[docs] serving wire assets from ${wireDistDir}`);
 	console.log(`Check it out at http://localhost:3000 (${useSocket ? "socket mode" : "http+sse mode"})`);
 })();
