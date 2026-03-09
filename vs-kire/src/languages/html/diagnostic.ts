@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { kireStore } from "../../core/store";
+import { extractTagAttributes } from "../../utils/embedded";
 
 export class HtmlDiagnosticProvider {
 	public static readonly htmlVoidElements = new Set([
@@ -133,46 +134,38 @@ export class HtmlDiagnosticProvider {
 		diagnostics: vscode.Diagnostic[],
 	) {
 		const store = kireStore.getState();
-		const jsAttrRegex = /([:@a-zA-Z0-9\-.]+)\s*=\s*(["'])/g;
-		let jsMatch: RegExpExecArray | null;
-
-		while ((jsMatch = jsAttrRegex.exec(text)) !== null) {
-			const attrName = jsMatch[1] as string;
-			const quote = jsMatch[2] as string;
-			const startValueIndex = jsMatch.index + jsMatch[0].length;
-
-			let def = store.attributes.get(attrName);
+		const parsedAttrs = extractTagAttributes(text);
+		for (const attr of parsedAttrs) {
+			let def = store.attributes.get(attr.name);
 			if (!def) {
 				for (const el of store.elements.values()) {
-					if (el.attributes && el.attributes[attrName]) {
-						const attr = el.attributes[attrName];
-						def = typeof attr === "string" ? { type: attr } : attr;
+					if (!el.attributes) continue;
+					if (Array.isArray(el.attributes)) {
+						const found = el.attributes.find((entry: any) => entry?.name === attr.name);
+						if (found) {
+							def = typeof found === "string" ? { type: found } : (found as any);
+							break;
+						}
+						continue;
+					}
+					const raw = (el.attributes as Record<string, any>)[attr.name];
+					if (raw) {
+						def = typeof raw === "string" ? { type: raw } : (raw as any);
 						break;
 					}
 				}
 			}
 
-			if (def?.type === "javascript") {
-				let current = startValueIndex;
-				while (current < text.length) {
-					const char = text[current];
-					if (char === quote && text[current - 1] !== "") {
-						const nextChunk = text.slice(current + 1, current + 50);
-						const trimmedNext = nextChunk.trim();
-						if (trimmedNext && /^[a-zA-Z0-9_{}[\](),.;+\-*/=!&|]/.test(trimmedNext)) {
-							const position = document.positionAt(current);
-							diagnostics.push(
-								new vscode.Diagnostic(
-									new vscode.Range(position, position.translate(0, 1)),
-									`Unescaped quote in JavaScript attribute. Use \${quote} to avoid breaking HTML syntax.`,
-									vscode.DiagnosticSeverity.Error,
-								),
-							);
-						}
-						break;
-					}
-					current++;
-				}
+			const attrType = Array.isArray(def?.type) ? def?.type[0] : def?.type;
+			if (attrType === "javascript" && !attr.quote) {
+				const pos = document.positionAt(attr.valueStart);
+				diagnostics.push(
+					new vscode.Diagnostic(
+						new vscode.Range(pos, pos.translate(0, Math.max(attr.value.length, 1))),
+						`JavaScript attribute "${attr.name}" should use quoted value to preserve parsing.`,
+						vscode.DiagnosticSeverity.Warning,
+					),
+				);
 			}
 		}
 

@@ -1,55 +1,9 @@
-import { existsSync, writeFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { cp, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { $ } from "bun";
 import { glob } from "glob";
-import pkg from "../core/package.json"; // Path adjusted
-import { Kire } from "../core/src"; // Path adjusted relative to tools/
 import { getPackages, type PackageInfo } from "./utils"; // Shared utils
-
-// Generate Root Schema
-const kire = new Kire();
-kire.kireSchema({
-	author: pkg.author,
-	repository: pkg.repository,
-	version: pkg.version,
-});
-
-const rootAttributes = Object.fromEntries(
-	(kire.$schema.attributes || []).map((attr) => [
-		attr.name,
-		{
-			type: attr.type ?? "string",
-			comment: attr.description,
-			example: attr.example,
-		},
-	]),
-);
-
-const rootGlobals = (kire.$schema.types || []).map((typeDef) => ({
-	variable: typeDef.variable,
-	type: typeDef.tstype,
-	comment: typeDef.comment,
-}));
-
-const rootSchema = {
-	$schema:
-		"https://raw.githubusercontent.com/drysius/kire/refs/heads/main/schema.json",
-	package: pkg.name,
-	version: pkg.version,
-	author: pkg.author,
-	repository: pkg.repository,
-	dependencies: Object.keys(pkg.dependencies || {}),
-	directives: kire.$schema.directives || [],
-	elements: kire.$schema.elements || [],
-	attributes: { global: rootAttributes },
-	globals: rootGlobals,
-};
-
-writeFileSync(
-	"kire-schema.json",
-	JSON.stringify(rootSchema, null, 3),
-);
 
 class Builder {
 	private async cleanPublishDirectory(): Promise<void> {
@@ -186,7 +140,7 @@ class Builder {
 	}
 
 	private async copyMetaFiles(pkg: PackageInfo): Promise<void> {
-		const files = ["README.md", "LICENSE", "kire-schema.json"];
+		const files = ["README.md", "LICENSE", "kire.schema.js"];
 		for (const file of files) {
 			const src = `${pkg.path}/${file}`;
 			if (existsSync(src)) {

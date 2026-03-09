@@ -145,7 +145,7 @@ export type KireHandler = (api: CompilerApi) => void;
 export interface ElementDefinition {
     // Runtime matching
     name: string | RegExp;
-    onCall: KireHandler;
+    onCall?: KireHandler;
 
     // Kernel Metadata
     relatedTo?: string[];
@@ -202,6 +202,7 @@ export interface KireExistVar {
 export interface KireSchemaObject {
     name: string;
     version: string;
+    description?: string;
     author?:string;
     repository?: string;
     dependencies: string[];
@@ -209,6 +210,7 @@ export interface KireSchemaObject {
     elements: KireElementDeclaration[];
     attributes: KireAttributeDeclaration[];
     types: TypeDefinition[];
+    tools?: Record<string, any>;
 }
 
 export interface KireDirectiveDeclaration {
@@ -242,6 +244,17 @@ export interface TypeDefinition {
     type: "global" | "context" | "prop";
     comment?: string;
     tstype: string;
+}
+
+export interface KireSchemaDefinition {
+    name?: string;
+    version?: string;
+    description?: string;
+    author?: string;
+    repository?: string;
+    dependencies?: string[];
+    tools?: Record<string, any>;
+    handle(kire: Kire<any>): void | Promise<void>;
 }
 
 // ==========================================

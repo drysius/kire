@@ -26,13 +26,18 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Run Benchmark (Node.js)
-        run: npx tsx benchmark/create.ts
+      - name: Compile Core for Benchmark (Bun)
+        run: bun run benchmark/create.ts --prepare-only
+        env:
+          NODE_ENV: production
+
+      - name: Run Benchmark (Node.js runtime)
+        run: node --import tsx benchmark/create.ts --runtime=node --skip-build --no-report
         env:
           NODE_ENV: production
 
       - name: Run Benchmark (Bun)
-        run: bun run benchmark/create.ts
+        run: bun run benchmark/create.ts --runtime=bun --skip-build --no-report
         env:
           NODE_ENV: production
 

@@ -13,8 +13,8 @@ export default (kire: Kire<any>) => {
             return [];
         },
         onCall: (api) => {
-            const rawPath = api.getAttribute("path") || api.getArgument(0);
-            const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
+            const rawPath = api.getArgument(0) || api.getAttribute("path");
+            const locals = api.getArgument(1) || api.getAttribute("locals") || "new NullProtoObj()";
 
             if (!rawPath) return;
 

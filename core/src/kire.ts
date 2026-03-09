@@ -24,7 +24,8 @@ import type {
     KireRendered,
     Node,
     TypeDefinition,
-    KireAttributeDeclaration
+    KireAttributeDeclaration,
+    KireSchemaDefinition
 } from "./types";
 
 export interface ElementMatcher {
@@ -81,6 +82,13 @@ export function kirePlugin<Options extends object>(
 }
 
 /**
+ * Schema factory helper used by tooling integrations.
+ */
+export function defineSchema(definition: KireSchemaDefinition): KireSchemaDefinition {
+    return definition;
+}
+
+/**
  * The main Kire engine class.
  * Handles configuration, compilation, and rendering of templates.
  */
@@ -128,12 +136,14 @@ export class Kire<Asyncronos extends boolean = true> {
     public ["~schema"]: KireSchemaObject = {
         name: "kire-app",
         version: "1.0.0",
+        description: "",
         repository: "",
         dependencies: [],
         directives: [],
         elements: [],
         attributes: [],
-        types: []
+        types: [],
+        tools: new NullProtoObj() as Record<string, any>
     };
 
     public ["~parent"]?: Kire<any>;
@@ -394,6 +404,10 @@ export class Kire<Asyncronos extends boolean = true> {
         return this;
     }
 
+    public use<Options extends object>(plugin: KirePlugin<Options>, opts?: Partial<Options>) {
+        return this.plugin(plugin, opts);
+    }
+
     public existVar(name: string | RegExp, callback: KireHandler, unique = false) {
         const handlers = this.$kire["~handlers"];
         const key = name.toString(); 
@@ -465,10 +479,6 @@ export class Kire<Asyncronos extends boolean = true> {
     }
 
     public element(def: ElementDefinition) {
-        this.$elements.list.push(def);
-        this.$elements.matchers.unshift({ def });
-        const names = this.$elements.list.map(d => d.name);
-        this.$elements.pattern = createFastMatcher(names);
         if (typeof def.name === 'string') {
             this.$schema.elements.push({
                 name: def.name,
@@ -479,6 +489,16 @@ export class Kire<Asyncronos extends boolean = true> {
                 related: def.related ?? def.relatedTo
             });
         }
+
+        // Declaration-only element (schema/intellisense) without runtime handler.
+        if (typeof def.onCall !== "function") {
+            return this;
+        }
+
+        this.$elements.list.push(def);
+        this.$elements.matchers.unshift({ def });
+        const names = this.$elements.list.map(d => d.name);
+        this.$elements.pattern = createFastMatcher(names);
         return this;
     }
 

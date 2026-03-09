@@ -2,6 +2,17 @@ import type { Kire } from "../../kire";
 
 export default (kire: Kire<any>) => {
     kire.directive({
+        name: "interface",
+        params: ["shape_or_type:object|string", "global:boolean"],
+        children: false,
+        description:
+            "Type-only directive for tooling. Does not render output. Use @interface(Type) for local typing or @interface({ user: Type }, true) for workspace-global typing in editors.",
+        onCall: () => {
+            // Intentionally noop at runtime. This directive exists for tooling/type hints only.
+        },
+    });
+
+    kire.directive({
         name: `once`,
         children: true,
         onCall: (api) => {
@@ -21,7 +32,7 @@ export default (kire: Kire<any>) => {
         closeBy: [`enderror`, `end`],
         scope: () => [`$message`],
         onCall: (api) => {
-            const field = api.getAttribute("field");
+            const field = api.getArgument(0) ?? api.getAttribute("field");
             api.write(`if ($props.errors && $props.errors[${field}]) {
                 $message = $props.errors[${field}];`);
             api.renderChildren();
@@ -47,7 +58,7 @@ export default (kire: Kire<any>) => {
         params: [`method:string`],
         children: false,
         onCall: (api) => {
-            const method = api.getAttribute("method");
+            const method = api.getArgument(0) ?? api.getAttribute("method");
             api.append(`<input type="hidden" name="_method" value="\${$escape(${method})}">`);
         },
     });
@@ -62,7 +73,7 @@ export default (kire: Kire<any>) => {
             return first ? [first.trim()] : [];
         },
         onCall: (api) => {
-            api.write(`${api.getAttribute("expr")};`);
+            api.write(`${api.getArgument(0) ?? api.getAttribute("expr")};`);
         },
     });
 
@@ -76,7 +87,7 @@ export default (kire: Kire<any>) => {
             return first ? [first.trim()] : [];
         },
         onCall: (api) => {
-            api.write(`${api.getAttribute("expr")};`);
+            api.write(`${api.getArgument(0) ?? api.getAttribute("expr")};`);
         },
     });
 };

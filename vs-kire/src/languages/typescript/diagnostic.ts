@@ -3,11 +3,28 @@ import { KIRE_TS_SCHEME, provider } from './utils';
 
 export class TypescriptDiagnosticProvider {
     private collection: vscode.DiagnosticCollection;
-    private disposable: vscode.Disposable;
+    private disposables: vscode.Disposable[] = [];
 
     constructor() {
         this.collection = vscode.languages.createDiagnosticCollection('kire-ts');
-        this.disposable = vscode.languages.onDidChangeDiagnostics(this.onDidChangeDiagnostics, this);
+        this.disposables.push(
+            vscode.languages.onDidChangeDiagnostics(this.onDidChangeDiagnostics, this),
+            vscode.workspace.onDidOpenTextDocument((doc) => this.refreshForDocument(doc)),
+            vscode.workspace.onDidChangeTextDocument((e) => this.refreshForDocument(e.document)),
+            vscode.workspace.onDidCloseTextDocument((doc) => this.collection.delete(doc.uri)),
+        );
+
+        vscode.workspace.textDocuments.forEach((doc) => this.refreshForDocument(doc));
+    }
+
+    private async refreshForDocument(document: vscode.TextDocument) {
+        if (document.languageId !== "kire" && !document.fileName.endsWith(".kire")) return;
+        const { virtualUri } = provider.update(document);
+        try {
+            await vscode.commands.executeCommand('vscode.executeDiagnosticProvider', virtualUri);
+        } catch {
+            // Fallback on passive diagnostic updates
+        }
     }
 
     private onDidChangeDiagnostics(e: vscode.DiagnosticChangeEvent) {
@@ -47,6 +64,8 @@ export class TypescriptDiagnosticProvider {
 
     dispose() {
         this.collection.dispose();
-        this.disposable.dispose();
+        for (const disposable of this.disposables) {
+            disposable.dispose();
+        }
     }
 }

@@ -1,11 +1,14 @@
-import { workerData } from "node:worker_threads";
 import { Kire } from "../../core/dist/index.js";
-import { runBenchmark } from "./base.js";
+import type { BenchmarkPayload, BenchmarkRunner } from "./base.ts";
 
-async function main() {
-    const { scenario, data } = workerData;
-    const kire = new Kire({ production: true, async:false });
-    await runBenchmark(() => kire.render(scenario.templates.kire, data));
+export async function createRunner(payload: BenchmarkPayload): Promise<BenchmarkRunner> {
+    const { scenario, data } = payload;
+    const kire = new Kire({ production: true, async: false });
+    const compiled = kire.compile(scenario.templates.kire, "__benchmark_kire__.kire");
+
+    if (!compiled.fn) {
+        throw new Error("Kire compile did not return an executable function.");
+    }
+
+    return () => kire.run(compiled.fn!, data);
 }
-
-main();

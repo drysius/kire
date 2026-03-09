@@ -5,7 +5,7 @@ export class TypescriptCompletionItemProvider implements vscode.CompletionItemPr
     async provideCompletionItems(
         document: vscode.TextDocument,
         position: vscode.Position,
-        token: vscode.CancellationToken,
+        _token: vscode.CancellationToken,
         context: vscode.CompletionContext
     ): Promise<vscode.CompletionItem[]> {
         

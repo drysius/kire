@@ -1,11 +1,13 @@
-import { workerData } from "node:worker_threads";
 import pug from "pug";
-import { runBenchmark } from "./base.js";
+import type { BenchmarkPayload, BenchmarkRunner } from "./base.ts";
 
-async function main() {
-    const { scenario, data } = workerData;
-    
-    await runBenchmark(() => pug.compile(scenario.templates.pug)(data));
+export async function createRunner(payload: BenchmarkPayload): Promise<BenchmarkRunner> {
+    const { scenario, data } = payload;
+    const compiled = pug.compile(scenario.templates.pug, {
+        compileDebug: false,
+        pretty: false,
+        inlineRuntimeFunctions: true,
+    });
+
+    return () => compiled(data);
 }
-
-main();

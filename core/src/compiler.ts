@@ -427,7 +427,9 @@ export class Compiler {
             this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
             if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
         }
-        matcher.def.onCall(this.createCompilerApi(n, matcher.def));
+        if (typeof matcher.def.onCall === "function") {
+            matcher.def.onCall(this.createCompilerApi(n, matcher.def));
+        }
     }
 
     private createCompilerApi(node: Node, definition: any, isExistVar = false): any {
@@ -502,11 +504,16 @@ export class Compiler {
             getAttribute: (n: string) => {
                 const val = node.type === "element" ? node.attributes?.[n] : undefined;
                 if (val !== undefined) return this.parseAttrCode(val);
-                
-                if (definition.params && node.args) {
-                    const i = definition.params.findIndex((p: string) => p.startsWith(n + ":") || p === n);
-                    const argVal = i !== -1 ? node.args[i] : undefined;
-                    return typeof argVal === "string" ? this.parseAttrCode(argVal) : argVal;
+
+                // Named arguments for directives can be passed as: @directive(name: value)
+                if (node.type === "directive" && node.args) {
+                    for (const arg of node.args) {
+                        if (typeof arg !== "string") continue;
+                        const match = arg.match(/^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*([\s\S]+)$/);
+                        if (match && match[1] === n) {
+                            return this.parseAttrCode(match[2]!);
+                        }
+                    }
                 }
                 return undefined;
             },

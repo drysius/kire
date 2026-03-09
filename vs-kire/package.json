@@ -18,10 +18,10 @@
   ],
   "main": "./dist/extension.js",
   "activationEvents": [
-    "onLanguage:kire",
-    "onLanguage:html"
+    "onLanguage:kire"
   ],
   "dependencies": {
+    "kire": "^0.1.2",
     "vscode-html-languageservice": "^5.5.1",
     "vscode-languageserver-textdocument": "^1.0.12",
     "zustand": "^5.0.8"
@@ -32,6 +32,31 @@
     "typescript": "^5.9.2"
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "kire.reloadSchemas",
+        "title": "Kire: Reload Schemas"
+      },
+      {
+        "command": "kire.showLogs",
+        "title": "Kire: Show Logs"
+      }
+    ],
+    "configuration": {
+      "title": "Kire",
+      "properties": {
+        "kire.logs.debug": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable verbose debug logs in the Kire output channel."
+        },
+        "kire.schema.scanNodeModules": {
+          "type": "boolean",
+          "default": false,
+          "description": "Scan node_modules for kire.schema.js files. Disable for faster schema loading."
+        }
+      }
+    },
     "languages": [
       {
         "id": "kire",
@@ -59,12 +84,6 @@
           "source.js": "javascript",
           "source.css": "css"
         }
-      }
-    ],
-    "jsonValidation": [
-      {
-        "fileMatch": "kire-schema.json",
-        "url": "../schema.json"
       }
     ],
     "semanticTokenScopes": [

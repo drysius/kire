@@ -8,6 +8,7 @@ export const activate = (context: vscode.ExtensionContext) => {
     context.subscriptions.push(
         vscode.workspace.registerTextDocumentContentProvider(KIRE_TS_SCHEME, provider)
     );
+    provider.bootstrapWorkspaceInterfaces();
 
     const selector = { language: 'kire', scheme: 'file' };
     
@@ -18,6 +19,15 @@ export const activate = (context: vscode.ExtensionContext) => {
 
     const diagnosticProvider = new TypescriptDiagnosticProvider();
     context.subscriptions.push(diagnosticProvider);
+
+    const kireWatcher = vscode.workspace.createFileSystemWatcher("**/*.kire");
+    const kireHtmlWatcher = vscode.workspace.createFileSystemWatcher("**/*.kire.html");
+    for (const watcher of [kireWatcher, kireHtmlWatcher]) {
+        watcher.onDidChange(() => provider.scheduleWorkspaceInterfaceRescan());
+        watcher.onDidCreate(() => provider.scheduleWorkspaceInterfaceRescan());
+        watcher.onDidDelete(() => provider.scheduleWorkspaceInterfaceRescan());
+        context.subscriptions.push(watcher);
+    }
 };
 
 export const deactivate = () => {};

@@ -7,7 +7,7 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getAttribute("name") || api.getArgument(0);
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("slot");
 			api.write(`{ const _oldRes${id} = $kire_response; $kire_response = "";`);
@@ -24,9 +24,9 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`, `default:string`],
         children: false,
 		onCall: (api) => {
-			let name = api.getAttribute("name") || api.getArgument(0);
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			const def = api.getAttribute("default") || api.getArgument(1);
+			const def = api.getArgument(1) || api.getAttribute("default");
 			api.write(`{
                 const content = ($props.slots && $props.slots['${name}']);
                 if (content) {
@@ -50,8 +50,8 @@ export default (kire: Kire<any>) => {
             return [];
         },
         onCall: (api) => {
-            const rawPath = api.getAttribute("path") || api.getArgument(0);
-            const locals = api.getAttribute("locals") || api.getArgument(1) || "new NullProtoObj()";
+            const rawPath = api.getArgument(0) || api.getAttribute("path");
+            const locals = api.getArgument(1) || api.getAttribute("locals") || "new NullProtoObj()";
             const id = api.uid("comp");
             const depId = api.depend(rawPath);
             const dep = api.getDependency(rawPath);

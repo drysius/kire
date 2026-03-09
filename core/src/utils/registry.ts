@@ -40,10 +40,6 @@ export function directive(this: Kire<any>, def: DirectiveDefinition) {
 }
 
 export function element(this: Kire<any>, def: ElementDefinition) {
-    this.$kire["~elements"].list.push(def);
-    this.$kire["~elements"].matchers.unshift({ def });
-    const names = this.$kire["~elements"].list.map(d => d.name instanceof RegExp ? d.name.source : d.name);
-    this.$kire["~elements"].pattern = createFastMatcher(names);
     if (typeof def.name === 'string') {
         this.$schema.elements.push({
             name: def.name,
@@ -54,6 +50,15 @@ export function element(this: Kire<any>, def: ElementDefinition) {
             related: def.related ?? def.relatedTo
         });
     }
+
+    if (typeof def.onCall !== "function") {
+        return this;
+    }
+
+    this.$kire["~elements"].list.push(def);
+    this.$kire["~elements"].matchers.unshift({ def });
+    const names = this.$kire["~elements"].list.map(d => d.name instanceof RegExp ? d.name.source : d.name);
+    this.$kire["~elements"].pattern = createFastMatcher(names);
     return this;
 }
 

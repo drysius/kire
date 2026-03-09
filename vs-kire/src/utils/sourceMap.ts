@@ -35,12 +35,18 @@ export class SourceMapper {
      * Maps a position from the generated document back to the original document.
      */
     toOriginal(line: number, character: number): { line: number, character: number } | undefined {
-        // Find the mapping that covers this position
-        const mapping = this.maps.find(m => 
-            m.generatedLine === line && 
-            character >= m.generatedCharacter && 
-            character <= m.generatedCharacter + m.length
-        );
+        let mapping: SourceMap | undefined;
+        for (let i = this.maps.length - 1; i >= 0; i--) {
+            const current = this.maps[i]!;
+            if (
+                current.generatedLine === line &&
+                character >= current.generatedCharacter &&
+                character <= current.generatedCharacter + current.length
+            ) {
+                mapping = current;
+                break;
+            }
+        }
 
         if (mapping) {
             const offset = character - mapping.generatedCharacter;
@@ -57,11 +63,18 @@ export class SourceMapper {
      * Maps a position from the original document to the generated document.
      */
     toGenerated(line: number, character: number): { line: number, character: number } | undefined {
-        const mapping = this.maps.find(m => 
-            m.originalLine === line && 
-            character >= m.originalCharacter && 
-            character <= m.originalCharacter + m.length
-        );
+        let mapping: SourceMap | undefined;
+        for (let i = this.maps.length - 1; i >= 0; i--) {
+            const current = this.maps[i]!;
+            if (
+                current.originalLine === line &&
+                character >= current.originalCharacter &&
+                character <= current.originalCharacter + current.length
+            ) {
+                mapping = current;
+                break;
+            }
+        }
 
         if (mapping) {
             const offset = character - mapping.originalCharacter;

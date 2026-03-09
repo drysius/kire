@@ -1,10 +1,8 @@
-/**
- * Simplified parameter parser with enhanced pattern matching
- */
-
 export interface ParamDefinition {
 	name: string;
-    type: string;
+	type: string;
+	tstype: string;
+	optional?: boolean;
 	rawDefinition: string;
 	validate: (value: any) => ValidationResult;
 }
@@ -16,28 +14,21 @@ export interface ValidationResult {
 }
 
 type TypeChecker = (value: any) => boolean;
+type ToolResolver = (ref: string) => string;
 
-/**
- * Basic type validators
- */
 const TYPE_VALIDATORS: Record<string, TypeChecker> = {
 	string: (value) => typeof value === "string",
-	number: (value) =>
-		typeof value === "number" && !Number.isNaN(value) && Number.isFinite(value),
+	number: (value) => typeof value === "number" && Number.isFinite(value),
 	boolean: (value) => typeof value === "boolean",
 	any: () => true,
-	object: (value) =>
-		(typeof value === "object" && value !== null && !Array.isArray(value)) ||
-		typeof value === "string",
-	array: (value) => Array.isArray(value) || typeof value === "string",
+	unknown: () => true,
+	object: (value) => typeof value === "object" && value !== null && !Array.isArray(value),
+	array: (value) => Array.isArray(value),
 	null: (value) => value === null,
 	undefined: (value) => value === undefined,
 	function: (value) => typeof value === "function",
 };
 
-/**
- * Registry for custom validators
- */
 export const validators = {
 	register(type: string, validator: TypeChecker) {
 		TYPE_VALIDATORS[type] = validator;
@@ -47,127 +38,69 @@ export const validators = {
 	},
 };
 
-/**
- * Helper to escape regex special characters
- */
 function escapeRegex(text: string): string {
-	return text.replace(/[.*+?^${}()|[\\]/g, "\\$&");
+	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-/**
- * Creates a pattern matcher function with syntax:
- * - `$var` - Captures a variable
- * - `$...` - Captures the rest
- * - `{op1/op2}` - Choice (non-capturing)
- * - `{name:op1/op2}` - Named choice (capturing)
- */
-function createPatternMatcher(
-	pattern: string,
-): (input: string) => Record<string, string> | null {
+function createPatternMatcher(pattern: string): (input: string) => Record<string, string> | null {
 	let regex = "^";
 	let i = 0;
 
 	while (i < pattern.length) {
-		// Rest parameter: $...
 		if (pattern.startsWith("$...", i)) {
 			regex += "(?<rest>.*)";
 			i += 4;
 			continue;
 		}
 
-		// Variable: $var
 		if (pattern[i] === "$") {
 			const varStart = i + 1;
 			let varEnd = varStart;
-			while (varEnd < pattern.length && /\w/.test(pattern[varEnd])) {
-				varEnd++;
-			}
-
+			while (varEnd < pattern.length && /\w/.test(pattern[varEnd])) varEnd++;
 			if (varEnd === varStart) {
-				// Not a variable, treat as literal $
 				regex += "\\$";
 				i++;
 				continue;
 			}
 
 			const varName = pattern.slice(varStart, varEnd);
-			let capturePattern = "[^\\s]+";
-
-			if (varEnd < pattern.length) {
-				const nextChar = pattern[varEnd];
-				if (nextChar === " ") {
-					capturePattern = ".*?";
-				} else if (nextChar !== "$" && nextChar !== "{") {
-					let literalEnd = varEnd;
-					while (
-						literalEnd < pattern.length &&
-						pattern[literalEnd] !== " " &&
-						pattern[literalEnd] !== "$" &&
-						pattern[literalEnd] !== "{"
-					) {
-						literalEnd++;
-					}
-					const nextLiteral = pattern.slice(varEnd, literalEnd);
-					if (nextLiteral) {
-						const firstChar = escapeRegex(nextLiteral[0]!);
-						capturePattern = `.*?(?=\\s|${firstChar}|$)`;
-					}
-				}
-			}
-
-			regex += `(?<${varName}>${capturePattern})`;
+			regex += `(?<${varName}>[^\\s]+)`;
 			i = varEnd;
 			continue;
 		}
 
-		// Choices: {name:op1/op2} or {op1/op2}
 		if (pattern[i] === "{") {
 			const end = pattern.indexOf("}", i);
 			if (end !== -1) {
 				const content = pattern.slice(i + 1, end);
 				const colon = content.indexOf(":");
-
 				if (colon !== -1) {
-					const name = content.slice(0, colon);
+					const name = content.slice(0, colon).trim();
 					const choices = content
 						.slice(colon + 1)
 						.split("/")
-						.map(escapeRegex)
+						.map((item) => escapeRegex(item.trim()))
 						.join("|");
 					regex += `(?<${name}>${choices})`;
 				} else {
-					const choices = content.split("/").map(escapeRegex).join("|");
+					const choices = content
+						.split("/")
+						.map((item) => escapeRegex(item.trim()))
+						.join("|");
 					regex += `(?:${choices})`;
 				}
-
 				i = end + 1;
 				continue;
 			}
 		}
 
-		// Literal text
 		const literalStart = i;
-		while (
-			i < pattern.length &&
-			pattern[i] !== " " &&
-			pattern[i] !== "$" &&
-			pattern[i] !== "{"
-		) {
-			i++;
-		}
-
-		if (literalStart < i) {
-			const literal = pattern.slice(literalStart, i);
-			regex += escapeRegex(literal);
-		}
-
-		// Spaces
+		while (i < pattern.length && pattern[i] !== " " && pattern[i] !== "$" && pattern[i] !== "{") i++;
+		if (literalStart < i) regex += escapeRegex(pattern.slice(literalStart, i));
 		if (i < pattern.length && pattern[i] === " ") {
 			regex += "\\s+";
 			i++;
 			while (i < pattern.length && pattern[i] === " ") i++;
-		} else if (literalStart === i) {
-			i++;
 		}
 	}
 
@@ -178,140 +111,293 @@ function createPatternMatcher(
 		if (typeof input !== "string") return null;
 		const match = compiled.exec(input.trim());
 		if (!match) return null;
-
 		const result: Record<string, string> = {};
 		for (const [key, value] of Object.entries(match.groups || {})) {
-			if (value !== undefined) {
-				result[key] = value;
-			}
+			if (value !== undefined) result[key] = value;
 		}
 		return result;
 	};
 }
 
-/**
- * Check if definition is a pattern
- */
-export function isPatternDefinition(def: string): boolean {
-	return (
-		def.includes(" ") ||
-		def.includes("$") ||
-		(def.includes("{") && def.includes("}"))
-	);
+function splitTopLevel(input: string, separator: string): string[] {
+	const chunks: string[] = [];
+	let current = "";
+	let inQuote: string | null = null;
+	let depthParen = 0;
+	let depthBracket = 0;
+	let depthBrace = 0;
+	let depthAngle = 0;
+
+	for (let i = 0; i < input.length; i++) {
+		const ch = input[i]!;
+		const prev = i > 0 ? input[i - 1] : "";
+
+		if (inQuote) {
+			current += ch;
+			if (ch === inQuote && prev !== "\\") inQuote = null;
+			continue;
+		}
+
+		if (ch === '"' || ch === "'" || ch === "`") {
+			inQuote = ch;
+			current += ch;
+			continue;
+		}
+
+		if (ch === "(") depthParen++;
+		else if (ch === ")") depthParen--;
+		else if (ch === "[") depthBracket++;
+		else if (ch === "]") depthBracket--;
+		else if (ch === "{") depthBrace++;
+		else if (ch === "}") depthBrace--;
+		else if (ch === "<") depthAngle++;
+		else if (ch === ">") depthAngle--;
+
+		if (
+			ch === separator &&
+			depthParen === 0 &&
+			depthBracket === 0 &&
+			depthBrace === 0 &&
+			depthAngle === 0
+		) {
+			chunks.push(current.trim());
+			current = "";
+			continue;
+		}
+
+		current += ch;
+	}
+
+	if (current.trim()) chunks.push(current.trim());
+	return chunks;
 }
 
-/**
- * Parse parameter definition
- */
+export function splitTopLevelArgs(input: string): string[] {
+	return splitTopLevel(input, ",");
+}
+
+function findTopLevelColon(input: string): number {
+	let inQuote: string | null = null;
+	let depthParen = 0;
+	let depthBracket = 0;
+	let depthBrace = 0;
+	let depthAngle = 0;
+
+	for (let i = 0; i < input.length; i++) {
+		const ch = input[i]!;
+		const prev = i > 0 ? input[i - 1] : "";
+
+		if (inQuote) {
+			if (ch === inQuote && prev !== "\\") inQuote = null;
+			continue;
+		}
+
+		if (ch === '"' || ch === "'" || ch === "`") {
+			inQuote = ch;
+			continue;
+		}
+
+		if (ch === "(") depthParen++;
+		else if (ch === ")") depthParen--;
+		else if (ch === "[") depthBracket++;
+		else if (ch === "]") depthBracket--;
+		else if (ch === "{") depthBrace++;
+		else if (ch === "}") depthBrace--;
+		else if (ch === "<") depthAngle++;
+		else if (ch === ">") depthAngle--;
+		else if (
+			ch === ":" &&
+			depthParen === 0 &&
+			depthBracket === 0 &&
+			depthBrace === 0 &&
+			depthAngle === 0
+		) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+function parseObjectType(inner: string, resolveToolType?: ToolResolver): string {
+	const fields = splitTopLevel(inner, ",")
+		.map((rawField) => rawField.trim())
+		.filter(Boolean)
+		.map((rawField) => {
+			const colon = findTopLevelColon(rawField);
+			if (colon === -1) {
+				return `${rawField}: any;`;
+			}
+			const rawName = rawField.slice(0, colon).trim();
+			const fieldName = rawName.endsWith("?") ? rawName.slice(0, -1).trim() : rawName;
+			const optional = rawName.endsWith("?");
+			const rawType = rawField.slice(colon + 1).trim();
+			const tsType = paramTypeToTs(rawType, resolveToolType);
+			return `${fieldName}${optional ? "?" : ""}: ${tsType};`;
+		});
+
+	if (fields.length === 0) return "Record<string, any>";
+	return `{ ${fields.join(" ")} }`;
+}
+
+export function paramTypeToTs(typeDef: string, resolveToolType?: ToolResolver): string {
+	const raw = typeDef.trim();
+	if (!raw) return "any";
+
+	const unionParts = splitTopLevel(raw, "|");
+	if (unionParts.length > 1) {
+		return unionParts.map((part) => paramTypeToTs(part, resolveToolType)).join(" | ");
+	}
+
+	if (raw.startsWith("tools.")) {
+		if (!resolveToolType) return "any";
+		return resolveToolType(raw.slice("tools.".length));
+	}
+
+	if (raw.startsWith("object{") && raw.endsWith("}")) {
+		return parseObjectType(raw.slice(7, -1), resolveToolType);
+	}
+
+	if (raw.startsWith("{") && raw.endsWith("}")) {
+		return parseObjectType(raw.slice(1, -1), resolveToolType);
+	}
+
+	const arrayMatch = raw.match(/^array<([\s\S]+)>$/);
+	if (arrayMatch?.[1]) {
+		return `${paramTypeToTs(arrayMatch[1], resolveToolType)}[]`;
+	}
+
+	if (raw.endsWith("[]")) {
+		return `${paramTypeToTs(raw.slice(0, -2), resolveToolType)}[]`;
+	}
+
+	switch (raw) {
+		case "string":
+		case "number":
+		case "boolean":
+		case "any":
+		case "unknown":
+		case "never":
+			return raw;
+		case "filepath":
+		case "path":
+			return "string";
+		case "object":
+			return "Record<string, any>";
+		case "array":
+			return "any[]";
+		case "function":
+			return "(...args: any[]) => any";
+		default:
+			return raw;
+	}
+}
+
+function isLikelyPattern(input: string): boolean {
+	return input.includes("$") || /\{[^}]*\/[^}]*\}/.test(input) || input.includes(" ");
+}
+
+export function isPatternDefinition(def: string): boolean {
+	return isLikelyPattern(def);
+}
+
 export function parseParamDefinition(def: string): ParamDefinition {
-	// 1. Handle Unions
-	if (def.includes("|")) {
-		// If it looks like a pattern, don't split by pipe immediately unless we are sure.
-		// But our simple pattern syntax doesn't use pipe except inside choice {} blocks.
-		// So safe to split by top-level pipe?
-		// Wait, {op1/op2} uses slash.
-		// So pipe is reserved for Union Types.
+	const trimmed = def.trim();
+	const unionParts = splitTopLevel(trimmed, "|");
 
-		const parts = def.split("|").map((p) => p.trim());
-		const validators = parts.map((p) => parseParamDefinition(p));
-
+	if (unionParts.length > 1) {
+		const branches = unionParts.map((part) => parseParamDefinition(part));
+		const fallbackName = branches[0]?.name || "arg";
 		return {
-			name: validators[0]!.name,
-            type: validators.map(v => v.type).join("|"),
+			name: fallbackName,
+			type: branches.map((entry) => entry.type).join("|"),
+			tstype: branches.map((entry) => entry.tstype).join(" | "),
 			rawDefinition: def,
-			validate: (value: any) => {
+			validate: (value) => {
 				const errors: string[] = [];
-				const combinedExtracted: Record<string, any> = {};
-
-				for (const validator of validators) {
-					const result = validator.validate(value);
-					if (result.valid) {
-						if (validator.name && validator.name !== "pattern_match") {
-							combinedExtracted[validator.name] = value;
-						}
-						if (result.extracted) {
-							Object.assign(combinedExtracted, result.extracted);
-						}
-						return { valid: true, extracted: combinedExtracted };
-					}
-					errors.push(result.error || "Invalid");
+				for (const branch of branches) {
+					const result = branch.validate(value);
+					if (result.valid) return result;
+					if (result.error) errors.push(result.error);
 				}
-
 				return {
 					valid: false,
-					error: `Value didn't match: ${errors.join(" OR ")}`,
+					error: errors.length > 0 ? errors.join(" OR ") : "No union branch matched",
 				};
 			},
 		};
 	}
 
-	// 2. Handle Patterns
-	if (isPatternDefinition(def)) {
-		// Check for name prefix "name:pattern"
-		let name = "pattern_match";
-		let pattern = def;
+	const colon = findTopLevelColon(trimmed);
+	const hasTypedName = colon > 0;
 
-		// Simple heuristic: if it starts with "word:" and rest is pattern
-		const colonIndex = def.indexOf(":");
-		if (colonIndex !== -1) {
-			const possibleName = def.slice(0, colonIndex);
-			// Ensure name is a valid identifier and not part of the pattern structure like {name:opt}
-			// Actually {name:opt} is inside braces.
-			// If we have "loop:$lhs...", "loop" is name.
-			if (/^[a-zA-Z_]\w*$/.test(possibleName)) {
-				name = possibleName;
-				pattern = def.slice(colonIndex + 1);
-			}
-		}
-
-		const matcher = createPatternMatcher(pattern);
-
+	if (!hasTypedName && isLikelyPattern(trimmed)) {
+		const matcher = createPatternMatcher(trimmed);
 		return {
-			name,
-            type: 'pattern',
+			name: "pattern_match",
+			type: "pattern",
+			tstype: "any",
 			rawDefinition: def,
-			validate: (value: any) => {
+			validate: (value) => {
 				if (typeof value !== "string") {
-					return {
-						valid: false,
-						error: "Expected string for pattern matching",
-					};
+					return { valid: false, error: "Expected string for pattern parameter" };
 				}
 				const extracted = matcher(value);
 				if (!extracted) {
-					return {
-						valid: false,
-						error: `Value does not match pattern: ${pattern}`,
-					};
+					return { valid: false, error: `Pattern mismatch: ${trimmed}` };
 				}
 				return { valid: true, extracted };
 			},
 		};
 	}
 
-	// 3. Handle Simple Types "name:type"
-	const [namePart, typeDef = "any"] = def.split(":");
-	let name = namePart!.trim();
-
-	// Handle optional indicator '?' in name (e.g., "param?:type")
-	if (name.endsWith("?")) {
-		name = name.slice(0, -1);
+	let rawName = hasTypedName ? trimmed.slice(0, colon).trim() : trimmed;
+	const rawType = hasTypedName ? trimmed.slice(colon + 1).trim() : "any";
+	let optional = false;
+	if (rawName.endsWith("?")) {
+		rawName = rawName.slice(0, -1).trim();
+		optional = true;
 	}
 
-	const validator = TYPE_VALIDATORS[typeDef.trim()] || TYPE_VALIDATORS.any!;
+	const name = rawName || "arg";
+	if (isLikelyPattern(rawType)) {
+		const matcher = createPatternMatcher(rawType);
+		return {
+			name,
+			type: "pattern",
+			tstype: "any",
+			optional,
+			rawDefinition: def,
+			validate: (value) => {
+				if (typeof value !== "string") {
+					return { valid: false, error: "Expected string for pattern parameter" };
+				}
+				const extracted = matcher(value);
+				if (!extracted) {
+					return { valid: false, error: `Pattern mismatch: ${rawType}` };
+				}
+				return { valid: true, extracted };
+			},
+		};
+	}
+
+	const cleanType = rawType || "any";
+	const tsType = paramTypeToTs(cleanType);
+	const validator = TYPE_VALIDATORS[cleanType] || (cleanType.startsWith("object{") || cleanType.startsWith("{")
+		? TYPE_VALIDATORS.object
+		: cleanType.startsWith("array<") || cleanType.endsWith("[]")
+			? TYPE_VALIDATORS.array
+			: TYPE_VALIDATORS.any);
 
 	return {
-		name: name,
-        type: typeDef.trim(),
+		name,
+		type: cleanType,
+		tstype: tsType,
+		optional,
 		rawDefinition: def,
-		validate: (value: any) => {
-			if (validator(value)) {
-				return { valid: true };
-			}
-			return {
-				valid: false,
-				error: `Expected ${typeDef}, got ${typeof value}`,
-			};
-		},
+		validate: (value) =>
+			validator(value)
+				? { valid: true }
+				: { valid: false, error: `Expected ${cleanType}, got ${typeof value}` },
 	};
 }

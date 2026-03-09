@@ -5,7 +5,7 @@ export class TypescriptHoverProvider implements vscode.HoverProvider {
     async provideHover(
         document: vscode.TextDocument,
         position: vscode.Position,
-        token: vscode.CancellationToken
+        _token: vscode.CancellationToken
     ): Promise<vscode.Hover | undefined> {
         
         const { virtualUri, mapper } = provider.update(document);

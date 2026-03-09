@@ -1,185 +1,243 @@
 import { createStore } from "zustand/vanilla";
 
+type KireInstance = any;
+
+interface KireSchemaShape {
+    directives?: any[];
+    elements?: any[];
+    attributes?: any[];
+    types?: any[];
+    tools?: Record<string, any> | any[];
+}
+
 export interface DirectiveDefinition {
-	name: string;
-	params?: string[];
-	children?: boolean | "auto";
-	type?: "css" | "js" | "html";
-	description?: string;
-	example?: string;
-	parents?: DirectiveDefinition[];
+    name: string;
+    params?: string[];
+    children?: boolean | "auto";
+    description?: string;
+    example?: string;
+    related?: string[];
+    parents?: Array<{ name: string }>;
+    [key: string]: any;
 }
 
 export interface ElementDefinition {
-	name: string;
-	description?: string;
-	example?: string;
-	void?: boolean;
-	type?: "html" | "javascript" | "css";
-	attributes?: Record<string, AttributeDefinition | string>;
+    name: string;
+    description?: string;
+    example?: string;
+    void?: boolean;
+    attributes?: Array<AttributeDefinition | { name: string; type?: string | string[]; description?: string; example?: string }> | Record<string, AttributeDefinition | string>;
+    [key: string]: any;
 }
 
 export interface AttributeDefinition {
-	type: string | string[];
-	comment?: string;
-	example?: string;
+    name?: string;
+    type: string | string[];
+    comment?: string;
+    description?: string;
+    example?: string;
     separator?: string;
+    [key: string]: any;
 }
 
 export interface PackageMetadata {
     name?: string;
     version?: string;
+    description?: string;
     author?: string;
     repository?: string;
 }
 
+export interface ToolDefinition {
+    type?: string | string[];
+    tstype?: string;
+    comment?: string;
+    description?: string;
+    example?: string;
+    separator?: string;
+    [key: string]: any;
+}
+
 export interface KireState {
-	directives: Map<string, DirectiveDefinition>;
-	elements: Map<string, ElementDefinition>;
-	attributes: Map<string, AttributeDefinition>;
+    engine: KireInstance | null;
+    directives: Map<string, DirectiveDefinition>;
+    elements: Map<string, ElementDefinition>;
+    attributes: Map<string, AttributeDefinition>;
     globals: Map<string, any>;
+    tools: Map<string, ToolDefinition>;
     metadata: PackageMetadata;
-	parentDirectives: Map<string, string[]>;
-	addDirectives: (directives: Record<string, any> | DirectiveDefinition[]) => void;
-	addElements: (elements: Record<string, any> | any[]) => void;
-	addAttributes: (attributes: Record<string, Record<string, any>>) => void;
-    addGlobals: (globals: Record<string, any> | any[]) => void;
+    parentDirectives: Map<string, string[]>;
+    setEngine: (engine: KireInstance | null) => void;
+    applyKireSchema: (schema: KireSchemaShape & Record<string, any>) => void;
     setMetadata: (meta: PackageMetadata) => void;
-	clear: () => void;
+    clear: () => void;
+}
+
+function normalizeAttribute(def: any): AttributeDefinition {
+    if (!def) return { type: "any" };
+    if (typeof def === "string") return { type: def };
+    return {
+        ...def,
+        type: def.type ?? "any",
+        comment: def.comment ?? def.description,
+    };
+}
+
+function flattenObjectTree(
+    root: any,
+    onEntry: (name: string, node: any) => void,
+    prefix = "",
+    inheritedSep = ".",
+) {
+    if (!root || typeof root !== "object") return;
+    const key = root.variable || root.name;
+    const separator = root.separator || inheritedSep;
+    const current = key ? (prefix ? `${prefix}${separator}${key}` : key) : prefix;
+
+    if (current && (root.type || root.tstype || root.description || root.comment)) {
+        onEntry(current, root);
+    }
+
+    if (Array.isArray(root.extends)) {
+        for (const child of root.extends) {
+            flattenObjectTree(child, onEntry, current, separator);
+        }
+    }
 }
 
 export const kireStore = createStore<KireState>((set) => ({
-	directives: new Map(),
-	elements: new Map(),
-	attributes: new Map(),
+    engine: null,
+    directives: new Map(),
+    elements: new Map(),
+    attributes: new Map(),
     globals: new Map(),
+    tools: new Map(),
     metadata: {},
-	parentDirectives: new Map(),
-    setMetadata: (meta) => set({ metadata: meta }),
-	addDirectives: (directives) =>
-		set((state) => {
-			const newMap = new Map(state.directives);
-			const newParents = new Map(state.parentDirectives);
+    parentDirectives: new Map(),
 
-            const processDef = (d: any) => {
-                newMap.set(d.name, d);
-				if (d.parents) {
-					d.parents.forEach((p: any) => {
-						// Sub-directives might be full definitions or refs
-                        // Since schema now outputs full objects in 'parents', we treat them as definitions
-                        if (p.name) newMap.set(p.name, p);
-						
-                        const parents = newParents.get(p.name) || [];
-						if (!parents.includes(d.name)) {
-							parents.push(d.name);
-						}
-						newParents.set(p.name, parents);
-					});
-				}
-            };
+    setEngine: (engine) => set({ engine }),
 
-            if (Array.isArray(directives)) {
-			    directives.forEach(processDef);
-            } else {
-                Object.values(directives).forEach(processDef);
-            }
-            
-			return { directives: newMap, parentDirectives: newParents };
-		}),
-	addElements: (elements) =>
-		set((state) => {
-			const newElements = new Map(state.elements);
-            const newAttributes = new Map(state.attributes);
-
-            const processTree = (node: any, prefix: string, sep: string) => {
-                 const currentKey = prefix ? prefix + sep + (node.variable || node.name) : (node.variable || node.name);
-                 
-                 // If array of children directly? No, structure is Node object.
-                 if (!currentKey) return; // Should not happen if schema is valid
-
-                 if (node.description || node.comment || node.type || node.example) {
-                    if (node.type === 'element') {
-                        newElements.set(currentKey, { name: currentKey, ...node });
-                    } else {
-                        // Attribute or generic type
-                        newAttributes.set(currentKey, { type: node.type || "string", comment: node.comment || node.description, example: node.example });
-                    }
-                 }
-                 
-                 if (node.extends && Array.isArray(node.extends)) {
-                     const nextSep = node.separator || ""; 
-                     node.extends.forEach((child: any) => processTree(child, currentKey, nextSep));
-                 }
-            };
-
-            if (Array.isArray(elements)) {
-			    elements.forEach((e) => {
-                    // Check if it's new Tree format (has variable) or legacy flat (has name)
-                    if (e.variable) {
-                        processTree(e, "", "");
-                    } else if (e.name) {
-                        // Legacy flat definition
-                        newElements.set(e.name, e);
-                    }
-                });
-            } else {
-                // Object-based legacy structure
-                // ... same as before or skipped
-            }
-            
-			return { elements: newElements, attributes: newAttributes };
-		}),
-    addGlobals: (globals) =>
+    applyKireSchema: (schema) =>
         set((state) => {
-            const newMap = new Map(state.globals);
-            
-            const processTree = (node: any, prefix: string, sep: string) => {
-                 const currentKey = prefix ? prefix + sep + (node.variable || node.name) : (node.variable || node.name);
-                 
-                 if (node.description || node.comment || node.type) {
-                     newMap.set(currentKey, node);
-                 }
-                 
-                 if (node.extends && Array.isArray(node.extends)) {
-                     const nextSep = node.separator || "."; 
-                     node.extends.forEach((child: any) => processTree(child, currentKey, nextSep));
-                 }
+            const directives = new Map(state.directives);
+            const elements = new Map(state.elements);
+            const attributes = new Map(state.attributes);
+            const globals = new Map(state.globals);
+            const tools = new Map(state.tools);
+            const parentDirectives = new Map(state.parentDirectives);
+
+            const directiveList = Array.isArray(schema.directives) ? schema.directives : [];
+            const addParent = (childName: string, parentName: string) => {
+                const current = parentDirectives.get(childName) || [];
+                if (!current.includes(parentName)) {
+                    current.push(parentName);
+                    parentDirectives.set(childName, current);
+                }
             };
 
-            if (Array.isArray(globals)) {
-                globals.forEach(g => {
-                    if (g.variable) processTree(g, "", "");
-                    else {
-                        // Maybe flat?
+            for (const raw of directiveList as any[]) {
+                if (!raw?.name) continue;
+                directives.set(raw.name, raw);
+
+                // Modern shape: related = allowed parent directives for this directive.
+                const directParents = Array.isArray(raw.related)
+                    ? raw.related.filter((p: any) => typeof p === "string")
+                    : [];
+                for (const parentName of directParents) {
+                    addParent(raw.name, parentName);
+                }
+
+                // Legacy shape:
+                // - parents: string[] => allowed parents for this directive
+                // - parents: [{ name: "else" }, ...] => child directives allowed inside current directive
+                if (Array.isArray(raw.parents)) {
+                    for (const parentEntry of raw.parents) {
+                        if (typeof parentEntry === "string") {
+                            addParent(raw.name, parentEntry);
+                            continue;
+                        }
+
+                        if (parentEntry && typeof parentEntry === "object" && typeof parentEntry.name === "string") {
+                            directives.set(parentEntry.name, parentEntry);
+                            addParent(parentEntry.name, raw.name);
+                        }
                     }
-                });
-            } else {
-                // Legacy object map
-                Object.entries(globals).forEach(([k, v]) => newMap.set(k, v));
+                }
             }
-            return { globals: newMap };
+
+            const elementList = Array.isArray(schema.elements) ? schema.elements : [];
+            for (const raw of elementList as any[]) {
+                if (!raw?.name) continue;
+                elements.set(raw.name, raw);
+
+                if (Array.isArray(raw.attributes)) {
+                    for (const attr of raw.attributes) {
+                        if (!attr?.name) continue;
+                        attributes.set(attr.name, normalizeAttribute(attr));
+                    }
+                } else if (raw.attributes && typeof raw.attributes === "object") {
+                    for (const [name, attr] of Object.entries(raw.attributes)) {
+                        attributes.set(name, normalizeAttribute(attr));
+                    }
+                }
+            }
+
+            const attrList = Array.isArray(schema.attributes) ? schema.attributes : [];
+            for (const raw of attrList as any[]) {
+                if (!raw?.name) continue;
+                attributes.set(raw.name, normalizeAttribute(raw));
+            }
+
+            const typeList = Array.isArray(schema.types) ? schema.types : [];
+            for (const typeDef of typeList as any[]) {
+                if (!typeDef?.variable) continue;
+                globals.set(typeDef.variable, {
+                    type: typeDef.tstype || typeDef.type || "any",
+                    comment: typeDef.comment,
+                });
+            }
+
+            const schemaTools = schema.tools;
+            if (schemaTools && typeof schemaTools === "object") {
+                if (Array.isArray(schemaTools)) {
+                    for (const entry of schemaTools) {
+                        flattenObjectTree(entry, (name, node) => {
+                            tools.set(name, node);
+                        });
+                    }
+                } else {
+                    for (const [name, value] of Object.entries(schemaTools)) {
+                        if (value && typeof value === "object" && (value as any).extends) {
+                            flattenObjectTree({ name, ...(value as any) }, (key, node) => {
+                                tools.set(key, node);
+                            });
+                        } else {
+                            tools.set(name, value as ToolDefinition);
+                        }
+                    }
+                }
+            }
+
+            return { directives, elements, attributes, globals, tools, parentDirectives };
         }),
-	addAttributes: (schemas) =>
-		set((state) => {
-			const newMap = new Map(state.attributes);
-			if (schemas.global) {
-				Object.entries(schemas.global).forEach(([key, def]) => {
-					if (typeof def === "string") {
-						newMap.set(key, { type: def });
-					} else {
-						newMap.set(key, def as AttributeDefinition);
-					}
-				});
-			}
-			return { attributes: newMap };
-		}),
-	clear: () =>
-		set({
-			directives: new Map(),
-			elements: new Map(),
-			attributes: new Map(),
+
+    setMetadata: (meta) =>
+        set((state) => ({
+            metadata: {
+                ...state.metadata,
+                ...meta,
+            },
+        })),
+
+    clear: () =>
+        set({
+            engine: null,
+            directives: new Map(),
+            elements: new Map(),
+            attributes: new Map(),
             globals: new Map(),
+            tools: new Map(),
             metadata: {},
-			parentDirectives: new Map(),
-		}),
+            parentDirectives: new Map(),
+        }),
 }));

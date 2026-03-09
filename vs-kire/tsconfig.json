@@ -11,6 +11,8 @@
 		"allowImportingTsExtensions": true,
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
+		"types": ["node", "vscode"],
+		"skipLibCheck": true,
 		"baseUrl": "./",
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,

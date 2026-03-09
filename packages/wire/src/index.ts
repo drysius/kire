@@ -61,7 +61,7 @@ export class KirewirePlugin {
                         ? this.wire.options.adapter.getUploadUrl()
                         : ($wireUrl.replace(/\\/+$/, '') + '/upload');
                     $kire_response += \`
-                        <script type="module" src="/dist/client/wire.js"></script>
+                        <script type="module" src="\${$wireUrl}/kirewire.js"></script>
                         <script type="module">
                             window.__WIRE_INITIAL_CONFIG__ = Object.assign({}, window.__WIRE_INITIAL_CONFIG__ || {}, {
                                 pageId: \${JSON.stringify($pageId)},
@@ -101,8 +101,8 @@ export class KirewirePlugin {
                 api.write(`{
                     const $name = (${nameExpr}).replace(/^['"]|['"]$/g, '');
                     const $locals = ${localsExpr};
-                    const $userId = $globals.user?.id || 'guest';
-                    const $pageId = $globals.pageId || 'default-page';
+                    const $userId = String($globals.user?.id || 'guest');
+                    const $pageId = String($globals.pageId || 'default-page');
 
                     const $componentClass = this.wire.components.get($name);
                     if (!$componentClass) {
@@ -122,7 +122,8 @@ export class KirewirePlugin {
                                 this.wire.on(\`event:\${event}\`, async (data) => {
                                     if (data.sourceId !== $id) {
                                         if (typeof $instance[method] === 'function') {
-                                            await $instance[method](...data.params);
+                                            const $params = Array.isArray(data.params) ? data.params : [];
+                                            await $instance[method](...$params);
                                             
                                             const $state = $instance.getPublicState();
                                             const $rendered = await $instance.render();

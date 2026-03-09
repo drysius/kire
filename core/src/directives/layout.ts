@@ -27,7 +27,7 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("def");
             api.write(`{ const _origRes${id} = $kire_response; $kire_response = "";`);
@@ -44,7 +44,7 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: `auto`,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             api.write(`$kire_response += "<!-- KIRE:defined(${name}) -->";`);
             if (api.node.children && api.node.children.length > 0) {
@@ -59,7 +59,7 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: false,
 		onCall: (api) => {
-			let name = api.getAttribute("name") || api.getArgument(0);
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
 			api.write(`$kire_response += "<!-- KIRE:stack(${name}) -->";`);
             
@@ -78,7 +78,7 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getAttribute("name");
+			let name = api.getArgument(0) || api.getAttribute("name");
             if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("push");
 			api.write(`{

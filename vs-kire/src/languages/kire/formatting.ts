@@ -440,7 +440,9 @@ export class FeatureFormatting
 		const tag = this.getHtmlTagName(t);
 		if (!tag) return "text";
 
-		if (t.includes("/>")) return "html-self-closing";
+		// Only treat as self-closing when the outer tag itself ends with '/>'.
+		if (/^<\s*[a-zA-Z][a-zA-Z0-9:-]*\b[^>]*\/>\s*$/i.test(t))
+			return "html-self-closing";
 		if (this.isVoidHtmlTag(tag)) return "html-self-closing";
 
 		if (this.isSingleLineHtmlElement(t, tag)) return "html-single-line";
@@ -455,7 +457,7 @@ export class FeatureFormatting
 
 	private isSingleLineHtmlElement(line: string, tag: string): boolean {
 		const re = new RegExp(
-			`^<\s*${this.escapeRegExp(tag)}\b[^>]*>.*<\/\s*${this.escapeRegExp(tag)}\s*>\s*$`,
+			`^<\\s*${this.escapeRegExp(tag)}\\b[^>]*>[\\s\\S]*<\\/\\s*${this.escapeRegExp(tag)}\\s*>\\s*$`,
 			"i",
 		);
 		return re.test(line);

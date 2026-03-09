@@ -2,8 +2,6 @@ import * as vscode from "vscode";
 import { getLanguageService } from "vscode-html-languageservice";
 import { HtmlCompletionItemProvider } from "./completion";
 import { HtmlHoverProvider } from "./hover";
-export { HtmlDiagnosticProvider } from "./diagnostic";
-import { HtmlDocumentFormattingEditProvider } from "./formatting";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();
@@ -52,26 +50,7 @@ export const activate = (context: vscode.ExtensionContext) => {
         vscode.languages.registerDocumentSymbolProvider(selector, new HtmlDocumentSymbolProvider()),
         vscode.languages.registerDocumentHighlightProvider(selector, new HtmlDocumentHighlightProvider()),
         vscode.languages.registerFoldingRangeProvider(selector, new HtmlFoldingRangeProvider()),
-        vscode.languages.registerDocumentFormattingEditProvider(selector, new HtmlDocumentFormattingEditProvider()),
     ];
-
-    const diagnosticProvider = new HtmlDiagnosticProvider();
-    const diagnosticCollection = vscode.languages.createDiagnosticCollection("html");
-    disposables.push(diagnosticCollection);
-
-    const updateDiagnostics = (document: vscode.TextDocument) => {
-        if (document.languageId === "kire") {
-            diagnosticCollection.set(document.uri, diagnosticProvider.createDiagnostics(document));
-        }
-    };
-
-    disposables.push(
-        vscode.workspace.onDidChangeTextDocument((e) => updateDiagnostics(e.document)),
-        vscode.workspace.onDidOpenTextDocument(updateDiagnostics),
-        vscode.workspace.onDidCloseTextDocument((doc) => diagnosticCollection.delete(doc.uri))
-    );
-
-    vscode.workspace.textDocuments.forEach(updateDiagnostics);
     context.subscriptions.push(...disposables);
 };
 

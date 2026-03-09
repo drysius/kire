@@ -19,7 +19,7 @@ export default (kire: Kire<any>) => {
         children: true,
         relatedTo: [],
         onCall: (api) => {
-            const cond = api.getAttribute("cond");
+            const cond = api.getArgument(0) ?? api.getAttribute("cond");
             api.write(`if (${cond}) {`);
             api.renderChildren();
             if (api.node.related && api.node.related.length > 0) {
@@ -34,7 +34,7 @@ export default (kire: Kire<any>) => {
         name: `elseif`,
         params: [`cond:any`],
         onCall: (api) => {
-            const cond = api.getAttribute("cond");
+            const cond = api.getArgument(0) ?? api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);
             api.renderChildren();
         }
@@ -45,7 +45,7 @@ export default (kire: Kire<any>) => {
         params: [`cond:any`],
         children: true,
         onCall: (api) => {
-            const cond = api.getAttribute("cond");
+            const cond = api.getArgument(0) ?? api.getAttribute("cond");
             api.write(`if (!(${cond})) {`);
             api.renderChildren();
             if (api.node.related && api.node.related.length > 0) {

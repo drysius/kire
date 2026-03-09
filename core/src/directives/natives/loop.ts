@@ -16,7 +16,7 @@ export default (kire: Kire<any>) => {
             return ['item', 'index', '$loop'];
         },
         onCall: (api) => {
-            const rawExpr = api.getAttribute("expr") || api.getArgument(0) || "[]";
+            const rawExpr = api.getArgument(0) || api.getAttribute("expr") || "[]";
             const id = api.uid("i");
             const relatedNodes = api.node.related || [];
             const hasEmptyBranch = relatedNodes.some((n: any) => n?.name === "empty");

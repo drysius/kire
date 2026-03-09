@@ -89,7 +89,10 @@ export class HttpAdapter extends Adapter {
                 const page = this.wire.sessions.getPage(userId, pageId);
                 const instance = page.components.get(id) as any;
 
-                if (!instance) throw new Error(`Component ${id} not found.`);
+                if (!instance) {
+                    console.error(`[HttpAdapter] Component ${id} not found for userId=${userId} pageId=${pageId}. Available components in this page:`, Array.from(page.components.keys()));
+                    throw new Error(`Component ${id} not found.`);
+                }
                 
                 // Reset side effects only once per component in each batch.
                 if (!preparedComponents.has(id)) {

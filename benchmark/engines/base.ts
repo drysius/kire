@@ -1,29 +1,57 @@
-import { parentPort, workerData } from "node:worker_threads";
+export interface BenchmarkScenario {
+    name: string;
+    iterations: number;
+    dataCount: number;
+    templates: Record<string, string>;
+}
 
-export async function runBenchmark(runner: () => any | Promise<any>) {
-    const { engineName, scenario, data } = workerData;
-    
-    try {
-        // Warmup
-        for (let i = 0; i < 10; i++) {
-            const res = runner();
-            if (res instanceof Promise) await res;
-        }
+export interface BenchmarkPayload {
+    engineName: string;
+    scenario: BenchmarkScenario;
+    data: Record<string, any>;
+}
 
-        // Benchmark
-        const start = performance.now();
-        for (let i = 0; i < scenario.iterations; i++) {
-            const res = runner();
-            if (res instanceof Promise) await res;
-        }
-        const end = performance.now();
+export interface BenchmarkResult {
+    engineName: string;
+    totalMs: number;
+    warmupMs: number;
+    iterations: number;
+    opsPerSec: number;
+}
 
-        parentPort?.postMessage({
-            engineName,
-            totalMs: end - start,
-            opsPerSec: Math.round((scenario.iterations / (end - start)) * 1000)
-        });
-    } catch (error: any) {
-        parentPort?.postMessage({ error: error.message, stack: error.stack });
+export type BenchmarkRunner = () => any | Promise<any>;
+
+async function execute(runner: BenchmarkRunner) {
+    const result = runner();
+    if (result instanceof Promise) {
+        await result;
     }
+}
+
+export async function runBenchmark(
+    payload: BenchmarkPayload,
+    runner: BenchmarkRunner,
+): Promise<BenchmarkResult> {
+    const warmupIterations = 10;
+
+    const warmupStart = performance.now();
+    for (let i = 0; i < warmupIterations; i++) {
+        await execute(runner);
+    }
+    const warmupEnd = performance.now();
+
+    const start = performance.now();
+    for (let i = 0; i < payload.scenario.iterations; i++) {
+        await execute(runner);
+    }
+    const end = performance.now();
+
+    const totalMs = end - start;
+    return {
+        engineName: payload.engineName,
+        totalMs,
+        warmupMs: warmupEnd - warmupStart,
+        iterations: payload.scenario.iterations,
+        opsPerSec: Math.round((payload.scenario.iterations / totalMs) * 1000),
+    };
 }

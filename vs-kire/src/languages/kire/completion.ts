@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import { kireStore } from "../../core/store";
-import { parseParamDefinition } from "../../utils/params";
+import { parseParamDefinition, splitTopLevelArgs } from "../../utils/params";
 
 export class KireCompletionItemProvider
 	implements vscode.CompletionItemProvider
@@ -53,7 +53,7 @@ export class KireCompletionItemProvider
             if (dirMatch) {
                 const dirName = dirMatch[1] as string;
                 const paramsStr = dirMatch[2] as string;
-                const params = paramsStr.split(',');
+                const params = splitTopLevelArgs(paramsStr);
                 const paramIndex = params.length - 1;
                 
                 const def = kireStore.getState().directives.get(dirName);
@@ -386,29 +386,31 @@ export class KireCompletionItemProvider
 				items.push(item);
 			});
 
-			// Element-specific Attributes
-			const elementDef = kireStore.getState().elements.get(tagName);
-			if (elementDef && elementDef.attributes) {
-				Object.entries(elementDef.attributes).forEach(([name, rawDef]) => {
-					const def = typeof rawDef === "string" ? { type: rawDef } : rawDef;
-					const item = new vscode.CompletionItem(
-						name,
-						vscode.CompletionItemKind.Property,
-					);
-					item.detail = `Attribute (${def.type}) [${tagName}]`;
-					item.sortText = `0_${name}`; // Prioritize specific attributes
+				// Element-specific Attributes
+				const elementDef = kireStore.getState().elements.get(tagName);
+				if (elementDef && elementDef.attributes) {
+					const attrs = Array.isArray(elementDef.attributes)
+						? elementDef.attributes
+								.filter((a: any) => a?.name)
+								.map((a: any) => [a.name, a] as const)
+						: Object.entries(elementDef.attributes);
 
-					const doc = new vscode.MarkdownString(def.comment || "");
-					if (def.example) {
-						doc.appendCodeblock(def.example, "html");
-					}
-					item.documentation = doc;
+					attrs.forEach(([name, rawDef]) => {
+						const def = typeof rawDef === "string" ? { type: rawDef } : (rawDef as any);
+						const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Property);
+						item.detail = `Attribute (${def.type || "any"}) [${tagName}]`;
+						item.sortText = `0_${name}`;
 
-					item.insertText = new vscode.SnippetString(`${name}="$0"`);
-					items.push(item);
-				});
+						const doc = new vscode.MarkdownString(def.comment || def.description || "");
+						if (def.example) {
+							doc.appendCodeblock(def.example, "html");
+						}
+						item.documentation = doc;
+						item.insertText = new vscode.SnippetString(`${name}="$0"`);
+						items.push(item);
+					});
+				}
 			}
-		}
 
 		return items;
 	}

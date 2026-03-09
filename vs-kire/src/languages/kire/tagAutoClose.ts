@@ -1,6 +1,22 @@
 import * as vscode from "vscode";
 import { kireStore } from "../../core/store";
-import { HtmlDiagnosticProvider } from "../html";
+
+const htmlVoidElements = new Set([
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"param",
+	"source",
+	"track",
+	"wbr",
+]);
 
 export class TagAutoCloseProvider {
 	private disposable: vscode.Disposable;
@@ -56,7 +72,7 @@ export class TagAutoCloseProvider {
 		if (!tagName) return;
 
 		// Check if void
-		if (HtmlDiagnosticProvider.htmlVoidElements.has(tagName.toLowerCase()))
+		if (htmlVoidElements.has(tagName.toLowerCase()))
 			return;
 
 		// Check Kire elements definition

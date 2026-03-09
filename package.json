@@ -12,7 +12,11 @@
 	},
 	"scripts": {
 		"test": "bun test && bun tools/playwright.ts",
-		"benchmark": "bun run benchmark/create.ts",
+		"benchmark": "bun run benchmark:all",
+		"benchmark:build": "bun run benchmark/create.ts --prepare-only",
+		"benchmark:node": "node --import tsx benchmark/create.ts --runtime=node --skip-build",
+		"benchmark:bun": "bun run benchmark/create.ts --runtime=bun --skip-build",
+		"benchmark:all": "bun run benchmark/create.ts --runtime=both",
 		"schema": "bun run tools/schema.ts",
 		"build": "bun run tools/build.ts",
 		"publish": "bun run tools/publish.ts",
@@ -33,6 +37,7 @@
 		"globals": "^16.5.0",
 		"json5": "^2.2.3",
 		"semver": "^7.7.3",
+		"tsx": "^4.20.6",
 		"tsup": "^8.5.1",
 		"typescript-eslint": "^8.52.0"
 	},

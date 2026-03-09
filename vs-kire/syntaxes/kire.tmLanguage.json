@@ -26,6 +26,9 @@
 			"include": "#interpolations"
 		},
 		{
+			"include": "#alpine-js-attributes"
+		},
+		{
 			"include": "#kire-attributes"
 		},
 		{
@@ -33,10 +36,32 @@
 		}
 	],
 	"repository": {
+		"alpine-js-attributes": {
+			"patterns": [
+				{
+					"begin": "\\b(x-data(?:\\.[a-zA-Z0-9_.-]+)?|x-init|x-effect|x-on:[a-zA-Z0-9_.:-]+|x-bind:[a-zA-Z0-9_.:-]+)\\s*=\\s*(['\"])",
+					"beginCaptures": {
+						"1": { "name": "entity.other.attribute-name.html" },
+						"2": { "name": "punctuation.definition.string.begin.html" }
+					},
+					"end": "\\2",
+					"endCaptures": {
+						"0": { "name": "punctuation.definition.string.end.html" }
+					},
+					"name": "meta.attribute.alpine.js.kire",
+					"contentName": "source.js",
+					"patterns": [
+						{
+							"include": "source.js"
+						}
+					]
+				}
+			]
+		},
 		"kire-attributes": {
 			"patterns": [
 				{
-					"begin": "\\b(x-[a-z0-9-]+|wire:[a-z0-9\\.]+)\\s*=\\s*(['\"])",
+					"begin": "\\b(:[a-zA-Z0-9_.-]+|@[a-zA-Z0-9_.-]+|wire:[a-zA-Z0-9_.-]+)\\s*=\\s*(['\"])",
 					"beginCaptures": {
 						"1": { "name": "entity.other.attribute-name.html" },
 						"2": { "name": "punctuation.definition.string.begin.html" }

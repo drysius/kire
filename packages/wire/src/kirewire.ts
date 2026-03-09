@@ -85,7 +85,7 @@ export class Kirewire extends EventController {
                         const relPath = file.slice(searchDir.length + 1);
                         const parsed = parse(relPath);
                         const dirParts = parsed.dir ? parsed.dir.split(/[\\\/]/) : [];
-                        const name = [...dirParts, parsed.name].join(".").toLowerCase();
+                        const name = [...dirParts, parsed.name].join(".");
                         
                         this.components.set(name, componentClass);
                         console.log(`[Kirewire] Registered component: ${name}`);

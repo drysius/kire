@@ -1,12 +1,13 @@
-import { workerData } from "node:worker_threads";
 import nunjucks from "nunjucks";
-import { runBenchmark } from "./base.js";
+import type { BenchmarkPayload, BenchmarkRunner } from "./base.ts";
 
-async function main() {
-    const { scenario, data } = workerData;
-    nunjucks.configure({ watch: false });
-    
-    await runBenchmark(() => nunjucks.renderString(scenario.templates.nunjucks, data));
+export async function createRunner(payload: BenchmarkPayload): Promise<BenchmarkRunner> {
+    const { scenario, data } = payload;
+    const env = new nunjucks.Environment(undefined as any, {
+        autoescape: true,
+        throwOnUndefined: false,
+    });
+    const compiled = nunjucks.compile(scenario.templates.nunjucks, env);
+
+    return () => compiled.render(data);
 }
-
-main();

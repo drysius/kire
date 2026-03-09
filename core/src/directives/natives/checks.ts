@@ -7,7 +7,7 @@ export default (kire: Kire<any>) => {
         children: true,
         closeBy: [`endisset`, `end`],
         onCall: (api) => {
-            const expr = api.getAttribute("expr");
+            const expr = api.getArgument(0) ?? api.getAttribute("expr");
             api.write(`if (typeof ${api.transform(expr)} !== 'undefined' && ${api.transform(expr)} !== null) {`);
             api.renderChildren();
             api.write(`}`);
@@ -21,7 +21,7 @@ export default (kire: Kire<any>) => {
         relatedTo: [`for`, `each`],
         closeBy: [`endempty`, `endfor`, `endeach`, `end`],
         onCall: (api) => {
-            const expr = api.getAttribute("expr") || api.getArgument(0);
+            const expr = api.getArgument(0) || api.getAttribute("expr");
             if (!expr) {
                 api.renderChildren();
                 return;

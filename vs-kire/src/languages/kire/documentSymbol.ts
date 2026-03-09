@@ -45,8 +45,8 @@ export class KireDocumentSymbolProvider
 					continue;
 				}
 
-				// Check if it's a "Section" directive (file path)
-				const isSection = dirName.includes("/") || dirName.includes("");
+				// Treat path-like directives as file sections
+				const isSection = dirName.includes("/") || dirName.includes(".");
 
 				// Check definition for standard blocks
 				const def = kireStore.getState().directives.get(dirName);

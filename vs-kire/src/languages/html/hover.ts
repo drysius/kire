@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { getLanguageService, type HoverSettings } from "vscode-html-languageservice";
+import { hasKireHoverTarget } from "../kire/schemaHover";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();
@@ -10,6 +11,11 @@ export class HtmlHoverProvider implements vscode.HoverProvider {
 		position: vscode.Position,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.Hover> {
+		if (hasKireHoverTarget(document, position)) {
+			// Let the dedicated Kire hover provider render custom directives/elements/attributes.
+			return undefined;
+		}
+
 		const lspDoc = toLspDocument(document);
 		const htmlDoc = htmlLanguageService.parseHTMLDocument(lspDoc);
 

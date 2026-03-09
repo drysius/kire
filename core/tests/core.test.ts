@@ -74,6 +74,24 @@ describe("Kire Core (Bun)", () => {
         expect(result).toBe("<div><span>Text</span></div>");
     });
 
+    test("should allow declaration-only elements for schema/intellisense", async () => {
+        const k = new Kire();
+        k.element({
+            name: "z-card",
+            description: "Schema-only element declaration",
+            attributes: [{ name: "title", type: "string" }],
+        });
+
+        const declared = k.$schema.elements.find((entry) => entry.name === "z-card");
+        expect(declared?.name).toBe("z-card");
+        expect(declared?.attributes?.[0]?.name).toBe("title");
+
+        // No runtime transformer => render should keep original markup.
+        const output = await k.render("<z-card title=\"Example\">Body</z-card>");
+        expect(output).toContain("<z-card");
+        expect(output).toContain("Body");
+    });
+
     test("should handle prototype-based globals shadowing", async () => {
         const k = new Kire();
         k.$global("theme", "dark");

@@ -5,7 +5,7 @@ export default (kire: Kire) => {
         name: `class`,
         params: [`classes:any`],
         onCall(api) {
-            const classes = api.getAttribute("classes");
+            const classes = api.getArgument(0) ?? api.getAttribute("classes");
             api.write(`{
                 const $c = ${classes};
                 let $r = "";
@@ -21,7 +21,7 @@ export default (kire: Kire) => {
         name: `style`,
         params: [`styles:any`],
         onCall(api) {
-            const styles = api.getAttribute("styles");
+            const styles = api.getArgument(0) ?? api.getAttribute("styles");
             api.write(`{
                 const $s = ${styles};
                 let $r = "";
@@ -39,7 +39,7 @@ export default (kire: Kire) => {
             name: attr,
             params: [`cond:any`],
             onCall(api) {
-                const cond = api.getAttribute("cond");
+                const cond = api.getArgument(0) ?? api.getAttribute("cond");
                 api.write(`if (${cond}) $kire_response += ' ${attr} ';`);
             },
         });

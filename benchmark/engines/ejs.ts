@@ -1,10 +1,12 @@
-import { workerData } from "node:worker_threads";
 import ejs from "ejs";
-import { runBenchmark } from "./base.js";
+import type { BenchmarkPayload, BenchmarkRunner } from "./base.ts";
 
-async function main() {
-    const { scenario, data } = workerData;
-    await runBenchmark(() => ejs.render(scenario.templates.ejs, data));
+export async function createRunner(payload: BenchmarkPayload): Promise<BenchmarkRunner> {
+    const { scenario, data } = payload;
+    const compiled = ejs.compile(scenario.templates.ejs, {
+        rmWhitespace: false,
+        compileDebug: false,
+    });
+
+    return () => compiled(data);
 }
-
-main();

@@ -1,6 +1,8 @@
 // getted in https://github.com/oven-sh/bun/issues/6351#issuecomment-1760508292
 import packageJson from "./package.json";
 
+declare const Bun: any;
+
 function getExternalsFromPackageJson(): string[] {
 	const sections: (keyof typeof packageJson)[] = [
 		"dependencies",

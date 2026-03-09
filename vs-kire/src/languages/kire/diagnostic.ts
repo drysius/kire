@@ -1,727 +1,254 @@
 import * as vscode from "vscode";
-import { type DirectiveDefinition, kireStore } from "../../core/store";
-import { parseParamDefinition } from "../../utils/params";
-import { HtmlDiagnosticProvider } from "../html";
+import { scanDirectives } from "../../core/directiveScan";
+import { kireStore } from "../../core/store";
+
+const HTML_VOID = new Set([
+    "area",
+    "base",
+    "br",
+    "col",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+]);
 
 export class KireDiagnosticProvider {
-	private diagnosticCollection: vscode.DiagnosticCollection;
-
-	constructor() {
-		this.diagnosticCollection =
-			vscode.languages.createDiagnosticCollection("kire");
-	}
-
-	dispose() {
-		this.diagnosticCollection.dispose();
-	}
-
-	register(_context: vscode.ExtensionContext): vscode.Disposable {
-		const disposables: vscode.Disposable[] = [];
-		disposables.push(this.diagnosticCollection);
-
-		// Update diagnostics when document changes
-		const updateDiagnostics = (document: vscode.TextDocument) => {
-			if (
-				document.languageId === "kire" ||
-				document.fileName.endsWith(".kire")
-			) {
-				this.validateDocument(document);
-			}
-		};
-
-		disposables.push(
-			vscode.workspace.onDidChangeTextDocument((e) =>
-				updateDiagnostics(e.document),
-			),
-			vscode.workspace.onDidOpenTextDocument(updateDiagnostics),
-			vscode.workspace.onDidCloseTextDocument((doc) =>
-				this.diagnosticCollection.delete(doc.uri),
-			),
-		);
-
-		// Validate all open documents
-		vscode.workspace.textDocuments.forEach(updateDiagnostics);
-
-		return vscode.Disposable.from(...disposables);
-	}
-
-	async validateDocument(document: vscode.TextDocument): Promise<void> {
-		const diagnostics: vscode.Diagnostic[] = [];
-		const text = document.getText();
-
-		// Validate all aspects
-		this.validateDirectives(document, text, diagnostics);
-		this.validateElements(document, text, diagnostics);
-		this.validateInterpolations(document, text, diagnostics);
-		this.validateHtmlSyntax(document, text, diagnostics);
-		this.validateElementAttributes(document, text, diagnostics);
-
-		this.diagnosticCollection.set(document.uri, diagnostics);
-	}
-
-	private validateDirectives(
-		document: vscode.TextDocument,
-		text: string,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		const directiveStack: Array<{ name: string; line: number; char: number }> =
-			[];
-		const directiveRegex = /@([a-zA-Z0-9_]+)(?:\s*\(([^)]*)\))?/g;
-
-		// Find JS blocks to ignore directives inside them
-		const jsBlocks: [number, number][] = [];
-		// Match both <?js and <?jsc
-		//biome-ignore lint:suspicious/noControlCharactersInRegex not need
-		const jsBlockRegex = /<\?js[c]?[\u0000-\uFFFF]*?\?>/g;
-		let jsMatch: RegExpExecArray | null;
-		while ((jsMatch = jsBlockRegex.exec(text)) !== null) {
-			jsBlocks.push([jsMatch.index, jsMatch.index + jsMatch[0].length]);
-		}
-
-		let match: RegExpExecArray | null;
-		while ((match = directiveRegex.exec(text)) !== null) {
-			// Check if inside JS block
-			const matchIndex = match.index;
-			const isInsideJs = jsBlocks.some(
-				([start, end]) => matchIndex >= start && matchIndex < end,
-			);
-			if (isInsideJs) continue;
-
-			const fullMatch = match[0];
-			const name = match[1] as string;
-			const argsStr = match[2] as string;
-			const position = document.positionAt(match.index);
-
-			// Skip escaped directives @@
-			if (match.index > 0 && text[match.index - 1] === "@") {
-				continue;
-			}
-
-			// Check if directive exists
-			const directiveDef = kireStore.getState().directives.get(name);
-
-			if (directiveDef) {
-				// Validate parameters
-				if (argsStr !== undefined && directiveDef.params) {
-					this.validateDirectiveParams(
-						document,
-						position,
-						name,
-						argsStr,
-						directiveDef,
-						diagnostics,
-					);
-				} else if (
-					argsStr === undefined &&
-					directiveDef.params &&
-					directiveDef.params.length > 0
-				) {
-					// Missing required parameters
-					const paramText = directiveDef.params
-						.map((p) => p.split(":")[0])
-						.join(", ");
-					diagnostics.push(
-						new vscode.Diagnostic(
-							new vscode.Range(
-								position,
-								position.translate(0, fullMatch.length),
-							),
-							`Directive @${name} requires parameters: (${paramText})`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
-				}
-
-				// Validate parents (sub-directives)
-				const allowedParents = kireStore.getState().parentDirectives.get(name);
-				if (allowedParents && allowedParents.length > 0) {
-					const parent = directiveStack[directiveStack.length - 1];
-					if (!parent || !allowedParents.includes(parent.name)) {
-						diagnostics.push(
-							new vscode.Diagnostic(
-								new vscode.Range(
-									position,
-									position.translate(0, fullMatch.length),
-								),
-								`Directive @${name} must be used inside: @${allowedParents.join(
-									", @",
-								)}`,
-								vscode.DiagnosticSeverity.Error,
-							),
-						);
-					}
-				} else if (directiveDef.children) {
-					// Handle block directives (only if not a sub-directive)
-					if (directiveDef.children === "auto") {
-						const nextChars = text.substring(match.index, text.length);
-						const hasEnd = nextChars.includes("@end");
-
-						if (hasEnd) {
-							directiveStack.push({
-								name,
-								line: position.line,
-								char: position.character,
-							});
-						}
-					} else if (directiveDef.children === true) {
-						directiveStack.push({
-							name,
-							line: position.line,
-							char: position.character,
-						});
-					}
-				}
-			}
-
-			// Handle @end
-			if (name === "end") {
-				if (directiveStack.length === 0) {
-					diagnostics.push(
-						new vscode.Diagnostic(
-							new vscode.Range(
-								position,
-								position.translate(0, fullMatch.length),
-							),
-							`Unexpected @end without opening directive`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
-				} else {
-					directiveStack.pop();
-				}
-			}
-		}
-
-		// Check for unclosed directives
-		directiveStack.forEach(({ name, line, char }) => {
-			diagnostics.push(
-				new vscode.Diagnostic(
-					new vscode.Range(line, char, line, char + 1),
-					`Directive @${name} is not closed with @end`,
-					vscode.DiagnosticSeverity.Error,
-				),
-			);
-		});
-	}
-
-	private validateDirectiveParams(
-		_document: vscode.TextDocument,
-		position: vscode.Position,
-		name: string,
-		argsStr: string,
-		directiveDef: DirectiveDefinition,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		// Parse arguments with type inference for validation
-		const args = this.parseDirectiveArgs(argsStr);
-		const requiredParams = directiveDef.params || [];
-
-		// Basic parameter count validation (might need adjustment for optional params logic later)
-		// If args are fewer than required params, check if the last param might be a catch-all or pattern
-		if (args.length < requiredParams.length) {
-			// Identify truly missing required parameters
-			const missingParams: string[] = [];
-
-			for (let i = args.length; i < requiredParams.length; i++) {
-				const p = requiredParams[i]!;
-				// Check if optional (ends with ?) or is a pattern (might cover optionality differently?)
-				// We use simple split checking for now.
-				const namePart = p.includes("|")
-					? p.split("|")[0]!.split(":")[0]!
-					: p.split(":")[0]!;
-
-				// If name part doesn't end with '?', it's required.
-				if (!namePart.endsWith("?")) {
-					missingParams.push(namePart);
-				}
-			}
-
-			if (missingParams.length > 0) {
-				diagnostics.push(
-					new vscode.Diagnostic(
-						new vscode.Range(
-							position,
-							position.translate(0, `@${name}(${argsStr})`.length),
-						),
-						`Missing parameters for @${name}: ${missingParams.join(", ")}`,
-						vscode.DiagnosticSeverity.Error,
-					),
-				);
-			}
-		}
-
-		// Validate types using robust parser
-		requiredParams.forEach((paramDefStr, index) => {
-			if (index < args.length) {
-				const argValue = args[index];
-
-				try {
-					const definition = parseParamDefinition(paramDefStr);
-					const validation = definition.validate(argValue);
-
-					if (!validation.valid) {
-						diagnostics.push(
-							new vscode.Diagnostic(
-								new vscode.Range(
-									position,
-									position.translate(0, `@${name}(${argsStr})`.length),
-								),
-								`Parameter ${index + 1} error: ${validation.error}`,
-								vscode.DiagnosticSeverity.Warning,
-							),
-						);
-					}
-				} catch (e: any) {
-					console.error(
-						`Error validating param definition "${paramDefStr}":`,
-						e,
-					);
-				}
-			}
-		});
-	}
-
-	private parseDirectiveArgs(argsStr: string): any[] {
-		const args: any[] = [];
-		let current = "";
-		let inQuote = false;
-		let quoteChar = "";
-		let braceDepth = 0;
-		let bracketDepth = 0;
-		let parenDepth = 0;
-
-		for (let i = 0; i < argsStr.length; i++) {
-			const char = argsStr[i];
-
-			// Handle quotes
-			if (
-				(char === '"' || char === "'") &&
-				(i === 0 || argsStr[i - 1] !== "")
-			) {
-				if (inQuote && char === quoteChar) {
-					inQuote = false;
-				} else if (!inQuote) {
-					inQuote = true;
-					quoteChar = char;
-				}
-			}
-
-			if (!inQuote) {
-				if (char === "{") braceDepth++;
-				else if (char === "}") braceDepth--;
-				else if (char === "[") bracketDepth++;
-				else if (char === "]") bracketDepth--;
-				else if (char === "(") parenDepth++;
-				else if (char === ")") parenDepth--;
-			}
-
-			if (
-				char === "," &&
-				!inQuote &&
-				braceDepth === 0 &&
-				bracketDepth === 0 &&
-				parenDepth === 0
-			) {
-				args.push(this.parseValue(current.trim()));
-				current = "";
-			} else {
-				current += char;
-			}
-		}
-
-		if (current.trim()) {
-			args.push(this.parseValue(current.trim()));
-		}
-
-		return args;
-	}
-
-	private parseValue(val: string): any {
-		if (val === "true") return true;
-		if (val === "false") return false;
-		if (val === "null") return null;
-		if (val === "undefined") return undefined;
-
-		// Number check (must be a valid number, not just digits inside a variable name)
-		// If it looks like a variable (starts with letter), it's a string expression, unless it matches a pattern later.
-		if (!Number.isNaN(Number(val)) && val.trim() !== "") return Number(val);
-
-		// Remove quotes if present for string literals
-		if (
-			(val.startsWith('"') && val.endsWith('"')) ||
-			(val.startsWith("'") && val.endsWith("'"))
-		) {
-			return val.slice(1, -1);
-		}
-
-		// Otherwise treat as string (variable name, pattern content, or object literal string)
-		return val;
-	}
-
-	private validateElements(
-		document: vscode.TextDocument,
-		text: string,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		const elementRegex = /<([a-zA-Z][a-zA-Z0-9_-]*)([^>]*?)(\/?)>/g;
-
-		let match: RegExpExecArray | null;
-		while ((match = elementRegex.exec(text)) !== null) {
-			const fullMatch = match[0];
-			const name = match[1] as string;
-			const attributes = match[2] as string;
-			const isSelfClosing = match[3] === "/";
-			const position = document.positionAt(match.index);
-
-			// Check if it's a Kire element
-			const elementDef = Array.from(
-				kireStore.getState().elements.values(),
-			).find((def) => {
-				if (typeof def.name === "string") {
-					return def.name === name;
-				} else if ((def as any).name instanceof RegExp) {
-					return (def as any).name.test(name);
-				}
-				return false;
-			});
-
-			if (elementDef) {
-				// Validate void element usage
-				if (elementDef.void === true) {
-					if (!isSelfClosing) {
-						// Check if it has separate closing tag (error)
-						const nextChars = text.substring(
-							match.index,
-							Math.min(match.index + 500, text.length),
-						);
-						const closingTagRegex = new RegExp(`</${name}s*>`, "i");
-						const closingMatch = closingTagRegex.exec(nextChars);
-
-						if (closingMatch) {
-							const closingPos = document.positionAt(
-								match.index + closingMatch.index,
-							);
-							diagnostics.push(
-								new vscode.Diagnostic(
-									new vscode.Range(
-										closingPos,
-										closingPos.translate(0, name.length + 3),
-									),
-									`Void element <${name}> should not have a separate closing tag. Use <${name} /> instead.`,
-									vscode.DiagnosticSeverity.Error,
-								),
-							);
-						}
-
-						// Suggest using self-closing syntax
-						diagnostics.push(
-							new vscode.Diagnostic(
-								new vscode.Range(
-									position,
-									position.translate(0, fullMatch.length),
-								),
-								`Element <${name}> is void. Consider using self-closing syntax: <${name}${attributes}/>`,
-								vscode.DiagnosticSeverity.Information,
-							),
-						);
-					}
-				} else if (
-					isSelfClosing &&
-					!HtmlDiagnosticProvider.htmlVoidElements.has(name.toLowerCase())
-				) {
-					// Non-void element with self-closing tag (error)
-					diagnostics.push(
-						new vscode.Diagnostic(
-							new vscode.Range(
-								position,
-								position.translate(0, fullMatch.length),
-							),
-							`Element <${name}> is not void and should not use self-closing syntax`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
-				}
-			}
-		}
-	}
-
-	private validateElementAttributes(
-		document: vscode.TextDocument,
-		text: string,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		// Validate Kire element attributes based on their definitions
-		const elementRegex = /<([a-zA-Z][a-zA-Z0-9_-]*)([^>]*)>/g;
-
-		let match: RegExpExecArray | null;
-		while ((match = elementRegex.exec(text)) !== null) {
-			const name = match[1] as string;
-			const attrsStr = match[2] as string;
-			const position = document.positionAt(match.index);
-
-			// Find element definition
-			const elementDef = Array.from(
-				kireStore.getState().elements.values(),
-			).find((def) => {
-				if (typeof def.name === "string") {
-					return def.name === name;
-				} else if ((def as any).name instanceof RegExp) {
-					return (def as any).name.test(name);
-				}
-				return false;
-			});
-
-			if (elementDef) {
-				// Extract attributes
-				const attrRegex = /([a-zA-Z0-9_-]+)\s*=\s*["']?([^"'\s>]*)[ "']?/g;
-				const attributes: Record<string, string> = {};
-				let attrMatch: RegExpExecArray | null;
-
-				while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
-					const attrName = attrMatch[1] as string;
-					const attrValue = attrMatch[2] as string;
-					attributes[attrName] = attrValue;
-				}
-
-				// Check for required attributes if element has params definition
-				if ((elementDef as any).params) {
-					const requiredParams = (elementDef as any).params as string[];
-					requiredParams.forEach((paramName) => {
-						const pName = paramName.split(":")[0] as string;
-						if (!attributes[pName]) {
-							diagnostics.push(
-								new vscode.Diagnostic(
-									new vscode.Range(
-										position,
-										position.translate(0, name.length + 1),
-									),
-									`Element <${name}> requires attribute "${pName}"`,
-									vscode.DiagnosticSeverity.Warning,
-								),
-							);
-						}
-					});
-				}
-			}
-		}
-	}
-
-	private validateInterpolations(
-		document: vscode.TextDocument,
-		text: string,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		// Validate {{ }} interpolations
-		const interpolationRegex = /\{\{([^}]*)\}\}/g;
-		let match: RegExpExecArray | null;
-
-		while ((match = interpolationRegex.exec(text)) !== null) {
-			const fullMatch = match[0];
-			const content = match[1] as string;
-			const position = document.positionAt(match.index);
-
-			// Check for empty interpolations
-			if (!content.trim()) {
-				diagnostics.push(
-					new vscode.Diagnostic(
-						new vscode.Range(position, position.translate(0, fullMatch.length)),
-						`Empty interpolation`,
-						vscode.DiagnosticSeverity.Warning,
-					),
-				);
-			}
-		}
-
-		// Validate {{{ }}} raw interpolations
-		const rawInterpolationRegex = /\{\{\{([^}]*)\}\}\}/g;
-		while ((match = rawInterpolationRegex.exec(text)) !== null) {
-			const fullMatch = match[0];
-			const content = match[1] as string;
-			const position = document.positionAt(match.index);
-
-			if (!content.trim()) {
-				diagnostics.push(
-					new vscode.Diagnostic(
-						new vscode.Range(position, position.translate(0, fullMatch.length)),
-						`Empty raw interpolation`,
-						vscode.DiagnosticSeverity.Warning,
-					),
-				);
-			}
-		}
-
-		// Check for unclosed interpolations
-		const lines = text.split("\n");
-		lines.forEach((line, lineIndex) => {
-			const openBraces = (line.match(/\{\{/g) || []).length;
-			const closeBraces = (line.match(/\}\}/g) || []).length;
-
-			if (openBraces > closeBraces) {
-				const charIndex = line.lastIndexOf("{{");
-				if (charIndex !== -1) {
-					// Check if it continues on next line
-					const remainingText = lines.slice(lineIndex).join("\n");
-					const hasClosing = remainingText.includes("}}");
-
-					if (!hasClosing) {
-						diagnostics.push(
-							new vscode.Diagnostic(
-								new vscode.Range(
-									lineIndex,
-									charIndex,
-									lineIndex,
-									charIndex + 2,
-								),
-								`Unclosed interpolation {{`,
-								vscode.DiagnosticSeverity.Error,
-							),
-						);
-					}
-				}
-			}
-		});
-	}
-
-	private validateHtmlSyntax(
-		document: vscode.TextDocument,
-		text: string,
-		diagnostics: vscode.Diagnostic[],
-	) {
-		// Simple HTML tag validation (ignores Kire elements and directives)
-		const stack: Array<{ tag: string; line: number; char: number }> = [];
-        // Improved regex to capture attributes and self-closing slash
-		const tagRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9_-]*)([^>]*?)(\/?)>/g;
-
-		let match: RegExpExecArray | null;
-		while ((match = tagRegex.exec(text)) !== null) {
-			const isClosing = match[1] === "/";
-			const tagName = match[2] as string;
-            const isSelfClosing = match[4] === "/";
-			const position = document.positionAt(match.index);
-
-			const isKireElement = Array.from(
-				kireStore.getState().elements.values(),
-			).some((def) => {
-				if (typeof def.name === "string") {
-					return def.name === tagName;
-				} else if ((def as any).name instanceof RegExp) {
-					return (def as any).name.test(tagName);
-				}
-				return false;
-			});
-
-			if (isKireElement) {
-				continue; // Skip Kire elements, they're validated elsewhere
-			}
-
-			const isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(
-				tagName.toLowerCase(),
-			);
-
-			if (!isClosing && !isVoid && !isSelfClosing) {
-				stack.push({
-					tag: tagName,
-					line: position.line,
-					char: position.character,
-				});
-			} else if (isClosing) {
-				if (stack.length === 0) {
-					// Ignore closing tags for void elements if they are allowed (like in SVG)
-                    // But if it's strictly HTML void, it shouldn't have closing.
-                    // However, we removed SVG from void list in html.ts, so they are not isVoid here.
-                    // So unexpected closing tag is an error.
-					diagnostics.push(
-						new vscode.Diagnostic(
-							new vscode.Range(
-								position,
-								position.translate(0, tagName.length + 2),
-							),
-							`Closing tag </${tagName}> has no corresponding opening tag`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
-				} else {
-					const last = stack[stack.length - 1]!;
-					if (last.tag !== tagName) {
-						diagnostics.push(
-							new vscode.Diagnostic(
-								new vscode.Range(
-									position,
-									position.translate(0, tagName.length + 2),
-								),
-								`Closing tag </${tagName}> does not match opening tag <${last.tag}>`,
-								vscode.DiagnosticSeverity.Error,
-							),
-						);
-						stack.pop();
-					} else {
-						stack.pop();
-					}
-				}
-			}
-
-			// Check for void elements with separate closing tag
-			if (isVoid && !isClosing && !isSelfClosing) {
-				const nextChars = text.substring(
-					match.index,
-					Math.min(match.index + 200, text.length),
-				);
-				const closingTagPattern = new RegExp(`</${tagName}\s*>`, "i");
-				const closingMatch = closingTagPattern.exec(nextChars);
-
-				if (closingMatch) {
-                    // It has a closing tag, so it's not being treated as void here, but we flagged it.
-					const closingPos = document.positionAt(
-						match.index + closingMatch.index,
-					);
-					diagnostics.push(
-						new vscode.Diagnostic(
-							new vscode.Range(
-								closingPos,
-								closingPos.translate(0, tagName.length + 3),
-							),
-							`Void element <${tagName}> should not have a separate closing tag`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
-				}
-			}
-		}
-
-		// Check for unclosed HTML tags
-		stack.forEach(({ tag, line, char }) => {
-			diagnostics.push(
-				new vscode.Diagnostic(
-					new vscode.Range(line, char, line, char + tag.length + 1),
-					`Unclosed tag <${tag}>`,
-					vscode.DiagnosticSeverity.Warning,
-				),
-			);
-		});
-
-		// Validate attribute syntax
-		const unquotedAttrRegex = /\s([a-zA-Z-]+)=([^"'\s>]+)(?=\s|\/?>)/g;
-		while ((match = unquotedAttrRegex.exec(text)) !== null) {
-			const attrName = match[1] as string;
-			const attrValue = match[2] as string;
-			const position = document.positionAt(
-				match.index + match[0].indexOf(attrValue),
-			);
-
-			// Check if value needs quotes
-			if (
-				attrValue.includes(" ") ||
-				attrValue.includes("=") ||
-				attrValue.includes(">")
-			) {
-				diagnostics.push(
-					new vscode.Diagnostic(
-						new vscode.Range(position, position.translate(0, attrValue.length)),
-						`Attribute "${attrName}" value should be quoted`,
-						vscode.DiagnosticSeverity.Warning,
-					),
-				);
-			}
-		}
-	}
+    private diagnosticCollection: vscode.DiagnosticCollection;
+
+    constructor() {
+        this.diagnosticCollection = vscode.languages.createDiagnosticCollection("kire");
+    }
+
+    dispose() {
+        this.diagnosticCollection.dispose();
+    }
+
+    register(_context: vscode.ExtensionContext): vscode.Disposable {
+        const disposables: vscode.Disposable[] = [];
+        disposables.push(this.diagnosticCollection);
+
+        const updateDiagnostics = (document: vscode.TextDocument) => {
+            if (document.languageId === "kire" || document.fileName.endsWith(".kire")) {
+                void this.validateDocument(document);
+            }
+        };
+
+        disposables.push(
+            vscode.workspace.onDidChangeTextDocument((e) => updateDiagnostics(e.document)),
+            vscode.workspace.onDidOpenTextDocument(updateDiagnostics),
+            vscode.workspace.onDidCloseTextDocument((doc) => this.diagnosticCollection.delete(doc.uri)),
+        );
+
+        vscode.workspace.textDocuments.forEach(updateDiagnostics);
+        return vscode.Disposable.from(...disposables);
+    }
+
+    async validateDocument(document: vscode.TextDocument): Promise<void> {
+        const diagnostics: vscode.Diagnostic[] = [];
+        const text = document.getText();
+
+        this.validateDirectives(document, text, diagnostics);
+        this.validateHtmlTags(document, text, diagnostics);
+        this.validateInterpolations(document, text, diagnostics);
+
+        this.diagnosticCollection.set(document.uri, diagnostics);
+    }
+
+    private validateDirectives(
+        document: vscode.TextDocument,
+        text: string,
+        diagnostics: vscode.Diagnostic[],
+    ) {
+        const state = kireStore.getState();
+        const calls = scanDirectives(text);
+        const stack: Array<{ name: string; start: number; end: number }> = [];
+
+        for (const call of calls) {
+            const range = new vscode.Range(document.positionAt(call.start), document.positionAt(call.end));
+
+            if (call.name === "end") {
+                if (stack.length === 0) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            range,
+                            "Unexpected @end without an opening directive block",
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                } else {
+                    stack.pop();
+                }
+                continue;
+            }
+
+            if (call.name.startsWith("end") && call.name.length > 3) {
+                const target = call.name.slice(3);
+                const top = stack[stack.length - 1];
+                if (!top) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            range,
+                            `Unexpected @${call.name} without an opening @${target}`,
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                    continue;
+                }
+                if (top.name !== target) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            range,
+                            `@${call.name} closes @${target}, but current block is @${top.name}`,
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                    continue;
+                }
+                stack.pop();
+                continue;
+            }
+
+            const def = state.directives.get(call.name);
+            const allowedParents = state.parentDirectives.get(call.name) || [];
+            const current = stack[stack.length - 1];
+
+            if (allowedParents.length > 0) {
+                if (!current || !allowedParents.includes(current.name)) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            range,
+                            `Directive @${call.name} must be inside one of: ${allowedParents.map((p) => `@${p}`).join(", ")}`,
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                }
+                continue;
+            }
+
+            if (def?.children) {
+                stack.push({
+                    name: call.name,
+                    start: call.start,
+                    end: call.end,
+                });
+            }
+        }
+
+        for (const unclosed of stack) {
+            diagnostics.push(
+                new vscode.Diagnostic(
+                    new vscode.Range(document.positionAt(unclosed.start), document.positionAt(unclosed.end)),
+                    `Directive @${unclosed.name} is not closed`,
+                    vscode.DiagnosticSeverity.Error,
+                ),
+            );
+        }
+    }
+
+    private validateHtmlTags(
+        document: vscode.TextDocument,
+        text: string,
+        diagnostics: vscode.Diagnostic[],
+    ) {
+        const state = kireStore.getState();
+        const stack: Array<{ name: string; start: number; end: number }> = [];
+        const tagRegex = /<(\/?)([a-zA-Z][a-zA-Z0-9:_-]*)([^>]*?)(\/?)>/g;
+
+        for (let match: RegExpExecArray | null; (match = tagRegex.exec(text)); ) {
+            const closing = match[1] === "/";
+            const tag = match[2]!;
+            const selfClosing = match[4] === "/";
+            const isKireElement = state.elements.has(tag);
+            const isVoid = isKireElement
+                ? !!state.elements.get(tag)?.void
+                : HTML_VOID.has(tag.toLowerCase());
+
+            if (!closing && !selfClosing && !isVoid) {
+                stack.push({
+                    name: tag,
+                    start: match.index,
+                    end: match.index + match[0]!.length,
+                });
+                continue;
+            }
+
+            if (closing) {
+                const top = stack[stack.length - 1];
+                if (!top) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            new vscode.Range(
+                                document.positionAt(match.index),
+                                document.positionAt(match.index + match[0]!.length),
+                            ),
+                            `Closing tag </${tag}> has no opening tag`,
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                    continue;
+                }
+
+                if (top.name !== tag) {
+                    diagnostics.push(
+                        new vscode.Diagnostic(
+                            new vscode.Range(
+                                document.positionAt(match.index),
+                                document.positionAt(match.index + match[0]!.length),
+                            ),
+                            `Closing tag </${tag}> does not match <${top.name}>`,
+                            vscode.DiagnosticSeverity.Error,
+                        ),
+                    );
+                    continue;
+                }
+
+                stack.pop();
+            }
+        }
+
+        for (const unclosed of stack) {
+            diagnostics.push(
+                new vscode.Diagnostic(
+                    new vscode.Range(document.positionAt(unclosed.start), document.positionAt(unclosed.end)),
+                    `Tag <${unclosed.name}> is not closed`,
+                    vscode.DiagnosticSeverity.Warning,
+                ),
+            );
+        }
+    }
+
+    private validateInterpolations(
+        _document: vscode.TextDocument,
+        text: string,
+        diagnostics: vscode.Diagnostic[],
+    ) {
+        const lines = text.split("\n");
+        for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+            const line = lines[lineIndex]!;
+            const opens = (line.match(/\{\{/g) || []).length;
+            const closes = (line.match(/\}\}/g) || []).length;
+            if (opens <= closes) continue;
+
+            const openPos = line.lastIndexOf("{{");
+            if (openPos === -1) continue;
+
+            const tail = lines.slice(lineIndex).join("\n");
+            if (tail.includes("}}")) continue;
+
+            diagnostics.push(
+                new vscode.Diagnostic(
+                    new vscode.Range(lineIndex, openPos, lineIndex, openPos + 2),
+                    "Unclosed interpolation",
+                    vscode.DiagnosticSeverity.Error,
+                ),
+            );
+        }
+    }
 }

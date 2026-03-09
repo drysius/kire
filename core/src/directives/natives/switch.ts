@@ -6,7 +6,7 @@ export default (kire: Kire<any>) => {
         params: [`expr:any`],
         children: true,
         onCall: (api) => {
-            const expr = api.getAttribute("expr");
+            const expr = api.getArgument(0) ?? api.getAttribute("expr");
             api.write(`switch (${api.transform(expr)}) {`);
             
             // In Kernel mode, related nodes (case/default) are stored in node.related
@@ -24,7 +24,7 @@ export default (kire: Kire<any>) => {
         children: true,
         relatedTo: [`switch`, `case`, `default`],
         onCall: (api) => {
-            const val = api.getAttribute("val");
+            const val = api.getArgument(0) ?? api.getAttribute("val");
             api.write(`case ${api.transform(val)}: {`);
             api.renderChildren();
             api.write(`  break; }`);
