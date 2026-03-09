@@ -9,6 +9,7 @@ import './directives/dirty';
 import './directives/ignore';
 import './directives/init';
 import './directives/offline';
+import './directives/intersect';
 import './features/file-upload';
 import './features/wire-broadcast';
 import './features/game-canvas';

@@ -177,6 +177,18 @@ test.describe("Wire E2E (Playwright)", () => {
         await expect(page.getByRole("cell", { name: "User 37" })).toBeVisible();
     });
 
+    test("infinity renderiza conteudo inicial e carrega mais itens ao intersectar", async ({ page }) => {
+        await page.goto(`${baseUrl}/infinity`);
+
+        await expect(page.getByRole("heading", { name: "Infinite Scroll Example" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /^Item 1$/ })).toBeVisible();
+        await expect(page.getByRole("heading", { name: /^Item 10$/ })).toBeVisible();
+
+        const sentinel = page.locator('div[wire\\:intersect="loadMore"]');
+        await sentinel.scrollIntoViewIfNeeded();
+        await expect(page.getByRole("heading", { name: /^Item 11$/ })).toBeVisible();
+    });
+
     test("chat envia mensagem com username defer e limpa input", async ({ page }) => {
         await page.goto(`${baseUrl}/chat`);
 

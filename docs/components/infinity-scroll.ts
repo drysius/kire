@@ -6,7 +6,7 @@ export default class InfinityScroll extends Component {
 	public hasMore = true;
 
 	async mount() {
-		this.loadMore();
+		await this.loadMore();
 	}
 
 	async loadMore() {
