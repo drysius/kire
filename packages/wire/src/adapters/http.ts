@@ -1,5 +1,8 @@
 import { Adapter } from "../adapter";
 import { randomUUID } from "node:crypto";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { FileStore } from "../features/file-store";
 import { WireProperty } from "../wire-property";
 
@@ -25,6 +28,7 @@ function normalizeRoute(route: string): string {
 }
 
 export class HttpAdapter extends Adapter {
+    private static clientScriptCache: string | null = null;
     private route: string;
     private fileStore: FileStore;
 
@@ -51,6 +55,10 @@ export class HttpAdapter extends Adapter {
      */
     public async handleRequest(req: HandleRequestInput, userId: string, _sessionId: string) {
         const url = new URL(req.url, "http://localhost");
+
+        if (req.method === "GET" && url.pathname === `${this.route}/kirewire.js`) {
+            return this.handleClientScript();
+        }
         
         if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
             const pageId = String(url.searchParams.get("pageId") || "");
@@ -352,5 +360,46 @@ export class HttpAdapter extends Adapter {
 
     private buildComponentRef(userId: string, pageId: string, id: string) {
         return `${userId}::${pageId}::${id}`;
+    }
+
+    private handleClientScript() {
+        return {
+            status: 200,
+            headers: {
+                "Content-Type": "text/javascript; charset=utf-8",
+                "Cache-Control": "no-store",
+            },
+            result: this.getClientScriptSource(),
+        };
+    }
+
+    private getClientScriptSource(): string {
+        if (HttpAdapter.clientScriptCache) return HttpAdapter.clientScriptCache;
+
+        const adapterDir = dirname(fileURLToPath(import.meta.url));
+        const candidates = [
+            // Source runtime (monorepo / ts execution)
+            resolve(adapterDir, "../../dist/client/wire.js"),
+            // Built runtime (dist/esm/adapters or dist/cjs/adapters)
+            resolve(adapterDir, "../../client/wire.js"),
+            // Consumer installs
+            resolve(process.cwd(), "node_modules/@kirejs/wire/dist/client/wire.js"),
+            resolve(process.cwd(), "dist/client/wire.js"),
+            // Monorepo docs execution path
+            resolve(process.cwd(), "packages/wire/dist/client/wire.js"),
+        ];
+
+        for (let i = 0; i < candidates.length; i++) {
+            const path = candidates[i]!;
+            if (!existsSync(path)) continue;
+            try {
+                const content = readFileSync(path, "utf8");
+                HttpAdapter.clientScriptCache = content;
+                return content;
+            } catch {}
+        }
+
+        console.error("[Kirewire] Client script not found. Expected dist/client/wire.js");
+        return `console.error("[Kirewire] Client script not found.");`;
     }
 }

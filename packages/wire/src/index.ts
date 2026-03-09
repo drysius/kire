@@ -109,41 +109,21 @@ export class KirewirePlugin {
                         $kire_response += \`<!-- Component "\${$name}" not found -->\`;
                     } else {
                         const $page = this.wire.sessions.getPage($userId, $pageId);
-                        const $id = Math.random().toString(36).substring(2, 11);
+                        const $id = this.wire.createComponentId();
                         
                         const $instance = new $componentClass();
                         $instance.$id = $id;
                         $instance.$kire = this;
                         $instance.$wire_instance = this.wire;
-                        
-                        // Register listeners for cross-component communication
-                        if ($instance.listeners) {
-                            for (const [event, method] of Object.entries($instance.listeners)) {
-                                this.wire.on(\`event:\${event}\`, async (data) => {
-                                    if (data.sourceId !== $id) {
-                                        if (typeof $instance[method] === 'function') {
-                                            const $params = Array.isArray(data.params) ? data.params : [];
-                                            await $instance[method](...$params);
-                                            
-                                            const $state = $instance.getPublicState();
-                                            const $rendered = await $instance.render();
-                                            const $html = $rendered.toString();
-                                            const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
-                                            const $fullHtml = \`<div wire:id="\${$id}" wire:state='\${$stateStr}'>\${$html}</div>\`;
 
-                                            await this.wire.emit('component:update', {
-                                                userId: $userId, pageId: $pageId, id: $id, 
-                                                html: $fullHtml,
-                                                state: $state,
-                                                effects: $instance.__effects
-                                            });
-                                        }
-                                    }
-                                });
-                            }
-                        }
-                        
-                        Object.assign($instance, $locals);
+                        const $listenerCleanup = this.wire.bindComponentListeners($instance, {
+                            userId: $userId,
+                            pageId: $pageId,
+                            id: $id
+                        });
+                        this.wire.attachLifecycleGuards($instance, $listenerCleanup);
+                        this.wire.applySafeLocals($instance, $locals);
+
                         await $instance.mount();
                         $page.components.set($id, $instance);
 

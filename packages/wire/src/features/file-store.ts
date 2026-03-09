@@ -1,5 +1,6 @@
 import { writeFileSync, unlinkSync, existsSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
+import { basename, join } from "node:path";
+import { randomUUID } from "node:crypto";
 
 export class FileStore {
     private tempDir: string;
@@ -14,8 +15,9 @@ export class FileStore {
     }
 
     public store(filename: string, buffer: Buffer): string {
-        const id = Math.random().toString(36).substring(2, 15);
-        const path = join(this.tempDir, `${id}_${filename}`);
+        const id = randomUUID();
+        const safeName = basename(String(filename || "upload.bin")).replace(/[^\w.\-]/g, "_");
+        const path = join(this.tempDir, `${id}_${safeName}`);
         writeFileSync(path, buffer);
         this.fileMap.set(id, { path, expires: Date.now() + this.ttl });
         return id;

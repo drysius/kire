@@ -155,7 +155,9 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 
 				return kire.run(entry.fn!, locals) as any;
 			} catch (e) {
-				console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
+				if (!kire.$silent) {
+					console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
+				}
 				return "";
 			}
 		};

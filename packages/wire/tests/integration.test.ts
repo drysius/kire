@@ -113,6 +113,23 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         expect(Object.keys(call.body.batch[0].state || {}).length).toBe(0);
     });
 
+    test("HttpAdapter should serve client script at /_wire/kirewire.js", async () => {
+        const response = await adapter.handleRequest(
+            {
+                method: "GET",
+                url: "/_wire/kirewire.js",
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(response.status).toBe(200);
+        expect(String(response.headers?.["Content-Type"] || "")).toContain("text/javascript");
+        expect(typeof response.result).toBe("string");
+        expect((response.result as string).length).toBeGreaterThan(20);
+        expect(String(response.result)).not.toContain("Method not allowed");
+    });
+
 
     test("Full Cycle: Client increments counter on Server and patches DOM", async () => {
         const page = serverWire.sessions.getPage('user-1', 'page-1');

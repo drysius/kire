@@ -23,7 +23,7 @@ export class WireBroadcast extends WireProperty {
     private static readonly CONNECTION_STALE_FACTOR = 2;
     private static readonly CLEANUP_INTERVAL_MS = 60 * 1000;
     private static rooms = new Map<string, WireBroadcastRoom>();
-    private static cleanupTimer: any = null;
+    private static cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
     public readonly __wire_type = 'broadcast';
     public connected = false;
@@ -105,8 +105,36 @@ export class WireBroadcast extends WireProperty {
         }
     }
 
+    public disconnect(component: Record<string, any>) {
+        const room = this.findRoom();
+        if (!room) {
+            this.connected = false;
+            this.connections = 0;
+            return;
+        }
+
+        room.connections.delete(this.makeConnectionId(component));
+        room.lastSeen = Date.now();
+        this.connections = room.connections.size;
+        this.connected = this.connections > 0;
+    }
+
     public getRoomId(): string {
         return this.makeRoomId(this.channel, this.options.password);
+    }
+
+    public static cleanupNow(now: number = Date.now()) {
+        for (const [roomId, room] of WireBroadcast.rooms.entries()) {
+            WireBroadcast.pruneConnections(room, now);
+
+            if (room.connections.size > 0) {
+                room.lastSeen = now;
+            }
+
+            if (room.autodelete && now - room.lastSeen > room.ttlMs && room.connections.size === 0) {
+                WireBroadcast.rooms.delete(roomId);
+            }
+        }
     }
 
     private getRoom(): WireBroadcastRoom {
@@ -124,10 +152,15 @@ export class WireBroadcast extends WireProperty {
             };
             WireBroadcast.rooms.set(roomId, room);
         } else {
+            WireBroadcast.pruneConnections(room);
             room.lastSeen = Date.now();
         }
 
         return room;
+    }
+
+    private findRoom(): WireBroadcastRoom | null {
+        return WireBroadcast.rooms.get(this.getRoomId()) || null;
     }
 
     private filterState(state: Record<string, any>): Record<string, any> {
@@ -147,17 +180,13 @@ export class WireBroadcast extends WireProperty {
     private static ensureCleanupLoop() {
         if (WireBroadcast.cleanupTimer) return;
         WireBroadcast.cleanupTimer = setInterval(() => {
-            const now = Date.now();
-            for (const [roomId, room] of WireBroadcast.rooms.entries()) {
-                if (room.autodelete && now - room.lastSeen > room.ttlMs && room.connections.size === 0) {
-                    WireBroadcast.rooms.delete(roomId);
-                }
-            }
+            WireBroadcast.cleanupNow(Date.now());
         }, WireBroadcast.CLEANUP_INTERVAL_MS);
     }
 
     private touchConnection(room: WireBroadcastRoom, component: Record<string, any>) {
-        const connectionId = `${(component as any).$id}:${this.channel}`;
+        WireBroadcast.pruneConnections(room);
+        const connectionId = this.makeConnectionId(component);
         room.connections.set(connectionId, Date.now());
         room.lastSeen = Date.now();
     }
@@ -168,5 +197,23 @@ export class WireBroadcast extends WireProperty {
 
     private makeRoomId(channel: string, password?: string): string {
         return `${channel}:${password || ""}`;
+    }
+
+    private makeConnectionId(component: Record<string, any>): string {
+        const id = String((component as any).$id || "anonymous");
+        return `${id}:${this.channel}`;
+    }
+
+    private static pruneConnections(room: WireBroadcastRoom, now: number = Date.now()) {
+        const staleAfter = Math.max(
+            WireBroadcast.CLEANUP_INTERVAL_MS,
+            room.ttlMs * WireBroadcast.CONNECTION_STALE_FACTOR,
+        );
+
+        for (const [connectionId, lastSeen] of room.connections.entries()) {
+            if (now - lastSeen > staleAfter) {
+                room.connections.delete(connectionId);
+            }
+        }
     }
 }

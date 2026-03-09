@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it, spyOn } from "bun:test";
 import { mkdir, rm, unlink, writeFile } from "node:fs/promises";
 import { Kire } from "kire";
 import { KireMarkdown } from "../src/index";
@@ -98,9 +98,12 @@ describe("KireMarkdown", () => {
 
 	it("should handle missing file gracefully (fallback to string)", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+		const warnSpy = spyOn(console, "warn").mockImplementation(() => {});
 		const tpl = `@markdown('missing_file.md')`;
 		const result = await kire.render(tpl);
 		expect(result).toContain("<p>missing_file.md</p>");
+		expect(warnSpy).not.toHaveBeenCalled();
+		warnSpy.mockRestore();
 	});
 
 	it("should resolve wildcard files without overriding $readdir", async () => {

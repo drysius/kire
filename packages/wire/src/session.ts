@@ -1,4 +1,5 @@
 import type { Component } from "./component";
+import { randomUUID } from "node:crypto";
 
 export interface WirePage {
     components: Map<string, Component>;
@@ -37,7 +38,7 @@ export class SessionManager {
     public getSession(userId: string): WireSession {
         let session = this.sessions.get(userId);
         if (!session) {
-            const publicId = Math.random().toString(36).substring(2, 15);
+            const publicId = randomUUID();
             session = {
                 publicId,
                 pages: new Map(),

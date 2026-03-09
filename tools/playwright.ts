@@ -59,7 +59,7 @@ export default {
     writeFileSync(configPath, configSource, "utf8");
 
     const result = spawnSync(bunBin, ["x", "playwright", "test", "-c", configPath], {
-        cwd: exampleDir,
+        cwd: repoRoot,
         stdio: "inherit",
         shell: false,
         env: {

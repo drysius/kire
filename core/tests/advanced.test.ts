@@ -59,7 +59,7 @@ describe("Kire Advanced Features", () => {
     });
 
     test("Circular Dependencies: should detect and throw error", async () => {
-        const k = new Kire();
+        const k = new Kire({ silent: true });
         k["~store"].files[k.resolvePath("a.kire")] = "@include('b')";
         k["~store"].files[k.resolvePath("b.kire")] = "@include('a')";
         
