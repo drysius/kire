@@ -1,7 +1,7 @@
 @include('layouts.app', it)
 
 @define('content')
-<div class="max-w-xl mx-auto py-8">
+<div class="w-full py-8">
     <div class="mb-6">
         <h2 class="text-2xl font-bold mb-2">Lazy Loading Example</h2>
         <p class="text-base-content/70">The component below will only load after the page is ready.</p>
