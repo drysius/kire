@@ -3,6 +3,7 @@ import { JSDOM } from "jsdom";
 import { Kire } from "kire";
 import { Kirewire, Component, HttpAdapter, WireBroadcast } from "../src/index";
 import { KirewireClient, type WireAdapter } from "../web/kirewire";
+import { HttpClientAdapter } from "../web/adapters/http";
 import { MessageBus } from "../web/utils/message-bus";
 
 // --- MOCK ENVIRONMENT ---
@@ -39,6 +40,23 @@ class SharedCounterComponent extends Component {
 
     render() {
         return `Shared: ${this.count}`;
+    }
+}
+
+class ModelHookComponent extends Component {
+    search = "";
+    updates: string[] = [];
+
+    async updatedSearch(value: string, property: string) {
+        this.updates.push(`search:${property}:${value}`);
+    }
+
+    async updated(value: string, property: string) {
+        this.updates.push(`generic:${property}:${value}`);
+    }
+
+    render() {
+        return `Search: ${this.search}`;
     }
 }
 
@@ -186,6 +204,24 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         expect(instance.count).toBe(6);
     });
 
+    test("$set triggers updated<Property> and updated hooks", async () => {
+        serverWire.components.set("model-hook", ModelHookComponent as any);
+
+        const page = serverWire.sessions.getPage("user-1", "page-1");
+        const instance = new ModelHookComponent();
+        instance.$id = "m1";
+        instance.$kire = kire;
+        page.components.set("m1", instance);
+
+        document.body.innerHTML = `<div id="root" wire:id="m1" wire:state='{\"search\":\"\"}'></div>`;
+
+        await clientWire.call(document.getElementById("root")!, "$set", ["search", "john"]);
+
+        expect(instance.search).toBe("john");
+        expect(instance.updates).toContain("search:search:john");
+        expect(instance.updates).toContain("generic:search:john");
+    });
+
     test("Broadcast components sync through SSE updates and not inline response html", async () => {
         const page = serverWire.sessions.getPage('user-1', 'page-1');
 
@@ -222,6 +258,46 @@ describe("Kirewire Full Integration (Client + Server)", () => {
             expect(byId.get("s2")?.state?.count).toBe(1);
         } finally {
             off();
+        }
+    });
+
+    test("HttpClientAdapter refreshes current page via navigate when page session expires", async () => {
+        const previousNavigate = (window as any).KirewireNavigate;
+        const previousEventSource = (global as any).EventSource;
+        const refreshCalls: any[] = [];
+
+        class FakeEventSource {
+            public onmessage: ((event: MessageEvent) => void) | null = null;
+            public onerror: (() => void) | null = null;
+            constructor(_url: string) {}
+            close() {}
+        }
+
+        (window as any).KirewireNavigate = {
+            navigateTo: async () => {},
+            refreshCurrentPage: async (options?: any) => {
+                refreshCalls.push(options || {});
+            },
+        };
+        (global as any).EventSource = FakeEventSource as any;
+
+        const clientAdapter = new HttpClientAdapter({
+            url: "/_wire",
+            pageId: "page-1",
+            transport: "sse",
+        });
+
+        try {
+            (clientAdapter as any).isSessionFinished = async () => true;
+            await (clientAdapter as any).checkSessionAfterDisconnect();
+
+            expect(refreshCalls).toHaveLength(1);
+            expect(refreshCalls[0]?.replace).toBe(true);
+            expect(refreshCalls[0]?.force).toBe(true);
+        } finally {
+            clientAdapter.destroy();
+            (window as any).KirewireNavigate = previousNavigate;
+            (global as any).EventSource = previousEventSource;
         }
     });
 });

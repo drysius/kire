@@ -1,0 +1,65 @@
+<aside class="drawer-side z-50">
+    <label for="docs-drawer" aria-label="Close navigation" class="drawer-overlay"></label>
+    <div class="min-h-full w-86 border-r border-base-300 bg-base-100 p-4 lg:border-base-300/70 lg:bg-base-100/95 lg:backdrop-blur">
+        <div class="mb-4 block lg:hidden">
+            @wire('docs-search', {
+                placeholder: 'Search docs...',
+                limit: 6,
+            })
+        </div>
+
+        <div class="rounded-2xl border border-base-300/70 bg-base-200/60 p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-base-content/55">Workspace</p>
+            <h2 class="mt-1 text-2xl font-bold">Kire + Wire</h2>
+            <p class="mt-2 text-sm text-base-content/70">
+                Core documentation, package references and interactive wire demos in one place.
+            </p>
+        </div>
+
+        <ul class="menu mt-4 w-full gap-1 p-0">
+            <li class="menu-title w-full">Documentation</li>
+            <li class="w-full">
+                <a wire:navigate href="/" class="w-full {{ $globals.currentPath === '/' ? 'docs-active' : '' }}">Overview</a>
+            </li>
+            <li class="w-full">
+                <a wire:navigate href="/docs/packages" class="w-full {{ $globals.currentPath === '/docs/packages' || String($globals.currentPath || '').startsWith('/docs/packages/') ? 'docs-active' : '' }}">Packages Index</a>
+            </li>
+            <li class="w-full">
+                <a wire:navigate href="/docs/search" class="w-full {{ $globals.currentPath === '/docs/search' || String($globals.currentPath || '').startsWith('/docs/search/') ? 'docs-active' : '' }}">Search</a>
+            </li>
+        </ul>
+
+        <ul class="menu mt-2 w-full gap-1 p-0">
+            <li class="menu-title w-full">Guides & Reference</li>
+            @for(item of docsNav)
+                <li class="w-full">
+                    <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
+                        <span>{{ item.title }}</span>
+                    </a>
+                </li>
+            @end
+        </ul>
+
+        <ul class="menu mt-2 w-full gap-1 p-0">
+            <li class="menu-title w-full">Package Docs</li>
+            @for(item of packageNav)
+                <li class="w-full">
+                    <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
+                        <span>{{ item.title }}</span>
+                    </a>
+                </li>
+            @end
+        </ul>
+
+        <ul class="menu mt-2 w-full gap-1 p-0">
+            <li class="menu-title w-full">KireWire Playground</li>
+            @for(item of wireNav)
+                <li class="w-full">
+                    <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
+                        <span>{{ item.title }}</span>
+                    </a>
+                </li>
+            @end
+        </ul>
+    </div>
+</aside>

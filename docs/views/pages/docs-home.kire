@@ -1,0 +1,68 @@
+@include('layouts.app', it)
+
+@define('content')
+    <section class="grid gap-6 lg:grid-cols-[1.45fr_1fr]">
+        <article class="rounded-3xl border border-base-300/70 bg-base-100/80 p-6 sm:p-8">
+            <span class="badge badge-primary badge-outline">Kire Documentation</span>
+            <h1 class="mt-4 text-4xl font-bold leading-tight sm:text-5xl">
+                Build high-performance templates with Kire and scale interactions with KireWire.
+            </h1>
+            <p class="mt-4 max-w-2xl text-base-content/70">
+                This hub centralizes guides, directives reference, package docs and a full wire playground.
+                Use the sidebar or search to jump directly to features.
+            </p>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a wire:navigate href="/docs/getting-started" class="btn btn-primary">Start with Kire</a>
+                <a wire:navigate href="/docs/directives-reference" class="btn btn-outline">Directives</a>
+                <a wire:navigate href="/kirewire" class="btn btn-ghost">Open KireWire Playground</a>
+            </div>
+        </article>
+
+        <aside class="rounded-3xl border border-base-300/70 bg-base-100/75 p-6">
+            <p class="text-xs uppercase tracking-[0.2em] text-base-content/55">Fast Access</p>
+            <ul class="mt-4 space-y-3">
+                @for(item in featuredDocs)
+                    <li>
+                        <a wire:navigate href="{{ item.href }}" class="block rounded-xl border border-base-300/70 bg-base-100/70 px-4 py-3 transition hover:border-primary/35 hover:bg-base-100">
+                            <p class="font-semibold">{{ item.title }}</p>
+                            <p class="mt-1 text-sm text-base-content/70">{{ item.summary }}</p>
+                        </a>
+                    </li>
+                @end
+            </ul>
+        </aside>
+    </section>
+
+    <section class="mt-8">
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <h2 class="text-2xl font-bold">Package Documentation</h2>
+            <a wire:navigate href="/docs/packages" class="btn btn-sm btn-outline">View all packages</a>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            @for(pkg in featuredPackages)
+                <a wire:navigate href="{{ pkg.href }}" class="card border border-base-300/70 bg-base-100/75 shadow-sm transition hover:-translate-y-[2px] hover:border-primary/40">
+                    <div class="card-body p-4">
+                        <h3 class="card-title text-base">{{ pkg.title }}</h3>
+                        <p class="text-sm text-base-content/70">{{ pkg.summary }}</p>
+                    </div>
+                </a>
+            @end
+        </div>
+    </section>
+
+    <section class="mt-8">
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <h2 class="text-2xl font-bold">KireWire Playground</h2>
+            <a wire:navigate href="/kirewire" class="btn btn-sm btn-primary">Open playground</a>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            @for(item in wireHighlights)
+                <a wire:navigate href="{{ item.href }}" class="rounded-2xl border border-base-300/70 bg-base-100/75 p-4 transition hover:border-primary/35 hover:bg-base-100">
+                    <p class="font-semibold">{{ item.title }}</p>
+                    <p class="mt-2 text-sm text-base-content/70">Interactive example running with server-driven components.</p>
+                </a>
+            @end
+        </div>
+    </section>
+@end
+

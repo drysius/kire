@@ -1,0 +1,48 @@
+@include('layouts.app', it)
+
+@define('content')
+    <section class="rounded-2xl border border-base-300/70 bg-base-100/80 p-6 sm:p-8">
+        <span class="badge badge-info badge-outline">Search</span>
+        <h1 class="mt-4 text-3xl font-bold sm:text-4xl">Search Documentation</h1>
+        <p class="mt-3 text-base-content/70">
+            @if(query)
+                Results for <strong>"{{ query }}"</strong>.
+            @else
+                Type a term in the search bar to find guides, directives and packages.
+            @end
+        </p>
+    </section>
+
+    <section class="mt-6">
+        @if(!query)
+            <div class="rounded-2xl border border-dashed border-base-300/70 bg-base-100/75 p-6">
+                <p class="font-medium">Try examples:</p>
+                <div class="mt-3 flex flex-wrap gap-2">
+                    <a wire:navigate href="/docs/search?q=directive" class="btn btn-sm btn-outline">directive</a>
+                    <a wire:navigate href="/docs/search?q=component" class="btn btn-sm btn-outline">component</a>
+                    <a wire:navigate href="/docs/search?q=wire" class="btn btn-sm btn-outline">wire</a>
+                    <a wire:navigate href="/docs/search?q=plugin" class="btn btn-sm btn-outline">plugin</a>
+                </div>
+            </div>
+        @elseif(results.length === 0)
+            <div class="rounded-2xl border border-dashed border-base-300/70 bg-base-100/75 p-6">
+                <p class="font-medium">No results for "{{ query }}".</p>
+                <p class="mt-2 text-sm text-base-content/70">Try simpler terms like <code>directive</code>, <code>wire</code>, or <code>plugin</code>.</p>
+            </div>
+        @else
+            <div class="grid gap-4 md:grid-cols-2">
+                @for(item in results)
+                    <a wire:navigate href="{{ item.href }}" class="rounded-2xl border border-base-300/70 bg-base-100/80 p-5 transition hover:border-primary/40 hover:bg-base-100">
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-outline">{{ item.section }}</span>
+                            <span class="text-xs uppercase tracking-[0.12em] text-base-content/60">{{ item.id }}</span>
+                        </div>
+                        <h2 class="mt-3 text-xl font-semibold">{{ item.title }}</h2>
+                        <p class="mt-2 text-sm text-base-content/70">{{ item.summary }}</p>
+                    </a>
+                @end
+            </div>
+        @end
+    </section>
+@end
+

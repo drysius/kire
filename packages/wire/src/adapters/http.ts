@@ -139,7 +139,8 @@ export class HttpAdapter extends Adapter {
                     Object.assign(results[i], {
                         effects: instance.__effects,
                         state: payload.state,
-                        html: payload.html
+                        html: payload.html,
+                        revision: payload.revision,
                     });
                     break;
                 }
@@ -170,15 +171,16 @@ export class HttpAdapter extends Adapter {
         const uploaded: Array<{ id: string; name: string; size: number; mime: string; type: string }> = [];
 
         for (let i = 0; i < files.length; i++) {
-            const file = files[i]!;
-            const name = String((file as any).name || "upload.bin");
-            const size = Number((file as any).size || 0);
-            const mime = String((file as any).type || "application/octet-stream");
-            let id = randomUUID();
+            const raw = files[i]!;
+            const file = this.normalizeUploadFile(raw);
+            const name = String(file.name || "upload.bin");
+            const mime = String(file.mime || "application/octet-stream");
+            const buffer = await this.readUploadBuffer(file.source);
+            const size = buffer ? buffer.length : Number(file.size || 0);
+            let id: string = randomUUID();
 
             try {
-                if (typeof (file as any).arrayBuffer === "function") {
-                    const buffer = Buffer.from(await (file as any).arrayBuffer());
+                if (buffer) {
                     id = this.fileStore.store(name, buffer);
                 }
             } catch {}
@@ -200,12 +202,70 @@ export class HttpAdapter extends Adapter {
             for (let i = 0; i < candidates.length; i++) {
                 const c = candidates[i];
                 if (!c) continue;
-                if (Array.isArray(c)) out.push(...c);
-                else out.push(c);
+                if (Array.isArray(c)) {
+                    for (let j = 0; j < c.length; j++) {
+                        const item = c[j];
+                        if (!item) continue;
+                        if (item && typeof item === "object" && "value" in item && (item as any).value) {
+                            out.push((item as any).value);
+                            continue;
+                        }
+                        out.push(item);
+                    }
+                    continue;
+                }
+                if (c && typeof c === "object" && "value" in c && (c as any).value) {
+                    out.push((c as any).value);
+                    continue;
+                }
+                out.push(c);
             }
             return out.filter(Boolean);
         }
         return [];
+    }
+
+    private normalizeUploadFile(file: any): { name: string; mime: string; size: number; source: any } {
+        if (file && typeof file === "object" && "value" in file && (file as any).value) {
+            return this.normalizeUploadFile((file as any).value);
+        }
+
+        return {
+            name: String((file as any)?.name || (file as any)?.filename || "upload.bin"),
+            mime: String((file as any)?.type || (file as any)?.mime || (file as any)?.mimetype || "application/octet-stream"),
+            size: Number((file as any)?.size || 0),
+            source: file,
+        };
+    }
+
+    private async readUploadBuffer(file: any): Promise<Buffer | null> {
+        if (!file || typeof file !== "object") return null;
+
+        if (typeof (file as any).arrayBuffer === "function") {
+            const data = await (file as any).arrayBuffer();
+            return Buffer.from(data);
+        }
+
+        if (typeof (file as any).toBuffer === "function") {
+            const data = await (file as any).toBuffer();
+            return Buffer.isBuffer(data) ? data : Buffer.from(data);
+        }
+
+        if (Buffer.isBuffer((file as any).buffer)) {
+            return (file as any).buffer;
+        }
+
+        const stream = (file as any).file;
+        if (stream && typeof stream[Symbol.asyncIterator] === "function") {
+            const chunks: Buffer[] = [];
+            for await (const chunk of stream as AsyncIterable<any>) {
+                if (Buffer.isBuffer(chunk)) chunks.push(chunk);
+                else if (chunk) chunks.push(Buffer.from(chunk));
+            }
+            return chunks.length > 0 ? Buffer.concat(chunks) : null;
+        }
+
+        return null;
     }
 
     private async invokeComponentAction(instance: any, method: string, params: any) {
@@ -213,7 +273,10 @@ export class HttpAdapter extends Adapter {
         const callParams = Array.isArray(params) ? params : [];
 
         if (name === "$set") {
-            instance.$set(callParams[0], callParams[1]);
+            const property = String(callParams[0] ?? "").trim();
+            const value = callParams[1];
+            instance.$set(property, value);
+            await this.runUpdatedHooks(instance, property, value);
             return;
         }
 
@@ -238,6 +301,34 @@ export class HttpAdapter extends Adapter {
         }
 
         await instance[name](...callParams);
+    }
+
+    private async runUpdatedHooks(instance: any, property: string, value: any) {
+        if (!instance || !property) return;
+
+        const callHook = async (hookName: string, args: any[]) => {
+            if (!hookName) return;
+            const fn = instance[hookName];
+            if (typeof fn !== "function") return;
+            await fn.apply(instance, args);
+        };
+
+        const toStudly = (raw: string) =>
+            String(raw || "")
+                .split(/[\s._-]+/)
+                .filter(Boolean)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join("");
+
+        const rootProperty = property.split(".")[0] || property;
+        const fullPathHook = `updated${toStudly(property)}`;
+        const rootHook = `updated${toStudly(rootProperty)}`;
+
+        await callHook(fullPathHook, [value, property]);
+        if (rootHook !== fullPathHook) {
+            await callHook(rootHook, [value, property]);
+        }
+        await callHook("updated", [value, property]);
     }
 
     private handleSse(req: HandleRequestInput, userId: string, pageId?: string) {
@@ -307,9 +398,10 @@ export class HttpAdapter extends Adapter {
                 if (typeof instance.$clearEffects === "function") instance.$clearEffects();
 
                 // Call serverHydrate on each broadcast property
-                const keys = Object.keys(instance);
+                const typedInstance = instance as any;
+                const keys = Object.keys(typedInstance);
                 for (let k = 0; k < keys.length; k++) {
-                    const val = instance[keys[k]];
+                    const val = typedInstance[keys[k]!];
                     if (val instanceof WireProperty && val.__wire_type === 'broadcast') {
                         const roomId = (val as any).getRoomId?.();
                         if (roomIds.has(roomId)) {
@@ -325,11 +417,14 @@ export class HttpAdapter extends Adapter {
     }
 
     private async renderComponentPayload(id: string, instance: any) {
+        const nextRevision = Number((instance as any).__wireRevision || 0) + 1;
+        (instance as any).__wireRevision = nextRevision;
+
         const state = instance.getPublicState();
         const rendered = await instance.render();
         const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
         const html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
-        return { html, state, effects: instance.__effects };
+        return { html, state, effects: instance.__effects, revision: nextRevision };
     }
 
     private getBroadcastRoomIds(instance: any): string[] {
@@ -338,7 +433,7 @@ export class HttpAdapter extends Adapter {
         for (let i = 0; i < keys.length; i++) {
             const value = instance[keys[i]];
             if (value instanceof WireProperty && value.__wire_type === 'broadcast') {
-                const roomId = value.getRoomId();
+                const roomId = (value as any).getRoomId?.();
                 if (roomId) out.push(roomId);
             }
         }

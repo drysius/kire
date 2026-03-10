@@ -120,6 +120,31 @@ function resolveMarkdownPath(kire: Kire<any>, path: string): string {
 	return legacy;
 }
 
+function protectKireSyntaxInCode(html: string): string {
+	const chunks: string[] = [];
+	const tokenPrefix = "__KIRE_MD_CHUNK_";
+
+	const encode = (value: string): string =>
+		value
+			.replaceAll("@", "&#64;")
+			.replaceAll("{{", "&#123;&#123;")
+			.replaceAll("}}", "&#125;&#125;");
+
+	const stash = (value: string): string => {
+		const idx = chunks.push(encode(value)) - 1;
+		return `${tokenPrefix}${idx}__`;
+	};
+
+	let out = html.replace(/<pre\b[\s\S]*?<\/pre>/gi, (segment) => stash(segment));
+	out = out.replace(/<code\b[\s\S]*?<\/code>/gi, (segment) => stash(segment));
+	out = out.replace(/@([A-Za-z_][\w.-]*)\/([A-Za-z0-9._-]+)/g, "&#64;$1/$2");
+	out = out.replace(new RegExp(`${tokenPrefix}(\\d+)__`, "g"), (_, rawIdx: string) => {
+		const idx = Number(rawIdx);
+		return chunks[idx] ?? "";
+	});
+	return out;
+}
+
 export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
     kire.kireSchema({
         name: "@kirejs/markdown",
@@ -134,7 +159,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 			content: string,
 			locals: Record<string, any> = {},
 		) => {
-			const html = await marked.parse(content);
+			const html = protectKireSyntaxInCode(await marked.parse(content));
 			return await kire.render(html, locals) as any;
 		};
 
@@ -148,7 +173,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 			try {
 				const resolved = resolveMarkdownPath(kire, path);
 				const content = kire.readFile(resolved);
-				const htmlTemplate = await marked.parse(content);
+				const htmlTemplate = protectKireSyntaxInCode(await marked.parse(content));
 				const entry = kire.compile(htmlTemplate, resolved);
 
 				if (kire.$production) _fnCache[cacheKey] = entry.fn;

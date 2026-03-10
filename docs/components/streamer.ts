@@ -6,7 +6,6 @@ export default class Streamer extends Component {
 		this.stream(
 			"logs",
 			`<pre data-prefix=">"><code>Log at ${time}</code></pre>`,
-			false,
 			"prepend",
 		);
 	}

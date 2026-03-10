@@ -10,8 +10,8 @@
                 Every card below is a real component running with wire actions.
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
-                <a href="/features" wire:navigate class="btn btn-primary">Open Feature Tour</a>
-                <a href="/todo" wire:navigate class="btn btn-ghost">Start with Todo</a>
+                <a href="/kirewire/features" wire:navigate class="btn btn-primary">Open Feature Tour</a>
+                <a href="/kirewire/todo" wire:navigate class="btn btn-ghost">Start with Todo</a>
             </div>
         </div>
         <div class="rounded-2xl border border-base-300/70 bg-gradient-to-br from-primary/15 via-transparent to-secondary/20 p-6">
@@ -57,23 +57,23 @@
     </section>
 
     <section class="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <a wire:navigate href="/upload" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+        <a wire:navigate href="/kirewire/upload" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">File Upload</p>
             <p class="text-sm text-base-content/70">Validate and store files with progress state.</p>
         </a>
-        <a wire:navigate href="/stream" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+        <a wire:navigate href="/kirewire/stream" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">Streaming</p>
             <p class="text-sm text-base-content/70">Send partial HTML fragments without full rerender.</p>
         </a>
-        <a wire:navigate href="/shared-components" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+        <a wire:navigate href="/kirewire/shared-components" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">Shared State</p>
             <p class="text-sm text-base-content/70">Synchronize UI blocks on the same channel.</p>
         </a>
-        <a wire:navigate href="/stress" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+        <a wire:navigate href="/kirewire/stress" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">Poll Stress</p>
             <p class="text-sm text-base-content/70">Observe batched polling behavior under load.</p>
         </a>
-        <a wire:navigate href="/battle-tank" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+        <a wire:navigate href="/kirewire/battle-tank" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">Battle Tank</p>
             <p class="text-sm text-base-content/70">Canvas + emitter demo with game-like state loop.</p>
         </a>

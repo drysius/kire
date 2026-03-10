@@ -2,10 +2,41 @@ import { Kirewire } from "../kirewire";
 
 type ModelElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
-function getEventType(el: ModelElement): string {
+function isTextLikeModelElement(el: ModelElement): boolean {
+    if (el instanceof HTMLTextAreaElement) return true;
+    if (el instanceof HTMLSelectElement) return false;
+    if (!(el instanceof HTMLInputElement)) return false;
+
+    const type = String(el.type || "text").toLowerCase();
+    if (type === "checkbox" || type === "radio" || type === "file") return false;
+    return true;
+}
+
+function getEventType(el: ModelElement, modifiers: string[]): string {
+    if ((modifiers.includes("blur") || modifiers.includes("lazy")) && isTextLikeModelElement(el)) {
+        return "blur";
+    }
     if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) return "change";
     if (el instanceof HTMLSelectElement) return "change";
     return "input";
+}
+
+function parseDebounce(modifiers: string[]): number {
+    const index = modifiers.indexOf("debounce");
+    if (index === -1) return 0;
+
+    const next = String(modifiers[index + 1] || "").trim().toLowerCase();
+    if (!next) return 150;
+
+    const match = next.match(/^(\d+)(ms|s)?$/);
+    if (!match) return 150;
+
+    const value = Number(match[1] || 0);
+    if (!Number.isFinite(value) || value < 0) return 150;
+
+    const unit = match[2] || "ms";
+    if (unit === "s") return value * 1000;
+    return value;
 }
 
 function readInputValue(el: ModelElement): any {
@@ -79,8 +110,11 @@ Kirewire.directive("model", ({ el, expression, modifiers, cleanup, wire, compone
         el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement;
     if (!isModelElement) return;
 
-    const eventType = getEventType(el);
-    const handler = () => {
+    const eventType = getEventType(el, modifiers);
+    const debounceMs = parseDebounce(modifiers);
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const commit = () => {
         const value = readInputValue(el);
         if (value === undefined && el instanceof HTMLInputElement && el.type === "radio") {
             return;
@@ -93,8 +127,26 @@ Kirewire.directive("model", ({ el, expression, modifiers, cleanup, wire, compone
         }
     };
 
+    const handler = () => {
+        if (debounceMs <= 0) {
+            commit();
+            return;
+        }
+
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+        }
+        debounceTimer = setTimeout(() => {
+            debounceTimer = null;
+            commit();
+        }, debounceMs);
+    };
+
     el.addEventListener(eventType, handler);
-    cleanup(() => el.removeEventListener(eventType, handler));
+    cleanup(() => {
+        el.removeEventListener(eventType, handler);
+        if (debounceTimer) clearTimeout(debounceTimer);
+    });
 
     const off = wire.on("component:update", (data) => {
         if (data?.id !== componentId) return;

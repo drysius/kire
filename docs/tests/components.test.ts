@@ -11,6 +11,7 @@ import InfinityScroll from "../components/infinity-scroll";
 import PollStress from "../components/poll-stress";
 import Receiver from "../components/receiver";
 import Searchable from "../components/searchable";
+import DocsSearch from "../components/docs-search";
 import Sender from "../components/sender";
 import Streamer from "../components/streamer";
 import TextareaTest from "../components/textarea-test";
@@ -60,6 +61,7 @@ describe("wire-example component renders", () => {
         { name: "poll-stress", ctor: PollStress, view: "components.poll-stress" },
         { name: "receiver", ctor: Receiver, view: "components.receiver" },
         { name: "searchable", ctor: Searchable, view: "components.searchable" },
+        { name: "docs-search", ctor: DocsSearch, view: "components.docs-search" },
         { name: "sender", ctor: Sender, view: "components.sender" },
         { name: "streamer", ctor: Streamer, view: "components.streamer" },
         { name: "textarea-test", ctor: TextareaTest, view: "components.textarea-test" },
@@ -227,6 +229,19 @@ describe("wire-example component behaviors", () => {
         expect(filtered.every((u) => u.role === "Admin")).toBe(true);
     });
 
+    test("DocsSearch returns references and clear resets query", async () => {
+        const search = new DocsSearch();
+        search.query = "wire";
+
+        expect(search.hasQuery).toBe(true);
+        expect(search.results.length).toBeGreaterThan(0);
+        expect(search.searchHref).toContain("/docs/search?q=wire");
+
+        await search.clear();
+        expect(search.query).toBe("");
+        expect(search.hasQuery).toBe(false);
+    });
+
     test("Streamer emits stream update in prepend mode", async () => {
         const streamer = new Streamer() as any;
         let called: any[] = [];
@@ -238,8 +253,8 @@ describe("wire-example component behaviors", () => {
 
         expect(called[0]).toBe("logs");
         expect(typeof called[1]).toBe("string");
-        expect(called[2]).toBe(false);
-        expect(called[3]).toBe("prepend");
+        expect(called[2]).toBe("prepend");
+        expect(called.length).toBe(3);
     });
 
     test("TextareaTest submit stores and clears message", async () => {

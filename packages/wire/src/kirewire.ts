@@ -169,7 +169,7 @@ export class Kirewire extends EventController {
     /**
      * Registers components using a glob-like pattern via node:fs.
      */
-    public async wireRegister(pattern: string, rootDir: string = process.cwd()) {
+    public async wireRegister(pattern: string, rootDir: string = process.cwd(), namePrefix = "") {
         const { existsSync, readdirSync, statSync } = await import("node:fs");
         const { join, resolve, parse } = await import("node:path");
         const { Component } = await import("./component");
@@ -207,7 +207,9 @@ export class Kirewire extends EventController {
                         const relPath = file.slice(searchDir.length + 1);
                         const parsed = parse(relPath);
                         const dirParts = parsed.dir ? parsed.dir.split(/[\\\/]/) : [];
-                        const name = [...dirParts, parsed.name].join(".");
+                        const localName = [...dirParts, parsed.name].join(".");
+                        const prefix = String(namePrefix || "").trim().replace(/\.+$/, "");
+                        const name = prefix ? `${prefix}.${localName}` : localName;
                         
                         this.components.set(name, componentClass);
                         console.log(`[Kirewire] Registered component: ${name}`);

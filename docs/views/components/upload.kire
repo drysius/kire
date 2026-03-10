@@ -1,4 +1,4 @@
-<div class="card bg-base-100 shadow-xl w-full max-w-2xl mx-auto">
+<div class="card bg-base-100 shadow-xl w-full max-w-2xl  ">
     <div class="card-body">
         <h2 class="card-title">File Upload with Validation</h2>
 

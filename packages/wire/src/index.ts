@@ -60,7 +60,16 @@ export class KirewirePlugin {
                     const $uploadUrl = (this.wire.options.adapter && typeof this.wire.options.adapter.getUploadUrl === 'function')
                         ? this.wire.options.adapter.getUploadUrl()
                         : ($wireUrl.replace(/\\/+$/, '') + '/upload');
+                    const $pageIdAttr = String($pageId).replace(/"/g, '&quot;');
+                    const $wireUrlAttr = String($wireUrl).replace(/"/g, '&quot;');
+                    const $uploadUrlAttr = String($uploadUrl).replace(/"/g, '&quot;');
+                    const $transportAttr = String($transport).replace(/"/g, '&quot;');
                     $kire_response += \`
+                        <meta name="kirewire:page-id" content="\${$pageIdAttr}">
+                        <meta name="kirewire:url" content="\${$wireUrlAttr}">
+                        <meta name="kirewire:upload-url" content="\${$uploadUrlAttr}">
+                        <meta name="kirewire:transport" content="\${$transportAttr}">
+                        <meta name="kirewire:bus-delay" content="\${Number($busDelay) || 0}">
                         <script type="module" src="\${$wireUrl}/kirewire.js"></script>
                         <script type="module">
                             window.__WIRE_INITIAL_CONFIG__ = Object.assign({}, window.__WIRE_INITIAL_CONFIG__ || {}, {
@@ -70,6 +79,7 @@ export class KirewirePlugin {
                                 transport: \${JSON.stringify($transport)},
                                 busDelay: \${Number($busDelay) || 0}
                             });
+                            let __kirewireInitAttempts = 0;
                             const init = () => {
                                 if (window.Kirewire && window.Alpine) {
                                     if (window.Kirewire.configure) {
@@ -79,11 +89,18 @@ export class KirewirePlugin {
                                     if (window.Kirewire.bus) {
                                         window.Kirewire.bus.setDelay(Number(\${$busDelay}) || 0);
                                     }
+                                    return;
                                 } else {
-                                    setTimeout(init, 10);
+                                    __kirewireInitAttempts += 1;
+                                    const waitMs = Math.min(320, 24 + (__kirewireInitAttempts * 8));
+                                    setTimeout(init, waitMs);
                                 }
                             };
-                            init();
+                            if (document.readyState === 'loading') {
+                                document.addEventListener('DOMContentLoaded', init, { once: true });
+                            } else {
+                                init();
+                            }
                         </script>
                     \`;
                 }`);

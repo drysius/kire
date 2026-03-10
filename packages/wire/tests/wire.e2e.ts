@@ -68,6 +68,11 @@ test.describe("Wire E2E (Playwright)", () => {
             stdio: "pipe",
         });
 
+        await new Promise((resolvePromise) => setTimeout(resolvePromise, 300));
+        if (!serverProcess || serverProcess.exitCode !== null) {
+            throw new Error("Failed to start docs server. Port 3000 may already be in use.");
+        }
+
         await waitForServer(baseUrl);
     });
 
@@ -93,7 +98,7 @@ test.describe("Wire E2E (Playwright)", () => {
             }
         });
 
-        await page.goto(`${baseUrl}/`);
+        await page.goto(`${baseUrl}/kirewire`);
 
         const senderCard = page.locator(".card", {
             has: page.getByRole("heading", { name: "Sender" }),
@@ -131,7 +136,7 @@ test.describe("Wire E2E (Playwright)", () => {
     });
 
     test("textarea defer limpa visualmente apos submit", async ({ page }) => {
-        await page.goto(`${baseUrl}/textarea`);
+        await page.goto(`${baseUrl}/kirewire/textarea`);
 
         const textarea = page.getByPlaceholder("Type a message...");
         const submitButton = page.getByRole("button", { name: "Submit" });
@@ -145,7 +150,7 @@ test.describe("Wire E2E (Playwright)", () => {
     });
 
     test("todo adiciona e remove tarefa", async ({ page }) => {
-        await page.goto(`${baseUrl}/todo`);
+        await page.goto(`${baseUrl}/kirewire/todo`);
 
         const taskInput = page.getByPlaceholder("New Task...");
         const addButton = page.getByRole("button", { name: "Add" });
@@ -162,7 +167,7 @@ test.describe("Wire E2E (Playwright)", () => {
     });
 
     test("searchable filtra por busca e role", async ({ page }) => {
-        await page.goto(`${baseUrl}/search`);
+        await page.goto(`${baseUrl}/kirewire/search`);
 
         const searchInput = page.getByPlaceholder("Search users...");
         const roleSelect = page.locator("select");
@@ -177,8 +182,30 @@ test.describe("Wire E2E (Playwright)", () => {
         await expect(page.getByRole("cell", { name: "User 37" })).toBeVisible();
     });
 
+    test("wire:navigate troca paginas com history e progresso", async ({ page }) => {
+        await page.goto(`${baseUrl}/kirewire`);
+
+        const sidebar = page.locator("aside");
+        await sidebar.getByRole("link", { name: "Feature Tour" }).click();
+        await expect(page).toHaveURL(`${baseUrl}/kirewire/features`);
+        await expect(page.getByRole("heading", { name: "Feature Tour" })).toBeVisible();
+        await expect(page.locator("#kirewire-navigate-progress")).toHaveCount(1);
+
+        await sidebar.getByRole("link", { name: "Todo List" }).click();
+        await expect(page).toHaveURL(`${baseUrl}/kirewire/todo`);
+        await expect(page.getByRole("heading", { name: "Todo List" })).toBeVisible();
+
+        await page.goBack();
+        await expect(page).toHaveURL(`${baseUrl}/kirewire/features`);
+        await expect(page.getByRole("heading", { name: "Feature Tour" })).toBeVisible();
+
+        await page.goBack();
+        await expect(page).toHaveURL(`${baseUrl}/kirewire`);
+        await expect(page.getByRole("heading", { name: "KireWire Playground" })).toBeVisible();
+    });
+
     test("infinity renderiza conteudo inicial e carrega mais itens ao intersectar", async ({ page }) => {
-        await page.goto(`${baseUrl}/infinity`);
+        await page.goto(`${baseUrl}/kirewire/infinity`);
 
         await expect(page.getByRole("heading", { name: "Infinite Scroll Example" })).toBeVisible();
         await expect(page.getByRole("heading", { name: /^Item 1$/ })).toBeVisible();
@@ -190,7 +217,7 @@ test.describe("Wire E2E (Playwright)", () => {
     });
 
     test("chat envia mensagem com username defer e limpa input", async ({ page }) => {
-        await page.goto(`${baseUrl}/chat`);
+        await page.goto(`${baseUrl}/kirewire/chat`);
 
         const chatCard = page.locator(".card", {
             has: page.getByRole("heading", { name: "Chat Room" }),
@@ -216,11 +243,11 @@ test.describe("Wire E2E (Playwright)", () => {
         const pageErrors: string[] = [];
         page.on("pageerror", (err) => pageErrors.push(err.message));
 
-        await page.goto(`${baseUrl}/users`);
+        await page.goto(`${baseUrl}/kirewire/users`);
         await expect(page.getByRole("heading", { name: /Usuarios \(\d+\)/ })).toBeVisible();
         await expect(page.getByText("Page 1 of 5")).toBeVisible();
 
-        await page.goto(`${baseUrl}/upload`);
+        await page.goto(`${baseUrl}/kirewire/upload`);
         await expect(page.getByRole("heading", { name: "File Upload with Validation" })).toBeVisible();
 
         expect(pageErrors).toEqual([]);
@@ -230,17 +257,24 @@ test.describe("Wire E2E (Playwright)", () => {
         const pageErrors: string[] = [];
         page.on("pageerror", (err) => pageErrors.push(err.message));
 
-        await page.goto(`${baseUrl}/stream`);
-        await page.getByRole("button", { name: "Add Log Stream" }).click();
+        await page.goto(`${baseUrl}/kirewire/stream`);
+        const streamButton = page.getByRole("button", { name: "Add Log Stream" });
+        const streamItems = page.locator('div[wire\\:stream="logs"] pre');
+
+        await streamButton.click();
+        await expect(streamItems).toHaveCount(1);
+
+        await streamButton.click();
+        await expect(streamItems).toHaveCount(2);
         await expect(page.getByText("Log at", { exact: false }).first()).toBeVisible();
 
-        await page.goto(`${baseUrl}/shared-components`);
+        await page.goto(`${baseUrl}/kirewire/shared-components`);
         const counter = page.locator(".stat-value").first();
         const initialCounter = Number.parseInt((await counter.textContent()) || "0", 10);
         await page.getByRole("button", { name: "Increment Shared Counter" }).click();
         await expect(counter).toHaveText(String(initialCounter + 1));
 
-        await page.goto(`${baseUrl}/toast`);
+        await page.goto(`${baseUrl}/kirewire/toast`);
         await page.getByRole("button", { name: "Show Success" }).click();
         await expect(page.getByText("Operation successful!").first()).toBeVisible();
 
@@ -248,3 +282,4 @@ test.describe("Wire E2E (Playwright)", () => {
     });
 });
 }
+

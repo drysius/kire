@@ -1,0 +1,55 @@
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" defer></script>
+<script>
+    window.__WIRE_INITIAL_CONFIG__ = {
+        transport: "{{ sharedTransport || 'sse' }}"
+    };
+</script>
+<script>
+    (() => {
+        const STORAGE_KEY = "theme";
+        const getCurrentTheme = () =>
+            document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+
+        const syncThemeUI = () => {
+            const active = getCurrentTheme();
+            document.querySelectorAll("input.theme-controller").forEach((input) => {
+                input.checked = input.value === active;
+            });
+            const label = document.getElementById("theme-label");
+            if (label) label.textContent = active;
+        };
+
+        const applyTheme = (theme) => {
+            const next = theme === "dark" ? "dark" : "light";
+            document.documentElement.setAttribute("data-theme", next);
+            localStorage.setItem(STORAGE_KEY, next);
+            syncThemeUI();
+        };
+
+        const initializeTheme = () => {
+            const savedTheme = localStorage.getItem(STORAGE_KEY);
+            if (savedTheme === "dark" || savedTheme === "light") {
+                document.documentElement.setAttribute("data-theme", savedTheme);
+            } else {
+                const defaultTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                document.documentElement.setAttribute("data-theme", defaultTheme);
+                localStorage.setItem(STORAGE_KEY, defaultTheme);
+            }
+            syncThemeUI();
+        };
+
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            const toggle = target.closest("#toggle-theme");
+            if (!toggle) return;
+            const current = getCurrentTheme();
+            applyTheme(current === "dark" ? "light" : "dark");
+        });
+
+        document.addEventListener("DOMContentLoaded", initializeTheme);
+        document.addEventListener("kirewire:navigated", syncThemeUI);
+        window.addEventListener("pageshow", syncThemeUI);
+    })();
+</script>
+@kirewire

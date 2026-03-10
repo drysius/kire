@@ -6,10 +6,11 @@ export interface WirePayload {
 }
 
 export class MessageBus {
-    private queue: Array<{ payload: WirePayload, resolve: Function, reject: Function }> = [];
+    private queue: Array<{ payload: WirePayload; resolve: (value: any) => void; reject: (reason?: any) => void }> = [];
     private timer: any = null;
     private inFlight = false;
     private readonly flushTimeoutMs = 15000;
+    private activeCancel: ((reason?: any) => void) | null = null;
 
     constructor(private delay: number = 10) {}
 
@@ -34,6 +35,25 @@ export class MessageBus {
         });
     }
 
+    public cancelPending(reason: any = new Error("MessageBus queue cancelled")) {
+        if (this.timer) {
+            clearTimeout(this.timer);
+            this.timer = null;
+        }
+
+        if (this.queue.length > 0) {
+            const pending = [...this.queue];
+            this.queue = [];
+            for (let i = 0; i < pending.length; i++) {
+                pending[i]!.reject(reason);
+            }
+        }
+
+        if (this.activeCancel) {
+            this.activeCancel(reason);
+        }
+    }
+
     private async flush() {
         if (this.inFlight || this.queue.length === 0) return;
         this.inFlight = true;
@@ -49,6 +69,7 @@ export class MessageBus {
             if (settled) return;
             settled = true;
             this.inFlight = false;
+            this.activeCancel = null;
             if (!this.timer && this.queue.length > 0) {
                 this.timer = setTimeout(() => this.flush(), this.delay);
             }
@@ -64,11 +85,27 @@ export class MessageBus {
             failBatch(new Error(`MessageBus timed out after ${this.flushTimeoutMs}ms`));
         }, this.flushTimeoutMs);
 
+        this.activeCancel = (reason?: any) => {
+            const err = reason instanceof Error
+                ? reason
+                : new Error(typeof reason === "string" ? reason : "MessageBus batch cancelled");
+            failBatch(err);
+        };
+
         try {
             // The transport logic will be injected by the adapter
             const event = new CustomEvent('wire:bus:flush', { 
                 detail: { 
                     batch: batch.map(b => b.payload),
+                    setCancel: (fn: (reason?: any) => void) => {
+                        this.activeCancel = (reason?: any) => {
+                            try { fn(reason); } catch {}
+                            const err = reason instanceof Error
+                                ? reason
+                                : new Error(typeof reason === "string" ? reason : "MessageBus batch cancelled");
+                            failBatch(err);
+                        };
+                    },
                     finish: (rawResults: any) => {
                         clearTimeout(timeout);
                         const results = Array.isArray(rawResults) ? rawResults : [rawResults];

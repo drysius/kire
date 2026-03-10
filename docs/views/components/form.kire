@@ -1,4 +1,4 @@
-<div class="card bg-base-100 shadow-xl max-w-md mx-auto border border-base-200">
+<div class="card bg-base-100 shadow-xl max-w-md   border border-base-200">
     <div class="card-body">
         <h2 class="card-title text-2xl mb-4">Register</h2>
         

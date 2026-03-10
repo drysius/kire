@@ -19,6 +19,8 @@ export interface WireAdapter {
     call(componentId: string, method: string, params: any[]): Promise<any>;
     defer(componentId: string, property: string, value: any): void;
     upload(files: FileList | File[], onProgress?: (progress: any) => void): Promise<any>;
+    reconfigure?(config: Partial<WireClientConfig>): void;
+    abortAllRequests?(): void;
     setup?(): void;
     destroy?(): void;
 }
@@ -32,9 +34,15 @@ export interface WireClientConfig {
 }
 
 declare global {
+    interface KirewireNavigateRuntime {
+        navigateTo: (url: string, options?: { replace?: boolean; force?: boolean; reason?: string }) => Promise<void>;
+        refreshCurrentPage: (options?: { replace?: boolean; force?: boolean; reason?: string }) => Promise<void>;
+    }
+
     interface Window {
         __WIRE_INITIAL_CONFIG__?: WireClientConfig;
         Kirewire?: KirewireClient;
+        KirewireNavigate?: KirewireNavigateRuntime;
     }
 }
 
@@ -57,6 +65,7 @@ export class KirewireClient extends EventController {
     private observer: MutationObserver | null = null;
     private deferredUpdates = new Map<string, Record<string, any>>();
     private cleanupByElement = new WeakMap<HTMLElement, Array<() => void>>();
+    private navigationInFlight = false;
     private config: Required<Pick<WireClientConfig, "url" | "uploadUrl" | "transport">> = {
         url: "/_wire",
         uploadUrl: "/_wire/upload",
@@ -100,6 +109,15 @@ export class KirewireClient extends EventController {
             uploadUrl: nextUpload,
             transport: nextTransport,
         };
+
+        if (this.adapter && typeof this.adapter.reconfigure === "function") {
+            this.adapter.reconfigure({
+                pageId: this.pageId,
+                url: this.config.url,
+                uploadUrl: this.config.uploadUrl,
+                transport: this.config.transport,
+            });
+        }
     }
 
     public getUploadUrl() {
@@ -286,6 +304,8 @@ export class KirewireClient extends EventController {
     }
 
     public async call(el: HTMLElement, method: string, params: any[] = []) {
+        if (this.navigationInFlight) return;
+
         const componentId = this.getComponentId(el);
         if (!componentId) return;
         if (!this.ensureAdapter()) return;
@@ -307,6 +327,19 @@ export class KirewireClient extends EventController {
             this.emitSync("component:finished", { id: componentId });
             return responses.length > 1 ? responses : result;
         } catch (error) {
+            const message = String((error as any)?.message || "");
+            const name = String((error as any)?.name || "");
+            if (
+                this.navigationInFlight &&
+                (
+                    name === "AbortError" ||
+                    message.includes("Cancelled due to navigation") ||
+                    message.includes("MessageBus batch cancelled")
+                )
+            ) {
+                this.emitSync("component:finished", { id: componentId });
+                return;
+            }
             this.emitSync("component:error", { id: componentId, error });
             throw error;
         }
@@ -513,6 +546,27 @@ export class KirewireClient extends EventController {
 
     public $emit(event: string, data?: any) {
         this.emitSync(event, data);
+    }
+
+    public beginNavigation() {
+        this.navigationInFlight = true;
+        this.bus.cancelPending(new Error("Cancelled due to navigation"));
+        if (this.adapter && typeof this.adapter.abortAllRequests === "function") {
+            this.adapter.abortAllRequests();
+        }
+    }
+
+    public endNavigation() {
+        this.navigationInFlight = false;
+    }
+
+    public isNavigating() {
+        return this.navigationInFlight;
+    }
+
+    public resetClientState() {
+        this.components.clear();
+        this.deferredUpdates.clear();
     }
 
     private setupRemovalObserver() {

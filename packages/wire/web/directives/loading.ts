@@ -1,51 +1,111 @@
 import { Kirewire } from "../kirewire";
 
-Kirewire.directive('loading', ({ el, modifiers, wire, cleanup }) => {
-    let originalDisplay = el.style.display;
-    if (!modifiers.includes('class') && !modifiers.includes('attr')) {
-        el.style.display = 'none';
-    }
+function parseTargets(raw: string): string[] {
+    return String(raw || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .map((item) => normalizeAction(item));
+}
 
-    const show = () => {
-        if (modifiers.includes('class')) {
-            el.classList.add(modifiers[modifiers.indexOf('class') + 1] || 'wire-loading');
-        } else if (modifiers.includes('attr')) {
-            el.setAttribute(modifiers[modifiers.indexOf('attr') + 1] || 'disabled', 'true');
-        } else {
-            el.style.display = originalDisplay;
+function normalizeAction(value: string): string {
+    const source = String(value || "").trim();
+    if (!source) return "";
+
+    if (source.startsWith("$set")) return "$set";
+    const match = source.match(/^([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/);
+    if (match?.[1]) return match[1];
+    return source;
+}
+
+Kirewire.directive("loading", ({ el, expression, modifiers, wire, cleanup }) => {
+    const componentId = wire.getComponentId(el);
+    if (!componentId) return;
+
+    const targetExpression = el.getAttribute("wire:target") || "";
+    const targets = parseTargets(targetExpression);
+    const removeMode = modifiers.includes("remove");
+    const classMode = modifiers.includes("class");
+    const attrMode = modifiers.includes("attr");
+
+    const className = String(expression || "").trim() || "wire-loading";
+    const attrName = String(expression || "").trim() || "disabled";
+    const initialDisplay = el.style.display;
+
+    const setVisible = (visible: boolean) => {
+        if (visible) {
+            if (initialDisplay) el.style.display = initialDisplay;
+            else el.style.removeProperty("display");
+            return;
         }
+        el.style.display = "none";
     };
 
-    const hide = () => {
-        if (modifiers.includes('class')) {
-            el.classList.remove(modifiers[modifiers.indexOf('class') + 1] || 'wire-loading');
-        } else if (modifiers.includes('attr')) {
-            el.removeAttribute(modifiers[modifiers.indexOf('attr') + 1] || 'disabled');
-        } else {
-            el.style.display = 'none';
+    const applyState = (isLoading: boolean) => {
+        if (classMode) {
+            if (removeMode) {
+                if (isLoading) el.classList.remove(className);
+                else el.classList.add(className);
+            } else if (isLoading) {
+                el.classList.add(className);
+            } else {
+                el.classList.remove(className);
+            }
+            return;
         }
+
+        if (attrMode) {
+            if (removeMode) {
+                if (isLoading) el.removeAttribute(attrName);
+                else el.setAttribute(attrName, "true");
+            } else if (isLoading) {
+                el.setAttribute(attrName, "true");
+            } else {
+                el.removeAttribute(attrName);
+            }
+            return;
+        }
+
+        const shouldShow = removeMode ? !isLoading : isLoading;
+        setVisible(shouldShow);
     };
 
-    const unbindCall = wire.$on('component:call', (data) => {
-        const componentId = wire.getComponentId(el);
-        if (data.id === componentId) {
-            show();
+    // Default behavior keeps loading indicators hidden until a call starts.
+    applyState(false);
+
+    const matchesCall = (data: any) => {
+        if (!data || data.id !== componentId) return false;
+        if (targets.length === 0) return true;
+
+        const method = normalizeAction(String(data.method || ""));
+        const setTarget = method === "$set" ? String(data?.params?.[0] || "").trim() : "";
+
+        for (let i = 0; i < targets.length; i++) {
+            const target = targets[i]!;
+            if (!target) continue;
+            if (target === method || (setTarget && target === setTarget)) return true;
         }
+        return false;
+    };
+
+    let loading = false;
+
+    const unbindCall = wire.$on("component:call", (data) => {
+        if (!matchesCall(data)) return;
+        loading = true;
+        applyState(true);
     });
 
-    const maybeHide = (data: any) => {
-        const componentId = wire.getComponentId(el);
-        if (data.id === componentId) {
-            hide();
-        }
+    const onEnd = (data: any) => {
+        if (!data || data.id !== componentId || !loading) return;
+        loading = false;
+        applyState(false);
     };
 
-    const unbindUpdate = wire.$on('component:update', maybeHide);
-    const unbindFinished = wire.$on('component:finished', maybeHide);
-    const unbindError = wire.$on('component:error', maybeHide);
+    const unbindFinished = wire.$on("component:finished", onEnd);
+    const unbindError = wire.$on("component:error", onEnd);
 
     cleanup(unbindCall);
-    cleanup(unbindUpdate);
     cleanup(unbindFinished);
     cleanup(unbindError);
 });

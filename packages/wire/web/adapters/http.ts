@@ -66,9 +66,11 @@ function restoreStreams(root: HTMLElement, snapshots: Map<string, string>) {
 }
 
 export class HttpClientAdapter implements WireAdapter {
-    private readonly options: NormalizedOptions;
+    private options: NormalizedOptions;
     private sse: EventSource | null = null;
     private onBusFlush: ((e: CustomEvent) => Promise<void>) | null = null;
+    private lastRevisionByComponent = new Map<string, number>();
+    private inFlightControllers = new Set<AbortController>();
     private sessionCheckInFlight = false;
     private lastSessionCheckAt = 0;
     private readonly sessionCheckIntervalMs = 3000;
@@ -155,12 +157,19 @@ export class HttpClientAdapter implements WireAdapter {
         globalObj.__kirewire_http_adapter = this;
 
         this.onBusFlush = async (event: CustomEvent) => {
-            const { batch, finish, error } = event.detail;
+            const { batch, finish, error, setCancel } = event.detail || {};
+            const controller = new AbortController();
+            this.inFlightControllers.add(controller);
+            if (typeof setCancel === "function") {
+                setCancel(() => controller.abort());
+            }
 
             try {
                 const response = await fetch(this.options.url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
+                    credentials: "same-origin",
+                    signal: controller.signal,
                     body: JSON.stringify({
                         batch,
                         pageId: this.options.pageId,
@@ -176,11 +185,54 @@ export class HttpClientAdapter implements WireAdapter {
                 finish(results);
             } catch (err) {
                 error(err);
+            } finally {
+                this.inFlightControllers.delete(controller);
             }
         };
 
         window.addEventListener("wire:bus:flush" as any, this.onBusFlush as any);
         this.connectSse();
+    }
+
+    public reconfigure(next: Partial<HttpClientAdapterOptions>) {
+        const current = this.options;
+        const nextUrl = next.url ? String(next.url) : current.url;
+        const nextPageId = next.pageId ? String(next.pageId) : current.pageId;
+        const nextTransport = next.transport ? String(next.transport) : current.transport;
+        const nextUploadUrl = next.uploadUrl
+            ? String(next.uploadUrl)
+            : resolveUploadUrl(nextUrl, current.uploadUrl);
+
+        const shouldReconnectSse =
+            nextUrl !== current.url ||
+            nextPageId !== current.pageId ||
+            nextTransport !== current.transport;
+
+        this.options = {
+            url: nextUrl,
+            pageId: nextPageId,
+            uploadUrl: nextUploadUrl,
+            transport: nextTransport,
+        };
+        Kirewire.pageId = nextPageId;
+        this.lastRevisionByComponent.clear();
+
+        if (shouldReconnectSse) {
+            if (this.sse) {
+                this.sse.close();
+                this.sse = null;
+            }
+            this.connectSse();
+        }
+    }
+
+    public abortAllRequests() {
+        for (const controller of this.inFlightControllers.values()) {
+            try {
+                controller.abort();
+            } catch {}
+        }
+        this.inFlightControllers.clear();
     }
 
     public destroy() {
@@ -193,6 +245,7 @@ export class HttpClientAdapter implements WireAdapter {
             this.sse.close();
             this.sse = null;
         }
+        this.abortAllRequests();
     }
 
     private connectSse() {
@@ -233,6 +286,13 @@ export class HttpClientAdapter implements WireAdapter {
     private applyComponentUpdate(payload: any) {
         const id = String(payload?.id || "");
         if (!id) return;
+
+        const revision = Number(payload?.revision);
+        if (Number.isFinite(revision)) {
+            const lastRevision = this.lastRevisionByComponent.get(id) ?? 0;
+            if (revision <= lastRevision) return;
+            this.lastRevisionByComponent.set(id, revision);
+        }
 
         const root = document.querySelector(
             `[wire\\:id="${id}"], [wire-id="${id}"]`,
@@ -284,7 +344,12 @@ export class HttpClientAdapter implements WireAdapter {
         try {
             const ended = await this.isSessionFinished();
             if (ended) {
-                window.location.reload();
+                const navigate = (window as any).KirewireNavigate;
+                if (navigate && typeof navigate.refreshCurrentPage === "function") {
+                    navigate.refreshCurrentPage({ replace: true, force: true, reason: "session-expired" });
+                } else {
+                    window.location.reload();
+                }
             }
         } finally {
             this.sessionCheckInFlight = false;

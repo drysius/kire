@@ -1,4 +1,4 @@
-<div class="card bg-base-100 shadow-xl w-full max-w-lg mx-auto">
+<div class="card bg-base-100 shadow-xl w-full max-w-lg  ">
     <div class="card-body">
         <h2 class="card-title">Toast Notification Example</h2>
         <div class="flex flex-wrap gap-2 mt-4">

@@ -13,6 +13,7 @@ import './directives/intersect';
 import './features/file-upload';
 import './features/wire-broadcast';
 import './features/game-canvas';
+import './features/navigate';
 import './adapters/http';
 
 //@ts-expect-error ignore

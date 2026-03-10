@@ -96,6 +96,23 @@ describe("KireMarkdown", () => {
 		expect(html2).toContain("Content: Yes");
 	});
 
+	it("should not execute kire syntax inside code blocks", async () => {
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+		const html = await kire.mdrender(
+			"```kire\n@include('partials.card', { title: 'Demo' })\n@if(true)\n  {{ value }}\n@end\n```",
+		);
+
+		expect(html).toContain("<pre><code");
+		expect(html).toContain("&#64;include(");
+		expect(html).toContain("&#123;&#123; value &#125;&#125;");
+	});
+
+	it("should treat npm scoped package names as plain text", async () => {
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+		const html = await kire.mdrender("# @kirejs/wire");
+		expect(html).toContain("&#64;kirejs/wire");
+	});
+
 	it("should handle missing file gracefully (fallback to string)", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		const warnSpy = spyOn(console, "warn").mockImplementation(() => {});

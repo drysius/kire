@@ -1,0 +1,26 @@
+@include('layouts.app', it)
+
+@define('content')
+    <section class="rounded-2xl border border-base-300/70 bg-base-100/80 p-6 sm:p-8">
+        <span class="badge badge-secondary badge-outline">Packages</span>
+        <h1 class="mt-4 text-3xl font-bold sm:text-4xl">Kire Ecosystem Packages</h1>
+        <p class="mt-3 max-w-3xl text-base-content/70">
+            Each package below has dedicated markdown docs with purpose, usage patterns and implementation notes.
+        </p>
+    </section>
+
+    <section class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        @for(pkg in packages)
+            <a wire:navigate href="{{ pkg.href }}" class="card border border-base-300/70 bg-base-100/75 shadow-sm transition hover:-translate-y-[2px] hover:border-primary/35">
+                <div class="card-body p-5">
+                    <h2 class="card-title text-lg">{{ pkg.title }}</h2>
+                    <p class="text-sm text-base-content/70">{{ pkg.summary }}</p>
+                    <div class="card-actions justify-end">
+                        <span class="btn btn-sm btn-ghost">Open docs</span>
+                    </div>
+                </div>
+            </a>
+        @end
+    </section>
+@end
+
