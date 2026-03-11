@@ -61,6 +61,10 @@
             <p class="font-semibold">File Upload</p>
             <p class="text-sm text-base-content/70">Validate and store files with progress state.</p>
         </a>
+        <a wire:navigate href="/kirewire/collection" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
+            <p class="font-semibold">Collections</p>
+            <p class="text-sm text-base-content/70">Patch list state directly for append/prepend/upsert flows.</p>
+        </a>
         <a wire:navigate href="/kirewire/stream" class="rounded-xl border border-base-300/70 bg-base-100/70 p-4 transition hover:border-primary/40 hover:bg-base-100">
             <p class="font-semibold">Streaming</p>
             <p class="text-sm text-base-content/70">Send partial HTML fragments without full rerender.</p>

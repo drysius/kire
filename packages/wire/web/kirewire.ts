@@ -54,6 +54,70 @@ function resolveDefaultUploadUrl(url: string): string {
     return `${trimTrailingSlash(url)}/upload`;
 }
 
+function pathParts(path: string): string[] {
+    return String(path || "")
+        .split(".")
+        .map((part) => part.trim())
+        .filter(Boolean);
+}
+
+function readPathValue(source: any, path: string): any {
+    if (!source) return undefined;
+    const parts = pathParts(path);
+    if (parts.length === 0) return source;
+
+    let current = source;
+    for (let i = 0; i < parts.length; i++) {
+        if (current == null || typeof current !== "object") return undefined;
+        current = current[parts[i]!];
+    }
+    return current;
+}
+
+function setPathValue(target: Record<string, any>, path: string, value: any) {
+    const parts = pathParts(path);
+    if (parts.length === 0) return;
+
+    let current: Record<string, any> = target;
+    for (let i = 0; i < parts.length - 1; i++) {
+        const part = parts[i]!;
+        const next = current[part];
+        if (!next || typeof next !== "object") {
+            current[part] = {};
+        }
+        current = current[part];
+    }
+
+    current[parts[parts.length - 1]!] = value;
+}
+
+function cloneWireValue<T>(value: T): T {
+    if (value === null || value === undefined) return value;
+
+    try {
+        if (typeof structuredClone === "function") {
+            return structuredClone(value);
+        }
+    } catch {}
+
+    try {
+        return JSON.parse(JSON.stringify(value));
+    } catch {
+        return value;
+    }
+}
+
+function collectionKeyOf(value: any, key: string): string | number | undefined {
+    if (value == null || typeof value !== "object") return undefined;
+    const resolved = value[key];
+    if (resolved === undefined || resolved === null) return undefined;
+    return resolved;
+}
+
+function collectionSelectorValue(value: string) {
+    return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
 export class KirewireClient extends EventController {
     private directives: Array<{ pattern: RegExp | string; handler: WireClientDirective }> = [];
     public components = new Map<string, any>();
@@ -164,12 +228,9 @@ export class KirewireClient extends EventController {
         }));
 
         this.on("component:update", (data) => {
-            const proxy = this.components.get(data?.id);
-            if (proxy && (proxy as any).__target) {
-                const target = (proxy as any).__target;
-                const keys = Object.keys(target);
-                for (let i = 0; i < keys.length; i++) delete target[keys[i]!];
-            }
+            const id = String(data?.id || "");
+            if (!id) return;
+            this.syncProxyState(id, data?.state || {}, true);
         });
 
         if (!Alpine.started) {
@@ -416,6 +477,256 @@ export class KirewireClient extends EventController {
         return token;
     }
 
+    private createReactiveTarget() {
+        const Alpine = (window as any).Alpine;
+        if (Alpine && typeof Alpine.reactive === "function") {
+            return Alpine.reactive({});
+        }
+        return {};
+    }
+
+    private getProxyTarget(componentId: string) {
+        const proxy = this.components.get(componentId) as any;
+        if (!proxy || !proxy.__target) return null;
+        return proxy.__target as Record<string, any>;
+    }
+
+    private syncProxyState(componentId: string, nextState: any, replaceAll = true) {
+        const target = this.getProxyTarget(componentId);
+        if (!target || !nextState || typeof nextState !== "object") return;
+
+        if (replaceAll) {
+            const existingKeys = Object.keys(target);
+            for (let i = 0; i < existingKeys.length; i++) {
+                const key = existingKeys[i]!;
+                if (!Object.prototype.hasOwnProperty.call(nextState, key)) {
+                    delete target[key];
+                }
+            }
+        }
+
+        const keys = Object.keys(nextState);
+        for (let i = 0; i < keys.length; i++) {
+            const key = keys[i]!;
+            target[key] = cloneWireValue(nextState[key]);
+        }
+    }
+
+    private getComponentRoot(componentId: string) {
+        const selectorValue = collectionSelectorValue(componentId);
+        const selector = `[wire\\:id="${selectorValue}"], [wire-id="${selectorValue}"]`;
+        const direct = document.querySelector(selector) as HTMLElement | null;
+        if (direct) return direct;
+
+        const candidates = document.querySelectorAll("[wire\\:id], [wire-id], *");
+        for (let i = 0; i < candidates.length; i++) {
+            const element = candidates[i] as HTMLElement;
+            if (!element || typeof element.getAttribute !== "function") continue;
+            const wireId = element.getAttribute("wire:id") || element.getAttribute("wire-id");
+            if (wireId === componentId) return element;
+        }
+        return null;
+    }
+
+    private findCollectionTarget(scope: ParentNode, name: string): HTMLElement | null {
+        const selector = `[wire\\:collection="${collectionSelectorValue(name)}"]`;
+
+        if (scope instanceof HTMLElement && scope.matches(selector)) {
+            return scope;
+        }
+
+        const direct = scope.querySelector(selector) as HTMLElement | null;
+        if (direct) return direct;
+
+        const nodes = scope instanceof HTMLElement ? scope.querySelectorAll("*") : document.querySelectorAll("*");
+        for (let i = 0; i < nodes.length; i++) {
+            const element = nodes[i] as HTMLElement;
+            if (!element || typeof element.getAttribute !== "function") continue;
+            if (element.getAttribute("wire:collection") === name) return element;
+        }
+        return null;
+    }
+
+    private emitCollectionEffect(detail: Record<string, any>) {
+        this.emitSync("collection:update", detail);
+        if (typeof window === "undefined") return;
+
+        window.dispatchEvent(new CustomEvent("wire:collection", { detail }));
+        if (detail?.name) {
+            window.dispatchEvent(new CustomEvent(`wire:collection:${String(detail.name)}`, { detail }));
+        }
+    }
+
+    private applyStateCollection(componentId: string, payload: any) {
+        const path = String(payload?.path || payload?.name || "").trim();
+        if (!path) return;
+
+        const root = this.getComponentRoot(componentId);
+        const currentState = root ? this.getComponentState(root) : {};
+        const target = this.getProxyTarget(componentId);
+        if (!target) return;
+
+        const action = String(payload?.action || "replace");
+        const key = String(payload?.key || "id");
+        const sourceList = readPathValue(target, path) ?? readPathValue(currentState, path);
+        const current = Array.isArray(sourceList) ? cloneWireValue(sourceList) : [];
+        const items = Array.isArray(payload?.items) ? cloneWireValue(payload.items) : [];
+        const keys = new Set(
+            (Array.isArray(payload?.keys) ? payload.keys : [])
+                .filter((entry: any) => entry !== undefined && entry !== null)
+                .map((entry: any) => String(entry)),
+        );
+        let next = Array.isArray(current) ? current : [];
+
+        const appendUnique = (list: any[], values: any[]) => {
+            const output = [...list];
+            for (let i = 0; i < values.length; i++) {
+                const item = values[i];
+                const itemKey = collectionKeyOf(item, key);
+                if (itemKey === undefined) {
+                    output.push(item);
+                    continue;
+                }
+                if (output.some((entry) => collectionKeyOf(entry, key) === itemKey)) continue;
+                output.push(item);
+            }
+            return output;
+        };
+
+        const prependUnique = (list: any[], values: any[]) => {
+            let output = [...list];
+            for (let i = values.length - 1; i >= 0; i--) {
+                const item = values[i];
+                const itemKey = collectionKeyOf(item, key);
+                if (itemKey === undefined) {
+                    output = [item, ...output];
+                    continue;
+                }
+                if (output.some((entry) => collectionKeyOf(entry, key) === itemKey)) continue;
+                output = [item, ...output];
+            }
+            return output;
+        };
+
+        const upsert = (list: any[], values: any[], position: "append" | "prepend") => {
+            let output = [...list];
+            for (let i = 0; i < values.length; i++) {
+                const item = values[i];
+                const itemKey = collectionKeyOf(item, key);
+                if (itemKey === undefined) {
+                    output = position === "prepend" ? [item, ...output] : [...output, item];
+                    continue;
+                }
+
+                output = output.filter((entry) => collectionKeyOf(entry, key) !== itemKey);
+                output = position === "prepend" ? [item, ...output] : [...output, item];
+            }
+            return output;
+        };
+
+        switch (action) {
+            case "append":
+                next = appendUnique(current, items);
+                break;
+            case "prepend":
+                next = prependUnique(current, items);
+                break;
+            case "upsert":
+                next = upsert(current, items, payload?.position === "prepend" ? "prepend" : "append");
+                break;
+            case "remove":
+                next = current.filter((entry: any) => {
+                    const itemKey = collectionKeyOf(entry, key);
+                    if (itemKey === undefined) return true;
+                    return !keys.has(String(itemKey));
+                });
+                break;
+            case "replace":
+            default:
+                next = items;
+                break;
+        }
+
+        const limit = Number(payload?.limit);
+        if (Number.isFinite(limit) && limit > 0 && next.length > limit) {
+            if (action === "prepend" || (action === "upsert" && payload?.position === "prepend")) {
+                next = next.slice(0, limit);
+            } else {
+                next = next.slice(Math.max(0, next.length - limit));
+            }
+        }
+
+        setPathValue(target, path, next);
+    }
+
+    private findCollectionItem(target: HTMLElement, key: string) {
+        return target.querySelector(`[data-wire-collection-key="${collectionSelectorValue(key)}"]`) as HTMLElement | null;
+    }
+
+    private applyDomCollection(scope: ParentNode, payload: any) {
+        const name = String(payload?.name || "").trim();
+        if (!name) return;
+
+        const target = this.findCollectionTarget(scope, name);
+        if (!target) return;
+        if (typeof HTMLTemplateElement !== "undefined" && target instanceof HTMLTemplateElement) return;
+
+        const action = String(payload?.action || "replace");
+        const content = String(payload?.content || "");
+        const itemKey = payload?.key === undefined || payload?.key === null ? "" : String(payload.key);
+        const keys = Array.isArray(payload?.keys) ? payload.keys.map((entry: any) => String(entry)) : [];
+
+        if (action === "replace") {
+            target.innerHTML = content;
+            return;
+        }
+
+        if (action === "remove") {
+            for (let i = 0; i < keys.length; i++) {
+                const match = this.findCollectionItem(target, keys[i]!);
+                if (match) match.remove();
+            }
+            return;
+        }
+
+        if (!content) return;
+
+        if (action === "append" || action === "prepend") {
+            if (itemKey && this.findCollectionItem(target, itemKey)) return;
+            target.insertAdjacentHTML(action === "prepend" ? "afterbegin" : "beforeend", content);
+            return;
+        }
+
+        if (action === "upsert") {
+            const existing = itemKey ? this.findCollectionItem(target, itemKey) : null;
+            if (existing) {
+                existing.outerHTML = content;
+                return;
+            }
+            target.insertAdjacentHTML(payload?.position === "prepend" ? "afterbegin" : "beforeend", content);
+        }
+    }
+
+    private applyCollectionEffect(payload: any, componentId?: string) {
+        const id = String(componentId || "").trim();
+        if (!id || !payload) return;
+
+        const scope = this.getComponentRoot(id);
+        if (!scope) return;
+
+        const mode = String(payload?.mode || (payload?.content ? "dom" : "state"));
+        if (mode === "dom") {
+            this.applyDomCollection(scope, payload);
+        } else {
+            this.applyStateCollection(id, payload);
+        }
+
+        this.emitCollectionEffect({
+            componentId: id,
+            ...payload,
+        });
+    }
+
     public processEffects(effects: any[], componentId?: string) {
         if (!Array.isArray(effects)) return;
 
@@ -460,6 +771,9 @@ export class KirewireClient extends EventController {
                     else el.innerHTML = content || "";
                     break;
                 }
+                case "collection":
+                    this.applyCollectionEffect(effect.payload || {}, componentId);
+                    break;
             }
         }
     }
@@ -507,7 +821,7 @@ export class KirewireClient extends EventController {
 
     private createProxy(id: string, el: HTMLElement) {
         const wire = this;
-        const internalTarget: any = {};
+        const internalTarget: any = this.createReactiveTarget();
 
         return new Proxy(internalTarget, {
             get(target: any, prop: string) {

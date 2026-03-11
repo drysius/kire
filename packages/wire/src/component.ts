@@ -14,6 +14,22 @@ export type WireEffect = {
     payload: any;
 };
 
+export type WireCollectionAction = "replace" | "append" | "prepend" | "upsert" | "remove";
+export type WireCollectionMode = "state" | "dom";
+
+export type WireCollectionPayload = {
+    name: string;
+    action: WireCollectionAction;
+    mode?: WireCollectionMode;
+    path?: string;
+    key?: string;
+    keys?: Array<string | number>;
+    items?: any[];
+    content?: string;
+    limit?: number;
+    position?: "append" | "prepend";
+};
+
 /**
  * Base Component class for Kirewire.
  */
@@ -135,6 +151,11 @@ export abstract class Component {
     public __effects: Array<WireEffect> = [];
 
     /**
+     * Allows one response cycle to skip HTML morphing and send only state/effects.
+     */
+    public __skipRender = false;
+
+    /**
      * Resets all pending effects.
      */
     public $clearEffects() {
@@ -146,6 +167,14 @@ export abstract class Component {
      */
     public $effect(type: string, payload: any) {
         this.__effects.push({ type, payload });
+    }
+
+    public skipRender(value = true) {
+        this.__skipRender = !!value;
+    }
+
+    public $skipRender(value = true) {
+        this.skipRender(value);
     }
 
     /**
@@ -183,6 +212,156 @@ export abstract class Component {
 
     public $stream(target: string, content: string, method: 'update' | 'append' | 'prepend' = 'update') {
         this.stream(target, content, method);
+    }
+
+    public collection(name: string, payload: Omit<WireCollectionPayload, "name">) {
+        const target = String(name || "").trim();
+        if (!target) return;
+        this.$effect("collection", {
+            name: target,
+            ...payload,
+        });
+    }
+
+    public replaceCollection<T = any>(
+        path: string,
+        items: T[] = [],
+        options: { key?: string; limit?: number } = {},
+    ) {
+        this.collection(path, {
+            mode: "state",
+            path,
+            action: "replace",
+            items: Array.isArray(items) ? items : [],
+            key: options.key || "id",
+            limit: options.limit,
+        });
+    }
+
+    public appendToCollection<T = any>(
+        path: string,
+        items: T | T[],
+        options: { key?: string; limit?: number } = {},
+    ) {
+        const list = Array.isArray(items) ? items : [items];
+        this.collection(path, {
+            mode: "state",
+            path,
+            action: "append",
+            items: list.filter((item) => item !== undefined && item !== null),
+            key: options.key || "id",
+            limit: options.limit,
+        });
+    }
+
+    public prependToCollection<T = any>(
+        path: string,
+        items: T | T[],
+        options: { key?: string; limit?: number } = {},
+    ) {
+        const list = Array.isArray(items) ? items : [items];
+        this.collection(path, {
+            mode: "state",
+            path,
+            action: "prepend",
+            items: list.filter((item) => item !== undefined && item !== null),
+            key: options.key || "id",
+            limit: options.limit,
+        });
+    }
+
+    public upsertCollection<T = any>(
+        path: string,
+        items: T | T[],
+        options: { key?: string; limit?: number; position?: "append" | "prepend" } = {},
+    ) {
+        const list = Array.isArray(items) ? items : [items];
+        this.collection(path, {
+            mode: "state",
+            path,
+            action: "upsert",
+            items: list.filter((item) => item !== undefined && item !== null),
+            key: options.key || "id",
+            limit: options.limit,
+            position: options.position || "append",
+        });
+    }
+
+    public removeFromCollection(
+        path: string,
+        keys: Array<string | number> | string | number,
+        options: { key?: string } = {},
+    ) {
+        const list = Array.isArray(keys) ? keys : [keys];
+        this.collection(path, {
+            mode: "state",
+            path,
+            action: "remove",
+            keys: list.filter((item) => item !== undefined && item !== null),
+            key: options.key || "id",
+        });
+    }
+
+    public replaceCollectionHtml(name: string, content: string) {
+        this.collection(name, {
+            mode: "dom",
+            action: "replace",
+            content: String(content || ""),
+        });
+    }
+
+    public appendCollectionHtml(
+        name: string,
+        content: string,
+        options: { key?: string | number } = {},
+    ) {
+        this.collection(name, {
+            mode: "dom",
+            action: "append",
+            content: String(content || ""),
+            key: options.key === undefined || options.key === null ? undefined : String(options.key),
+        });
+    }
+
+    public prependCollectionHtml(
+        name: string,
+        content: string,
+        options: { key?: string | number } = {},
+    ) {
+        this.collection(name, {
+            mode: "dom",
+            action: "prepend",
+            content: String(content || ""),
+            key: options.key === undefined || options.key === null ? undefined : String(options.key),
+        });
+    }
+
+    public upsertCollectionHtml(
+        name: string,
+        content: string,
+        options: { key: string | number; position?: "append" | "prepend" } ,
+    ) {
+        this.collection(name, {
+            mode: "dom",
+            action: "upsert",
+            content: String(content || ""),
+            key: String(options.key),
+            position: options.position || "append",
+        });
+    }
+
+    public removeCollectionHtml(
+        name: string,
+        keys: Array<string | number> | string | number,
+    ) {
+        const list = Array.isArray(keys) ? keys : [keys];
+        this.collection(name, {
+            mode: "dom",
+            action: "remove",
+            keys: list
+                .filter((item) => item !== undefined && item !== null)
+                .map((item) => String(item)),
+        });
     }
 
     public addError(field: string, message: string) {
@@ -244,6 +423,59 @@ export abstract class Component {
             return current;
         }
         return value;
+    }
+
+    protected unpackEvent<T = any>(event?: unknown): T | null {
+        const payload = (event as any)?.params?.[0]
+            ?? (event as any)?.detail?.params?.[0]
+            ?? (event as any)?.detail
+            ?? event;
+
+        if (payload === undefined || payload === null) return null;
+        return payload as T;
+    }
+
+    protected appendUniqueBy<T extends Record<string, any>>(
+        list: T[],
+        item: T | null | undefined,
+        key: keyof T | string = "id",
+    ): T[] {
+        if (!item) return Array.isArray(list) ? list : [];
+        const normalized = Array.isArray(list) ? list : [];
+        const needle = (item as any)[key as string];
+        if (needle === undefined || needle === null) return [...normalized, item];
+        if (normalized.some((entry) => (entry as any)?.[key as string] === needle)) return normalized;
+        return [...normalized, item];
+    }
+
+    protected prependUniqueBy<T extends Record<string, any>>(
+        list: T[],
+        item: T | null | undefined,
+        key: keyof T | string = "id",
+    ): T[] {
+        if (!item) return Array.isArray(list) ? list : [];
+        const normalized = Array.isArray(list) ? list : [];
+        const needle = (item as any)[key as string];
+        if (needle === undefined || needle === null) return [item, ...normalized];
+        if (normalized.some((entry) => (entry as any)?.[key as string] === needle)) return normalized;
+        return [item, ...normalized];
+    }
+
+    protected upsertBy<T extends Record<string, any>>(
+        list: T[],
+        item: T | null | undefined,
+        key: keyof T | string = "id",
+        mode: "append" | "prepend" = "append",
+    ): T[] {
+        if (!item) return Array.isArray(list) ? list : [];
+        const normalized = Array.isArray(list) ? list : [];
+        const needle = (item as any)[key as string];
+        if (needle === undefined || needle === null) {
+            return mode === "prepend" ? [item, ...normalized] : [...normalized, item];
+        }
+
+        const next = normalized.filter((entry) => (entry as any)?.[key as string] !== needle);
+        return mode === "prepend" ? [item, ...next] : [...next, item];
     }
 
     private runValidator(

@@ -421,9 +421,16 @@ export class HttpAdapter extends Adapter {
         (instance as any).__wireRevision = nextRevision;
 
         const state = instance.getPublicState();
-        const rendered = await instance.render();
         const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-        const html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
+        const skipRender = Boolean(instance.__skipRender);
+        instance.__skipRender = false;
+        let html = "";
+
+        if (!skipRender) {
+            const rendered = await instance.render();
+            html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
+        }
+
         return { html, state, effects: instance.__effects, revision: nextRevision };
     }
 

@@ -1,0 +1,13 @@
+@include('layouts.app', it)
+
+@define('content')
+    <div class="mb-8 text-center">
+        <h1 class="mb-2 text-3xl font-bold">Collection Patches</h1>
+        <p class="text-base-content/70">
+            Demonstrates <code class="badge badge-ghost">wire:collection</code> driving an Alpine <code class="badge badge-ghost">x-for</code>
+            without rerendering the full component shell.
+        </p>
+    </div>
+
+    @wire('collection')
+@end

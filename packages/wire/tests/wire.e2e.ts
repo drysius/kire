@@ -174,6 +174,7 @@ test.describe("Wire E2E (Playwright)", () => {
 
         await searchInput.fill("user37@example.com");
         await expect(page.getByRole("cell", { name: "User 37" })).toBeVisible();
+        await expect(page.getByRole("cell", { name: "User 38" })).toHaveCount(0);
 
         await roleSelect.selectOption("User");
         await expect(page.getByText('No users found matching "user37@example.com"')).toBeVisible();
@@ -279,6 +280,51 @@ test.describe("Wire E2E (Playwright)", () => {
         await expect(page.getByText("Operation successful!").first()).toBeVisible();
 
         expect(pageErrors).toEqual([]);
+    });
+
+    test("wire:collection atualiza listas x-for sem html do componente", async ({ page }) => {
+        const observedResponses: any[] = [];
+        page.on("response", async (response) => {
+            if (!response.url().includes("/_wire") || response.request().method() !== "POST") return;
+            try {
+                observedResponses.push(await response.json());
+            } catch {}
+        });
+
+        await page.goto(`${baseUrl}/kirewire/collection`);
+
+        const input = page.getByPlaceholder("Add an entry and keep the DOM stable");
+        const addButton = page.getByRole("button", { name: "Add Entry" });
+        const entryText = "collection-e2e-entry";
+
+        await input.fill(entryText);
+        await addButton.click();
+
+        await expect(page.getByText(entryText)).toBeVisible();
+        await expect(input).toHaveValue("");
+
+        let matchedResult: any = null;
+        await expect.poll(() => {
+            for (let i = 0; i < observedResponses.length; i++) {
+                const list = Array.isArray(observedResponses[i]) ? observedResponses[i] : [observedResponses[i]];
+                const match = list.find((item: any) =>
+                    Array.isArray(item?.effects) &&
+                    item.effects.some((effect: any) => effect?.type === "collection"),
+                );
+                if (match) {
+                    matchedResult = match;
+                    return 1;
+                }
+            }
+            return 0;
+        }).toBe(1);
+
+        expect(matchedResult?.html).toBe("");
+        expect(matchedResult?.effects?.some((effect: any) =>
+            effect?.type === "collection" &&
+            effect?.payload?.name === "entries" &&
+            effect?.payload?.action === "prepend",
+        )).toBe(true);
     });
 });
 }

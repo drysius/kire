@@ -1,6 +1,11 @@
 import type { Kire } from "kire";
 import { Kirewire, type KirewireOptions } from "./kirewire";
-import { Component } from "./component";
+import {
+    Component,
+    type WireCollectionAction,
+    type WireCollectionMode,
+    type WireCollectionPayload,
+} from "./component";
 import { HttpAdapter } from "./adapters/http";
 import { SocketAdapter } from "./adapters/socket";
 import { FileStore } from "./features/file-store";
@@ -168,5 +173,20 @@ export class PageComponent extends Component {
 }
 
 export const wirePlugin = KirewirePlugin;
-export { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule, type ValidationResult, type WireBroadcastOptions };
+export {
+    Kirewire,
+    Component,
+    HttpAdapter,
+    SocketAdapter,
+    FileStore,
+    WireFile,
+    Rule,
+    WireBroadcast,
+    validateRule,
+    type ValidationResult,
+    type WireBroadcastOptions,
+    type WireCollectionAction,
+    type WireCollectionMode,
+    type WireCollectionPayload,
+};
 export default { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule }

@@ -1,0 +1,61 @@
+<div x-data="{}" class="card border border-base-300/70 bg-base-100/90 shadow-sm">
+    <div class="card-body gap-5">
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h2 class="card-title">Collection Feed</h2>
+                <p class="text-sm text-base-content/70">
+                    Uses <code class="badge badge-ghost">wire:collection</code> with <code class="badge badge-ghost">x-for</code>
+                    so the list updates without remorphing the whole component.
+                </p>
+            </div>
+            <div class="rounded-xl border border-base-300/80 bg-base-200/40 px-3 py-2 text-sm">
+                Active entries:
+                <span class="font-semibold" x-text="$wire.entries.length"></span>
+            </div>
+        </div>
+
+        <div class="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
+            <input
+                wire:model.defer="draft"
+                type="text"
+                placeholder="Add an entry and keep the DOM stable"
+                class="input input-bordered w-full" />
+            <button class="btn btn-primary" wire:click="addEntry">Add Entry</button>
+            <button class="btn btn-ghost" wire:click="seedBatch">Seed Batch</button>
+        </div>
+
+        <div class="rounded-2xl border border-base-300/70 bg-base-200/30 p-4">
+            <div class="mb-3 flex items-center justify-between">
+                <p class="text-sm font-semibold">Reactive Collection</p>
+                <button class="btn btn-xs btn-ghost" wire:click="removeLast">Remove Oldest</button>
+            </div>
+
+            <div class="space-y-3">
+                <template wire:collection="entries" x-for="entry in $wire.entries" :key="entry.id">
+                    <article class="rounded-xl border border-base-300/70 bg-base-100/90 p-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="badge badge-outline badge-sm" :class="{
+                                        'badge-info': entry.tone === 'info',
+                                        'badge-success': entry.tone === 'success',
+                                        'badge-warning': entry.tone === 'warning',
+                                    }" x-text="entry.tone"></span>
+                                    <span class="font-medium" x-text="entry.text"></span>
+                                </div>
+                                <p class="text-xs text-base-content/55">
+                                    Updated through a collection patch on <code>$wire.entries</code>.
+                                </p>
+                            </div>
+                            <time class="text-xs text-base-content/50" x-text="new Date(entry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })"></time>
+                        </div>
+                    </article>
+                </template>
+
+                <div x-show="$wire.entries.length === 0" class="rounded-xl border border-dashed border-base-300/70 bg-base-100/70 px-4 py-10 text-center text-sm text-base-content/50">
+                    No collection items yet.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

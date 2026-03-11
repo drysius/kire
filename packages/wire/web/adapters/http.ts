@@ -298,27 +298,31 @@ export class HttpClientAdapter implements WireAdapter {
             `[wire\\:id="${id}"], [wire-id="${id}"]`,
         ) as HTMLElement | null;
 
-        if (root && typeof payload?.html === "string" && payload.html.length > 0) {
-            const snapshots = snapshotStreams(root, payload.effects);
-
+        if (root) {
             if (payload.state !== undefined) {
                 root.setAttribute("wire:state", JSON.stringify(payload.state));
             } else {
                 root.removeAttribute("wire:state");
             }
             root.removeAttribute("wire:checksum");
+        }
+
+        let nextRoot = root;
+        if (root && typeof payload?.html === "string" && payload.html.length > 0) {
+            const snapshots = snapshotStreams(root, payload.effects);
 
             Kirewire.patch(root, payload.html);
 
-            const nextRoot = document.querySelector(
+            nextRoot = document.querySelector(
                 `[wire\\:id="${id}"], [wire-id="${id}"]`,
             ) as HTMLElement | null;
             if (nextRoot) {
                 restoreStreams(nextRoot, snapshots);
-                if (payload.state && typeof payload.state === "object") {
-                    syncModelElements(nextRoot, payload.state);
-                }
             }
+        }
+
+        if (nextRoot && payload.state && typeof payload.state === "object") {
+            syncModelElements(nextRoot, payload.state);
         }
 
         if (Array.isArray(payload?.effects)) {

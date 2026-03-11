@@ -102,17 +102,23 @@ export class Kirewire extends EventController {
                 const state = typeof instance.getPublicState === "function"
                     ? instance.getPublicState()
                     : {};
-                const rendered = typeof instance.render === "function"
-                    ? await instance.render()
-                    : "";
-                const html = rendered?.toString ? rendered.toString() : String(rendered ?? "");
                 const stateStr = this.serializeStateAttr(state);
+                const skipRender = Boolean(instance.__skipRender);
+                instance.__skipRender = false;
+                let html = "";
+
+                if (!skipRender) {
+                    const rendered = typeof instance.render === "function"
+                        ? await instance.render()
+                        : "";
+                    html = rendered?.toString ? rendered.toString() : String(rendered ?? "");
+                }
 
                 await this.emit("component:update", {
                     userId: context.userId,
                     pageId: context.pageId,
                     id: context.id,
-                    html: `<div wire:id="${context.id}" wire:state='${stateStr}'>${html}</div>`,
+                    html: skipRender ? "" : `<div wire:id="${context.id}" wire:state='${stateStr}'>${html}</div>`,
                     state,
                     effects: Array.isArray(instance.__effects) ? instance.__effects : [],
                 });
