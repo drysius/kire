@@ -75,8 +75,8 @@ export class KirewirePlugin {
                         <meta name="kirewire:upload-url" content="\${$uploadUrlAttr}">
                         <meta name="kirewire:transport" content="\${$transportAttr}">
                         <meta name="kirewire:bus-delay" content="\${Number($busDelay) || 0}">
-                        <script type="module" src="\${$wireUrl}/kirewire.js"></script>
-                        <script type="module">
+                        <script type="module" src="\${$wireUrl}/kirewire.js" data-kirewire-skip></script>
+                        <script type="module" data-kirewire-skip>
                             window.__WIRE_INITIAL_CONFIG__ = Object.assign({}, window.__WIRE_INITIAL_CONFIG__ || {}, {
                                 pageId: \${JSON.stringify($pageId)},
                                 url: \${JSON.stringify($wireUrl)},

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 type FeedEntry = {
     id: number;
@@ -76,3 +76,4 @@ export default class CollectionDemo extends Component {
         return this.view("components.collection");
     }
 }
+

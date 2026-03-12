@@ -12,8 +12,8 @@
                 Use the sidebar or search to jump directly to features.
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
-                <a wire:navigate href="/docs/getting-started" class="btn btn-primary">Start with Kire</a>
-                <a wire:navigate href="/docs/directives-reference" class="btn btn-outline">Directives</a>
+                <a wire:navigate href="/docs/kire/getting-started" class="btn btn-primary">Start with Kire</a>
+                <a wire:navigate href="/docs/kire/directives-reference" class="btn btn-outline">Directives</a>
                 <a wire:navigate href="/kirewire" class="btn btn-ghost">Open KireWire Playground</a>
             </div>
         </article>
@@ -65,4 +65,3 @@
         </div>
     </section>
 @end
-

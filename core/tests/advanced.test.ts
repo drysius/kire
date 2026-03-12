@@ -1,6 +1,9 @@
 import { expect, test, describe } from "bun:test";
 import { Kire } from "../src/kire";
 import { KireError } from "../src/utils/error";
+import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 describe("Kire Advanced Features", () => {
     
@@ -24,6 +27,49 @@ describe("Kire Advanced Features", () => {
         const result = await k.render(template);
         expect(result).toContain("Theme Layout:");
         expect(result).toContain("<button>Click me</button>");
+    });
+
+    test("Path Security: should block traversal outside allowed roots", async () => {
+        const base = join(tmpdir(), `kire-boundary-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const root = join(base, "views");
+
+        try {
+            mkdirSync(root, { recursive: true });
+            writeFileSync(join(root, "page.kire"), "@include('../secret.kire')");
+            writeFileSync(join(base, "secret.kire"), "SECRET");
+
+            const k = new Kire({ root, silent: true, production: true });
+
+            try {
+                await k.view("page");
+                expect.unreachable("Should block traversal outside root");
+            } catch (e: any) {
+                expect(String(e.message)).toContain("outside allowed roots");
+            }
+        } finally {
+            rmSync(base, { recursive: true, force: true });
+        }
+    });
+
+    test("Path Security: should allow access inside namespace roots", async () => {
+        const base = join(tmpdir(), `kire-namespace-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+        const root = join(base, "views");
+        const shared = join(base, "shared");
+
+        try {
+            mkdirSync(root, { recursive: true });
+            mkdirSync(shared, { recursive: true });
+            writeFileSync(join(root, "page.kire"), "@include('shared.partial')");
+            writeFileSync(join(shared, "partial.kire"), "OK");
+
+            const k = new Kire({ root, silent: true, production: true });
+            k.namespace("shared", "../shared");
+
+            const result = await k.view("page");
+            expect(result).toBe("OK");
+        } finally {
+            rmSync(base, { recursive: true, force: true });
+        }
     });
 
     test("Forks: should inherit state but maintain isolation", async () => {
@@ -106,5 +152,26 @@ describe("Kire Advanced Features", () => {
         
         const result = await k.render("@include('partials.header')");
         expect(result).toBe("<h1>Header</h1>");
+    });
+
+    test("readFile: should use normalized path for platform access", () => {
+        const files = new Map<string, string>([["/views/page.kire", "OK"]]);
+        const platform = {
+            readFile: (filePath: string) => files.get(filePath) || "",
+            exists: (filePath: string) => files.has(filePath),
+            readDir: () => [] as string[],
+            stat: () => ({ mtimeMs: 1, isDirectory: () => false, isFile: () => true }),
+            writeFile: () => {},
+            resolve: (...parts: string[]) => parts.join("/").replace(/\/+/g, "/"),
+            join: (...parts: string[]) => parts.join("/").replace(/\/+/g, "/"),
+            isAbsolute: (filePath: string) => filePath.startsWith("/"),
+            relative: (from: string, to: string) => to.startsWith(from) ? to.slice(from.length + 1) : to,
+            cwd: () => "/views",
+            env: (_key: string) => undefined,
+            isProd: () => true,
+        };
+
+        const k = new Kire({ root: "/views", platform, production: true, silent: true });
+        expect(k.readFile("\\views\\page.kire")).toBe("OK");
     });
 });

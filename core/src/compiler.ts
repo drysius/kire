@@ -79,6 +79,7 @@ export class Compiler {
         this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
+        const localsAlias = this.kire.$var_locals || "it";
 
         // Deep identifier collection (including dependencies)
         const localDecls = new Set<string>();
@@ -88,17 +89,16 @@ export class Compiler {
         this.fullBody = this.buildFullBody(nodes);
 
         for (const id of this.identifiers) {
-            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === "it" || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
-            if (typeof (globalThis as any)[id] !== 'undefined') continue;
+            if (RESERVED_KEYWORDS_REGEX.test(id) || localDecls.has(id) || id === localsAlias || id === "$props" || id === "$globals" || id === "$kire" || id === "$kire_response" || id === "$escape" || id === "NullProtoObj") continue;
             
             // Skip variables that have existVar handlers (they will be injected by the loop below)
             if (this.kire.$kire["~handlers"].exists_vars.has(id)) continue;
 
-            this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'];`);
+            this.header.push(`let ${id} = $props['${id}'] ?? $globals['${id}'] ?? (typeof globalThis !== 'undefined' ? globalThis['${id}'] : undefined);`);
         }
         
-        if (this.identifiers.has('it')) {
-            this.header.push(`const it = $props;`);
+        if (this.identifiers.has(localsAlias)) {
+            this.header.push(`const ${localsAlias} = $props;`);
         }
 
         this.compileNodes(nodes);
@@ -370,6 +370,10 @@ export class Compiler {
         if (d) {
             d.onCall(this.createCompilerApi(n, d));
         } else {
+            if (this.kire.$strict_directives) {
+                const loc = n.loc ? `${this.filename}:${n.loc.line}:${n.loc.column}` : this.filename;
+                throw new Error(`Unknown directive "@${n.name}" at ${loc}.`);
+            }
             // Keep unknown directives as text (e.g. @tailwindcss)
             this.body.push(`$kire_response += "@${n.name}";`);
         }

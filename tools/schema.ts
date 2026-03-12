@@ -99,7 +99,7 @@ ${handle}
 
 export async function generate() {
 	console.log("Generating kire.schema.js files...");
-	const packages = await getPackages();
+	const packages = await getPackages({ publishableOnly: true });
 	let failures = 0;
 
 	for (const pkg of packages) {

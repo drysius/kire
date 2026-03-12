@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { WireFile } from "@kirejs/wire";
+import { WireFile } from "../lib/wire";
 
 import Chat from "../components/chat";
 import BattleTank from "../components/battle-tank";
@@ -344,3 +344,4 @@ describe("wire-example component behaviors", () => {
         expect(resetCalled).toBe(true);
     });
 });
+

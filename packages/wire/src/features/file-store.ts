@@ -5,13 +5,17 @@ import { randomUUID } from "node:crypto";
 export class FileStore {
     private tempDir: string;
     private fileMap = new Map<string, { path: string, expires: number }>();
+    private cleanupTimer: ReturnType<typeof setInterval>;
 
     constructor(tempDir: string, private ttl: number = 3600000) { // 1h default
         this.tempDir = tempDir;
         if (!existsSync(this.tempDir)) {
             mkdirSync(this.tempDir, { recursive: true });
         }
-        setInterval(() => this.cleanup(), 60000);
+        this.cleanupTimer = setInterval(() => this.cleanup(), 60000);
+        if (typeof (this.cleanupTimer as any)?.unref === "function") {
+            (this.cleanupTimer as any).unref();
+        }
     }
 
     public store(filename: string, buffer: Buffer): string {
@@ -45,6 +49,14 @@ export class FileStore {
             if (now > entry.expires) {
                 this.delete(id);
             }
+        }
+    }
+
+    public destroy() {
+        clearInterval(this.cleanupTimer);
+        const ids = Array.from(this.fileMap.keys());
+        for (let i = 0; i < ids.length; i++) {
+            this.delete(ids[i]!);
         }
     }
 }

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Counter extends Component {
 	public count = 0;
@@ -19,3 +19,4 @@ export default class Counter extends Component {
 		return this.view("components.counter");
 	}
 }
+

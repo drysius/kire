@@ -91,7 +91,7 @@ export class Lexer {
         const isRaw = this.template.startsWith("{{{", this.cursor);
         const open = isRaw ? "{{{" : "{{";
         const close = isRaw ? "}}}" : "}}";
-        const end = this.template.indexOf(close, this.cursor + open.length);
+        const end = this.findInterpolationEnd(this.cursor + open.length, close);
         if (end !== -1) {
             const content = this.template.slice(this.cursor + open.length, end).trim();
             this.addNode({ type: "interpolation", content, raw: isRaw, loc });
@@ -145,7 +145,18 @@ export class Lexer {
         let matchedName = "";
         const m = rawName.match(this.kire.$directivesPattern);
         if (m && m.index === 0) {
-            matchedName = m[0];
+            const candidate = m[0]!;
+            if (candidate === rawName) {
+                matchedName = candidate;
+            } else {
+                const def = registered[candidate];
+                const hasParams = !!def?.params?.length;
+                const nextAfterRaw = this.template[this.cursor + 1 + rawName.length];
+                const looksLikeAnotherDirectiveCall = hasParams && nextAfterRaw === "(";
+                if (!looksLikeAnotherDirectiveCall) {
+                    matchedName = candidate;
+                }
+            }
         }
 
         if (!matchedName) {
@@ -305,16 +316,46 @@ export class Lexer {
             } else if (this.template[this.cursor] === "=") {
                 this.advance(1); const first = this.template[this.cursor];
                 if (first === '"' || first === "'") {
-                    this.advance(1); value = "";
-                    while (this.cursor < this.template.length && this.template[this.cursor] !== first) {
-                        value += this.template[this.cursor]; this.advance(1);
-                    }
                     this.advance(1);
+                    value = this.captureQuotedValue(first);
+                    if (this.template[this.cursor] === first) this.advance(1);
                 } else { value = this.captureBalancedValue(); }
             }
             attrs[name] = value;
         }
         return attrs;
+    }
+
+    private captureQuotedValue(quote: '"' | "'"): string {
+        let value = "";
+        let escaped = false;
+
+        while (this.cursor < this.template.length) {
+            const char = this.template[this.cursor]!;
+            if (escaped) {
+                if (char === quote || char === "\\") {
+                    value += char;
+                } else {
+                    value += "\\" + char;
+                }
+                escaped = false;
+                this.advance(1);
+                continue;
+            }
+            if (char === "\\") {
+                escaped = true;
+                this.advance(1);
+                continue;
+            }
+            if (char === quote) {
+                break;
+            }
+            value += char;
+            this.advance(1);
+        }
+
+        if (escaped) value += "\\";
+        return value;
     }
 
     private captureBalancedValue(): string {
@@ -419,11 +460,80 @@ export class Lexer {
         return -1;
     }
 
+    private findInterpolationEnd(from: number, close: string): number {
+        let inQuote: string | null = null;
+        let escaped = false;
+        let depthParen = 0;
+        let depthBracket = 0;
+        let depthBrace = 0;
+
+        for (let i = from; i < this.template.length; i++) {
+            const char = this.template[i]!;
+
+            if (
+                !inQuote &&
+                depthParen === 0 &&
+                depthBracket === 0 &&
+                depthBrace === 0 &&
+                this.template.startsWith(close, i)
+            ) {
+                return i;
+            }
+
+            if (inQuote) {
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (char === "\\") {
+                    escaped = true;
+                    continue;
+                }
+                if (char === inQuote) {
+                    inQuote = null;
+                }
+                continue;
+            }
+
+            if (char === '"' || char === "'" || char === "`") {
+                inQuote = char;
+                continue;
+            }
+
+            if (char === "(") depthParen++;
+            else if (char === ")" && depthParen > 0) depthParen--;
+            else if (char === "[") depthBracket++;
+            else if (char === "]" && depthBracket > 0) depthBracket--;
+            else if (char === "{") depthBrace++;
+            else if (char === "}" && depthBrace > 0) depthBrace--;
+        }
+
+        return -1;
+    }
+
     private extractBracketedContent(open: string, close: string) {
         let depth = 0; let content = "";
+        let inQuote: string | null = null;
+        let escaped = false;
         for (let i = 0; i < this.template.length - this.cursor; i++) {
             const char = this.template[this.cursor + i];
-            if (char === open) depth++; else if (char === close) depth--;
+            if (inQuote) {
+                if (escaped) {
+                    escaped = false;
+                } else if (char === "\\") {
+                    escaped = true;
+                } else if (char === inQuote) {
+                    inQuote = null;
+                }
+            } else {
+                if (char === '"' || char === "'" || char === "`") {
+                    inQuote = char;
+                } else if (char === open) {
+                    depth++;
+                } else if (char === close) {
+                    depth--;
+                }
+            }
             content += char;
             if (depth === 0) return { content: content.slice(1, -1), fullLength: i + 1 };
         }

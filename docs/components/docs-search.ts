@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 import { searchDocs, type DocsPage } from "../lib/docs-index";
 
 type DocsResult = Pick<DocsPage, "id" | "href" | "title" | "section" | "summary">;
@@ -51,3 +51,4 @@ export default class DocsSearch extends Component {
         return this.view("components.docs-search");
     }
 }
+

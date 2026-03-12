@@ -220,7 +220,13 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
                 api.markAsync();
 				api.write(`await (async () => {
                     const $source = ${source};
-                    if (typeof $source === 'string' && $source.includes("*")) {
+                    const $isGlobPattern =
+                        typeof $source === 'string' &&
+                        $source.includes('*') &&
+                        !$source.includes('\\n') &&
+                        !$source.includes('\\r') &&
+                        ($source.includes('/') || $source.includes('\\\\') || $source.endsWith('.md') || $source.endsWith('.markdown'));
+                    if ($isGlobPattern) {
                         const $files = await $globals.$readdir($source);
                         for (const $file of $files) {
                             const $html = await $globals.$mdrender($file);

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Receiver extends Component {
 	public message = "Waiting...";

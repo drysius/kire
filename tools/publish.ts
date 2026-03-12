@@ -56,7 +56,7 @@ class Publisher {
 
 	public async publish(targetVersion?: string): Promise<void> {
 		try {
-			const packages = await getPackages();
+			const packages = await getPackages({ publishableOnly: true });
 			console.log(`${this.CLI} Found ${packages.length} packages`);
 
 			for (const pkg of packages) {

@@ -11,8 +11,40 @@ export interface PackageInfo {
 	json: any;
 }
 
-export async function getPackages(): Promise<PackageInfo[]> {
-	const packagePaths = await glob(["core", "packages/*", "vs-kire", "MultiChat"]);
+export interface GetPackagesOptions {
+	includeExtensions?: boolean;
+	includeApps?: boolean;
+	publishableOnly?: boolean;
+}
+
+const BASE_PACKAGE_PATTERNS = ["core", "packages/*"];
+const EXTENSION_PACKAGE_PATTERNS = ["vs-kire"];
+const APP_PACKAGE_PATTERNS = ["MultiChat"];
+
+function isVsCodeExtensionPackage(pkgJson: any): boolean {
+	return !!pkgJson?.engines?.vscode;
+}
+
+function isPublishablePackage(pkgJson: any): boolean {
+	if (pkgJson?.private === true) return false;
+	if (isVsCodeExtensionPackage(pkgJson)) return false;
+	return true;
+}
+
+export async function getPackages(
+	options: GetPackagesOptions = {},
+): Promise<PackageInfo[]> {
+	const {
+		includeExtensions = false,
+		includeApps = false,
+		publishableOnly = false,
+	} = options;
+
+	const patterns = [...BASE_PACKAGE_PATTERNS];
+	if (includeExtensions) patterns.push(...EXTENSION_PACKAGE_PATTERNS);
+	if (includeApps) patterns.push(...APP_PACKAGE_PATTERNS);
+
+	const packagePaths = await glob(patterns, { windowsPathsNoEscape: true });
 	const packages = new Map<string, PackageInfo>();
 
 	for (const packagePath of packagePaths) {
@@ -21,6 +53,7 @@ export async function getPackages(): Promise<PackageInfo[]> {
 		const pkgJsonPath = `${packagePath}/package.json`;
 		const content = await readFile(pkgJsonPath, "utf-8");
 		const pkg = JSON.parse(content);
+		if (publishableOnly && !isPublishablePackage(pkg)) continue;
 
 		// Normalize path for consistent handling
 		const normalizedPath = packagePath.replace(/\\/g, "/");
@@ -46,7 +79,7 @@ export async function getPackages(): Promise<PackageInfo[]> {
 	const sortedPackages = Array.from(packages.values()).sort((a, b) => {
 		if (a.name === "kire") return -1;
 		if (b.name === "kire") return 1;
-		return 0;
+		return a.name.localeCompare(b.name);
 	});
 
 	return sortedPackages;

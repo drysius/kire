@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 interface User {
 	id: number;
@@ -35,3 +35,4 @@ export default class Searchable extends Component {
 		return this.view("components.searchable");
 	}
 }
+

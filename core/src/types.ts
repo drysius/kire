@@ -14,6 +14,7 @@ export interface KireOptions<Asyncronos extends boolean = boolean> {
     root?: string;
     extension?: string;
     silent?: boolean;
+    strict_directives?: boolean;
     local_variable?: string;
     max_renders?: number;
     // Option to define the initial cache/bundle file
@@ -55,6 +56,7 @@ export interface KireConfig {
     root: string;
     extension: string;
     silent: boolean;
+    strict_directives: boolean;
     var_locals: string;
     namespaces: Record<string, string>;
     max_renders: number;

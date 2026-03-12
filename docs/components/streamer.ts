@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Streamer extends Component {
 	async addLog() {
@@ -14,3 +14,4 @@ export default class Streamer extends Component {
 		return this.view("components.streamer");
 	}
 }
+

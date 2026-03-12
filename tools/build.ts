@@ -20,7 +20,6 @@ class Builder {
 		const files = await glob([
 			"core/src/**/*.d.ts",
 			"packages/*/src/**/*.d.ts",
-			"vs-kire/src/**/*.d.ts",
 		]);
 		for (const file of files) {
 			await rm(file);
@@ -168,7 +167,7 @@ class Builder {
 		delete content.scripts;
 		delete content.devDependencies;
 
-		const packages = await getPackages();
+		const packages = await getPackages({ publishableOnly: true });
 		const packageMap = new Map(packages.map((p) => [p.name, p]));
 
 		if (content.dependencies) {
@@ -196,7 +195,7 @@ class Builder {
 		console.log("📜 Running schema generator...");
 		await $`bun run tools/schema.ts`;
 
-		const packages = await getPackages();
+		const packages = await getPackages({ publishableOnly: true });
 
 		for (const pkg of packages) {
 			console.log(`

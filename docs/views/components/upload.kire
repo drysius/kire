@@ -35,7 +35,7 @@
             @end
         </div>
 
-        <div x-show="$wire && $wire.file && $wire.file.uploading && ($wire.file.uploading.percent ?? 100) < 100" x-cloak
+        <div wire:show="file && file.uploading && (file.uploading.percent ?? 100) < 100"
             class="w-full mt-4">
             <progress class="progress progress-primary w-full"
                 :value="($wire && $wire.file && $wire.file.uploading && $wire.file.uploading.percent) ? $wire.file.uploading.percent : 0"
@@ -45,20 +45,14 @@
             </div>
         </div>
 
-        <template x-if='$wire && $wire.file && $wire.file.file'>
-            <div class="stats shadow mt-4 w-full">
-                <div class="stat">
-                    <div class="stat-title">Selected File</div>
-                    <div x-text="$wire.file.file.name" class="stat-value text-lg"></div>
-                    <div x-text="(($wire.file.file.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
-                    <template x-if="$wire.file.file.type && $wire.file.file.type.startsWith('image/')">
-                        <div class="mt-2">
-                            <img :src="$wire.file.file.content" class="max-h-32 rounded-lg border border-base-300" />
-                        </div>
-                    </template>
-                </div>
+        <div wire:show="file && (file.name || file.id)" class="stats shadow mt-4 w-full">
+            <div class="stat">
+                <div class="stat-title">Selected File</div>
+                <div x-text="$wire.file?.name || 'Unknown'" class="stat-value text-lg"></div>
+                <div x-text="(($wire.file?.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
+                <div wire:file.preview="file" class="mt-2"></div>
             </div>
-        </template>
+        </div>
 
         <div class="card-actions justify-end mt-4">
             <button wire:click="save" class="btn btn-primary" wire:loading.attr="disabled">

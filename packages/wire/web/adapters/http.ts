@@ -32,10 +32,19 @@ function toArray<T>(value: T | T[] | null | undefined): T[] {
 }
 
 function findStreamTarget(root: ParentNode, target: string): HTMLElement | null {
-    let element = root.querySelector(target) as HTMLElement | null;
+    let element: HTMLElement | null = null;
+    try {
+        element = root.querySelector(target) as HTMLElement | null;
+    } catch {
+        element = null;
+    }
     if (!element) {
         const value = target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-        element = root.querySelector(`[wire\\:stream="${value}"]`) as HTMLElement | null;
+        try {
+            element = root.querySelector(`[wire\\:stream="${value}"]`) as HTMLElement | null;
+        } catch {
+            element = null;
+        }
     }
     return element;
 }

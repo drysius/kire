@@ -1,4 +1,4 @@
-import { PageComponent } from "@kirejs/wire";
+import { PageComponent } from "../lib/wire";
 
 // Mock data
 let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
@@ -60,3 +60,4 @@ export default class Users extends PageComponent {
 		return this.view("components.users");
 	}
 }
+

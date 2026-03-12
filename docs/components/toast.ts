@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Toast extends Component {
 	// This component manages the global toast state on the server if needed,
@@ -21,3 +21,4 @@ export default class Toast extends Component {
 		return this.view("components.toast");
 	}
 }
+

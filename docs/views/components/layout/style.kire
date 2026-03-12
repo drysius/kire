@@ -172,6 +172,7 @@
     }
 
     .kire-doc pre {
+        position: relative;
         margin-top: 1rem;
         margin-bottom: 1rem;
         border-radius: 1rem;
@@ -180,6 +181,34 @@
         color: var(--color-neutral-content);
         overflow: auto;
         padding: 1rem;
+    }
+
+    .kire-doc pre[data-code-lang]::before {
+        content: attr(data-code-lang);
+        position: absolute;
+        right: 0.75rem;
+        top: 0.55rem;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.6;
+    }
+
+    .kire-doc pre[data-code-lang="kire"] {
+        border-color: color-mix(in oklab, var(--color-primary) 38%, var(--color-base-content) 12%);
+    }
+
+    .kire-doc pre[data-code-lang="html"],
+    .kire-doc pre[data-code-lang="xml"],
+    .kire-doc pre[data-code-lang="svg"] {
+        border-color: color-mix(in oklab, var(--color-accent) 34%, var(--color-base-content) 12%);
+    }
+
+    .kire-doc pre[data-code-lang="js"],
+    .kire-doc pre[data-code-lang="javascript"],
+    .kire-doc pre[data-code-lang="ts"],
+    .kire-doc pre[data-code-lang="typescript"] {
+        border-color: color-mix(in oklab, var(--color-secondary) 34%, var(--color-base-content) 12%);
     }
 
     .kire-doc code {
@@ -193,6 +222,16 @@
         background: transparent;
         padding: 0;
     }
+
+    .kire-doc .kire-tok-directive { color: oklch(78% 0.17 308); font-weight: 700; }
+    .kire-doc .kire-tok-interpolation { color: oklch(84% 0.17 109); font-weight: 600; }
+    .kire-doc .kire-tok-comment { color: oklch(70% 0 0 / 0.72); font-style: italic; }
+    .kire-doc .kire-tok-string { color: oklch(82% 0.16 146); }
+    .kire-doc .kire-tok-tag { color: oklch(80% 0.15 239); }
+    .kire-doc .kire-tok-attr { color: oklch(84% 0.12 77); }
+    .kire-doc .kire-tok-keyword { color: oklch(79% 0.16 291); font-weight: 600; }
+    .kire-doc .kire-tok-constant { color: oklch(83% 0.14 112); font-weight: 600; }
+    .kire-doc .kire-tok-number { color: oklch(82% 0.16 47); }
 
     .kire-doc blockquote {
         border-left: 4px solid color-mix(in oklab, var(--color-primary) 70%, transparent);

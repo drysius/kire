@@ -102,7 +102,10 @@ class Builder {
 	public async build(): Promise<void> {
 		console.log("🚀 Starting llms-build process...\n");
 
-		const packages = await getPackages();
+		const packages = await getPackages({
+			includeExtensions: true,
+			includeApps: true,
+		});
 
 		if (packages.length === 0) {
 			console.error("❌ No packages found!");

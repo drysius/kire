@@ -1,4 +1,4 @@
-import { Component, WireFile, Rule } from "@kirejs/wire";
+import { Component, WireFile, Rule } from "../lib/wire";
 
 export default class Upload extends Component {
 	// Using WireFile for robust file handling
@@ -41,3 +41,4 @@ export default class Upload extends Component {
 		return this.view("components.upload");
 	}
 }
+

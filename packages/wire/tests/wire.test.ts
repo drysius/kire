@@ -147,6 +147,80 @@ describe("Kirewire Kernel", () => {
         (WireBroadcast as any).cleanupNow(Date.now());
         expect(room.connections.size).toBe(0);
     });
+
+    test("destroy should release session state and registries", async () => {
+        class DummyProperty extends WireProperty {
+            public readonly __wire_type = "dummy";
+            public hydrate(_value: any): void {}
+            public dehydrate(): any { return null; }
+        }
+
+        class DummyComponent extends Component {
+            render() { return ""; }
+        }
+
+        const wire = new Kirewire({ secret: "destroy-secret" });
+        wire.class("dummy", DummyProperty as any);
+        wire.components.set("dummy", DummyComponent as any);
+        wire.sessions.getPage("user-1", "page-1");
+
+        expect(wire.propertyClasses.size).toBe(1);
+        expect(wire.components.size).toBe(1);
+        expect(wire.sessions.getActivePages().length).toBeGreaterThan(0);
+
+        await wire.destroy();
+
+        expect(wire.propertyClasses.size).toBe(0);
+        expect(wire.components.size).toBe(0);
+        expect(wire.sessions.getActivePages()).toHaveLength(0);
+    });
+
+    test("should register and resolve wire references", () => {
+        const wire = new Kirewire({ secret: "ref-secret" });
+        wire.reference("socket:url", "/_wire/socket");
+        wire.reference("dynamic:upload", ({ adapter }) => `${String(adapter?.route || "/_wire").replace(/\/+$/, "")}/upload`);
+
+        expect(wire.getReference("socket:url")).toBe("/_wire/socket");
+        expect(wire.getReference("dynamic:upload", { adapter: { route: "/custom" } })).toBe("/custom/upload");
+    });
+
+    test("should register and match custom routes with params", async () => {
+        const wire = new Kirewire({ secret: "route-secret" });
+        wire.route("fivem.player.sync", {
+            method: "POST",
+            path: "/fivem/:serverId/player/:playerId",
+            handler: ({ params }) => ({
+                status: 202,
+                result: {
+                    ok: true,
+                    server: params.serverId,
+                    player: params.playerId,
+                },
+            }),
+        });
+
+        const match = wire.matchRoute("POST", "/fivem/alpha/player/42");
+        expect(match).not.toBeNull();
+        expect(match?.params.serverId).toBe("alpha");
+        expect(match?.params.playerId).toBe("42");
+
+        const payload = await match?.handler({
+            method: "POST",
+            path: "/fivem/alpha/player/42",
+            url: new URL("http://localhost/fivem/alpha/player/42"),
+            query: new URLSearchParams(),
+            params: match?.params || {},
+            userId: "u1",
+            sessionId: "s1",
+            wire,
+        });
+
+        expect(payload.status).toBe(202);
+        expect(payload.result.ok).toBe(true);
+        expect(payload.result.server).toBe("alpha");
+        expect(payload.result.player).toBe("42");
+        expect(wire.matchRoute("GET", "/fivem/alpha/player/42")).toBeNull();
+    });
 });
 
 describe("FileStore", () => {
@@ -165,5 +239,19 @@ describe("FileStore", () => {
         
         store.delete(id);
         expect(existsSync(path!)).toBe(false);
+    });
+
+    test("destroy should clear all tracked files and cleanup timer", () => {
+        const store = new FileStore(testDir);
+        const id = store.store("delete-me.txt", Buffer.from("bye"));
+        const path = store.get(id);
+        expect(path).not.toBeNull();
+
+        store.destroy();
+
+        expect(store.get(id)).toBeNull();
+        if (path) {
+            expect(existsSync(path)).toBe(false);
+        }
     });
 });

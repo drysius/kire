@@ -52,7 +52,7 @@
                     </article>
                 </template>
 
-                <div x-show="$wire.entries.length === 0" class="rounded-xl border border-dashed border-base-300/70 bg-base-100/70 px-4 py-10 text-center text-sm text-base-content/50">
+                <div wire:collection.empty="entries" class="rounded-xl border border-dashed border-base-300/70 bg-base-100/70 px-4 py-10 text-center text-sm text-base-content/50">
                     No collection items yet.
                 </div>
             </div>

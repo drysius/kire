@@ -1,5 +1,5 @@
 import { Kire } from "kire";
-import { wirePlugin, Component } from "@kirejs/wire";
+import { wirePlugin, Component } from "./lib/wire";
 
 const kire = new Kire({
     production: false,
@@ -72,3 +72,4 @@ Bun.serve({
         }
     }
 });
+

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Sender extends Component {
 	public text = "Hello World";
@@ -13,3 +13,4 @@ export default class Sender extends Component {
 		return this.view("components.sender");
 	}
 }
+

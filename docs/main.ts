@@ -1,12 +1,22 @@
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import { wirePlugin, HttpAdapter, SocketAdapter } from "@kirejs/wire";
+import fs from "node:fs";
+import { wirePlugin, HttpAdapter, SocketAdapter } from "./lib/wire";
 import { KireMarkdown } from "@kirejs/markdown";
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
 import { Kire } from "kire";
-import { docsPages, docsNav, packageNav, searchDocs, type NavItem } from "./lib/docs-index";
+import {
+    docsPages,
+    docsNav,
+    docsNavGroups,
+    getDocNeighbors,
+    packageNav,
+    packageNavGroups,
+    searchDocs,
+    type NavItem,
+} from "./lib/docs-index";
 
 type WireRoute = {
     path: string;
@@ -38,9 +48,44 @@ const wireRoutes: WireRoute[] = [
 ];
 
 const wireNav: NavItem[] = wireRoutes.map((route) => ({
+    id: route.path.replace(/\W+/g, "-"),
     title: route.title,
     href: route.path,
+    section: "KireWire Playground",
 }));
+
+const docsMarkdownCache = new Map<string, string>();
+
+function stripFrontmatter(source: string): string {
+    const normalized = String(source || "").replace(/^\uFEFF/, "");
+    const match = normalized.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
+    if (!match) return normalized;
+    return normalized.slice(match[0].length);
+}
+
+function resolveDocsMarkdownPath(relativeFile: string): string {
+    return path.resolve(path.join(appRoot, "views"), relativeFile);
+}
+
+function readDocsMarkdown(relativeFile: string): string {
+    const key = String(relativeFile || "").trim();
+    if (!key) return "";
+
+    const isProduction = process.env.NODE_ENV === "production";
+    if (isProduction && docsMarkdownCache.has(key)) {
+        return docsMarkdownCache.get(key) || "";
+    }
+
+    try {
+        const absolutePath = resolveDocsMarkdownPath(key);
+        const source = fs.readFileSync(absolutePath, "utf8");
+        const stripped = stripFrontmatter(source);
+        if (isProduction) docsMarkdownCache.set(key, stripped);
+        return stripped;
+    } catch {
+        return "";
+    }
+}
 
 const legacyWireRouteMap: Record<string, string> = {
     "/features": "/kirewire/features",
@@ -64,6 +109,27 @@ const legacyWireRouteMap: Record<string, string> = {
 function redirect(context: any, to: string, status = 302) {
     context.set.status = status;
     context.set.headers["Location"] = to;
+    return "";
+}
+
+function parseCookieValue(cookieHeader: string, key: string): string {
+    const source = String(cookieHeader || "");
+    if (!source) return "";
+    const chunks = source.split(";");
+    for (let i = 0; i < chunks.length; i++) {
+        const part = chunks[i]!.trim();
+        if (!part) continue;
+        const eq = part.indexOf("=");
+        if (eq <= 0) continue;
+        const name = part.slice(0, eq).trim();
+        if (name !== key) continue;
+        const raw = part.slice(eq + 1);
+        try {
+            return decodeURIComponent(raw);
+        } catch {
+            return raw;
+        }
+    }
     return "";
 }
 
@@ -91,6 +157,22 @@ void (async () => {
         adapter: useSocket ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" }),
     });
 
+    const socketClientsByUser = new Map<string, Set<any>>();
+    const addSocketClient = (userId: string, ws: any) => {
+        let bucket = socketClientsByUser.get(userId);
+        if (!bucket) {
+            bucket = new Set<any>();
+            socketClientsByUser.set(userId, bucket);
+        }
+        bucket.add(ws);
+    };
+    const removeSocketClient = (userId: string, ws: any) => {
+        const bucket = socketClientsByUser.get(userId);
+        if (!bucket) return;
+        bucket.delete(ws);
+        if (bucket.size === 0) socketClientsByUser.delete(userId);
+    };
+
     kire.plugin(KireMarkdown);
     kire.plugin(wire);
 
@@ -100,6 +182,64 @@ void (async () => {
     kire.namespace("pages", path.join(appRoot, "views/pages"));
 
     await (kire as any).$wire.wireRegister("components/*.ts", appRoot);
+
+    if (useSocket) {
+        const wireEngine = (kire as any).$wire;
+        wireEngine.on("socket:push", (packet: any) => {
+            const userId = String(packet?.userId || "").trim();
+            if (!userId) return;
+            const clients = socketClientsByUser.get(userId);
+            if (!clients || clients.size === 0) return;
+
+            const raw = JSON.stringify({
+                event: String(packet?.event || ""),
+                payload: packet?.data,
+            });
+
+            for (const ws of clients) {
+                try {
+                    ws.send(raw);
+                } catch {}
+            }
+        });
+
+        app.ws("/_wire/socket", {
+            open(ws: any) {
+                const request = ws.data?.request as Request | undefined;
+                const url = request ? new URL(request.url) : new URL("http://localhost/_wire/socket");
+                const cookieHeader = request?.headers.get("cookie") || "";
+                const userId = parseCookieValue(cookieHeader, "session") || "guest";
+                const pageId = String(url.searchParams.get("pageId") || "default-page");
+
+                ws.data = ws.data || {};
+                ws.data.kirewire = { userId, pageId };
+                addSocketClient(userId, ws);
+            },
+            message(ws: any, message: any) {
+                const wireEngine = (kire as any).$wire;
+                const adapter = wireEngine?.options?.adapter;
+                if (!adapter || typeof adapter.onMessage !== "function") return;
+
+                let parsed: any;
+                try {
+                    parsed = typeof message === "string" ? JSON.parse(message) : message;
+                } catch {
+                    ws.send(JSON.stringify({
+                        event: "response",
+                        payload: { error: "Invalid JSON payload." },
+                    }));
+                    return;
+                }
+
+                const userId = String(ws.data?.kirewire?.userId || "guest");
+                void adapter.onMessage(String(ws.id || ""), userId, userId, parsed);
+            },
+            close(ws: any) {
+                const userId = String(ws.data?.kirewire?.userId || "");
+                if (userId) removeSocketClient(userId, ws);
+            },
+        });
+    }
 
     app.derive({ as: "global" }, async (context) => {
         const session = context.cookie.session;
@@ -133,10 +273,13 @@ void (async () => {
         context.kire.$global("user", user);
         context.kire.$global("sharedTransport", useSocket ? "socket" : "sse");
         context.kire.$global("docsNav", docsNav);
+        context.kire.$global("docsNavGroups", docsNavGroups);
         context.kire.$global("packageNav", packageNav);
+        context.kire.$global("packageNavGroups", packageNavGroups);
         context.kire.$global("wireNav", wireNav);
         context.kire.$global("docsQuery", docsQuery);
         context.kire.$global("currentPath", url.pathname);
+        context.kire.$global("$docsMarkdown", (relativeFile: string) => readDocsMarkdown(relativeFile));
 
         return {
             user,
@@ -186,10 +329,16 @@ void (async () => {
         });
     });
 
+    app.get("/llms.txt", async (context) => {
+        context.set.headers["Content-Type"] = "text/plain; charset=utf-8";
+        return Bun.file(path.join(appRoot, "llms.txt"));
+    });
+
     for (let i = 0; i < docsPages.length; i++) {
         const page = docsPages[i]!;
         app.get(page.href, async (context) => {
             context.set.headers["Content-Type"] = "text/html";
+            const neighbors = getDocNeighbors(page.href);
             const related = docsPages
                 .filter((item) => item.section === page.section && item.id !== page.id)
                 .slice(0, 4);
@@ -198,6 +347,8 @@ void (async () => {
                 title: `${page.title} - Kire Docs`,
                 article: page,
                 related,
+                previousDoc: neighbors.previous,
+                nextDoc: neighbors.next,
             });
         });
     }
@@ -257,3 +408,4 @@ void (async () => {
     console.log(`[docs] serving wire assets from ${wireDistDir}`);
     console.log(`Check it out at http://localhost:3000 (${useSocket ? "socket mode" : "http+sse mode"})`);
 })();
+

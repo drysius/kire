@@ -1,63 +1,105 @@
+﻿---
+route: "/docs/kire/how-kire-works"
+title: "How Kire Works"
+description: "Understand Kire parser/compiler/runtime internals, cache behavior, dependency resolution, and request isolation."
+tags: ["compiler", "cache", "runtime", "execution", "performance", "internals"]
+section: "Kire Internals"
+order: 1
+---
+
 # How Kire Works
 
-Kire has a simple but strict lifecycle:
+Kire compiles template syntax into JavaScript functions.
+That is the core reason repeated renders are fast.
 
-1. Resolve template source (file, virtual file, namespace, inline string).
-2. Compile source into a JavaScript function.
-3. Execute function with locals and globals.
-4. Return rendered HTML string.
+## End-to-End Pipeline
 
-## Compilation Model
+1. Path resolution (`view("pages.home")` -> file path via root/namespaces).
+2. Lexer parses template into AST nodes.
+3. Compiler generates JavaScript from AST.
+4. Runtime wraps generated code into callable template function.
+5. Function executes with locals, globals, and engine context.
+6. Output string is returned (sync or async).
 
-Templates are compiled to runtime JS. This keeps rendering fast and allows directives to output code directly.
+```text
+Template -> Lexer(AST) -> Compiler(JS) -> Function -> Rendered HTML
+```
 
-### Why it is fast
+## Lexer Stage
 
-- Parsed templates are cached.
-- Generated functions are reused.
-- `fork()` reuses compile cache between requests.
+The lexer recognizes:
 
-## Locals and Globals
+- text blocks
+- interpolation (`{{ }}` and `{{{ }}}`)
+- directives (`@if`, `@for`, ...)
+- elements (`<x-card>`, `<kire:if>`, etc)
+- inline JS blocks (`<?js ... ?>`)
 
-- Locals: data passed to `render()` / `view()`.
-- Globals: shared values injected with `$global()`.
+It also tracks line/column metadata to improve stack traces.
+
+## Compiler Stage
+
+The compiler:
+
+- transforms AST nodes into JavaScript statements
+- injects directive and element handlers
+- tracks dependencies from `@include`/`@component`
+- auto-maps identifiers from `$props` and `$globals`
+- marks templates as async when `await` is detected
+
+Unknown directives behavior:
+
+- default: kept as plain text
+- `strict_directives: true`: compilation fails fast
+
+## Runtime Stage
+
+Generated code runs as a template function with:
+
+- `$props`: local render data
+- `$globals`: shared/global values
+- `$kire`: template metadata/function context
+- `$kire_response`: output buffer
+
+Kire uses `new Function` and `AsyncFunction` intentionally for runtime performance.
+
+## Cache Behavior
+
+Kire has two relevant caches:
+
+- inline template cache for `render(templateString)`
+- file cache for `view(path)`
+
+Production mode favors cache reuse.
+Development mode checks file timestamps for refresh.
+
+## Dependency Resolution
+
+Directives/elements like `@include`, `@component`, and `x-*` can declare dependencies.
+Kire resolves and compiles those dependencies and detects circular references.
+
+## Request Isolation
+
+Use `fork()` per request in web servers.
 
 ```ts
-kire.$global("appName", "Kire Docs");
+const requestKire = kire.fork();
+requestKire.$global("requestId", req.id);
+requestKire.$global("user", req.user);
 
-await kire.render("<h1>{{ appName }}</h1>");
+const html = await requestKire.view("pages.dashboard", { stats });
 ```
+
+Forks inherit engine definitions but isolate per-request mutable state.
 
 ## Error Mapping
 
-When a runtime error happens, Kire maps it back to source template lines.
-This is useful when debugging nested includes and directives.
+Kire wraps failures as `KireError` and maps runtime errors back to template source lines.
+In non-production mode, source maps and line markers improve diagnostics.
 
-## Async Rendering
+## Performance Notes
 
-Kire supports async directives and expressions. If the compiled template needs `await`, runtime executes async.
-
-## fork() Behavior
-
-`fork()` isolates mutable runtime state:
-
-- globals map
-- request-scoped values
-
-while sharing:
-
-- template cache
-- plugin registrations
-- compiled functions
-
-This is the recommended mode for web frameworks.
-
-## Plugin Pipeline
-
-Most syntax features are provided by plugins:
-
-- directives (`@if`, `@for`, custom directives)
-- elements (`<x-*>`, `<kire:if>`, custom elements)
-- helpers / globals
-
-Kire core keeps the execution model stable while plugins extend syntax.
+- Keep templates focused on presentation.
+- Pass precomputed data from services/controllers.
+- Reuse namespaces and engine instance at startup.
+- Avoid expensive dynamic template generation at runtime.

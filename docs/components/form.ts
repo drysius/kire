@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class RegisterForm extends Component {
 	public name = "";
@@ -28,3 +28,4 @@ export default class RegisterForm extends Component {
 		return this.view("components.form");
 	}
 }
+

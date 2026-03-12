@@ -179,9 +179,13 @@ export class WireBroadcast extends WireProperty {
 
     private static ensureCleanupLoop() {
         if (WireBroadcast.cleanupTimer) return;
-        WireBroadcast.cleanupTimer = setInterval(() => {
+        const timer = setInterval(() => {
             WireBroadcast.cleanupNow(Date.now());
         }, WireBroadcast.CLEANUP_INTERVAL_MS);
+        if (typeof (timer as any)?.unref === "function") {
+            (timer as any).unref();
+        }
+        WireBroadcast.cleanupTimer = timer;
     }
 
     private touchConnection(room: WireBroadcastRoom, component: Record<string, any>) {

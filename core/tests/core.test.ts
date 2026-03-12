@@ -14,6 +14,19 @@ describe("Kire Core (Bun)", () => {
         expect(result).toBe("Hello Kire");
     });
 
+    test("should parse interpolation when close token appears inside quoted strings", async () => {
+        const k = new Kire({ production: true, silent: true });
+        const result = await k.render('{{ "a}}" }}|{{ ({ txt: "b}}" }).txt }}');
+        expect(result).toBe("a}}|b}}");
+    });
+
+    test("should parse escaped quotes in HTML attributes", async () => {
+        const k = new Kire({ production: true, silent: true });
+        const result = await k.render('<div title="a\\\"b" data=\'a\\\'b\'></div>');
+        expect(result).toContain('title="a&quot;b"');
+        expect(result).toContain('data="a&#039;b"');
+    });
+
     test("should handle @if directive", async () => {
         const template = `
             @if(show)
@@ -102,5 +115,25 @@ describe("Kire Core (Bun)", () => {
         // Shadowing in a fork or via locals
         const result2 = await k.render("Theme: {{ theme }}", { theme: "light" });
         expect(result2).toBe("Theme: light");
+    });
+
+    test("should support custom local variable alias", async () => {
+        const k = new Kire({ local_variable: "ctx" });
+        const result = await k.render("Hello {{ ctx.name }}", { name: "Kire" });
+        expect(result).toBe("Hello Kire");
+    });
+
+    test("should reject invalid local variable alias", () => {
+        expect(() => new Kire({ local_variable: "ctx.name" as any })).toThrow("Invalid local_variable");
+    });
+
+    test("should allow locals to shadow globalThis identifiers while preserving fallback", async () => {
+        const k = new Kire({ production: true, silent: true });
+
+        const shadowed = await k.render("{{ process ? 'YES' : 'NO' }}", { process: 0 } as any);
+        expect(shadowed).toBe("NO");
+
+        const fallback = await k.render("{{ typeof Math }}");
+        expect(fallback).toBe("object");
     });
 });

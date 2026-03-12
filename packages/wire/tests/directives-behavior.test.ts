@@ -192,4 +192,71 @@ describe("wire model/loading directives", () => {
 
         cleanupFns.forEach((fn) => fn());
     });
+
+    test("wire:loading ignores unrelated finish events when target is set", () => {
+        const indicator = document.createElement("span");
+        indicator.setAttribute("wire:loading", "");
+        indicator.setAttribute("wire:target", "send");
+        document.body.appendChild(indicator);
+
+        const directive = Kirewire.getDirective("loading")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire();
+
+        directive({
+            el: indicator,
+            value: "loading",
+            expression: "",
+            modifiers: [],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        (wire as any).emit("component:call", { id: "cmp-1", method: "send", params: [] });
+        expect(indicator.style.display).not.toBe("none");
+
+        (wire as any).emit("component:finished", { id: "cmp-1", method: "refresh", params: [] });
+        expect(indicator.style.display).not.toBe("none");
+
+        (wire as any).emit("component:finished", { id: "cmp-1", method: "send", params: [] });
+        expect(indicator.style.display).toBe("none");
+
+        cleanupFns.forEach((fn) => fn());
+    });
+
+    test("wire:loading keeps visible while multiple target calls are pending", () => {
+        const indicator = document.createElement("span");
+        indicator.setAttribute("wire:loading", "");
+        indicator.setAttribute("wire:target", "save");
+        document.body.appendChild(indicator);
+
+        const directive = Kirewire.getDirective("loading")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire();
+
+        directive({
+            el: indicator,
+            value: "loading",
+            expression: "",
+            modifiers: [],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        (wire as any).emit("component:call", { id: "cmp-1", method: "save", params: [] });
+        (wire as any).emit("component:call", { id: "cmp-1", method: "save", params: [] });
+        expect(indicator.style.display).not.toBe("none");
+
+        (wire as any).emit("component:finished", { id: "cmp-1", method: "save", params: [] });
+        expect(indicator.style.display).not.toBe("none");
+
+        (wire as any).emit("component:finished", { id: "cmp-1", method: "save", params: [] });
+        expect(indicator.style.display).toBe("none");
+
+        cleanupFns.forEach((fn) => fn());
+    });
 });

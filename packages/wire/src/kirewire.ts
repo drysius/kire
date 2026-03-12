@@ -11,6 +11,33 @@ export interface KirewireOptions {
     adapter?: any;
 }
 
+export type WireReferenceResolver =
+    | string
+    | ((ctx: { wire: Kirewire; adapter?: any }) => string);
+
+export type WireRouteHandler = (ctx: {
+    method: string;
+    path: string;
+    url: URL;
+    query: URLSearchParams;
+    params: Record<string, string>;
+    body?: any;
+    signal?: AbortSignal;
+    userId: string;
+    sessionId: string;
+    wire: Kirewire;
+    adapter?: any;
+}) => Promise<{ status?: number; headers?: Record<string, string>; result?: any } | any> | { status?: number; headers?: Record<string, string>; result?: any } | any;
+
+type RegisteredRoute = {
+    name: string;
+    method: string;
+    path: string;
+    paramNames: string[];
+    matcher: RegExp;
+    handler: WireRouteHandler;
+};
+
 type ComponentListenerContext = {
     userId: string;
     pageId: string;
@@ -22,11 +49,47 @@ type ComponentListenerPayload = {
     sourceId?: string;
 };
 
+function normalizeRoutePath(path: string): string {
+    const value = String(path || "").trim();
+    if (!value) return "/";
+    const withSlash = value.startsWith("/") ? value : `/${value}`;
+    return withSlash.replace(/\/+$/, "") || "/";
+}
+
+function escapeRegex(value: string) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function compileRoute(path: string): { matcher: RegExp; paramNames: string[] } {
+    const normalized = normalizeRoutePath(path);
+    const parts = normalized.split("/").filter(Boolean);
+    const paramNames: string[] = [];
+    const pattern = parts
+        .map((part) => {
+            if (part === "*") {
+                paramNames.push("wildcard");
+                return "(.*)";
+            }
+            if (part.startsWith(":")) {
+                const key = part.slice(1).trim();
+                paramNames.push(key || "param");
+                return "([^/]+)";
+            }
+            return escapeRegex(part);
+        })
+        .join("/");
+
+    const source = pattern ? `^/${pattern}/?$` : "^/?$";
+    return { matcher: new RegExp(source), paramNames };
+}
+
 export class Kirewire extends EventController {
     public components = new Map<string, typeof Component>();
     public propertyClasses = new Map<string, new (...args: any[]) => WireProperty>();
     public sessions: SessionManager;
     private middlewares: Array<(ctx: any) => void> = [];
+    private references = new Map<string, WireReferenceResolver>();
+    private routes = new Map<string, RegisteredRoute>();
     public secret: string;
 
     constructor(public options: KirewireOptions) {
@@ -44,6 +107,92 @@ export class Kirewire extends EventController {
      */
     public class(name: string, PropertyClass: new (...args: any[]) => WireProperty) {
         this.propertyClasses.set(name, PropertyClass);
+    }
+
+    public reference(name: string, value: WireReferenceResolver) {
+        const key = String(name || "").trim();
+        if (!key) throw new Error("Wire reference name is required.");
+        this.references.set(key, value);
+    }
+
+    public getReference(name: string, ctx: { adapter?: any } = {}): string | undefined {
+        const key = String(name || "").trim();
+        if (!key) return undefined;
+        const entry = this.references.get(key);
+        if (entry === undefined) return undefined;
+        if (typeof entry === "function") {
+            return String(entry({ wire: this, adapter: ctx.adapter }) || "");
+        }
+        return String(entry || "");
+    }
+
+    public getReferences(ctx: { adapter?: any } = {}): Record<string, string> {
+        const out: Record<string, string> = {};
+        for (const [name] of this.references.entries()) {
+            const value = this.getReference(name, ctx);
+            if (value === undefined) continue;
+            out[name] = value;
+        }
+        return out;
+    }
+
+    public route(name: string, config: { path: string; method?: string; handler: WireRouteHandler }) {
+        const key = String(name || "").trim();
+        if (!key) throw new Error("Wire route name is required.");
+        if (!config || typeof config.handler !== "function") {
+            throw new Error(`Wire route "${key}" requires a handler.`);
+        }
+
+        const method = String(config.method || "GET").trim().toUpperCase();
+        const path = normalizeRoutePath(config.path);
+        const { matcher, paramNames } = compileRoute(path);
+        this.routes.set(key, {
+            name: key,
+            method,
+            path,
+            paramNames,
+            matcher,
+            handler: config.handler,
+        });
+    }
+
+    public removeRoute(name: string): boolean {
+        const key = String(name || "").trim();
+        if (!key) return false;
+        return this.routes.delete(key);
+    }
+
+    public matchRoute(method: string, path: string): {
+        name: string;
+        method: string;
+        path: string;
+        params: Record<string, string>;
+        handler: WireRouteHandler;
+    } | null {
+        const targetMethod = String(method || "").trim().toUpperCase();
+        const targetPath = normalizeRoutePath(path);
+
+        for (const route of this.routes.values()) {
+            if (route.method !== targetMethod) continue;
+            const match = route.matcher.exec(targetPath);
+            if (!match) continue;
+
+            const params: Record<string, string> = {};
+            for (let i = 0; i < route.paramNames.length; i++) {
+                const key = route.paramNames[i]!;
+                params[key] = decodeURIComponent(match[i + 1] || "");
+            }
+
+            return {
+                name: route.name,
+                method: route.method,
+                path: route.path,
+                params,
+                handler: route.handler,
+            };
+        }
+
+        return null;
     }
 
     public createComponentId(): string {
@@ -271,6 +420,15 @@ export class Kirewire extends EventController {
             case 'h': return val * 3600000;
             default: return val;
         }
+    }
+
+    public async destroy() {
+        await this.sessions.destroy();
+        this.clear();
+        this.components.clear();
+        this.propertyClasses.clear();
+        this.references.clear();
+        this.routes.clear();
     }
 }
 

@@ -2,7 +2,7 @@ import { platform as browserPlatform } from "./utils/browser";
 import { createKireFunction } from "./runtime";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { escapeHtml } from "./utils/html";
-import { NullProtoObj, createFastMatcher } from "./utils/regex";
+import { JS_IDENTIFIER_REGEX, NullProtoObj, RESERVED_KEYWORDS_REGEX, createFastMatcher } from "./utils/regex";
 import { KireDirectives } from "./directives/index";
 import { Compiler } from "./compiler";
 import { Lexer } from "./lexer";
@@ -31,6 +31,15 @@ import type {
 export interface ElementMatcher {
     def: ElementDefinition;
 }
+
+const RESERVED_LOCAL_ALIASES = new Set([
+    "$props",
+    "$globals",
+    "$kire",
+    "$kire_response",
+    "$escape",
+    "NullProtoObj",
+]);
 
 function createNodePlatformFromRuntime(): KirePlatform | null {
     const runtimeRequire = typeof require === "function" ? require : undefined;
@@ -195,6 +204,7 @@ export class Kire<Asyncronos extends boolean = true> {
     public get $extension(): string { return this.$config.extension; }
     public get $async(): Asyncronos { return this.$config.async as Asyncronos; }
     public get $silent(): boolean { return this.$config.silent; }
+    public get $strict_directives(): boolean { return this.$config.strict_directives; }
     public get $var_locals(): string { return this.$config.var_locals; }
     public get $namespaces(): Record<string, string> { return this.$config.namespaces; }
     public get $max_renders(): number { return this.$config.max_renders; }
@@ -266,7 +276,14 @@ export class Kire<Asyncronos extends boolean = true> {
         conf.async = (options.async ?? true);
         conf.extension = options.extension ?? "kire";
         conf.silent = options.silent ?? false;
-        conf.var_locals = options.local_variable ?? "it";
+        conf.strict_directives = options.strict_directives ?? false;
+        const localVariable = options.local_variable ?? "it";
+        if (!JS_IDENTIFIER_REGEX.test(localVariable) || RESERVED_KEYWORDS_REGEX.test(localVariable) || RESERVED_LOCAL_ALIASES.has(localVariable)) {
+            throw new Error(
+                `Invalid local_variable "${localVariable}". Use a valid JavaScript identifier that is not reserved by Kire.`
+            );
+        }
+        conf.var_locals = localVariable;
         conf.max_renders = options.max_renders ?? 1000;
         conf.root = options.root ? plat.resolve(options.root) : plat.cwd();
         conf.namespaces = new NullProtoObj();
@@ -528,7 +545,7 @@ export class Kire<Asyncronos extends boolean = true> {
             }
             throw new Error(`Path ${path} points to a pre-compiled function without source text.`);
         }
-        if (this.$platform.exists(path)) return this.$platform.readFile(path);
+        if (this.$platform.exists(normalized)) return this.$platform.readFile(normalized);
         throw new Error(`Template file not found: ${path}`);
     }
 

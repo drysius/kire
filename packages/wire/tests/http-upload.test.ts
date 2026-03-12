@@ -2,6 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { HttpAdapter } from "../src/adapters/http";
+import { Kirewire } from "../src/kirewire";
+import { Kire } from "kire";
 
 const tempDirs: string[] = [];
 
@@ -49,5 +51,106 @@ describe("HttpAdapter upload parsing", () => {
         expect(typeof filePath).toBe("string");
         expect(existsSync(filePath)).toBe(true);
         expect(readFileSync(filePath, "utf8")).toBe("hello upload");
+    });
+
+    test("rejects files bigger than maxUploadBytes", async () => {
+        const adapter = new HttpAdapter({ route: "/_wire", maxUploadBytes: 4 });
+        const fakePart = {
+            filename: "big.txt",
+            mimetype: "text/plain",
+            toBuffer: async () => Buffer.from("hello upload"),
+        };
+
+        const response = await adapter.handleRequest(
+            {
+                method: "POST",
+                url: "/_wire/upload",
+                body: {
+                    files: { value: fakePart },
+                },
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(response.status).toBe(413);
+        expect(String((response.result as any)?.error || "")).toContain("maximum allowed size");
+    });
+
+    test("returns 500 when file store persistence fails", async () => {
+        const adapter = new HttpAdapter({
+            route: "/_wire",
+            fileStore: {
+                store: () => {
+                    throw new Error("disk full");
+                },
+                get: () => null,
+                delete: () => {},
+                destroy: () => {},
+            } as any,
+        });
+        const fakePart = {
+            filename: "hello.txt",
+            mimetype: "text/plain",
+            toBuffer: async () => Buffer.from("hello upload"),
+        };
+
+        const response = await adapter.handleRequest(
+            {
+                method: "POST",
+                url: "/_wire/upload",
+                body: {
+                    files: { value: fakePart },
+                },
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(response.status).toBe(500);
+        expect(String((response.result as any)?.error || "")).toContain("Failed to store uploaded file");
+    });
+
+    test("returns explicit adapter install error for component calls when not installed", async () => {
+        const adapter = new HttpAdapter({ route: "/_wire" });
+
+        const response = await adapter.handleRequest(
+            {
+                method: "POST",
+                url: "/_wire",
+                body: {
+                    id: "missing",
+                    method: "increment",
+                    params: [],
+                },
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(response.status).toBe(500);
+        expect(String((response.result as any)?.error || "")).toContain("HttpAdapter is not installed");
+    });
+
+    test("supports normal component calls after install", async () => {
+        const adapter = new HttpAdapter({ route: "/_wire" });
+        adapter.install(new Kirewire({ secret: "upload-test" }), new Kire());
+
+        const response = await adapter.handleRequest(
+            {
+                method: "POST",
+                url: "/_wire",
+                body: {
+                    id: "missing",
+                    method: "increment",
+                    params: [],
+                },
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(response.status).toBe(200);
+        expect(String((response.result as any)?.error || "")).toContain("Component missing not found.");
     });
 });

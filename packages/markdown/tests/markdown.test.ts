@@ -131,4 +131,12 @@ describe("KireMarkdown", () => {
 		expect(result).toContain("<h1>Glob A</h1>");
 		expect(result).toContain("<h1>Glob B</h1>");
 	});
+
+	it("should treat markdown content containing '*' as content (not glob)", async () => {
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
+		const tpl = `@markdown('# Components\\n\\nUse x-* and kire:* elements.')`;
+		const result = await kire.render(tpl);
+		expect(result).toContain("<h1>Components</h1>");
+		expect(result).toContain("x-");
+	});
 });

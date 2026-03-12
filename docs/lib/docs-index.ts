@@ -1,154 +1,313 @@
-export type Section = "Guides" | "Reference" | "Packages";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+type FrontmatterValue = string | number | boolean | string[];
+type FrontmatterMap = Record<string, FrontmatterValue>;
 
 export type DocsPage = {
     id: string;
     href: string;
     title: string;
-    section: Section;
+    section: string;
     summary: string;
+    description: string;
     file: string;
     tags: string[];
+    order: number;
+    slug: string;
+    source: string;
 };
 
 export type NavItem = {
+    id: string;
     title: string;
     href: string;
     description?: string;
+    section: string;
 };
 
-export const docsPages: DocsPage[] = [
-    {
-        id: "getting-started",
-        href: "/docs/getting-started",
-        title: "Getting Started",
-        section: "Guides",
-        summary: "Instalacao, setup inicial, render e view com namespaces.",
-        file: "../content/kire/getting-started.md",
-        tags: ["install", "setup", "render", "view", "namespace"],
-    },
-    {
-        id: "how-kire-works",
-        href: "/docs/how-kire-works",
-        title: "How Kire Works",
-        section: "Guides",
-        summary: "Como o motor compila templates, forks e contexto por request.",
-        file: "../content/kire/how-kire-works.md",
-        tags: ["compiler", "jit", "fork", "request", "cache"],
-    },
-    {
-        id: "directives-reference",
-        href: "/docs/directives-reference",
-        title: "Directives Reference",
-        section: "Reference",
-        summary: "Diretivas principais para controle de fluxo, includes, layouts e slots.",
-        file: "../content/kire/directives-reference.md",
-        tags: ["if", "for", "include", "layout", "slot", "directive"],
-    },
-    {
-        id: "components-and-slots",
-        href: "/docs/components-and-slots",
-        title: "Components and Slots",
-        section: "Guides",
-        summary: "Como criar componentes, passar slots e reutilizar blocos.",
-        file: "../content/kire/components-and-slots.md",
-        tags: ["component", "slot", "yield", "reuse"],
-    },
-    {
-        id: "creating-plugins",
-        href: "/docs/creating-plugins",
-        title: "Creating Plugins",
-        section: "Guides",
-        summary: "Extendendo Kire com plugins, diretivas e elementos customizados.",
-        file: "../content/kire/creating-plugins.md",
-        tags: ["plugin", "directive", "element", "extension"],
-    },
-    {
-        id: "package-core",
-        href: "/docs/packages/core",
-        title: "kire (core)",
-        section: "Packages",
-        summary: "Motor principal de templates e API base.",
-        file: "../content/packages/core.md",
-        tags: ["core", "engine", "kire"],
-    },
-    {
-        id: "package-wire",
-        href: "/docs/packages/wire",
-        title: "@kirejs/wire",
-        section: "Packages",
-        summary: "Componentes server-driven inspirados em Livewire para Kire.",
-        file: "../content/packages/wire.md",
-        tags: ["wire", "livewire", "component", "sse", "navigate"],
-    },
-    {
-        id: "package-assets",
-        href: "/docs/packages/assets",
-        title: "@kirejs/assets",
-        section: "Packages",
-        summary: "Gerenciamento, deduplicacao e entrega de assets.",
-        file: "../content/packages/assets.md",
-        tags: ["assets", "script", "style", "cache"],
-    },
-    {
-        id: "package-auth",
-        href: "/docs/packages/auth",
-        title: "@kirejs/auth",
-        section: "Packages",
-        summary: "Diretivas de autenticacao e autorizacao no template.",
-        file: "../content/packages/auth.md",
-        tags: ["auth", "guest", "can", "permissions"],
-    },
-    {
-        id: "package-iconify",
-        href: "/docs/packages/iconify",
-        title: "@kirejs/iconify",
-        section: "Packages",
-        summary: "Integracao de icones SVG com Iconify.",
-        file: "../content/packages/iconify.md",
-        tags: ["iconify", "svg", "icons"],
-    },
-    {
-        id: "package-markdown",
-        href: "/docs/packages/markdown",
-        title: "@kirejs/markdown",
-        section: "Packages",
-        summary: "Renderizacao de Markdown em templates Kire.",
-        file: "../content/packages/markdown.md",
-        tags: ["markdown", "mdrender", "mdview"],
-    },
-    {
-        id: "package-tailwind",
-        href: "/docs/packages/tailwind",
-        title: "@kirejs/tailwind",
-        section: "Packages",
-        summary: "Compilacao de classes Tailwind e cache no runtime do Kire.",
-        file: "../content/packages/tailwind.md",
-        tags: ["tailwind", "css", "compile"],
-    },
-    {
-        id: "package-utils",
-        href: "/docs/packages/utils",
-        title: "@kirejs/utils",
-        section: "Packages",
-        summary: "Helpers utilitarios no estilo Laravel para templates.",
-        file: "../content/packages/utils.md",
-        tags: ["utils", "route", "html", "helpers"],
-    },
+export type NavGroup = {
+    title: string;
+    items: NavItem[];
+};
+
+const docsRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const contentRoot = path.resolve(docsRoot, "content");
+const viewsRoot = path.resolve(docsRoot, "views");
+
+const SECTION_PRIORITY = [
+    "Kire Essentials",
+    "Kire Internals",
+    "Kire Reference",
+    "Packages",
 ];
 
-export const docsNav: NavItem[] = docsPages
-    .filter((item) => item.section !== "Packages")
-    .map((item) => ({ title: item.title, href: item.href, description: item.summary }));
+function normalizePath(value: string): string {
+    return value.replaceAll("\\", "/");
+}
 
-export const packageNav: NavItem[] = docsPages
-    .filter((item) => item.section === "Packages")
-    .map((item) => ({ title: item.title, href: item.href, description: item.summary }));
+function normalizeRoute(value: string): string {
+    const raw = String(value || "").trim();
+    if (!raw) return "/docs";
+    if (raw.startsWith("/")) return raw;
+    return `/${raw}`;
+}
+
+function titleFromSlug(value: string): string {
+    return value
+        .split(/[/-]/g)
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+}
+
+function firstParagraph(markdown: string): string {
+    const cleaned = String(markdown || "")
+        .replace(/\r/g, "")
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .filter((line) => !line.startsWith("#"))
+        .find((line) => !line.startsWith("```") && !line.startsWith("- ") && !line.startsWith(">"));
+
+    if (!cleaned) return "";
+    return cleaned.replace(/[`*_]/g, "").slice(0, 240);
+}
+
+function parseQuoted(value: string): string {
+    const raw = String(value || "").trim();
+    if (
+        (raw.startsWith("\"") && raw.endsWith("\"")) ||
+        (raw.startsWith("'") && raw.endsWith("'"))
+    ) {
+        return raw.slice(1, -1);
+    }
+    return raw;
+}
+
+function parseArray(value: string): string[] {
+    const raw = String(value || "").trim();
+    if (!raw.startsWith("[") || !raw.endsWith("]")) return [];
+
+    const inner = raw.slice(1, -1).trim();
+    if (!inner) return [];
+
+    return inner
+        .split(",")
+        .map((part) => parseQuoted(part))
+        .map((part) => part.trim())
+        .filter(Boolean);
+}
+
+function parseFrontmatterBlock(block: string): FrontmatterMap {
+    const out: FrontmatterMap = {};
+    const lines = String(block || "")
+        .split(/\r?\n/g)
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .filter((line) => !line.startsWith("#"));
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i]!;
+        const splitAt = line.indexOf(":");
+        if (splitAt <= 0) continue;
+
+        const key = line.slice(0, splitAt).trim();
+        const rawValue = line.slice(splitAt + 1).trim();
+        if (!key) continue;
+
+        if (rawValue.startsWith("[") && rawValue.endsWith("]")) {
+            out[key] = parseArray(rawValue);
+            continue;
+        }
+
+        const normalized = parseQuoted(rawValue);
+        if (/^-?\d+$/.test(normalized)) {
+            out[key] = Number(normalized);
+            continue;
+        }
+
+        if (normalized === "true" || normalized === "false") {
+            out[key] = normalized === "true";
+            continue;
+        }
+
+        out[key] = normalized;
+    }
+
+    return out;
+}
+
+function splitFrontmatter(source: string): { frontmatter: FrontmatterMap; body: string } {
+    const normalizedSource = String(source || "").replace(/^\uFEFF/, "");
+    const match = normalizedSource.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+    if (!match) return { frontmatter: {}, body: normalizedSource };
+
+    return {
+        frontmatter: parseFrontmatterBlock(match[1] || ""),
+        body: normalizedSource.slice(match[0].length),
+    };
+}
+
+function collectMarkdownFiles(dir: string, out: string[]) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]!;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+            collectMarkdownFiles(full, out);
+            continue;
+        }
+
+        if (!entry.isFile()) continue;
+        if (!entry.name.endsWith(".md") && !entry.name.endsWith(".markdown")) continue;
+        out.push(full);
+    }
+}
+
+function isPackagePath(relativeContentPath: string) {
+    return normalizePath(relativeContentPath).startsWith("packages/");
+}
+
+function defaultSection(relativeContentPath: string): string {
+    return isPackagePath(relativeContentPath) ? "Packages" : "Kire Essentials";
+}
+
+function defaultRoute(relativeContentPath: string): string {
+    const base = normalizePath(relativeContentPath).replace(/\.(md|markdown)$/i, "");
+    return normalizeRoute(`/docs/${base}`);
+}
+
+function sectionPriority(section: string): number {
+    const index = SECTION_PRIORITY.indexOf(section);
+    return index >= 0 ? index : SECTION_PRIORITY.length + 1;
+}
+
+function sortPages(a: DocsPage, b: DocsPage): number {
+    const sectionDelta = sectionPriority(a.section) - sectionPriority(b.section);
+    if (sectionDelta !== 0) return sectionDelta;
+
+    const orderDelta = a.order - b.order;
+    if (orderDelta !== 0) return orderDelta;
+
+    return a.title.localeCompare(b.title);
+}
+
+function buildDocsPages(): DocsPage[] {
+    const files: string[] = [];
+    collectMarkdownFiles(contentRoot, files);
+    files.sort((a, b) => a.localeCompare(b));
+
+    const pages: DocsPage[] = [];
+    for (let i = 0; i < files.length; i++) {
+        const absolutePath = files[i]!;
+        const relativeContent = normalizePath(path.relative(contentRoot, absolutePath));
+        const source = fs.readFileSync(absolutePath, "utf8");
+        const { frontmatter, body } = splitFrontmatter(source);
+
+        const slug = relativeContent.replace(/\.(md|markdown)$/i, "");
+        const title =
+            String(frontmatter.title || "").trim() ||
+            titleFromSlug(path.basename(slug));
+        const description =
+            String(frontmatter.description || "").trim() ||
+            firstParagraph(body) ||
+            `Documentation page for ${title}.`;
+
+        const section = String(frontmatter.section || defaultSection(relativeContent)).trim();
+        const tagsRaw = Array.isArray(frontmatter.tags)
+            ? frontmatter.tags
+            : String(frontmatter.tags || "")
+                .split(",")
+                .map((entry) => entry.trim())
+                .filter(Boolean);
+        const tags = tagsRaw.map((entry) => String(entry).trim()).filter(Boolean);
+
+        const href = normalizeRoute(
+            String(frontmatter.route || "").trim() || defaultRoute(relativeContent),
+        );
+        const id = String(frontmatter.id || slug.replace(/[/.]/g, "-")).trim();
+        const order = Number(frontmatter.order || 0);
+
+        pages.push({
+            id,
+            href,
+            title,
+            section,
+            summary: description,
+            description,
+            file: normalizePath(path.relative(viewsRoot, absolutePath)),
+            tags,
+            order: Number.isFinite(order) ? order : 0,
+            slug,
+            source: absolutePath,
+        });
+    }
+
+    pages.sort(sortPages);
+    return pages;
+}
+
+function toNavItem(page: DocsPage): NavItem {
+    return {
+        id: page.id,
+        title: page.title,
+        href: page.href,
+        description: page.summary,
+        section: page.section,
+    };
+}
+
+function groupBySection(pages: DocsPage[]): NavGroup[] {
+    const map = new Map<string, NavItem[]>();
+    for (let i = 0; i < pages.length; i++) {
+        const page = pages[i]!;
+        const bucket = map.get(page.section) || [];
+        bucket.push(toNavItem(page));
+        map.set(page.section, bucket);
+    }
+
+    const groups: NavGroup[] = [];
+    for (const [title, items] of map.entries()) {
+        groups.push({
+            title,
+            items,
+        });
+    }
+
+    groups.sort((a, b) => sectionPriority(a.title) - sectionPriority(b.title) || a.title.localeCompare(b.title));
+    return groups;
+}
 
 function normalizeText(value: string): string {
-    return value
+    return String(value || "")
         .toLowerCase()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "");
+}
+
+export const docsPages: DocsPage[] = buildDocsPages();
+export const docsByHref = new Map<string, DocsPage>(docsPages.map((item) => [item.href, item]));
+
+export const docsNavGroups: NavGroup[] = groupBySection(docsPages.filter((item) => item.section !== "Packages"));
+export const packageNavGroups: NavGroup[] = groupBySection(docsPages.filter((item) => item.section === "Packages"));
+
+export const docsNav: NavItem[] = docsNavGroups.flatMap((group) => group.items);
+export const packageNav: NavItem[] = packageNavGroups.flatMap((group) => group.items);
+
+export function getDocByHref(href: string): DocsPage | null {
+    return docsByHref.get(String(href || "").trim()) || null;
+}
+
+export function getDocNeighbors(href: string): { previous: DocsPage | null; next: DocsPage | null } {
+    const index = docsPages.findIndex((item) => item.href === href);
+    if (index === -1) return { previous: null, next: null };
+
+    return {
+        previous: index > 0 ? docsPages[index - 1]! : null,
+        next: index < docsPages.length - 1 ? docsPages[index + 1]! : null,
+    };
 }
 
 export function searchDocs(query: string): DocsPage[] {
@@ -161,7 +320,7 @@ export function searchDocs(query: string): DocsPage[] {
     for (let i = 0; i < docsPages.length; i++) {
         const page = docsPages[i]!;
         const haystack = normalizeText(
-            `${page.title} ${page.summary} ${page.section} ${page.tags.join(" ")} ${page.id}`,
+            `${page.title} ${page.summary} ${page.section} ${page.tags.join(" ")} ${page.slug}`,
         );
 
         let score = 0;
@@ -173,13 +332,14 @@ export function searchDocs(query: string): DocsPage[] {
                 break;
             }
             score += 3;
-            if (normalizeText(page.title).includes(token)) score += 4;
+            if (normalizeText(page.title).includes(token)) score += 5;
             if (normalizeText(page.tags.join(" ")).includes(token)) score += 2;
+            if (normalizeText(page.section).includes(token)) score += 1;
         }
 
         if (allMatch) scored.push({ page, score });
     }
 
-    scored.sort((a, b) => b.score - a.score || a.page.title.localeCompare(b.page.title));
+    scored.sort((a, b) => b.score - a.score || sortPages(a.page, b.page));
     return scored.map((item) => item.page);
 }

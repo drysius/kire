@@ -5,6 +5,20 @@ export interface WirePayload {
     pageId: string;
 }
 
+function isDebugEnabled(): boolean {
+    return typeof window !== "undefined" && !!(window as any).__KIREWIRE_DEBUG__;
+}
+
+function debugLog(...args: any[]) {
+    if (!isDebugEnabled()) return;
+    console.log(...args);
+}
+
+function debugError(...args: any[]) {
+    if (!isDebugEnabled()) return;
+    console.error(...args);
+}
+
 export class MessageBus {
     private queue: Array<{ payload: WirePayload; resolve: (value: any) => void; reject: (reason?: any) => void }> = [];
     private timer: any = null;
@@ -19,7 +33,7 @@ export class MessageBus {
     }
 
     public enqueue(payload: WirePayload): Promise<any> {
-        console.log(`[Kirewire] MessageBus enqueuing action "${payload.method}" for component "${payload.id}"`);
+        debugLog(`[Kirewire] MessageBus enqueuing action "${payload.method}" for component "${payload.id}"`);
         return new Promise((resolve, reject) => {
             this.queue.push({ payload, resolve, reject });
             
@@ -27,7 +41,7 @@ export class MessageBus {
                 // Wait for the current synchronous execution to finish before starting the timer
                 queueMicrotask(() => {
                     if (!this.timer && this.queue.length > 0) {
-                        console.log(`[Kirewire] MessageBus starting flush timer (${this.delay}ms)`);
+                        debugLog(`[Kirewire] MessageBus starting flush timer (${this.delay}ms)`);
                         this.timer = setTimeout(() => this.flush(), this.delay);
                     }
                 });
@@ -62,7 +76,7 @@ export class MessageBus {
         const batch = [...this.queue];
         this.queue = [];
 
-        console.log(`[Kirewire] MessageBus flushing batch of ${batch.length} actions.`);
+        debugLog(`[Kirewire] MessageBus flushing batch of ${batch.length} actions.`);
 
         let settled = false;
         const finalize = () => {
@@ -76,7 +90,7 @@ export class MessageBus {
         };
 
         const failBatch = (err: any) => {
-            console.error(`[Kirewire] MessageBus batch failed:`, err);
+            debugError(`[Kirewire] MessageBus batch failed:`, err);
             batch.forEach(item => item.reject(err));
             finalize();
         };
@@ -109,7 +123,7 @@ export class MessageBus {
                     finish: (rawResults: any) => {
                         clearTimeout(timeout);
                         const results = Array.isArray(rawResults) ? rawResults : [rawResults];
-                        console.log(`[Kirewire] MessageBus batch finished with ${results.length} results.`);
+                        debugLog(`[Kirewire] MessageBus batch finished with ${results.length} results.`);
                         batch.forEach((item, i) => {
                             const result = results[i] ?? results[results.length - 1];
                             if (result?.error) item.reject(result.error);

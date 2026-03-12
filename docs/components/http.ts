@@ -1,4 +1,4 @@
-import { Component, WireBroadcast } from "@kirejs/wire";
+import { Component, WireBroadcast } from "../lib/wire";
 
 export default class Http extends Component {
 	public counter = 0;

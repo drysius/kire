@@ -1,19 +1,29 @@
 import type { Kire } from "../kire";
 import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
+const normalizeSlotNameExpression = (value: any, fallback = '"default"') => {
+    if (value === undefined || value === null || value === "") return fallback;
+    if (typeof value !== "string") return JSON.stringify(String(value));
+    const trimmed = value.trim();
+    if (QUOTED_STR_CHECK_REGEX.test(trimmed) && /^(['"]).*\1$/.test(trimmed)) {
+        return JSON.stringify(trimmed.slice(1, -1));
+    }
+    return `String(${trimmed})`;
+};
+
 export default (kire: Kire<any>) => {
 	kire.directive({
 		name: `slot`,
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
+			const nameExpr = normalizeSlotNameExpression(api.getArgument(0) || api.getAttribute("name"));
             const id = api.uid("slot");
 			api.write(`{ const _oldRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                if (typeof $slots !== 'undefined') $slots['${name}'] = $kire_response;
+                const _slotName${id} = ${nameExpr};
+                if (typeof $slots !== 'undefined') $slots[_slotName${id}] = $kire_response;
                 $kire_response = _oldRes${id};
             }`);
 		},
@@ -24,11 +34,11 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`, `default:string`],
         children: false,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
+			const nameExpr = normalizeSlotNameExpression(api.getArgument(0) || api.getAttribute("name"));
 			const def = api.getArgument(1) || api.getAttribute("default");
 			api.write(`{
-                const content = ($props.slots && $props.slots['${name}']);
+                const _slotName = ${nameExpr};
+                const content = ($props.slots && $props.slots[_slotName]);
                 if (content) {
                     $kire_response += content;
                 } else {

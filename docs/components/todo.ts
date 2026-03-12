@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Todo extends Component {
 	public task = "";
@@ -23,3 +23,4 @@ export default class Todo extends Component {
 		return this.view("components.todo");
 	}
 }
+

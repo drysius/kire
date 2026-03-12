@@ -59,7 +59,7 @@ export default (kire: Kire<any>) => {
         children: false,
         onCall: (api) => {
             const method = api.getArgument(0) ?? api.getAttribute("method");
-            api.append(`<input type="hidden" name="_method" value="\${$escape(${method})}">`);
+            api.write(`$kire_response += '<input type="hidden" name="_method" value="' + $escape(${method}) + '">';`);
         },
     });
 

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class PollStress extends Component {
 	public count = 0;
@@ -13,4 +13,5 @@ export default class PollStress extends Component {
 		return this.view("components.poll-stress");
 	}
 }
+
 

@@ -1,45 +1,86 @@
+﻿---
+route: "/docs/packages/wire"
+title: "@kirejs/wire"
+description: "Server-driven components for Kire with hydration, effects, streaming, navigation, and client directives."
+tags: ["wire", "components", "hydrate", "stream", "navigate", "directives"]
+section: "Packages"
+order: 2
+---
+
 # @kirejs/wire
 
-`@kirejs/wire` adds server-driven components to Kire, inspired by Livewire style APIs.
+`@kirejs/wire` brings **stateful server components** to Kire.
+It is designed for interactive apps without committing to a large client framework.
 
-## Purpose
+## Core Capabilities
 
-- Stateful server components.
-- Client-server action calls (`wire:click`, `wire:model`, etc.).
-- Batching, streaming, events and component hydration.
+- component state hydration/dehydration
+- action calls (`wire:click`, `wire:model`)
+- effect pipeline (`event`, `stream`, `collection`, `redirect`)
+- route navigation with request cancellation
+- SSE/socket update transport
 
-## Core Concepts
+## Component Example
 
-- Server `Component` classes with state.
-- `@wire("component")` to mount components in templates.
-- Effects pipeline for redirect, events and stream updates.
-- HTTP or socket transport adapters.
+```ts
+import { Component } from "@kirejs/wire";
 
-## Recent Runtime Improvements
+export default class Counter extends Component {
+  public count = 0;
 
-- native `wire:navigate` route transitions
-- cancellation of old requests when navigating
-- progress bar during navigation
-- session-expired recovery by refreshing current route via navigate
-- `wire:collection` for append/prepend/upsert/remove list patches without full remorph
+  increment() {
+    this.count += 1;
+  }
+
+  render() {
+    return this.view("components.counter");
+  }
+}
+```
+
+```kire
+<div>
+  <button wire:click="increment">+</button>
+  <span>{{ count }}</span>
+</div>
+```
 
 ## Collection Patches
 
-Use `wire:collection` when a component needs to update a list frequently and a full HTML remorph would be wasteful.
+Use `wire:collection` for list updates without full component remorph.
 
-```html
-<template wire:collection="entries" x-for="entry in $wire.entries" :key="entry.id">
-  <article x-text="entry.text"></article>
-</template>
+```kire
+<template wire:collection="messages" x-for="msg in $wire.messages" :key="msg.id"></template>
+<div wire:collection.empty="messages">No messages yet.</div>
 ```
 
 ```ts
-this.prependToCollection("entries", entry, { key: "id", limit: 25 });
+this.prependToCollection("messages", message, { key: "id", limit: 25 });
 this.$skipRender();
 ```
 
-For keyed DOM fragments, the same effect can target a regular container marked with `wire:collection="..."`.
+## New Utility Directives
 
-## Typical Use
+- `wire:collection.empty="path"`
+- `wire:intersect.top|bottom|left|right` (`down` alias of `bottom`)
+- `wire:show="expression"`
+- `wire:file.preview="path"`
+- `wire:offline` / `wire:online`
+- `wire:poll.visible`
 
-Use when you want server logic to own state transitions while keeping frontend JS light.
+## Navigation and History
+
+`wire:navigate` handles client navigation while keeping server authority:
+
+- cancels in-flight requests from old pages
+- shows navigation progress
+- syncs browser history
+- can recover from expired page sessions
+
+## When To Use
+
+Use Wire when:
+
+- state transitions should stay on the server
+- you want minimal client complexity
+- your team prefers template-first development with explicit actions

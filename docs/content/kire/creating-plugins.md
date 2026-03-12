@@ -1,54 +1,73 @@
+﻿---
+route: "/docs/kire/creating-plugins"
+title: "Creating Plugins"
+description: "Extend Kire with directives, elements, globals, and schema-driven metadata for robust ecosystem modules."
+tags: ["plugins", "schema", "directives", "elements", "extensibility"]
+section: "Kire Internals"
+order: 2
+---
+
 # Creating Plugins
 
-Plugins are the standard way to extend Kire syntax and behavior.
+Kire plugins are the main extension mechanism for new language features and runtime helpers.
 
-## Plugin Structure
+## Plugin Goals
+
+A good plugin should be:
+
+- small and focused
+- explicit about directives/elements it adds
+- safe under production cache
+- easy to test in isolation
+
+## Minimal Plugin Shape
 
 ```ts
-import { kirePlugin } from "kire";
+import { defineSchema } from "kire";
 
-export const MyPlugin = kirePlugin({}, (kire) => {
-  kire.directive({
-    name: "hello",
-    onCall(api) {
-      api.write("$kire_response += 'hello';");
-    },
-  });
+export default defineSchema({
+  name: "my-kire-plugin",
+  description: "Adds custom directives",
+  handle: (kire) => {
+    kire.directive({
+      name: "hello",
+      params: ["name:string"],
+      onCall(api) {
+        const name = api.getArgument(0) || "'world'";
+        api.write(`$kire_response += "Hello " + (${name});`);
+      },
+    });
+  },
 });
 ```
 
-Then register:
+## Directive Design Tips
 
-```ts
-kire.plugin(MyPlugin);
-```
+- Validate params early.
+- Keep generated code minimal.
+- Make async behavior explicit (`api.markAsync()` when required).
+- Prefer deterministic output for easier caching and testing.
 
-## Add Directives
+## Element Extensions
 
-Use directives when you need template-level control or sugar syntax.
+Custom elements can provide semantic shortcuts and editor tooling metadata.
+When adding custom elements, document expected attributes and behavior clearly.
 
-- Validate params clearly.
-- Generate minimal JS code.
-- Keep predictable output.
+## Schema Metadata
 
-## Add Elements
+Schema metadata helps tooling (for example VS extensions) with:
 
-Elements are useful for HTML-like DSLs (`<x-card>`, `<kire:if>`).
+- completion
+- hover descriptions
+- argument typing hints
 
-## Add Globals and Helpers
+## Testing Strategy
 
-```ts
-kire.$global("featureFlag", true);
-```
+1. unit test directive code generation
+2. integration test rendered output
+3. regression test invalid inputs and edge cases
 
-## Safety Guidelines
+## Versioning and Compatibility
 
-- Do not execute untrusted code inside directives.
-- Keep plugin APIs deterministic.
-- Document syntax and examples.
-- Add tests for parser edge cases.
-
-## Production Notes
-
-If your plugin has heavy compile-time work, cache by template id in production.
-This keeps rendering stable under load.
+When changing directive signatures, treat it as an API change.
+Document migration notes and keep backwards compatibility when possible.

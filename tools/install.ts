@@ -6,7 +6,10 @@ async function install() {
 
 	// 2. Discover Packages
 	console.log("\n📦 Discovering packages...");
-	const packages = await getPackages();
+	const packages = await getPackages({
+		includeExtensions: true,
+		includeApps: true,
+	});
 	console.log(`Found ${packages.length} packages.`);
 
 	// 3. Individual Package Installation

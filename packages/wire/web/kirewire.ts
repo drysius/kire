@@ -118,6 +118,14 @@ function collectionSelectorValue(value: string) {
     return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+function safeQuerySelector(scope: ParentNode, selector: string): Element | null {
+    try {
+        return scope.querySelector(selector);
+    } catch {
+        return null;
+    }
+}
+
 export class KirewireClient extends EventController {
     private directives: Array<{ pattern: RegExp | string; handler: WireClientDirective }> = [];
     public components = new Map<string, any>();
@@ -244,14 +252,31 @@ export class KirewireClient extends EventController {
     private ensureAdapter(): boolean {
         if (this.adapter) return true;
 
-        const AdapterCtor = (this as any).HttpClientAdapter;
-        if (typeof AdapterCtor === "function") {
-            this.adapter = new AdapterCtor({
-                url: this.config.url,
-                uploadUrl: this.config.uploadUrl,
-                pageId: this.pageId,
-                transport: this.config.transport,
-            });
+        const transport = String(this.config.transport || "sse").toLowerCase();
+        if (transport === "socket") {
+            const SocketCtor = (this as any).SocketClientAdapter;
+            if (typeof SocketCtor === "function") {
+                this.adapter = new SocketCtor({
+                    url: this.config.url,
+                    uploadUrl: this.config.uploadUrl,
+                    pageId: this.pageId,
+                    transport: transport,
+                });
+            } else {
+                console.warn("[Kirewire] Socket transport requested but SocketClientAdapter is unavailable. Falling back to HTTP.");
+            }
+        }
+
+        if (!this.adapter) {
+            const HttpCtor = (this as any).HttpClientAdapter;
+            if (typeof HttpCtor === "function") {
+                this.adapter = new HttpCtor({
+                    url: this.config.url,
+                    uploadUrl: this.config.uploadUrl,
+                    pageId: this.pageId,
+                    transport: this.config.transport,
+                });
+            }
         }
 
         if (!this.adapter) {
@@ -373,19 +398,20 @@ export class KirewireClient extends EventController {
 
         const normalized = this.normalizeAction(method, params);
         const actions = [...this.consumeDeferred(componentId), normalized];
-
-        this.emitSync("component:call", {
+        const callMeta = {
             id: componentId,
             method: normalized.method,
             params: normalized.params,
-        });
+        };
+
+        this.emitSync("component:call", callMeta);
 
         try {
             const responses = await Promise.all(
                 actions.map((action) => this.adapter.call(componentId, action.method, action.params)),
             );
             const result = responses[responses.length - 1];
-            this.emitSync("component:finished", { id: componentId });
+            this.emitSync("component:finished", callMeta);
             return responses.length > 1 ? responses : result;
         } catch (error) {
             const message = String((error as any)?.message || "");
@@ -398,10 +424,10 @@ export class KirewireClient extends EventController {
                     message.includes("MessageBus batch cancelled")
                 )
             ) {
-                this.emitSync("component:finished", { id: componentId });
+                this.emitSync("component:finished", callMeta);
                 return;
             }
-            this.emitSync("component:error", { id: componentId, error });
+            this.emitSync("component:error", { ...callMeta, error });
             throw error;
         }
     }
@@ -759,10 +785,10 @@ export class KirewireClient extends EventController {
                     const { target, content, method } = effect.payload || {};
                     if (!target || typeof target !== "string") break;
 
-                    let el = queryScope.querySelector(target);
+                    let el = safeQuerySelector(queryScope, target);
                     if (!el) {
                         const value = target.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
-                        el = queryScope.querySelector(`[wire\\:stream="${value}"]`);
+                        el = safeQuerySelector(queryScope, `[wire\\:stream="${value}"]`);
                     }
                     if (!el) break;
 

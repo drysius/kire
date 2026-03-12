@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class Heavy extends Component {
 	public loaded = false;
@@ -21,3 +21,4 @@ export default class Heavy extends Component {
 		return this.view("components.heavy");
 	}
 }
+

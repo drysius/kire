@@ -29,10 +29,14 @@ export class SessionManager {
      * Reverse lookup: PublicId -> UserId
      */
     private findByPublicId = new Map<string, string>();
+    private cleanupTimer: ReturnType<typeof setInterval>;
 
     constructor(private expireMs: number) {
         // Run cleanup every minute
-        setInterval(() => this.cleanup(), 60000);
+        this.cleanupTimer = setInterval(() => this.cleanup(), 60000);
+        if (typeof (this.cleanupTimer as any)?.unref === "function") {
+            (this.cleanupTimer as any).unref();
+        }
     }
 
     public getSession(userId: string): WireSession {
@@ -116,5 +120,16 @@ export class SessionManager {
             }
         }
         page.components.clear();
+    }
+
+    public async destroy() {
+        clearInterval(this.cleanupTimer);
+        for (const session of this.sessions.values()) {
+            for (const page of session.pages.values()) {
+                await this.unmountPage(page);
+            }
+        }
+        this.sessions.clear();
+        this.findByPublicId.clear();
     }
 }

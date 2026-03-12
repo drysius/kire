@@ -1,5 +1,4 @@
 import { Adapter } from "../adapter";
-import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -20,6 +19,13 @@ type ActionPayload = {
     pageId?: string;
 };
 
+type HttpAdapterOptions = {
+    route?: string;
+    fileStore?: FileStore;
+    tempDir?: string;
+    maxUploadBytes?: number;
+};
+
 function normalizeRoute(route: string): string {
     const value = String(route || "/_wire").trim();
     if (!value) return "/_wire";
@@ -28,18 +34,31 @@ function normalizeRoute(route: string): string {
 }
 
 export class HttpAdapter extends Adapter {
+    private static readonly DEFAULT_MAX_UPLOAD_BYTES = 64 * 1024 * 1024; // 64MB
+    private static readonly MAX_UPLOAD_ERROR_PREFIX = "KIREWIRE_UPLOAD_TOO_LARGE";
+    private static readonly SOCKET_MARKER = "SocketClientAdapter";
+    private static readonly HTTP_MARKER = "HttpClientAdapter";
     private static clientScriptCache: string | null = null;
     private route: string;
     private fileStore: FileStore;
+    private ownsFileStore: boolean;
+    private maxUploadBytes: number;
 
-    constructor(options: { route?: string, fileStore?: FileStore, tempDir?: string } = {}) {
+    constructor(options: HttpAdapterOptions = {}) {
         super();
         this.route = normalizeRoute(options.route || "/_wire");
         this.fileStore = options.fileStore || new FileStore(options.tempDir || "node_modules/.kirewire_uploads");
+        this.ownsFileStore = !options.fileStore;
+        this.maxUploadBytes = this.normalizeMaxUploadBytes(options.maxUploadBytes);
     }
 
     setup() {
         console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
+        this.wire.reference("wire:url", () => this.getClientUrl());
+        this.wire.reference("wire:upload-url", () => this.getUploadUrl());
+        this.wire.reference("wire:sse-url", () => `${this.route}/sse`);
+        this.wire.reference("wire:session-url", () => `${this.route}/session`);
+        this.wire.reference("wire:client-script-url", () => `${this.route}/kirewire.js`);
     }
 
     public getClientUrl() {
@@ -55,9 +74,26 @@ export class HttpAdapter extends Adapter {
      */
     public async handleRequest(req: HandleRequestInput, userId: string, _sessionId: string) {
         const url = new URL(req.url, "http://localhost");
-
+        
         if (req.method === "GET" && url.pathname === `${this.route}/kirewire.js`) {
             return this.handleClientScript();
+        }
+
+        if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
+            return await this.handleUpload(req.body);
+        }
+
+        if (!this.wire) {
+            return {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+                result: { error: "HttpAdapter is not installed. Call adapter.install(wire, kire) first." },
+            };
+        }
+
+        const customRoute = this.wire.matchRoute(req.method, url.pathname);
+        if (customRoute) {
+            return await this.handleCustomRoute(customRoute, req, url, userId, _sessionId);
         }
         
         if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
@@ -68,10 +104,6 @@ export class HttpAdapter extends Adapter {
         if (req.method === "GET" && url.pathname === `${this.route}/session`) {
             const pageId = String(url.searchParams.get("pageId") || "");
             return this.handleSessionStatus(userId, pageId);
-        }
-
-        if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
-            return await this.handleUpload(req.body);
         }
 
         if (req.method !== "POST") {
@@ -162,6 +194,60 @@ export class HttpAdapter extends Adapter {
         };
     }
 
+    private async handleCustomRoute(
+        route: {
+            name: string;
+            method: string;
+            path: string;
+            params: Record<string, string>;
+            handler: (ctx: any) => Promise<any> | any;
+        },
+        req: HandleRequestInput,
+        url: URL,
+        userId: string,
+        sessionId: string,
+    ) {
+        try {
+            const output = await route.handler({
+                method: req.method,
+                path: url.pathname,
+                url,
+                query: url.searchParams,
+                params: route.params,
+                body: req.body,
+                signal: req.signal,
+                userId,
+                sessionId,
+                wire: this.wire,
+                adapter: this,
+            });
+
+            if (output && typeof output === "object" && ("status" in output || "result" in output || "headers" in output)) {
+                const typed = output as { status?: number; headers?: Record<string, string>; result?: any };
+                return {
+                    status: Number(typed.status || 200),
+                    headers: typed.headers,
+                    result: typed.result,
+                };
+            }
+
+            return {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+                result: output,
+            };
+        } catch (error: any) {
+            return {
+                status: 500,
+                headers: { "Content-Type": "application/json" },
+                result: {
+                    route: route.name,
+                    error: String(error?.message || "Internal error"),
+                },
+            };
+        }
+    }
+
     private async handleUpload(body: any) {
         const files = this.extractFilesFromBody(body);
         if (!files.length) {
@@ -175,15 +261,40 @@ export class HttpAdapter extends Adapter {
             const file = this.normalizeUploadFile(raw);
             const name = String(file.name || "upload.bin");
             const mime = String(file.mime || "application/octet-stream");
-            const buffer = await this.readUploadBuffer(file.source);
-            const size = buffer ? buffer.length : Number(file.size || 0);
-            let id: string = randomUUID();
+            let buffer: Buffer | null;
+            try {
+                buffer = await this.readUploadBuffer(file.source, this.maxUploadBytes);
+            } catch (error: any) {
+                if (this.isUploadTooLargeError(error)) {
+                    return {
+                        status: 413,
+                        result: { error: String(error?.message || "Uploaded file is too large.") },
+                    };
+                }
+                return {
+                    status: 400,
+                    result: { error: String(error?.message || "Unable to read uploaded file.") },
+                };
+            }
+
+            if (!buffer) {
+                return {
+                    status: 400,
+                    result: { error: `Unable to read uploaded file "${name}".` },
+                };
+            }
+
+            const size = buffer.length || Number(file.size || 0);
+            let id: string;
 
             try {
-                if (buffer) {
-                    id = this.fileStore.store(name, buffer);
-                }
-            } catch {}
+                id = this.fileStore.store(name, buffer);
+            } catch (error: any) {
+                return {
+                    status: 500,
+                    result: { error: `Failed to store uploaded file "${name}". ${String(error?.message || "")}`.trim() },
+                };
+            }
 
             uploaded.push({ id, name, size, mime, type: mime });
         }
@@ -238,29 +349,53 @@ export class HttpAdapter extends Adapter {
         };
     }
 
-    private async readUploadBuffer(file: any): Promise<Buffer | null> {
+    private async readUploadBuffer(file: any, maxBytes: number): Promise<Buffer | null> {
         if (!file || typeof file !== "object") return null;
+
+        const enforceLimit = (bytes: number) => {
+            if (!Number.isFinite(maxBytes) || maxBytes <= 0) return;
+            if (bytes <= maxBytes) return;
+            throw new Error(
+                `${HttpAdapter.MAX_UPLOAD_ERROR_PREFIX}: Uploaded file exceeds the maximum allowed size (${maxBytes} bytes).`,
+            );
+        };
+
+        const declaredSize = Number((file as any).size || 0);
+        if (Number.isFinite(declaredSize) && declaredSize > 0) {
+            enforceLimit(declaredSize);
+        }
 
         if (typeof (file as any).arrayBuffer === "function") {
             const data = await (file as any).arrayBuffer();
+            enforceLimit(data?.byteLength || 0);
             return Buffer.from(data);
         }
 
         if (typeof (file as any).toBuffer === "function") {
             const data = await (file as any).toBuffer();
-            return Buffer.isBuffer(data) ? data : Buffer.from(data);
+            const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+            enforceLimit(buffer.length);
+            return buffer;
         }
 
         if (Buffer.isBuffer((file as any).buffer)) {
+            enforceLimit((file as any).buffer.length);
             return (file as any).buffer;
         }
 
         const stream = (file as any).file;
         if (stream && typeof stream[Symbol.asyncIterator] === "function") {
             const chunks: Buffer[] = [];
+            let total = 0;
             for await (const chunk of stream as AsyncIterable<any>) {
-                if (Buffer.isBuffer(chunk)) chunks.push(chunk);
-                else if (chunk) chunks.push(Buffer.from(chunk));
+                let normalized: Buffer | null = null;
+                if (Buffer.isBuffer(chunk)) normalized = chunk;
+                else if (chunk) normalized = Buffer.from(chunk);
+                if (!normalized) continue;
+
+                total += normalized.length;
+                enforceLimit(total);
+                chunks.push(normalized);
             }
             return chunks.length > 0 ? Buffer.concat(chunks) : null;
         }
@@ -479,7 +614,9 @@ export class HttpAdapter extends Adapter {
         if (HttpAdapter.clientScriptCache) return HttpAdapter.clientScriptCache;
 
         const adapterDir = dirname(fileURLToPath(import.meta.url));
+        const workspaceClient = this.findWorkspaceClientScript();
         const candidates = [
+            workspaceClient,
             // Source runtime (monorepo / ts execution)
             resolve(adapterDir, "../../dist/client/wire.js"),
             // Built runtime (dist/esm/adapters or dist/cjs/adapters)
@@ -489,19 +626,71 @@ export class HttpAdapter extends Adapter {
             resolve(process.cwd(), "dist/client/wire.js"),
             // Monorepo docs execution path
             resolve(process.cwd(), "packages/wire/dist/client/wire.js"),
-        ];
+            resolve(process.cwd(), "../packages/wire/dist/client/wire.js"),
+            resolve(process.cwd(), "../../packages/wire/dist/client/wire.js"),
+        ].filter((value, index, list): value is string => Boolean(value) && list.indexOf(value) === index);
+
+        let fallback: string | null = null;
 
         for (let i = 0; i < candidates.length; i++) {
             const path = candidates[i]!;
             if (!existsSync(path)) continue;
             try {
                 const content = readFileSync(path, "utf8");
-                HttpAdapter.clientScriptCache = content;
-                return content;
+                if (!fallback) fallback = content;
+
+                if (this.isSocketCapableClientScript(content)) {
+                    HttpAdapter.clientScriptCache = content;
+                    return content;
+                }
             } catch {}
+        }
+
+        if (fallback) {
+            HttpAdapter.clientScriptCache = fallback;
+            return fallback;
         }
 
         console.error("[Kirewire] Client script not found. Expected dist/client/wire.js");
         return `console.error("[Kirewire] Client script not found.");`;
+    }
+
+    private isSocketCapableClientScript(content: string): boolean {
+        return content.includes(HttpAdapter.HTTP_MARKER) && content.includes(HttpAdapter.SOCKET_MARKER);
+    }
+
+    private findWorkspaceClientScript(): string | null {
+        let current = process.cwd();
+        for (let i = 0; i < 8; i++) {
+            const candidate = resolve(current, "packages/wire/dist/client/wire.js");
+            if (existsSync(candidate)) return candidate;
+
+            const parent = resolve(current, "..");
+            if (parent === current) break;
+            current = parent;
+        }
+        return null;
+    }
+
+    public destroy() {
+        if (this.ownsFileStore && this.fileStore && typeof this.fileStore.destroy === "function") {
+            this.fileStore.destroy();
+        }
+    }
+
+    private normalizeMaxUploadBytes(value?: number): number {
+        if (value === undefined || value === null) {
+            return HttpAdapter.DEFAULT_MAX_UPLOAD_BYTES;
+        }
+        const parsed = Number(value);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+            return Number.POSITIVE_INFINITY;
+        }
+        return Math.floor(parsed);
+    }
+
+    private isUploadTooLargeError(error: unknown): boolean {
+        const message = String((error as any)?.message || "");
+        return message.startsWith(HttpAdapter.MAX_UPLOAD_ERROR_PREFIX);
     }
 }

@@ -175,6 +175,49 @@ describe("Kire Directives & Elements", () => {
         expect(result).toBe("<article>Head|Body</article>");
     });
 
+    test("@method should render escaped runtime value", async () => {
+        const result = await kire.render("@method('PUT')");
+        expect(result).toBe('<input type="hidden" name="_method" value="PUT">');
+
+        const escaped = await kire.render("@method(method)", { method: 'P\"UT' });
+        expect(escaped).toBe('<input type="hidden" name="_method" value="P&quot;UT">');
+    });
+
+    test("slot/define/stack names should support apostrophes safely", async () => {
+        const k = new Kire({ production: true });
+        k.$files[k.resolvePath("layout.quote")] = "<article>@yield(\"he'ad\", 'none')</article>";
+
+        const slotResult = await k.render("@component('layout.quote')@slot(\"he'ad\")Body@endslot@endcomponent");
+        expect(slotResult).toBe("<article>Body</article>");
+
+        const defineResult = await k.render("@define(\"he'ad\")OK@enddefine @defined(\"he'ad\")NO@enddefined");
+        expect(defineResult.trim()).toBe("OK");
+
+        const stackResult = await k.render("@stack(\"he'ad\")@push(\"he'ad\")<script>1</script>@endpush");
+        expect(stackResult).toContain("<script>1</script>");
+    });
+
+    test("unknown directives should not be parsed by prefix", async () => {
+        const result = await kire.render("@ifx(true)A@endifx");
+        expect(result).toBe("@ifx(true)A@endifx");
+    });
+
+    test("strict_directives should throw on unknown directives", async () => {
+        const strict = new Kire({ production: true, strict_directives: true, silent: true });
+        try {
+            await strict.render("@unknownDirective(1)", {}, {}, "strict_test.kire");
+            expect.unreachable("should throw on unknown directives in strict mode");
+        } catch (e: any) {
+            expect(e.message).toContain('Unknown directive "@unknownDirective"');
+            expect(e.message).toContain("strict_test.kire");
+        }
+    });
+
+    test("directive arguments should handle closing parenthesis inside strings", async () => {
+        const result = await kire.render('@if(")")OK@endif');
+        expect(result).toBe("OK");
+    });
+
     test("escaped interpolation", async () => {
         const template = "@{{ escaped }} @{{{ raw_escaped }}}";
         expect(await kire.render(template)).toBe("{{ escaped }} {{{ raw_escaped }}}");

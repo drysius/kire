@@ -25,12 +25,117 @@ const CONFIG_META_NAMES = [
 
 const NAVIGATE_PROGRESS_ID = "kirewire-navigate-progress";
 const NAVIGATE_BOOT_KEY = "__kirewire_navigate_booted";
+const NAVIGATE_SCRIPT_CACHE_KEY = "__kirewire_navigate_script_cache";
 const NAVIGATE_HEADER = "X-Kirewire-Navigate";
 
 let activeNavigationId = 0;
 let activeController: AbortController | null = null;
 let progressTimer: any = null;
 let scrollPersistTimer: any = null;
+
+function getScriptCache(): Set<string> {
+    const globalObj = window as any;
+    if (!(globalObj[NAVIGATE_SCRIPT_CACHE_KEY] instanceof Set)) {
+        globalObj[NAVIGATE_SCRIPT_CACHE_KEY] = new Set<string>();
+    }
+    return globalObj[NAVIGATE_SCRIPT_CACHE_KEY] as Set<string>;
+}
+
+function normalizeScriptKey(script: HTMLScriptElement, baseUrl: string = window.location.href): string {
+    const type = String(script.getAttribute("type") || "text/javascript").trim().toLowerCase();
+    const src = String(script.getAttribute("src") || "").trim();
+    if (src) {
+        return `src:${new URL(src, baseUrl).toString()}|type:${type}`;
+    }
+    const content = String(script.textContent || "").trim();
+    return `inline:${type}:${content}`;
+}
+
+function isExecutableScript(script: HTMLScriptElement) {
+    if (script.hasAttribute("data-kirewire-skip")) return false;
+    const type = String(script.getAttribute("type") || "text/javascript").trim().toLowerCase();
+    return (
+        type === "" ||
+        type === "text/javascript" ||
+        type === "application/javascript" ||
+        type === "module"
+    );
+}
+
+function cloneExecutableScript(script: HTMLScriptElement) {
+    const next = document.createElement("script");
+    const attrs = script.getAttributeNames();
+    for (let i = 0; i < attrs.length; i++) {
+        const name = attrs[i]!;
+        const value = script.getAttribute(name);
+        if (value === null) continue;
+        next.setAttribute(name, value);
+    }
+    // Preserve browser execution semantics for dynamically injected scripts.
+    next.async = script.async;
+    next.textContent = script.textContent || "";
+    return next;
+}
+
+function collectExecutableScripts(root: ParentNode = document): HTMLScriptElement[] {
+    const nodes = root.querySelectorAll("script");
+    const scripts: HTMLScriptElement[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+        const script = nodes[i] as HTMLScriptElement;
+        if (!isExecutableScript(script)) continue;
+        scripts.push(script);
+    }
+    return scripts;
+}
+
+function shouldCacheScript(_script: HTMLScriptElement) {
+    return _script.hasAttribute("src")
+        || _script.hasAttribute("data-kirewire-once")
+        || _script.hasAttribute("data-navigate-once");
+}
+
+function seedExecutedScripts(root: ParentNode = document, baseUrl: string = window.location.href) {
+    const cache = getScriptCache();
+    const scripts = collectExecutableScripts(root);
+    for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i]!;
+        if (!shouldCacheScript(script)) continue;
+        const key = normalizeScriptKey(script, baseUrl);
+        if (!key) continue;
+        cache.add(key);
+    }
+}
+
+function hydrateScripts(sourceRoot: ParentNode = document.body, baseUrl: string = window.location.href) {
+    const cache = getScriptCache();
+    const scripts = collectExecutableScripts(sourceRoot);
+
+    for (let i = 0; i < scripts.length; i++) {
+        const script = scripts[i]!;
+        const cacheable = shouldCacheScript(script);
+        const key = cacheable ? normalizeScriptKey(script, baseUrl) : "";
+
+        const forceReload = script.hasAttribute("data-kirewire-reload");
+        if (cacheable && !key) continue;
+        if (cacheable && !forceReload && cache.has(key)) continue;
+
+        if (cacheable && !forceReload) cache.add(key);
+
+        const next = cloneExecutableScript(script);
+        const src = next.getAttribute("src");
+        if (src) {
+            next.setAttribute("src", new URL(src, baseUrl).toString());
+        }
+        const mount = document.body || document.documentElement;
+        mount.appendChild(next);
+        if (!src) {
+            next.remove();
+        } else if (forceReload) {
+            next.addEventListener("load", () => next.remove(), { once: true });
+            next.addEventListener("error", () => next.remove(), { once: true });
+        }
+    }
+}
 
 function createState(url: string, scrollX: number, scrollY: number): NavigateState {
     return {
@@ -222,7 +327,7 @@ function syncConfigMetaTags(doc: Document) {
     }
 }
 
-function applyDocument(doc: Document) {
+function applyDocument(doc: Document, targetHref: string) {
     if (doc.title) {
         document.title = doc.title;
     }
@@ -244,6 +349,8 @@ function applyDocument(doc: Document) {
     if (Alpine && typeof Alpine.initTree === "function") {
         Alpine.initTree(document.body);
     }
+
+    hydrateScripts(nextBody, targetHref);
 
     document.dispatchEvent(new CustomEvent("kirewire:navigated", {
         detail: { url: window.location.href },
@@ -280,6 +387,13 @@ async function navigateTo(rawUrl: string, options: NavigateOptions = {}) {
 
     Kirewire.beginNavigation();
     startProgress();
+    document.dispatchEvent(new CustomEvent("kirewire:navigate:start", {
+        detail: {
+            from: window.location.href,
+            to: targetHref,
+            reason: options.reason || "navigate",
+        },
+    }));
 
     try {
         const response = await fetch(targetHref, {
@@ -304,7 +418,7 @@ async function navigateTo(rawUrl: string, options: NavigateOptions = {}) {
 
         const nextConfig = extractConfigFromDocument(doc);
         Kirewire.configure(nextConfig);
-        applyDocument(doc);
+        applyDocument(doc, targetHref);
 
         const state = createState(targetHref, 0, 0);
         if (!options.fromPopstate) {
@@ -323,13 +437,28 @@ async function navigateTo(rawUrl: string, options: NavigateOptions = {}) {
             window.scrollTo(0, 0);
         }
     } catch (error: any) {
-        if (error?.name === "AbortError") return;
+        if (error?.name === "AbortError") {
+            document.dispatchEvent(new CustomEvent("kirewire:navigate:abort", {
+                detail: { to: targetHref, reason: options.reason || "navigate" },
+            }));
+            return;
+        }
+        document.dispatchEvent(new CustomEvent("kirewire:navigate:error", {
+            detail: {
+                to: targetHref,
+                reason: options.reason || "navigate",
+                message: String(error?.message || error || "Navigation failed"),
+            },
+        }));
         window.location.href = targetHref;
     } finally {
         if (navigationId === activeNavigationId) {
             activeController = null;
             finishProgress();
             Kirewire.endNavigation();
+            document.dispatchEvent(new CustomEvent("kirewire:navigate:finish", {
+                detail: { to: targetHref, reason: options.reason || "navigate" },
+            }));
         }
     }
 }
@@ -387,6 +516,7 @@ function bootNavigate() {
     globalObj[NAVIGATE_BOOT_KEY] = true;
 
     ensureHistoryState();
+    seedExecutedScripts(document.body || document);
     setupScrollPersistence();
 
     document.addEventListener("click", onDocumentClick);

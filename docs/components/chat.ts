@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 // Simple in-memory store for demo purposes
 const db = {
@@ -39,3 +39,4 @@ export default class Chat extends Component {
 		return this.view("components.chat");
 	}
 }
+

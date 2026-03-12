@@ -88,18 +88,25 @@ Kirewire.directive("loading", ({ el, expression, modifiers, wire, cleanup }) => 
         return false;
     };
 
-    let loading = false;
+    let pending = 0;
 
     const unbindCall = wire.$on("component:call", (data) => {
         if (!matchesCall(data)) return;
-        loading = true;
-        applyState(true);
+        pending += 1;
+        applyState(pending > 0);
     });
 
     const onEnd = (data: any) => {
-        if (!data || data.id !== componentId || !loading) return;
-        loading = false;
-        applyState(false);
+        if (!data || data.id !== componentId) return;
+        if (pending <= 0) return;
+
+        // Prefer exact match using method metadata. Fallback keeps compatibility
+        // with legacy "component:finished" events that only include component id.
+        const hasMethodMeta = typeof data?.method === "string" || Array.isArray(data?.params);
+        if (!hasMethodMeta || matchesCall(data)) {
+            pending = Math.max(0, pending - 1);
+            applyState(pending > 0);
+        }
     };
 
     const unbindFinished = wire.$on("component:finished", onEnd);

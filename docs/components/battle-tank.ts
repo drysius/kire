@@ -1,4 +1,4 @@
-﻿import { Component, WireBroadcast } from "@kirejs/wire";
+import { Component, WireBroadcast } from "../lib/wire";
 
 type Direction = "up" | "down" | "left" | "right";
 type Owner = "enemy" | `player:${string}`;
@@ -501,7 +501,7 @@ export default class BattleTank extends Component {
 		}
 
 		if (!this.gameOver) {
-			this.status = `Wave ${this.wave} active • ${activePlayers.length} player(s) online`;
+			this.status = `Wave ${this.wave} active � ${activePlayers.length} player(s) online`;
 		}
 	}
 
@@ -989,4 +989,5 @@ export default class BattleTank extends Component {
 		};
 	}
 }
+
 

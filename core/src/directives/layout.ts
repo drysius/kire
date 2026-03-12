@@ -1,6 +1,16 @@
 import type { Kire } from "../kire";
 import { QUOTED_STR_CHECK_REGEX } from "../utils/regex";
 
+const normalizeStackNameLiteral = (value: any, fallback = "") => {
+    if (value === undefined || value === null || value === "") return fallback;
+    if (typeof value !== "string") return String(value);
+    const trimmed = value.trim();
+    if (QUOTED_STR_CHECK_REGEX.test(trimmed) && /^(['"]).*\1$/.test(trimmed)) {
+        return trimmed.slice(1, -1);
+    }
+    return trimmed;
+};
+
 export default (kire: Kire<any>) => {
     kire.existVar('__kire_stack', (api) => {
         api.prologue(`${api.editable ? 'let' : 'const'} __kire_stack = new this.NullProtoObj;`);
@@ -27,13 +37,13 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("def");
+            const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
+            const nameCode = JSON.stringify(name);
             api.write(`{ const _origRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                __kire_defines['${name}'] = $kire_response;
+                __kire_defines[${nameCode}] = $kire_response;
                 $kire_response = _origRes${id};
             }`);
 		},
@@ -44,9 +54,9 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: `auto`,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-            api.write(`$kire_response += "<!-- KIRE:defined(${name}) -->";`);
+            const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
+            const nameCode = JSON.stringify(name);
+            api.write(`$kire_response += "<!-- KIRE:defined(" + ${nameCode} + ") -->";`);
             if (api.node.children && api.node.children.length > 0) {
                 api.renderChildren();
             }
@@ -59,15 +69,16 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: false,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
-			api.write(`$kire_response += "<!-- KIRE:stack(${name}) -->";`);
+            const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
+            const nameCode = JSON.stringify(name);
+            const placeholderCode = JSON.stringify(`<!-- KIRE:stack(${name}) -->`);
+			api.write(`$kire_response += ${placeholderCode};`);
             
             const phId = api.uid('ph');
             api.epilogue(`
-                if (typeof __kire_stack !== 'undefined' && __kire_stack['${name}']) {
-                    const _placeholder${phId} = "<!-- KIRE:stack(${name}) -->";
-                    $kire_response = $kire_response.split(_placeholder${phId}).join(__kire_stack['${name}'].join("\\n"));
+                if (typeof __kire_stack !== 'undefined' && __kire_stack[${nameCode}]) {
+                    const _placeholder${phId} = ${placeholderCode};
+                    $kire_response = $kire_response.split(_placeholder${phId}).join(__kire_stack[${nameCode}].join("\\n"));
                 }
             `);
 		},
@@ -78,15 +89,15 @@ export default (kire: Kire<any>) => {
 		params: [`name:string`],
 		children: true,
 		onCall: (api) => {
-			let name = api.getArgument(0) || api.getAttribute("name");
-            if (typeof name === "string" && QUOTED_STR_CHECK_REGEX.test(name)) name = name.slice(1, -1);
             const id = api.uid("push");
+            const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
+            const nameCode = JSON.stringify(name);
 			api.write(`{
-                if (!__kire_stack['${name}']) __kire_stack['${name}'] = [];
+                if (!__kire_stack[${nameCode}]) __kire_stack[${nameCode}] = [];
                 const __kire_${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`
-                __kire_stack['${name}'].push($kire_response);
+                __kire_stack[${nameCode}].push($kire_response);
                 $kire_response = __kire_${id};
             }`);
 		},

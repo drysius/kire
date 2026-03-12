@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class InfinityScroll extends Component {
 	public items: string[] = [];
@@ -31,3 +31,4 @@ export default class InfinityScroll extends Component {
 		return this.view("components.infinity-scroll");
 	}
 }
+

@@ -1,4 +1,4 @@
-import { Component } from "@kirejs/wire";
+import { Component } from "../lib/wire";
 
 export default class TextareaTest extends Component {
 	public message = "";
@@ -13,4 +13,5 @@ export default class TextareaTest extends Component {
 		return this.view("components.textarea-test");
 	}
 }
+
 

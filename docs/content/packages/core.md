@@ -1,29 +1,58 @@
+﻿---
+route: "/docs/packages/core"
+title: "kire (core)"
+description: "Core package of the Kire engine: compilation, rendering, namespaces, cache, and plugin extension points."
+tags: ["core", "engine", "compile", "render", "plugin"]
+section: "Packages"
+order: 1
+---
+
 # kire (core)
 
-`kire` is the base template engine package.
+`kire` is the engine package. It handles template parsing, compilation, and rendering.
 
-## Purpose
+## What It Provides
 
-- Compile templates to JavaScript functions.
-- Render views with locals and globals.
-- Provide extensibility via directives and elements.
+- template compile/runtime pipeline
+- file and namespace resolution
+- globals and locals execution context
+- plugin system for directives/elements/helpers
+- cache-aware rendering behavior
 
-## Main APIs
+## Core API Surface
 
-- `new Kire(options)`
-- `kire.render(template, locals)`
-- `kire.view("namespace.file", locals)`
-- `kire.namespace(name, rootPath)`
-- `kire.plugin(plugin)`
-- `kire.fork()`
+```ts
+import { Kire } from "kire";
 
-## Typical Use
+const kire = new Kire({ root: "./views" });
 
-Use this package directly in backend apps, then add optional plugins (`wire`, `markdown`, `utils`, etc.) based on your needs.
+kire.namespace("pages", "./views/pages");
+kire.$global("appName", "KireApp");
 
-## Best Fit
+const html = await kire.view("pages.home", { user });
+```
 
-- SSR apps
-- email template systems
-- backend HTML rendering
-- hybrid server-driven interfaces
+## Typical Use Cases
+
+- SSR apps with custom HTML templates
+- framework adapters that need a deterministic view layer
+- plugin-driven template language extensions
+
+## Extension Points
+
+- `kire.directive(...)`
+- custom elements registration via plugin API
+- plugin lifecycle hooks
+- global helper injection (`$global`)
+
+## Performance Notes
+
+- cache compiled templates in production
+- avoid expensive calculations inside templates
+- pass precomputed values from services/controllers
+
+## Works Well With
+
+- `@kirejs/wire` for interactive server-driven components
+- `@kirejs/markdown` for content pages
+- `@kirejs/assets` for managed script/style output

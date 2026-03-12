@@ -29,27 +29,31 @@
             </li>
         </ul>
 
-        <ul class="menu mt-2 w-full gap-1 p-0">
-            <li class="menu-title w-full">Guides & Reference</li>
-            @for(item of docsNav)
-                <li class="w-full">
-                    <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
-                        <span>{{ item.title }}</span>
-                    </a>
-                </li>
-            @end
-        </ul>
+        @for(group of docsNavGroups)
+            <ul class="menu mt-2 w-full gap-1 p-0">
+                <li class="menu-title w-full">{{ group.title }}</li>
+                @for(item of group.items)
+                    <li class="w-full">
+                        <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
+                            <span>{{ item.title }}</span>
+                        </a>
+                    </li>
+                @end
+            </ul>
+        @end
 
-        <ul class="menu mt-2 w-full gap-1 p-0">
-            <li class="menu-title w-full">Package Docs</li>
-            @for(item of packageNav)
-                <li class="w-full">
-                    <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
-                        <span>{{ item.title }}</span>
-                    </a>
-                </li>
-            @end
-        </ul>
+        @for(group of packageNavGroups)
+            <ul class="menu mt-2 w-full gap-1 p-0">
+                <li class="menu-title w-full">{{ group.title }}</li>
+                @for(item of group.items)
+                    <li class="w-full">
+                        <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
+                            <span>{{ item.title }}</span>
+                        </a>
+                    </li>
+                @end
+            </ul>
+        @end
 
         <ul class="menu mt-2 w-full gap-1 p-0">
             <li class="menu-title w-full">KireWire Playground</li>
