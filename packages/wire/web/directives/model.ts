@@ -12,6 +12,11 @@ function isTextLikeModelElement(el: ModelElement): boolean {
     return true;
 }
 
+function isElementActive(el: ModelElement): boolean {
+    if (typeof document === "undefined") return false;
+    return document.activeElement === el;
+}
+
 function getEventType(el: ModelElement, modifiers: string[]): string {
     if ((modifiers.includes("blur") || modifiers.includes("lazy")) && isTextLikeModelElement(el)) {
         return "blur";
@@ -152,6 +157,10 @@ Kirewire.directive("model", ({ el, expression, modifiers, cleanup, wire, compone
         if (data?.id !== componentId) return;
         const next = readStateByPath(data?.state, expression);
         if (next === undefined) return;
+
+        // Avoid clobbering in-progress typing/caret position on focused text fields.
+        if (isTextLikeModelElement(el) && isElementActive(el)) return;
+
         syncElementValue(el, next);
     });
     cleanup(off);

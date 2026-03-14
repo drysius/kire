@@ -2,6 +2,7 @@ import Alpine from 'alpinejs';
 import { Kirewire } from './kirewire';
 import { HttpClientAdapter } from './adapters/http';
 import { SocketClientAdapter } from './adapters/socket';
+import { FiveMClientAdapter } from './adapters/fivem';
 import './directives/click';
 import './directives/model';
 import './directives/poll';
@@ -24,8 +25,10 @@ import './adapters/http';
 window.Alpine = Alpine;
 (Kirewire as any).HttpClientAdapter = HttpClientAdapter;
 (Kirewire as any).SocketClientAdapter = SocketClientAdapter;
+(Kirewire as any).FiveMClientAdapter = FiveMClientAdapter;
 
 export { Kirewire } from './kirewire';
 export { HttpClientAdapter } from './adapters/http';
 export { SocketClientAdapter } from './adapters/socket';
+export { FiveMClientAdapter } from './adapters/fivem';
 export { bus } from './utils/message-bus';

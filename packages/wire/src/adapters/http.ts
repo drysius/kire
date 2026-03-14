@@ -26,6 +26,8 @@ type HttpAdapterOptions = {
     maxUploadBytes?: number;
 };
 
+const BLOCKED_SET_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
+
 function normalizeRoute(route: string): string {
     const value = String(route || "/_wire").trim();
     if (!value) return "/_wire";
@@ -410,6 +412,9 @@ export class HttpAdapter extends Adapter {
         if (name === "$set") {
             const property = String(callParams[0] ?? "").trim();
             const value = callParams[1];
+            if (!this.isWritableSetPath(instance, property)) {
+                throw new Error(`Property "${property}" is not writable.`);
+            }
             instance.$set(property, value);
             await this.runUpdatedHooks(instance, property, value);
             return;
@@ -436,6 +441,39 @@ export class HttpAdapter extends Adapter {
         }
 
         await instance[name](...callParams);
+    }
+
+    private isWritableSetPath(instance: any, property: string): boolean {
+        const normalized = String(property || "").trim();
+        if (!normalized) return false;
+
+        if (typeof instance?.$canSet === "function") {
+            try {
+                return !!instance.$canSet(normalized);
+            } catch {
+                return false;
+            }
+        }
+
+        const segments = normalized
+            .split(".")
+            .map((part) => part.trim())
+            .filter(Boolean);
+        if (segments.length === 0) return false;
+        for (let i = 0; i < segments.length; i++) {
+            if (BLOCKED_SET_PATH_SEGMENTS.has(segments[i]!)) return false;
+        }
+
+        const root = segments[0]!;
+        const first = root.charCodeAt(0);
+        if (first === 36 || first === 95) return false;
+
+        if (typeof instance?.getPublicState === "function") {
+            const state = instance.getPublicState();
+            return Object.prototype.hasOwnProperty.call(state, root);
+        }
+
+        return true;
     }
 
     private async runUpdatedHooks(instance: any, property: string, value: any) {

@@ -8,6 +8,7 @@ import {
 } from "./component";
 import { HttpAdapter } from "./adapters/http";
 import { SocketAdapter } from "./adapters/socket";
+import { FiveMAdapter } from "./adapters/fivem";
 import { FileStore } from "./features/file-store";
 import { WireFile, Rule } from "./features/file-upload";
 import { WireBroadcast, type WireBroadcastOptions } from "./features/wire-broadcast";
@@ -178,6 +179,7 @@ export {
     Component,
     HttpAdapter,
     SocketAdapter,
+    FiveMAdapter,
     FileStore,
     WireFile,
     Rule,
@@ -189,4 +191,4 @@ export {
     type WireCollectionMode,
     type WireCollectionPayload,
 };
-export default { Kirewire, Component, HttpAdapter, SocketAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule }
+export default { Kirewire, Component, HttpAdapter, SocketAdapter, FiveMAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule }

@@ -1,5 +1,27 @@
 import { Kirewire } from "../kirewire";
 
+function parseDurationToken(token: string): number | null {
+    const match = String(token || "").trim().toLowerCase().match(/^(\d+)(ms|s|m)?$/);
+    if (!match) return null;
+
+    const value = Number(match[1] || 0);
+    if (!Number.isFinite(value) || value < 0) return null;
+
+    const unit = match[2] || "ms";
+    if (unit === "s") return value * 1000;
+    if (unit === "m") return value * 60_000;
+    return value;
+}
+
+function parseFailsafeTimeout(modifiers: string[]): number {
+    const index = modifiers.indexOf("failsafe");
+    if (index === -1) return 30_000;
+
+    const parsed = parseDurationToken(modifiers[index + 1] || "");
+    if (parsed !== null) return parsed;
+    return 30_000;
+}
+
 function parseTargets(raw: string): string[] {
     return String(raw || "")
         .split(",")
@@ -27,6 +49,7 @@ Kirewire.directive("loading", ({ el, expression, modifiers, wire, cleanup }) => 
     const removeMode = modifiers.includes("remove");
     const classMode = modifiers.includes("class");
     const attrMode = modifiers.includes("attr");
+    const failsafeTimeoutMs = parseFailsafeTimeout(modifiers);
 
     const className = String(expression || "").trim() || "wire-loading";
     const attrName = String(expression || "").trim() || "disabled";
@@ -88,24 +111,40 @@ Kirewire.directive("loading", ({ el, expression, modifiers, wire, cleanup }) => 
         return false;
     };
 
-    let pending = 0;
+    const pendingTickets: Array<ReturnType<typeof setTimeout> | null> = [];
+
+    const clearOnePending = () => {
+        if (pendingTickets.length === 0) return;
+        const timer = pendingTickets.shift();
+        if (timer) clearTimeout(timer);
+        applyState(pendingTickets.length > 0);
+    };
 
     const unbindCall = wire.$on("component:call", (data) => {
         if (!matchesCall(data)) return;
-        pending += 1;
-        applyState(pending > 0);
+
+        const timer = failsafeTimeoutMs > 0
+            ? setTimeout(() => {
+                const index = pendingTickets.indexOf(timer);
+                if (index === -1) return;
+                pendingTickets.splice(index, 1);
+                applyState(pendingTickets.length > 0);
+            }, failsafeTimeoutMs)
+            : null;
+
+        pendingTickets.push(timer);
+        applyState(pendingTickets.length > 0);
     });
 
     const onEnd = (data: any) => {
         if (!data || data.id !== componentId) return;
-        if (pending <= 0) return;
+        if (pendingTickets.length === 0) return;
 
         // Prefer exact match using method metadata. Fallback keeps compatibility
         // with legacy "component:finished" events that only include component id.
         const hasMethodMeta = typeof data?.method === "string" || Array.isArray(data?.params);
         if (!hasMethodMeta || matchesCall(data)) {
-            pending = Math.max(0, pending - 1);
-            applyState(pending > 0);
+            clearOnePending();
         }
     };
 
@@ -115,4 +154,10 @@ Kirewire.directive("loading", ({ el, expression, modifiers, wire, cleanup }) => 
     cleanup(unbindCall);
     cleanup(unbindFinished);
     cleanup(unbindError);
+    cleanup(() => {
+        while (pendingTickets.length > 0) {
+            const timer = pendingTickets.shift();
+            if (timer) clearTimeout(timer);
+        }
+    });
 });

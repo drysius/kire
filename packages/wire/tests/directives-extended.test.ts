@@ -216,6 +216,38 @@ describe("wire directives: extended behavior", () => {
         cleanupFns.forEach((fn) => fn());
     });
 
+    test("wire:show uses strict equality semantics for == and !=", () => {
+        const block = document.createElement("div");
+        document.body.appendChild(block);
+
+        const directive = Kirewire.getDirective("show")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire, emit } = createFakeWire({
+            initialState: { count: 0 },
+        });
+
+        directive({
+            el: block,
+            value: "show",
+            expression: "count == ''",
+            modifiers: [],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        expect(block.style.display).toBe("none");
+
+        emit("component:update", {
+            id: "cmp-1",
+            state: { count: "" },
+        });
+        expect(block.style.display).not.toBe("none");
+
+        cleanupFns.forEach((fn) => fn());
+    });
+
     test("wire:show fails closed for unsupported expressions", () => {
         const block = document.createElement("div");
         document.body.appendChild(block);
@@ -345,6 +377,51 @@ describe("wire directives: extended behavior", () => {
         cleanupFns.forEach((fn) => fn());
     });
 
+    test("wire:intersect disconnects safely when element is removed from DOM", async () => {
+        const target = document.createElement("div");
+        document.body.appendChild(target);
+
+        const observers: Array<{ callback: (entries: any[]) => void; disconnected: boolean }> = [];
+        (global as any).IntersectionObserver = class MockIntersectionObserver {
+            private index: number;
+            constructor(callback: (entries: any[]) => void) {
+                observers.push({ callback, disconnected: false });
+                this.index = observers.length - 1;
+            }
+            observe() {}
+            disconnect() {
+                observers[this.index]!.disconnected = true;
+            }
+        };
+
+        const directive = Kirewire.getDirective("intersect")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire, calls } = createFakeWire();
+
+        directive({
+            el: target,
+            value: "intersect",
+            expression: "loadMore",
+            modifiers: [],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        target.remove();
+        observers[0]!.callback([{
+            isIntersecting: true,
+            intersectionRect: { top: 0, bottom: 10, left: 0, right: 10 },
+            rootBounds: { top: 0, bottom: 100, left: 0, right: 100 },
+        }]);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        expect(calls).toHaveLength(0);
+        expect(observers[0]!.disconnected).toBe(true);
+        cleanupFns.forEach((fn) => fn());
+    });
+
     test("wire:poll.visible respects visibility and prevents concurrent calls", async () => {
         const target = document.createElement("div");
         document.body.appendChild(target);
@@ -400,6 +477,45 @@ describe("wire directives: extended behavior", () => {
         expect(calls.length).toBe(callCountBeforeHidden);
 
         cleanupFns.forEach((fn) => fn());
+    });
+
+    test("wire:poll stops interval when element leaves DOM", async () => {
+        const target = document.createElement("div");
+        document.body.appendChild(target);
+
+        const originalClearInterval = globalThis.clearInterval;
+        let clearCount = 0;
+        (globalThis as any).clearInterval = ((id: any) => {
+            clearCount += 1;
+            return originalClearInterval(id);
+        }) as any;
+
+        const directive = Kirewire.getDirective("poll")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire();
+
+        try {
+            directive({
+                el: target,
+                value: "poll",
+                expression: "$refresh",
+                modifiers: ["15ms"],
+                cleanup: (fn) => cleanupFns.push(fn),
+                wire: wire as any,
+                adapter: {} as any,
+                componentId: "cmp-1",
+            });
+
+            await new Promise((resolve) => setTimeout(resolve, 25));
+            expect(clearCount).toBe(0);
+
+            target.remove();
+            await new Promise((resolve) => setTimeout(resolve, 40));
+            expect(clearCount).toBeGreaterThan(0);
+        } finally {
+            (globalThis as any).clearInterval = originalClearInterval;
+            cleanupFns.forEach((fn) => fn());
+        }
     });
 
     test("wire:file.preview renders media previews and revokes object URLs", () => {

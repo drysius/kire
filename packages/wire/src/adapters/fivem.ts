@@ -18,11 +18,28 @@ type ActionPayload = {
     requestId?: string;
 };
 
-type SocketAdapterOptions = {
+type FiveMIdentity = {
+    userId: string;
+    sessionId: string;
+};
+
+type FiveMPushPacket = {
+    userId: string;
+    sourceId?: string;
+    channel: string;
+    event: string;
+    data: any;
+};
+
+type FiveMAdapterOptions = {
     route?: string;
     fileStore?: FileStore;
     tempDir?: string;
     maxUploadBytes?: number;
+    inboundEvent?: string;
+    outboundEvent?: string;
+    resolveIdentity?: (sourceId: string) => FiveMIdentity | null | undefined;
+    emit?: (packet: FiveMPushPacket) => void;
 };
 
 const BLOCKED_SET_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
@@ -34,11 +51,16 @@ function normalizeRoute(route: string): string {
     return withSlash.replace(/\/+$/, "");
 }
 
-export class SocketAdapter extends Adapter {
+export class FiveMAdapter extends Adapter {
     private route: string;
     private fallbackHttp: HttpAdapter;
+    private inboundEvent: string;
+    private outboundEvent: string;
+    private resolveIdentity?: (sourceId: string) => FiveMIdentity | null | undefined;
+    private emitToClient?: (packet: FiveMPushPacket) => void;
+    private lastSourceByUser = new Map<string, string>();
 
-    constructor(options: SocketAdapterOptions = {}) {
+    constructor(options: FiveMAdapterOptions = {}) {
         super();
         this.route = normalizeRoute(options.route || "/_wire");
         this.fallbackHttp = new HttpAdapter({
@@ -47,15 +69,21 @@ export class SocketAdapter extends Adapter {
             tempDir: options.tempDir,
             maxUploadBytes: options.maxUploadBytes,
         });
+        this.inboundEvent = String(options.inboundEvent || "kirewire:call");
+        this.outboundEvent = String(options.outboundEvent || "kirewire:push");
+        this.resolveIdentity = options.resolveIdentity;
+        this.emitToClient = options.emit;
     }
 
     setup() {
         // Keep HTTP endpoints available (/kirewire.js, /upload, /session) while
-        // socket transport handles action calls and pushes.
+        // FiveM transport handles action calls and pushes over game events.
         this.fallbackHttp.install(this.wire, this.kire);
 
-        console.log(`[Kirewire] SocketAdapter initialized on ${this.route}.`);
-        this.wire.reference("wire:socket-url", () => this.getSocketUrl());
+        console.log(`[Kirewire] FiveMAdapter initialized on ${this.route}.`);
+        this.wire.reference("wire:fivem:inbound-event", () => this.inboundEvent);
+        this.wire.reference("wire:fivem:outbound-event", () => this.outboundEvent);
+        this.wire.reference("wire:fivem:route", () => this.route);
 
         this.wire.on("component:update", (data) => {
             this.pushToClient(data.userId, "update", data);
@@ -70,23 +98,43 @@ export class SocketAdapter extends Adapter {
         return `${this.route}/upload`;
     }
 
-    public getSocketUrl() {
-        return `${this.route}/socket`;
+    public getInboundEventName() {
+        return this.inboundEvent;
+    }
+
+    public getOutboundEventName() {
+        return this.outboundEvent;
     }
 
     public async handleRequest(req: HandleRequestInput, userId: string, sessionId: string) {
         return this.fallbackHttp.handleRequest(req, userId, sessionId);
     }
 
+    public async onNetMessage(sourceId: string | number, message: any) {
+        const source = String(sourceId ?? "").trim();
+        const identity = this.resolveIdentity?.(source) || {
+            userId: source || "guest",
+            sessionId: source || "guest",
+        };
+
+        return this.onMessage(source, identity.userId, identity.sessionId, message);
+    }
+
     /**
-     * Called when a socket message arrives from a client.
+     * Called when a FiveM message arrives from a client script.
      */
-    public async onMessage(_socketId: string, userId: string, _sessionId: string, message: any) {
+    public async onMessage(sourceId: string, userId: string, _sessionId: string, message: any) {
+        const source = String(sourceId || "").trim();
+        const wireUserId = String(userId || "guest");
+        if (source) {
+            this.lastSourceByUser.set(wireUserId, source);
+        }
+
         const event = String(message?.event || "").trim();
         const payload = message?.payload || {};
 
         if (event === "ping") {
-            this.pushToClient(userId, "pong", { at: Date.now() });
+            this.pushToClient(wireUserId, "pong", { at: Date.now() }, source);
             return;
         }
 
@@ -101,7 +149,7 @@ export class SocketAdapter extends Adapter {
             const actionRequestId = String(action?.requestId || payload?.requestId || "");
 
             try {
-                const result = await this.executeAction(userId, pageId, action);
+                const result = await this.executeAction(wireUserId, pageId, action);
                 results.push({
                     requestId: actionRequestId,
                     ...result,
@@ -110,38 +158,38 @@ export class SocketAdapter extends Adapter {
                 results.push({
                     requestId: actionRequestId,
                     id: String(action?.id || ""),
-                    error: String(error?.message || "Unknown socket call error"),
+                    error: String(error?.message || "Unknown FiveM call error"),
                 });
             }
         }
 
         if (Array.isArray(payload?.batch)) {
-            this.pushToClient(userId, "response", {
+            this.pushToClient(wireUserId, "response", {
                 requestId: String(payload?.requestId || ""),
                 results,
-            });
+            }, source);
             return;
         }
 
         const single = results[0] || {
             requestId: String(payload?.requestId || ""),
             id: String(actions[0]?.id || ""),
-            error: "Unknown socket call error",
+            error: "Unknown FiveM call error",
         };
 
         if (single.error) {
-            this.pushToClient(userId, "response", {
+            this.pushToClient(wireUserId, "response", {
                 requestId: single.requestId,
                 id: single.id,
                 error: single.error,
-            });
+            }, source);
             return;
         }
 
-        this.pushToClient(userId, "response", {
+        this.pushToClient(wireUserId, "response", {
             requestId: single.requestId,
             result: single,
-        });
+        }, source);
     }
 
     private async executeAction(userId: string, pageId: string, action: ActionPayload) {
@@ -297,9 +345,26 @@ export class SocketAdapter extends Adapter {
         return { html, state, effects: instance.__effects, revision: nextRevision };
     }
 
-    private pushToClient(userId: string, event: string, data: any) {
-        // Implementation provided by the user's socket server (e.g. io.to(userId).emit(...))
-        this.wire.emitSync("socket:push", { userId, event, data });
+    private pushToClient(userId: string, event: string, data: any, sourceId?: string) {
+        const resolvedUserId = String(userId || "guest");
+        const targetSource = String(sourceId || this.lastSourceByUser.get(resolvedUserId) || "").trim();
+        const packet: FiveMPushPacket = {
+            userId: resolvedUserId,
+            sourceId: targetSource || undefined,
+            channel: this.outboundEvent,
+            event: String(event || ""),
+            data,
+        };
+
+        if (typeof this.emitToClient === "function") {
+            try {
+                this.emitToClient(packet);
+            } catch {
+                // Avoid breaking the transport because of host emit callback issues.
+            }
+        }
+
+        this.wire.emitSync("fivem:push", packet);
     }
 
     private disconnectSpecialProperties(instance: Record<string, any>) {
@@ -332,4 +397,3 @@ export class SocketAdapter extends Adapter {
         }
     }
 }
-

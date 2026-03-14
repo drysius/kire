@@ -14,6 +14,10 @@
     },
     "./client": {
       "import": "./dist/client/wire.js"
+    },
+    "./fivem-client": {
+      "import": "./dist/fivem-client.js",
+      "require": "./dist/fivem-client.js"
     }
   },
   "scripts": {

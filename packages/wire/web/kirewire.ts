@@ -253,7 +253,19 @@ export class KirewireClient extends EventController {
         if (this.adapter) return true;
 
         const transport = String(this.config.transport || "sse").toLowerCase();
-        if (transport === "socket") {
+        if (transport === "fivem") {
+            const FiveMCtor = (this as any).FiveMClientAdapter;
+            if (typeof FiveMCtor === "function") {
+                this.adapter = new FiveMCtor({
+                    url: this.config.url,
+                    uploadUrl: this.config.uploadUrl,
+                    pageId: this.pageId,
+                    transport: transport,
+                });
+            } else {
+                console.warn("[Kirewire] FiveM transport requested but FiveMClientAdapter is unavailable. Falling back to HTTP.");
+            }
+        } else if (transport === "socket") {
             const SocketCtor = (this as any).SocketClientAdapter;
             if (typeof SocketCtor === "function") {
                 this.adapter = new SocketCtor({
@@ -389,6 +401,33 @@ export class KirewireClient extends EventController {
         return actions;
     }
 
+    private restoreDeferred(componentId: string, actions: Array<{ method: string; params: any[] }>) {
+        if (!Array.isArray(actions) || actions.length === 0) return;
+
+        let updates = this.deferredUpdates.get(componentId);
+        if (!updates) {
+            updates = Object.create(null);
+            this.deferredUpdates.set(componentId, updates);
+        }
+
+        let restored = false;
+        for (let i = 0; i < actions.length; i++) {
+            const action = actions[i]!;
+            if (action.method !== "$set") continue;
+
+            const prop = String(action.params?.[0] || "").trim();
+            if (!prop) continue;
+            if (Object.prototype.hasOwnProperty.call(updates, prop)) continue;
+
+            updates[prop] = action.params?.[1];
+            restored = true;
+        }
+
+        if (restored) {
+            this.emitSync("component:dirty", { id: componentId, isDirty: true });
+        }
+    }
+
     public async call(el: HTMLElement, method: string, params: any[] = []) {
         if (this.navigationInFlight) return;
 
@@ -397,7 +436,8 @@ export class KirewireClient extends EventController {
         if (!this.ensureAdapter()) return;
 
         const normalized = this.normalizeAction(method, params);
-        const actions = [...this.consumeDeferred(componentId), normalized];
+        const deferredActions = this.consumeDeferred(componentId);
+        const actions = [...deferredActions, normalized];
         const callMeta = {
             id: componentId,
             method: normalized.method,
@@ -414,6 +454,8 @@ export class KirewireClient extends EventController {
             this.emitSync("component:finished", callMeta);
             return responses.length > 1 ? responses : result;
         } catch (error) {
+            this.restoreDeferred(componentId, deferredActions);
+
             const message = String((error as any)?.message || "");
             const name = String((error as any)?.name || "");
             if (

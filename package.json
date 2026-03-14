@@ -49,9 +49,12 @@
 	],
 	"dependencies": {
 		"@biomejs/biome": "^2.3.11",
+		"@citizenfx/http-wrapper": "^0.2.2",
 		"@playwright/test": "^1.58.2",
 		"express": "^5.2.1",
 		"handlebars": "^4.7.8",
+		"koa": "^2.16.3",
+		"koa-router": "^14.0.0",
 		"nunjucks": "^3.2.4",
 		"playwright-core": "^1.58.2",
 		"pug": "^3.0.3"

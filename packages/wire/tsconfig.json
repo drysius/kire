@@ -10,6 +10,6 @@
       "@kirejs/wire": ["src/index.ts"]
     }
   },
-  "include": ["src/**/*", "web/**/*"],
+  "include": ["src/**/*", "web/**/*", "fivem/**/*"],
   "exclude": ["node_modules", "dist"]
 }

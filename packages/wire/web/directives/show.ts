@@ -337,8 +337,8 @@ function evaluateAst(node: AstNode, state: Record<string, any>): any {
     const right = evaluateAst(node.right, state);
 
     switch (node.op) {
-        case "==": return left == right; // Intentional loose compare for template ergonomics
-        case "!=": return left != right;
+        case "==": return left === right;
+        case "!=": return left !== right;
         case "===": return left === right;
         case "!==": return left !== right;
         case ">": return left > right;

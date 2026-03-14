@@ -179,4 +179,15 @@ describe("Socket transport E2E", () => {
         await expect(clientWire.call(root, "_secret")).rejects.toThrow('Method "_secret" is not callable.');
         expect(component.count).toBe(0);
     });
+
+    test("blocks unauthorized $set over socket transport", async () => {
+        const { clientWire, root, component } = createHarness();
+
+        await expect(
+            clientWire.call(root, "$set", ["isAdmin", true]),
+        ).rejects.toThrow('Property "isAdmin" is not writable.');
+
+        expect(component.count).toBe(0);
+        expect((component as any).isAdmin).toBeUndefined();
+    });
 });

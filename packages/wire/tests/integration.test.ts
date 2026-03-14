@@ -222,6 +222,25 @@ describe("Kirewire Full Integration (Client + Server)", () => {
         expect(instance.updates).toContain("generic:search:john");
     });
 
+    test("HTTP adapter rejects $set on non-writable property", async () => {
+        serverWire.components.set("model-hook", ModelHookComponent as any);
+
+        const page = serverWire.sessions.getPage("user-1", "page-1");
+        const instance = new ModelHookComponent();
+        instance.$id = "m2";
+        instance.$kire = kire;
+        page.components.set("m2", instance);
+
+        document.body.innerHTML = `<div id="root" wire:id="m2" wire:state='{\"search\":\"\"}'></div>`;
+
+        await expect(
+            clientWire.call(document.getElementById("root")!, "$set", ["isAdmin", true]),
+        ).rejects.toBe('Property "isAdmin" is not writable.');
+
+        expect((instance as any).isAdmin).toBeUndefined();
+        expect(instance.search).toBe("");
+    });
+
     test("Broadcast components sync through SSE updates and not inline response html", async () => {
         const page = serverWire.sessions.getPage('user-1', 'page-1');
 

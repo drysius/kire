@@ -28,6 +28,10 @@ function runBunSync(args: string[], cwd: string) {
     }
 }
 
+function sleep(ms: number) {
+    return new Promise((resolvePromise) => setTimeout(resolvePromise, ms));
+}
+
 async function waitForServer(url: string, timeoutMs = 60_000) {
     const startedAt = Date.now();
     while (Date.now() - startedAt < timeoutMs) {
@@ -183,6 +187,106 @@ test.describe("Wire E2E (Playwright)", () => {
         await expect(page.getByRole("cell", { name: "User 37" })).toBeVisible();
     });
 
+    test("wire:model.live preserva input focado durante respostas atrasadas", async ({ page }) => {
+        let delayedSearchRequests = 0;
+
+        await page.route("**/_wire", async (route) => {
+            const request = route.request();
+            if (request.method() !== "POST") {
+                await route.continue();
+                return;
+            }
+
+            const rawPayload = request.postData();
+            if (!rawPayload) {
+                await route.continue();
+                return;
+            }
+
+            let parsedPayload: any;
+            try {
+                parsedPayload = JSON.parse(rawPayload);
+            } catch {
+                await route.continue();
+                return;
+            }
+
+            const batch = Array.isArray(parsedPayload?.batch) ? parsedPayload.batch : [];
+            const updatesSearch = batch.some((action: any) =>
+                action?.method === "$set" && action?.params?.[0] === "search",
+            );
+
+            if (!updatesSearch) {
+                await route.continue();
+                return;
+            }
+
+            delayedSearchRequests += 1;
+            if (delayedSearchRequests === 1) await sleep(300);
+            if (delayedSearchRequests === 2) await sleep(1200);
+            await route.continue();
+        });
+
+        await page.goto(`${baseUrl}/kirewire/users`);
+
+        const searchInput = page.getByPlaceholder("Search users...");
+
+        await searchInput.click();
+        await searchInput.type("3");
+        await page.waitForTimeout(80);
+        await searchInput.type("7");
+
+        await expect.poll(() => delayedSearchRequests >= 2).toBe(true);
+        await page.waitForTimeout(500);
+
+        await expect(searchInput).toBeFocused();
+        await expect(searchInput).toHaveValue("37");
+
+        await expect(page.getByText("user37@example.com")).toBeVisible();
+        await expect(searchInput).toHaveValue("37");
+    });
+
+    test("wire:loading exibe feedback durante busca com latencia", async ({ page }) => {
+        await page.route("**/_wire", async (route) => {
+            const request = route.request();
+            if (request.method() !== "POST") {
+                await route.continue();
+                return;
+            }
+
+            const rawPayload = request.postData();
+            if (!rawPayload) {
+                await route.continue();
+                return;
+            }
+
+            try {
+                const parsedPayload = JSON.parse(rawPayload);
+                const batch = Array.isArray(parsedPayload?.batch) ? parsedPayload.batch : [];
+                const updatesSearch = batch.some((action: any) =>
+                    action?.method === "$set" && action?.params?.[0] === "search",
+                );
+                if (updatesSearch) await sleep(700);
+            } catch {}
+
+            await route.continue();
+        });
+
+        await page.goto(`${baseUrl}/kirewire/search`);
+
+        const searchInput = page.getByPlaceholder("Search users...");
+        const searchField = page.locator(".relative", { has: searchInput });
+        const loadingSpinner = searchField.locator("span.loading.loading-spinner.loading-xs");
+
+        await expect(loadingSpinner).toBeHidden();
+
+        await searchInput.fill("user37@example.com");
+
+        await expect(loadingSpinner).toBeVisible();
+        await expect(page.getByRole("cell", { name: "User 37" })).toBeVisible();
+        await expect(loadingSpinner).toBeHidden();
+    });
+
     test("wire:navigate troca paginas com history e progresso", async ({ page }) => {
         await page.goto(`${baseUrl}/kirewire`);
 
@@ -215,6 +319,46 @@ test.describe("Wire E2E (Playwright)", () => {
         const sentinel = page.locator('div[wire\\:intersect="loadMore"]');
         await sentinel.scrollIntoViewIfNeeded();
         await expect(page.getByRole("heading", { name: /^Item 11$/ })).toBeVisible();
+    });
+
+    test("wire:poll interrompe chamadas apos remover componente do DOM", async ({ page }) => {
+        let pollCalls = 0;
+
+        page.on("request", (request) => {
+            if (!request.url().includes("/_wire") || request.method() !== "POST") return;
+
+            const rawPayload = request.postData();
+            if (!rawPayload) return;
+
+            try {
+                const parsedPayload = JSON.parse(rawPayload);
+                const batch = Array.isArray(parsedPayload?.batch) ? parsedPayload.batch : [];
+                const hasPollIncrement = batch.some((action: any) => action?.method === "increment");
+                if (hasPollIncrement) pollCalls += 1;
+            } catch {}
+        });
+
+        await page.goto(`${baseUrl}/kirewire/stress`);
+        await expect.poll(() => pollCalls >= 3).toBe(true);
+
+        const removed = await page.evaluate(() => {
+            const heading = Array.from(document.querySelectorAll("h2, h3")).find(
+                (node) => String(node.textContent || "").trim() === "Poll Stress",
+            );
+            const host = heading?.closest(".card") || heading?.parentElement;
+            if (!host) return false;
+            host.remove();
+            return !host.isConnected;
+        });
+
+        expect(removed).toBe(true);
+        await expect(page.getByRole("heading", { name: /^Poll Stress$/ })).toHaveCount(0);
+
+        const countAfterRemoval = pollCalls;
+        await page.waitForTimeout(1200);
+
+        // One extra in-flight request is acceptable, but polling must stop.
+        expect(pollCalls - countAfterRemoval).toBeLessThanOrEqual(1);
     });
 
     test("chat envia mensagem com username defer e limpa input", async ({ page }) => {

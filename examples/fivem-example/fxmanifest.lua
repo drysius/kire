@@ -1,15 +1,15 @@
 fx_version 'cerulean'
 game 'gta5'
 
-author 'Drylian'
+author 'Drysius'
 description 'KireWire FiveM Example'
 version '1.0.0'
 
 ui_page 'http://localhost:30120/fivem-example/'
 
-client_script 'build/fv-client.js'
+client_script 'client/focus-client.js'
+client_script 'client/fivem-client.js'
 
---Kirewire client script for production
---client_script 'node_modules/@kirejs/wire/dist/fv-client.js'
+-- client_script 'client/fv-client.js'
 
-server_script 'build/server.js'
+server_script 'server/server.js'

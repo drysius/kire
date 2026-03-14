@@ -1,5 +1,5 @@
 import { $ } from "bun";
-import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
@@ -8,6 +8,7 @@ import { join } from "node:path";
 const outDir = join(import.meta.dir, "dist/client");
 const esmDir = join(import.meta.dir, "dist/esm");
 const cjsDir = join(import.meta.dir, "dist/cjs");
+const distDir = join(import.meta.dir, "dist");
 if (!existsSync(outDir)) {
     mkdirSync(outDir, { recursive: true });
 }
@@ -16,6 +17,9 @@ if (!existsSync(esmDir)) {
 }
 if (!existsSync(cjsDir)) {
     mkdirSync(cjsDir, { recursive: true });
+}
+if (!existsSync(distDir)) {
+    mkdirSync(distDir, { recursive: true });
 }
 
 console.log("🚀 Building Wire Client (Web)...");
@@ -56,10 +60,19 @@ try {
         process.exit(1);
     }
 
+    const fivemClientFile = join(distDir, "fivem-client.js");
+    const fivemClient = await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
+    if (fivemClient.exitCode !== 0) {
+        console.error("❌ Wire FiveM client build failed!");
+        process.exit(1);
+    }
+    copyFileSync(fivemClientFile, join(distDir, "fv-client.js"));
+
     writeFileSync(join(esmDir, "package.json"), JSON.stringify({ type: "module" }));
     writeFileSync(join(cjsDir, "package.json"), JSON.stringify({ type: "commonjs" }));
 
     console.log("✅ Wire Server built successfully at dist/esm and dist/cjs");
+    console.log("✅ Wire FiveM client built at dist/fivem-client.js");
 } catch (error) {
     console.error("❌ Error during build:", error);
     process.exit(1);

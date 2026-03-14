@@ -50,10 +50,34 @@ Kirewire.directive('poll', ({ el, expression, modifiers, cleanup, wire }) => {
     let observer: IntersectionObserver | null = null;
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let throttledUntil = 0;
+    let timer: ReturnType<typeof setInterval> | null = null;
+
+    const stop = () => {
+        if (stopped) return;
+        stopped = true;
+        if (timer) {
+            clearInterval(timer);
+            timer = null;
+        }
+
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+
+        observer?.disconnect();
+        observer = null;
+
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener("online", onOnline);
+    };
 
     const canRun = () => {
         if (stopped) return false;
-        if (!document.body.contains(el)) return false;
+        if (!document.body || !document.body.contains(el)) {
+            stop();
+            return false;
+        }
         if (visibleOnly && !isVisible) return false;
         if (typeof document !== "undefined" && document.hidden) return false;
         if (typeof navigator !== "undefined" && navigator.onLine === false) return false;
@@ -120,26 +144,9 @@ Kirewire.directive('poll', ({ el, expression, modifiers, cleanup, wire }) => {
     document.addEventListener("visibilitychange", onVisibilityChange);
     window.addEventListener("online", onOnline);
 
-    const timer = setInterval(() => {
+    timer = setInterval(() => {
         schedule();
     }, interval);
-
-    const stop = () => {
-        if (stopped) return;
-        stopped = true;
-        clearInterval(timer);
-
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-            debounceTimer = null;
-        }
-
-        observer?.disconnect();
-        observer = null;
-
-        document.removeEventListener("visibilitychange", onVisibilityChange);
-        window.removeEventListener("online", onOnline);
-    };
 
     cleanup(stop);
 });

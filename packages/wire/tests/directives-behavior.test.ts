@@ -6,6 +6,7 @@ import "../web/directives/loading";
 
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
     url: "http://localhost/",
+    pretendToBeVisual: true,
 });
 
 (global as any).window = dom.window;
@@ -119,6 +120,45 @@ describe("wire model/loading directives", () => {
         expect(calls).toHaveLength(1);
         expect(calls[0]!.params).toEqual(["search", "ab"]);
 
+        cleanupFns.forEach((fn) => fn());
+    });
+
+    test("wire:model does not overwrite focused text input with stale server state", () => {
+        const input = document.createElement("input");
+        input.setAttribute("wire:model", "name");
+        document.body.appendChild(input);
+
+        const directive = Kirewire.getDirective("model")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire();
+
+        directive({
+            el: input,
+            value: "model",
+            expression: "name",
+            modifiers: [],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        input.focus();
+        input.value = "new-local-value";
+        (wire as any).emit("component:update", {
+            id: "cmp-1",
+            state: { name: "old-server-value" },
+        });
+
+        expect(input.value).toBe("new-local-value");
+
+        input.blur();
+        (wire as any).emit("component:update", {
+            id: "cmp-1",
+            state: { name: "fresh-server-value" },
+        });
+
+        expect(input.value).toBe("fresh-server-value");
         cleanupFns.forEach((fn) => fn());
     });
 
@@ -255,6 +295,36 @@ describe("wire model/loading directives", () => {
         expect(indicator.style.display).not.toBe("none");
 
         (wire as any).emit("component:finished", { id: "cmp-1", method: "save", params: [] });
+        expect(indicator.style.display).toBe("none");
+
+        cleanupFns.forEach((fn) => fn());
+    });
+
+    test("wire:loading releases UI via failsafe timeout when request lifecycle gets stuck", async () => {
+        const indicator = document.createElement("span");
+        indicator.setAttribute("wire:loading.failsafe.35ms", "");
+        indicator.setAttribute("wire:target", "save");
+        document.body.appendChild(indicator);
+
+        const directive = Kirewire.getDirective("loading")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire();
+
+        directive({
+            el: indicator,
+            value: "loading",
+            expression: "",
+            modifiers: ["failsafe", "35ms"],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        (wire as any).emit("component:call", { id: "cmp-1", method: "save", params: [] });
+        expect(indicator.style.display).not.toBe("none");
+
+        await new Promise((resolve) => setTimeout(resolve, 60));
         expect(indicator.style.display).toBe("none");
 
         cleanupFns.forEach((fn) => fn());

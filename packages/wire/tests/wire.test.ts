@@ -114,6 +114,74 @@ describe("Kirewire Kernel", () => {
         offUpdate();
     });
 
+    test("$set blocks unknown writable roots by default", () => {
+        class SecureComponent extends Component {
+            public count = 0;
+            render() {
+                return "" as any;
+            }
+        }
+
+        const instance = new SecureComponent();
+        expect(() => instance.$set("count", 2)).not.toThrow();
+        expect(instance.count).toBe(2);
+
+        expect(() => instance.$set("isAdmin", true)).toThrow(
+            'Property "isAdmin" is not writable.',
+        );
+        expect((instance as any).isAdmin).toBeUndefined();
+    });
+
+    test("$set blocks prototype pollution paths", () => {
+        class SecureComponent extends Component {
+            public profile: Record<string, any> = {};
+            render() {
+                return "" as any;
+            }
+        }
+
+        const instance = new SecureComponent();
+        expect(() => instance.$set("__proto__.polluted", "x")).toThrow();
+        expect(() => instance.$set("profile.__proto__.polluted", "x")).toThrow();
+        expect(({} as any).polluted).toBeUndefined();
+    });
+
+    test("$set allows explicit fillable paths", () => {
+        class FillableComponent extends Component {
+            public profile: Record<string, any> = {};
+            public $fillable = ["profile.name", "flags.*"];
+            render() {
+                return "" as any;
+            }
+        }
+
+        const instance = new FillableComponent() as any;
+        expect(() => instance.$set("profile.name", "Drysius")).not.toThrow();
+        expect(instance.profile.name).toBe("Drysius");
+
+        expect(() => instance.$set("flags.beta", true)).not.toThrow();
+        expect(instance.flags.beta).toBe(true);
+
+        expect(() => instance.$set("isAdmin", true)).toThrow(
+            'Property "isAdmin" is not writable.',
+        );
+    });
+
+    test("$canSet mirrors writable property checks", () => {
+        class SecureComponent extends Component {
+            public profile: Record<string, any> = {};
+            public $fillable = ["profile.name"];
+            render() {
+                return "" as any;
+            }
+        }
+
+        const instance = new SecureComponent() as any;
+        expect(instance.$canSet("profile.name")).toBe(true);
+        expect(instance.$canSet("profile.role")).toBe(false);
+        expect(instance.$canSet("__proto__.polluted")).toBe(false);
+    });
+
     test("should use UUID ids for component/session/file resources", () => {
         const wire = new Kirewire({ secret: "id-secret" });
 

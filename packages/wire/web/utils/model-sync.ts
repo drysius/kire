@@ -1,5 +1,19 @@
 type ModelElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
 
+function isTextLikeElement(el: ModelElement): boolean {
+    if (el instanceof HTMLTextAreaElement) return true;
+    if (!(el instanceof HTMLInputElement)) return false;
+
+    const type = String(el.type || "text").toLowerCase();
+    if (type === "checkbox" || type === "radio" || type === "file") return false;
+    return true;
+}
+
+function isElementActive(el: ModelElement): boolean {
+    if (typeof document === "undefined") return false;
+    return document.activeElement === el;
+}
+
 function getStateValue(state: any, expression: string): any {
     if (!expression) return undefined;
 
@@ -24,6 +38,11 @@ function getModelExpression(el: ModelElement): string | null {
 }
 
 function setModelElementValue(el: ModelElement, value: any) {
+    if (isTextLikeElement(el) && isElementActive(el)) {
+        // Preserve in-progress typing. The latest state will sync after blur/unfocus.
+        return;
+    }
+
     if (el instanceof HTMLInputElement) {
         if (el.type === "file") return;
 
@@ -82,4 +101,3 @@ export function syncModelElements(root: HTMLElement, state: Record<string, any>)
         setModelElementValue(el, nextValue);
     }
 }
-

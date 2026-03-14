@@ -65,8 +65,28 @@ Kirewire.directive("intersect", ({ el, expression, modifiers, cleanup, wire }) =
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
     let throttledUntil = 0;
 
+    const cancel = () => {
+        if (cancelled) return;
+        cancelled = true;
+        if (debounceTimer) {
+            clearTimeout(debounceTimer);
+            debounceTimer = null;
+        }
+        observer?.disconnect();
+        observer = null;
+    };
+
+    const ensureConnected = () => {
+        if (cancelled) return false;
+        if (!document.body || !document.body.contains(el)) {
+            cancel();
+            return false;
+        }
+        return true;
+    };
+
     const trigger = async () => {
-        if (cancelled || inFlight) return;
+        if (!ensureConnected() || inFlight) return;
         inFlight = true;
         try {
             await wire.call(el, action);
@@ -77,7 +97,7 @@ Kirewire.directive("intersect", ({ el, expression, modifiers, cleanup, wire }) =
     };
 
     const scheduleTrigger = () => {
-        if (cancelled) return;
+        if (!ensureConnected()) return;
 
         const now = Date.now();
         if (throttleMs > 0) {
@@ -98,6 +118,8 @@ Kirewire.directive("intersect", ({ el, expression, modifiers, cleanup, wire }) =
     };
 
     observer = new IntersectionObserver((entries) => {
+        if (!ensureConnected()) return;
+
         for (let i = 0; i < entries.length; i++) {
             const entry = entries[i];
             if (!entry?.isIntersecting) continue;
@@ -111,12 +133,5 @@ Kirewire.directive("intersect", ({ el, expression, modifiers, cleanup, wire }) =
     });
 
     observer.observe(el);
-    cleanup(() => {
-        cancelled = true;
-        if (debounceTimer) {
-            clearTimeout(debounceTimer);
-            debounceTimer = null;
-        }
-        observer?.disconnect();
-    });
+    cleanup(cancel);
 });

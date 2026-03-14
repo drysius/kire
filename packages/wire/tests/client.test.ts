@@ -120,5 +120,24 @@ describe("Kirewire Client Unit Logic", () => {
         const deferred = (wire as any).deferredUpdates.get("comp1");
         expect(deferred).toEqual({ count: 10 });
     });
+
+    test("wire.call restores deferred updates when transport call fails", async () => {
+        document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"text": ""}'></div>`;
+        const root = document.getElementById("root")!;
+
+        wire.defer("comp1", "text", "draft-value");
+        expect((wire as any).deferredUpdates.get("comp1")).toEqual({ text: "draft-value" });
+
+        wire.adapter = {
+            call: async () => {
+                throw new Error("transport failed");
+            },
+            defer: adapter.defer,
+            upload: adapter.upload,
+        };
+
+        await expect(wire.call(root, "send")).rejects.toThrow("transport failed");
+        expect((wire as any).deferredUpdates.get("comp1")).toEqual({ text: "draft-value" });
+    });
 });
 

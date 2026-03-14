@@ -30,6 +30,8 @@ export type WireCollectionPayload = {
     position?: "append" | "prepend";
 };
 
+const BLOCKED_SET_PATH_SEGMENTS = new Set(["__proto__", "constructor", "prototype"]);
+
 /**
  * Base Component class for Kirewire.
  */
@@ -87,13 +89,18 @@ export abstract class Component {
      * Supports dot notation for nested properties.
      */
     public $set(property: string, value: any) {
-        if (!property.includes('.')) {
-            const current = (this as any)[property];
-            (this as any)[property] = this.normalizeIncomingValue(current, value);
+        const normalizedProperty = String(property || "").trim();
+        if (!this.isPropertyWritable(normalizedProperty)) {
+            throw new Error(`Property "${normalizedProperty}" is not writable.`);
+        }
+
+        if (!normalizedProperty.includes('.')) {
+            const current = (this as any)[normalizedProperty];
+            (this as any)[normalizedProperty] = this.normalizeIncomingValue(current, value);
             return;
         }
 
-        const parts = property.split('.');
+        const parts = normalizedProperty.split('.');
         let obj = this as any;
         for (let i = 0; i < parts.length - 1; i++) {
             const part = parts[i]!;
@@ -104,6 +111,14 @@ export abstract class Component {
         }
         const leaf = parts[parts.length - 1]!;
         obj[leaf] = this.normalizeIncomingValue(obj[leaf], value);
+    }
+
+    /**
+     * Adapter-level helper for validating incoming $set paths.
+     * Keeps authorization checks centralized in Component.
+     */
+    public $canSet(property: string): boolean {
+        return this.isPropertyWritable(property);
     }
 
     public validate(
@@ -423,6 +438,57 @@ export abstract class Component {
             return current;
         }
         return value;
+    }
+
+    protected isPropertyWritable(property: string): boolean {
+        const normalized = String(property || "").trim();
+        if (!normalized) return false;
+
+        const segments = normalized
+            .split(".")
+            .map((part) => part.trim())
+            .filter(Boolean);
+        if (segments.length === 0) return false;
+
+        for (let i = 0; i < segments.length; i++) {
+            if (BLOCKED_SET_PATH_SEGMENTS.has(segments[i]!)) return false;
+        }
+
+        const root = segments[0]!;
+        const first = root.charCodeAt(0);
+        if (first === 36 || first === 95) return false; // $ or _
+
+        const fillable = (this as any).$fillable;
+        if (Array.isArray(fillable) && fillable.length > 0) {
+            return this.matchesFillablePath(normalized, fillable);
+        }
+
+        const state = this.getPublicState();
+        return Object.prototype.hasOwnProperty.call(state, root);
+    }
+
+    private matchesFillablePath(property: string, fillable: any[]): boolean {
+        const normalizedProperty = String(property || "").trim();
+        if (!normalizedProperty) return false;
+
+        for (let i = 0; i < fillable.length; i++) {
+            const raw = String(fillable[i] || "").trim();
+            if (!raw) continue;
+
+            if (raw === "*" || raw === normalizedProperty) return true;
+
+            if (raw.endsWith(".*")) {
+                const base = raw.slice(0, -2);
+                if (normalizedProperty === base || normalizedProperty.startsWith(`${base}.`)) {
+                    return true;
+                }
+                continue;
+            }
+
+            if (normalizedProperty.startsWith(`${raw}.`)) return true;
+        }
+
+        return false;
     }
 
     protected unpackEvent<T = any>(event?: unknown): T | null {
