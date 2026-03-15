@@ -2,17 +2,87 @@ import type { Kire } from "../../kire";
 
 export default (kire: Kire) => {
     kire.directive({
+        name: `attr`,
+        params: [`name:string`, `value:any`],
+        onCall(api) {
+            const name = api.getArgument(0) ?? api.getAttribute("name");
+            const value = api.getArgument(1) ?? api.getAttribute("value");
+            api.write(`{
+                const $name = ${name};
+                const $value = ${value};
+                if ($name && $value !== false && $value !== null && $value !== undefined) {
+                    if ($value === true) $kire_response += " " + $name;
+                    else $kire_response += " " + $name + "=\\"" + $escape($value) + "\\"";
+                }
+            }`);
+        },
+    });
+
+    kire.directive({
+        name: `attrs`,
+        params: [`attributes:any`],
+        onCall(api) {
+            const attributes = api.getArgument(0) ?? api.getAttribute("attributes") ?? api.getAttribute("attrs");
+            api.write(`{
+                const $attrs = ${attributes};
+                const $append = ($name, $value) => {
+                    const $clean = String($name || "").trim();
+                    if (!$clean || $value === false || $value === null || $value === undefined) return;
+                    if ($value === true) $kire_response += " " + $clean;
+                    else $kire_response += " " + $clean + "=\\"" + $escape($value) + "\\"";
+                };
+                const $walk = ($value) => {
+                    if (!$value) return;
+                    if (typeof $value === "string") {
+                        $append($value, true);
+                        return;
+                    }
+                    if (Array.isArray($value)) {
+                        for (let $i = 0; $i < $value.length; $i++) $walk($value[$i]);
+                        return;
+                    }
+                    if (typeof $value === "object") {
+                        for (const [$name, $entry] of Object.entries($value)) {
+                            $append($name, $entry);
+                        }
+                    }
+                };
+                $walk($attrs);
+            }`);
+        },
+    });
+
+    kire.directive({
         name: `class`,
         params: [`classes:any`],
         onCall(api) {
             const classes = api.getArgument(0) ?? api.getAttribute("classes");
             api.write(`{
-                const $c = ${classes};
-                let $r = "";
-                if (Array.isArray($c)) $r = $c.filter(Boolean).join(" ");
-                else if (typeof $c === 'object' && $c !== null) $r = Object.entries($c).filter(([_, v]) => v).map(([k]) => k).join(" ");
-                else $r = String($c || "");
-                if ($r) $kire_response += " class=\\"" + $escape($r) + "\\"";
+                const $input = ${classes};
+                const $tokens = [];
+                const $push = ($value) => {
+                    if (!$value) return;
+                    if (typeof $value === "string") {
+                        const $trimmed = $value.trim();
+                        if ($trimmed) $tokens.push($trimmed);
+                        return;
+                    }
+                    if (Array.isArray($value)) {
+                        for (let $i = 0; $i < $value.length; $i++) $push($value[$i]);
+                        return;
+                    }
+                    if (typeof $value === "object") {
+                        for (const [$name, $enabled] of Object.entries($value)) {
+                            if ($enabled) $tokens.push($name);
+                        }
+                        return;
+                    }
+                    const $string = String($value || "").trim();
+                    if ($string) $tokens.push($string);
+                };
+                $push($input);
+                const $classValue = $tokens.join(" ").trim();
+                if ($classValue) $kire_response += " class=\\"" + $escape($classValue) + "\\"";
             }`);
         },
     });
@@ -33,7 +103,7 @@ export default (kire: Kire) => {
         },
     });
 
-    const booleanAttrs = ["checked", "selected", "disabled", "readonly"];
+    const booleanAttrs = ["checked", "selected", "disabled", "readonly", "required"];
     for (const attr of booleanAttrs) {
         kire.directive({
             name: attr,

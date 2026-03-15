@@ -61,13 +61,13 @@ export default (kire: Kire<any>) => {
         },
         onCall: (api) => {
             const rawPath = api.getArgument(0) || api.getAttribute("path");
-            const locals = api.getArgument(1) || api.getAttribute("locals") || "new NullProtoObj()";
+            const locals = api.getArgument(1) || api.getAttribute("locals") || "new this.NullProtoObj()";
             const id = api.uid("comp");
             const depId = api.depend(rawPath);
             const dep = api.getDependency(rawPath);
 
             api.write(`{
-                const $slots = new NullProtoObj();
+                const $slots = new this.NullProtoObj();
                 const _oldRes${id} = $kire_response; $kire_response = "";`);
             api.renderChildren();
             api.write(`

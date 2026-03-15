@@ -287,6 +287,10 @@ export interface Node {
     name?: string; 
     args?: any[]; 
     attributes?: Record<string, string>; 
+    attributeMeta?: Record<string, {
+        quoted: boolean;
+        quote?: '"' | "'";
+    }>;
     tagName?: string; 
     wildcard?: string; 
     children?: Node[]; 

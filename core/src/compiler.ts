@@ -79,6 +79,7 @@ export class Compiler {
         this.header.push(`$globals = Object.assign(Object.create(this.$globals), $globals);`);
         this.header.push(`let $kire_response = "";`);
         this.header.push(`const $escape = this.$escape;`);
+        this.header.push(`const NullProtoObj = this.NullProtoObj;`);
         const localsAlias = this.kire.$var_locals || "it";
 
         // Deep identifier collection (including dependencies)
@@ -130,11 +131,6 @@ export class Compiler {
                 if (triggered.has(nameStr)) continue;
 
                 for (const entry of entries) {
-                    if (entry.unique && this._isDependency) {
-                         triggered.add(nameStr);
-                         continue;
-                    }
-
                     let isUsed = activeIdentifiers.has(nameStr);
                     if (!isUsed && entry.name instanceof RegExp) {
                         for (const id of activeIdentifiers) {
@@ -405,7 +401,12 @@ export class Compiler {
                                 this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
                                 if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
                             }
-                            dirDef.onCall(this.createCompilerApi({ ...n, type: 'directive', name: key.slice(1), args: [val] }, dirDef));
+                            dirDef.onCall(this.createCompilerApi({
+                                ...n,
+                                type: 'directive',
+                                name: key.slice(1),
+                                args: this.parseDirectiveAttributeArgs(val),
+                            }, dirDef));
                         }
                     } else {
                         if (INTERPOLATION_START_REGEX.test(val)) {
@@ -537,5 +538,42 @@ export class Compiler {
             }
         };
         return api;
+    }
+
+    private parseDirectiveAttributeArgs(value: string): string[] {
+        if (!value) return [];
+
+        const args: string[] = [];
+        let current = "";
+        let depthParen = 0;
+        let depthBracket = 0;
+        let depthBrace = 0;
+        let inQuote: string | null = null;
+
+        for (let i = 0; i < value.length; i++) {
+            const char = value[i]!;
+
+            if (inQuote) {
+                if (char === inQuote && value[i - 1] !== "\\") inQuote = null;
+            } else {
+                if (char === '"' || char === "'" || char === "`") inQuote = char;
+                else if (char === "(") depthParen++;
+                else if (char === ")") depthParen--;
+                else if (char === "[") depthBracket++;
+                else if (char === "]") depthBracket--;
+                else if (char === "{") depthBrace++;
+                else if (char === "}") depthBrace--;
+                else if (char === "," && depthParen === 0 && depthBracket === 0 && depthBrace === 0) {
+                    if (current.trim()) args.push(current.trim());
+                    current = "";
+                    continue;
+                }
+            }
+
+            current += char;
+        }
+
+        if (current.trim()) args.push(current.trim());
+        return args;
     }
 }

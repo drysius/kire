@@ -29,6 +29,30 @@ describe("Kire Elements System (Pattern-based)", () => {
 		expect(result).toContain("<button>Click Me</button>");
 	});
 
+	it("should treat quoted x-* attributes as literal strings", async () => {
+		const kire = new Kire({ silent: true });
+		kire.$files[kire.resolvePath("alert")] = "<section><h1>{{ title }}</h1><p>{{ description }}</p></section>";
+
+		const result = await kire.render(
+			'<x-alert title="ChatAI" description="Configure AI providers by queue and context markdown." />',
+		);
+
+		expect(result).toContain("<h1>ChatAI</h1>");
+		expect(result).toContain("<p>Configure AI providers by queue and context markdown.</p>");
+	});
+
+	it("should allow dynamic x-* props via colon binding and explicit braces", async () => {
+		const kire = new Kire({ silent: true });
+		kire.$files[kire.resolvePath("badge")] = "<span>{{ label }}|{{ tone }}</span>";
+
+		const result = await kire.render(
+			'<x-badge :label="user.name" tone="{variant}" />',
+			{ user: { name: "Codex" }, variant: "info" },
+		);
+
+		expect(result).toContain("<span>Codex|info</span>");
+	});
+
 	it("should handle native kire:if element", async () => {
 		const kire = new Kire({ silent: true });
 		const template = `

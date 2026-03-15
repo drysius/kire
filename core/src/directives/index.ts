@@ -12,10 +12,6 @@ export const KireDirectives: KirePlugin = {
 	load(kire) {
         registerTypes(kire);
 
-        kire.existVar('NullProtoObj', (api) => {
-            api.prologue(`const NullProtoObj = this.NullProtoObj;`);
-        }, true);
-
 		defineDirectives(kire);
 		nativeDirectives(kire);
 		importDirectives(kire);

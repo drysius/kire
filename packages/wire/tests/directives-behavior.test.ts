@@ -58,6 +58,57 @@ describe("wire model/loading directives", () => {
         document.body.innerHTML = "";
     });
 
+    test("wire:start hydrates nested loading descendants inside a component tree", () => {
+        document.body.innerHTML = `
+            <div wire:id="cmp-1" wire:state='{}'>
+                <button wire:click="save" wire:target="save" wire:loading.attr="disabled">
+                    <span id="idle" wire:loading.remove wire:target="save">Save</span>
+                    <span id="busy" wire:loading wire:target="save">Loading</span>
+                </button>
+            </div>
+        `;
+
+        const fakeAlpine: any = {
+            started: false,
+            plugin() {},
+            magic() {},
+            addRootSelector() {},
+            skipDuringClone(fn: any) { return fn; },
+            interceptInit(fn: any) { this._init = fn; },
+            start() { this.started = true; },
+            morph() {},
+        };
+
+        (Kirewire as any).started = false;
+        if ((Kirewire as any).observer) {
+            (Kirewire as any).observer.disconnect();
+            (Kirewire as any).observer = null;
+        }
+        Kirewire.resetClientState();
+
+        Kirewire.start(fakeAlpine);
+
+        const idle = document.getElementById("idle") as HTMLElement;
+        const busy = document.getElementById("busy") as HTMLElement;
+
+        expect(idle.style.display).not.toBe("none");
+        expect(busy.style.display).toBe("none");
+
+        Kirewire.$emit("component:call", { id: "cmp-1", method: "save", params: [] });
+        expect(idle.style.display).toBe("none");
+        expect(busy.style.display).not.toBe("none");
+
+        Kirewire.$emit("component:finished", { id: "cmp-1", method: "save", params: [] });
+        expect(idle.style.display).not.toBe("none");
+        expect(busy.style.display).toBe("none");
+
+        (Kirewire as any).started = false;
+        if ((Kirewire as any).observer) {
+            (Kirewire as any).observer.disconnect();
+            (Kirewire as any).observer = null;
+        }
+    });
+
     test("wire:model.blur commits only on blur", () => {
         const input = document.createElement("input");
         input.setAttribute("wire:model.blur", "name");

@@ -239,13 +239,13 @@ export class Lexer {
         if (!isLetter && !this.kire.$elementsPattern.test(tagName)) return false;
 
         this.advance(match[0]!.length);
-        const attributes = this.parseAttributesState();
+        const { attrs: attributes, meta: attributeMeta } = this.parseAttributesState();
         let selfClosing = false;
         while (this.cursor < this.template.length && WHITESPACE_REGEX.test(this.template[this.cursor]!)) this.advance(1);
         if (this.template[this.cursor] === "/") { selfClosing = true; this.advance(1); }
         if (this.template[this.cursor] === ">") this.advance(1);
 
-        const node: Node = { type: "element", name: tagName, tagName, attributes, void: selfClosing, children: [], loc };
+        const node: Node = { type: "element", name: tagName, tagName, attributes, attributeMeta, void: selfClosing, children: [], loc };
         
         let def = null;
         for (const m of this.kire.$elementMatchers) {
@@ -298,8 +298,12 @@ export class Lexer {
         return true;
     }
 
-    private parseAttributesState(): Record<string, string> {
+    private parseAttributesState(): {
+        attrs: Record<string, string>;
+        meta: Record<string, { quoted: boolean; quote?: '"' | "'" }>;
+    } {
         const attrs: Record<string, string> = new NullProtoObj();
+        const meta: Record<string, { quoted: boolean; quote?: '"' | "'" }> = new NullProtoObj();
         while (this.cursor < this.template.length) {
             while (this.cursor < this.template.length && WHITESPACE_REGEX.test(this.template[this.cursor]!)) this.advance(1);
             const char = this.template[this.cursor];
@@ -310,20 +314,25 @@ export class Lexer {
             }
             if (!name) break;
             let value = "true";
+            let quoted = false;
+            let quote: '"' | "'" | undefined;
             if (this.template[this.cursor] === "(") {
                 const res = this.extractBracketedContent("(", ")");
                 if (res) { value = res.content; this.advance(res.fullLength); }
             } else if (this.template[this.cursor] === "=") {
                 this.advance(1); const first = this.template[this.cursor];
                 if (first === '"' || first === "'") {
+                    quoted = true;
+                    quote = first;
                     this.advance(1);
                     value = this.captureQuotedValue(first);
                     if (this.template[this.cursor] === first) this.advance(1);
                 } else { value = this.captureBalancedValue(); }
             }
             attrs[name] = value;
+            meta[name] = quoted ? { quoted: true, quote } : { quoted: false };
         }
-        return attrs;
+        return { attrs, meta };
     }
 
     private captureQuotedValue(quote: '"' | "'"): string {

@@ -48,6 +48,108 @@ describe("Kire Directives & Elements", () => {
         expect(resStyle).toContain('style="color: red; display: block"');
     });
 
+    test("@attr and @attrs should support conditional and boolean HTML attributes", async () => {
+        const singleAttr = await kire.render('<button @attr("wire:click", action)>Run</button>', { action: "save" });
+        expect(singleAttr).toContain('wire:click="save"');
+
+        const template = '<button @attrs({ "wire:click": action, [isLoading ? "disabled" : ""]: true, "data-id": id })>Run</button>';
+        const result = await kire.render(template, { action: "save", isLoading: true, id: 17 });
+        expect(result).toContain('wire:click="save"');
+        expect(result).toContain(" disabled");
+        expect(result).toContain('data-id="17"');
+    });
+
+    test("@attrs should support blade-like arrays of boolean attributes", async () => {
+        const template = '<dialog @attrs([ignoreMode === "all" && "wire:ignore", ignoreMode === "self" && "wire:ignore.self"])></dialog>';
+        const all = await kire.render(template, { ignoreMode: "all" });
+        const self = await kire.render(template, { ignoreMode: "self" });
+        const none = await kire.render(template, { ignoreMode: "" });
+
+        expect(all).toContain(" wire:ignore");
+        expect(self).toContain(" wire:ignore.self");
+        expect(none).toBe("<dialog></dialog>");
+    });
+
+    test("@attrs should ignore undefined object values instead of rendering boolean attributes", async () => {
+        const template = '<button @attrs({ "wire:click": click, "wire:target": target, onclick: nativeClick, id: id, name: name, value: value, disabled: isDisabled })>Run</button>';
+        const result = await kire.render(template, { click: "save", isDisabled: true });
+
+        expect(result).toContain('wire:click="save"');
+        expect(result).toContain(" disabled");
+        expect(result).not.toContain(" wire:target");
+        expect(result).not.toContain(" onclick");
+        expect(result).not.toContain(" id");
+        expect(result).not.toContain(" name");
+        expect(result).not.toContain(" value");
+    });
+
+    test("@class should flatten nested arrays and objects", async () => {
+        const template = '<div @class(["p-4", [active && "font-bold"], { "text-info": info }])></div>';
+        const result = await kire.render(template, { active: true, info: true });
+        expect(result).toContain('class="p-4 font-bold text-info"');
+    });
+
+    test("@required should render conditionally like other boolean attributes", async () => {
+        const enabled = await kire.render('<input @required(isMandatory)>', { isMandatory: true });
+        const disabled = await kire.render('<input @required(isMandatory)>', { isMandatory: false });
+
+        expect(enabled).toContain(" required ");
+        expect(disabled).toBe("<input></input>");
+    });
+
+    test("boolean attribute helpers should match Blade-style semantics", async () => {
+        const enabled = await kire.render('<option @selected(country === "BR") @disabled(isReadonly) @readonly(isReadonly) @checked(isDefault)>Brazil</option>', {
+            country: "BR",
+            isReadonly: true,
+            isDefault: true,
+        });
+        const disabled = await kire.render('<input @checked(isDefault) @selected(isPrimary) @disabled(isReadonly) @readonly(isReadonly)>', {
+            isDefault: false,
+            isPrimary: false,
+            isReadonly: false,
+        });
+
+        expect(enabled).toContain(" selected ");
+        expect(enabled).toContain(" disabled ");
+        expect(enabled).toContain(" readonly ");
+        expect(enabled).toContain(" checked ");
+        expect(disabled).toBe("<input></input>");
+    });
+
+    test("dependencies with nested x-* should compile with NullProtoObj available", async () => {
+        const k = new Kire({ production: true, silent: true });
+        k.namespace("components", k.$root + "/components");
+        k.$files[k.resolvePath("components.inner")] = "<article>@yield('default')</article>";
+        k.$files[k.resolvePath("components.outer")] = "<section><x-inner>OK</x-inner></section>";
+        k.$files[k.resolvePath("page")] = "@component('components.outer')@endcomponent";
+
+        const result = await k.view("page");
+        const outerEntry = k.$cache.files.get(k.resolvePath("components.outer"));
+
+        expect(result).toBe("<section><article>OK</article></section>");
+        expect(String(outerEntry?.code || "")).toContain("const NullProtoObj = this.NullProtoObj;");
+    });
+
+    test("@include and @component should not depend on a local NullProtoObj alias", async () => {
+        const k = new Kire({ production: true, silent: true });
+        k.$files[k.resolvePath("partials.item")] = "<span>{{ label }}</span>";
+        k.$files[k.resolvePath("layout.card")] = "<article>@yield('default')</article>";
+
+        const includeTemplate = "@include('partials.item')";
+        const componentTemplate = "@component('layout.card')Body@endcomponent";
+        const includeResult = await k.render(includeTemplate, {}, undefined, "include-root.kire");
+        const componentResult = await k.render(componentTemplate, { label: "Included" }, undefined, "component-root.kire");
+        const renderBucket = k.$cache.files.get(k["~render-symbol"]) as unknown as Map<string, { code?: string }>;
+        const includeCode = String(renderBucket.get(includeTemplate)?.code || "");
+        const componentCode = String(renderBucket.get(componentTemplate)?.code || "");
+
+        expect(includeResult).toBe("<span></span>");
+        expect(componentResult).toBe("<article>Body</article>");
+        expect(includeCode).not.toContain("new NullProtoObj()");
+        expect(componentCode).not.toContain("new NullProtoObj()");
+        expect(componentCode).toContain("new this.NullProtoObj()");
+    });
+
     test("Namespaces and Views", async () => {
         const k = new Kire();
         const vPath = k.resolve("admin/dashboard");

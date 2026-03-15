@@ -14,7 +14,7 @@ export default (kire: Kire<any>) => {
         },
         onCall: (api) => {
             const rawPath = api.getArgument(0) || api.getAttribute("path");
-            const locals = api.getArgument(1) || api.getAttribute("locals") || "new NullProtoObj()";
+            const locals = api.getArgument(1) || api.getAttribute("locals") || "new this.NullProtoObj()";
 
             if (!rawPath) return;
 

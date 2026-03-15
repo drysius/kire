@@ -1,6 +1,52 @@
 import type { Kire } from "../kire";
 import type { ElementDefinition } from "../types";
-import { NullProtoObj } from "../utils/regex";
+import { INTERPOLATION_GLOBAL_REGEX, INTERPOLATION_PURE_REGEX, INTERPOLATION_START_REGEX, NullProtoObj } from "../utils/regex";
+
+const toTemplateLiteral = (value: string) => {
+    const escaped = value
+        .replace(/\\/g, "\\\\")
+        .replace(/`/g, "\\`")
+        .replace(/\$/g, "\\$");
+
+    return "`" + escaped.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${${expr}}`) + "`";
+};
+
+const toComponentPropExpression = (api: any, attrName: string, value: string, quoted: boolean) => {
+    if (attrName.startsWith(":")) {
+        return {
+            name: attrName.slice(1),
+            expression: api.transform(value),
+        };
+    }
+
+    if (!quoted) {
+        return {
+            name: attrName,
+            expression: api.getAttribute(attrName),
+        };
+    }
+
+    const trimmed = value.trim();
+    if (trimmed.startsWith("{") && trimmed.endsWith("}") && trimmed.length > 2) {
+        return {
+            name: attrName,
+            expression: trimmed.slice(1, -1),
+        };
+    }
+
+    const pureInterpolation = value.match(INTERPOLATION_PURE_REGEX);
+    if (pureInterpolation) {
+        return {
+            name: attrName,
+            expression: pureInterpolation[1]!,
+        };
+    }
+
+    return {
+        name: attrName,
+        expression: INTERPOLATION_START_REGEX.test(value) ? toTemplateLiteral(value) : JSON.stringify(value),
+    };
+};
 
 export default (kire: Kire<any>) => {
     
@@ -167,12 +213,16 @@ export default (kire: Kire<any>) => {
             const dep = api.getDependency(componentPath);
             
             const attrs = api.node.attributes || new NullProtoObj();
+            const attrMeta = api.node.attributeMeta || new NullProtoObj();
             const propsStr = Object.keys(attrs)
-                .map(k => `'${k}': ${api.getAttribute(k)}`)
+                .map((k) => {
+                    const prop = toComponentPropExpression(api, k, attrs[k]!, !!attrMeta[k]?.quoted);
+                    return `${JSON.stringify(prop.name)}: ${prop.expression}`;
+                })
                 .join(',');
 
             api.write(`{
-                const $slots = new NullProtoObj();
+                const $slots = new this.NullProtoObj();
                 const _oldRes${id} = $kire_response; $kire_response = "";`);
             
             if (api.node.children) {

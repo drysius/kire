@@ -1,4 +1,5 @@
 import { Kirewire } from "../kirewire";
+import { morphDom } from "../utils/morph";
 
 type NavigateOptions = {
     replace?: boolean;
@@ -337,11 +338,12 @@ function applyDocument(doc: Document, targetHref: string) {
     const nextBody = doc.body;
     if (!nextBody) return;
 
+    Kirewire.cleanupTree(document.body);
     Kirewire.resetClientState();
 
     const Alpine = (window as any).Alpine;
-    if (Alpine && typeof Alpine.morph === "function") {
-        Alpine.morph(document.body, nextBody);
+    if (document.body && nextBody) {
+        morphDom(document.body, nextBody);
     } else {
         document.body.replaceWith(nextBody);
     }
@@ -349,6 +351,7 @@ function applyDocument(doc: Document, targetHref: string) {
     if (Alpine && typeof Alpine.initTree === "function") {
         Alpine.initTree(document.body);
     }
+    Kirewire.hydrateTree(document.body);
 
     hydrateScripts(nextBody, targetHref);
 

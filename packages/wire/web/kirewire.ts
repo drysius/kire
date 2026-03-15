@@ -1,6 +1,7 @@
 import morph from "@alpinejs/morph";
 import { EventController, type Listener } from "../src/event-controller";
 import { bus } from "./utils/message-bus";
+import { morphDom } from "./utils/morph";
 
 export interface WireClientContext {
     el: HTMLElement;
@@ -245,6 +246,8 @@ export class KirewireClient extends EventController {
             Alpine.start();
         }
 
+        this.hydrateWireSubtree(document.body);
+
         this.started = true;
         this.emitSync("wire:ready", {});
     }
@@ -341,6 +344,41 @@ export class KirewireClient extends EventController {
                         componentId,
                     });
                 }
+            }
+        }
+    }
+
+    private hasWireAttributes(el: HTMLElement): boolean {
+        const attrs = el.getAttributeNames();
+        for (let i = 0; i < attrs.length; i++) {
+            if (attrs[i]!.startsWith("wire:")) return true;
+        }
+        return false;
+    }
+
+    private hydrateWireSubtree(scope: ParentNode | HTMLElement | null | undefined) {
+        if (!scope) return;
+
+        const elements: HTMLElement[] = [];
+        if (scope instanceof HTMLElement) elements.push(scope);
+
+        const descendants = (scope instanceof HTMLElement ? scope.querySelectorAll("*") : document.querySelectorAll("*"));
+        for (let i = 0; i < descendants.length; i++) {
+            elements.push(descendants[i] as HTMLElement);
+        }
+
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i]!;
+            const componentId = this.getComponentId(el);
+            if (!componentId) continue;
+
+            if (!this.components.has(componentId)) {
+                this.components.set(componentId, this.createProxy(componentId, el));
+            }
+
+            this.attachWireToDataScopes(el, componentId);
+            if (this.hasWireAttributes(el)) {
+                this.processWireAttributes(el, componentId);
             }
         }
     }
@@ -873,8 +911,15 @@ export class KirewireClient extends EventController {
     public getComponentId(el: HTMLElement): string | null {
         if (el.hasAttribute("wire:id")) return el.getAttribute("wire:id");
         if (el.hasAttribute("wire-id")) return el.getAttribute("wire-id");
-        const root = el.closest("[wire\\:id], [wire-id]");
-        return root ? (root.getAttribute("wire:id") || root.getAttribute("wire-id")) : null;
+
+        let current: HTMLElement | null = el.parentElement;
+        while (current) {
+            const wireId = current.getAttribute("wire:id") || current.getAttribute("wire-id");
+            if (wireId) return wireId;
+            current = current.parentElement;
+        }
+
+        return null;
     }
 
     public getComponentState(el: HTMLElement): any {
@@ -919,7 +964,11 @@ export class KirewireClient extends EventController {
         const parser = new DOMParser();
         const doc = parser.parseFromString(newHtml, "text/html");
         const newEl = doc.body.firstElementChild as HTMLElement;
-        if (newEl) (window as any).Alpine.morph(el, newEl);
+        if (newEl) {
+            this.cleanupTree(el);
+            morphDom(el, newEl);
+            queueMicrotask(() => this.hydrateWireSubtree(el));
+        }
     }
 
     public $on(event: string, callback: Listener): () => void {
@@ -951,11 +1000,33 @@ export class KirewireClient extends EventController {
         this.deferredUpdates.clear();
     }
 
+    public cleanupTree(scope: ParentNode | HTMLElement | null | undefined) {
+        if (!scope) return;
+
+        if (scope instanceof HTMLElement) {
+            this.runElementCleanup(scope);
+        }
+
+        const nodes = scope instanceof HTMLElement ? scope.querySelectorAll("*") : document.querySelectorAll("*");
+        for (let i = 0; i < nodes.length; i++) {
+            this.runElementCleanup(nodes[i] as HTMLElement);
+        }
+    }
+
+    public hydrateTree(scope: ParentNode | HTMLElement | null | undefined) {
+        this.hydrateWireSubtree(scope);
+    }
+
     private setupRemovalObserver() {
         if (this.observer || typeof MutationObserver === "undefined" || !document.body) return;
 
         this.observer = new MutationObserver((records) => {
             for (let i = 0; i < records.length; i++) {
+                const added = records[i]!.addedNodes;
+                for (let j = 0; j < added.length; j++) {
+                    this.hydrateWireSubtree(added[j] as any);
+                }
+
                 const removed = records[i]!.removedNodes;
                 for (let j = 0; j < removed.length; j++) {
                     this.runNodeCleanup(removed[j]!);
@@ -976,11 +1047,12 @@ export class KirewireClient extends EventController {
     }
 
     private runElementCleanup(el: HTMLElement) {
+        delete (el as any)._kirewire_init;
+
         const cleanups = this.cleanupByElement.get(el);
         if (!cleanups) return;
 
         this.cleanupByElement.delete(el);
-        delete (el as any)._kirewire_init;
 
         for (let i = 0; i < cleanups.length; i++) {
             try {
