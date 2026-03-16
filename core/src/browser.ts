@@ -5,4 +5,3 @@ import { platform as browserPlatform } from "./utils/browser";
 setDefaultKirePlatform(browserPlatform);
 
 export * from "./public";
-

@@ -23,12 +23,12 @@ jobs:
       - name: Install Workspace Dependencies
         run: bun run install:all
 
-      - name: Install Wire Example Dependencies
-        working-directory: examples/wire-example
+      - name: Install Docs Playground Dependencies
+        working-directory: docs
         run: bun install
 
       - name: Install Playwright Browser
-        working-directory: examples/wire-example
+        working-directory: docs
         run: bun run test:e2e:install
 
       - name: Run Playwright E2E
@@ -42,6 +42,6 @@ jobs:
           path: |
             playwright-report
             test-results
-            examples/wire-example/playwright-report
-            examples/wire-example/test-results
+            docs/playwright-report
+            docs/test-results
           if-no-files-found: ignore

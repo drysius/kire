@@ -1,13 +1,13 @@
 import type { Kire } from "../../kire";
 
 export default (kire: Kire) => {
-    kire.directive({
-        name: `attr`,
-        signature: [`name:string`, `value:any`],
-        onCall(api) {
-            const name = api.getArgument(0) ?? api.getAttribute("name");
-            const value = api.getArgument(1) ?? api.getAttribute("value");
-            api.write(`{
+	kire.directive({
+		name: `attr`,
+		signature: [`name:string`, `value:any`],
+		onCall(api) {
+			const name = api.getArgument(0) ?? api.getAttribute("name");
+			const value = api.getArgument(1) ?? api.getAttribute("value");
+			api.write(`{
                 const $name = ${name};
                 const $value = ${value};
                 if ($name && $value !== false && $value !== null && $value !== undefined) {
@@ -15,15 +15,18 @@ export default (kire: Kire) => {
                     else $kire_response += " " + $name + "=\\"" + $escape($value) + "\\"";
                 }
             }`);
-        },
-    });
+		},
+	});
 
-    kire.directive({
-        name: `attrs`,
-        signature: [`attributes:any`],
-        onCall(api) {
-            const attributes = api.getArgument(0) ?? api.getAttribute("attributes") ?? api.getAttribute("attrs");
-            api.write(`{
+	kire.directive({
+		name: `attrs`,
+		signature: [`attributes:any`],
+		onCall(api) {
+			const attributes =
+				api.getArgument(0) ??
+				api.getAttribute("attributes") ??
+				api.getAttribute("attrs");
+			api.write(`{
                 const $attrs = ${attributes};
                 const $append = ($name, $value) => {
                     const $clean = String($name || "").trim();
@@ -49,15 +52,15 @@ export default (kire: Kire) => {
                 };
                 $walk($attrs);
             }`);
-        },
-    });
+		},
+	});
 
-    kire.directive({
-        name: `class`,
-        signature: [`classes:any`],
-        onCall(api) {
-            const classes = api.getArgument(0) ?? api.getAttribute("classes");
-            api.write(`{
+	kire.directive({
+		name: `class`,
+		signature: [`classes:any`],
+		onCall(api) {
+			const classes = api.getArgument(0) ?? api.getAttribute("classes");
+			api.write(`{
                 const $input = ${classes};
                 const $tokens = [];
                 const $push = ($value) => {
@@ -84,15 +87,15 @@ export default (kire: Kire) => {
                 const $classValue = $tokens.join(" ").trim();
                 if ($classValue) $kire_response += " class=\\"" + $escape($classValue) + "\\"";
             }`);
-        },
-    });
+		},
+	});
 
-    kire.directive({
-        name: `style`,
-        signature: [`styles:any`],
-        onCall(api) {
-            const styles = api.getArgument(0) ?? api.getAttribute("styles");
-            api.write(`{
+	kire.directive({
+		name: `style`,
+		signature: [`styles:any`],
+		onCall(api) {
+			const styles = api.getArgument(0) ?? api.getAttribute("styles");
+			api.write(`{
                 const $s = ${styles};
                 let $r = "";
                 if (Array.isArray($s)) $r = $s.filter(Boolean).join("; ");
@@ -100,19 +103,24 @@ export default (kire: Kire) => {
                 else $r = String($s || "");
                 if ($r) $kire_response += " style=\\"" + $escape($r) + "\\"";
             }`);
-        },
-    });
+		},
+	});
 
-    const booleanAttrs = ["checked", "selected", "disabled", "readonly", "required"];
-    for (const attr of booleanAttrs) {
-        kire.directive({
-            name: attr,
-            signature: [`cond:any`],
-            onCall(api) {
-                const cond = api.getArgument(0) ?? api.getAttribute("cond");
-                api.write(`if (${cond}) $kire_response += ' ${attr} ';`);
-            },
-        });
-    }
+	const booleanAttrs = [
+		"checked",
+		"selected",
+		"disabled",
+		"readonly",
+		"required",
+	];
+	for (const attr of booleanAttrs) {
+		kire.directive({
+			name: attr,
+			signature: [`cond:any`],
+			onCall(api) {
+				const cond = api.getArgument(0) ?? api.getAttribute("cond");
+				api.write(`if (${cond}) $kire_response += ' ${attr} ';`);
+			},
+		});
+	}
 };
-

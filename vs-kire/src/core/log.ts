@@ -35,4 +35,3 @@ export function kireLog(level: LogLevel, message: string) {
 export function showKireLogs() {
 	channel?.show(true);
 }
-

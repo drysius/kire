@@ -22,7 +22,8 @@ const TYPE_VALIDATORS: Record<string, TypeChecker> = {
 	boolean: (value) => typeof value === "boolean",
 	any: () => true,
 	unknown: () => true,
-	object: (value) => typeof value === "object" && value !== null && !Array.isArray(value),
+	object: (value) =>
+		typeof value === "object" && value !== null && !Array.isArray(value),
 	array: (value) => Array.isArray(value),
 	null: (value) => value === null,
 	undefined: (value) => value === undefined,
@@ -42,7 +43,9 @@ function escapeRegex(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function createPatternMatcher(pattern: string): (input: string) => Record<string, string> | null {
+function createPatternMatcher(
+	pattern: string,
+): (input: string) => Record<string, string> | null {
 	let regex = "^";
 	let i = 0;
 
@@ -95,7 +98,13 @@ function createPatternMatcher(pattern: string): (input: string) => Record<string
 		}
 
 		const literalStart = i;
-		while (i < pattern.length && pattern[i] !== " " && pattern[i] !== "$" && pattern[i] !== "{") i++;
+		while (
+			i < pattern.length &&
+			pattern[i] !== " " &&
+			pattern[i] !== "$" &&
+			pattern[i] !== "{"
+		)
+			i++;
 		if (literalStart < i) regex += escapeRegex(pattern.slice(literalStart, i));
 		if (i < pattern.length && pattern[i] === " ") {
 			regex += "\\s+";
@@ -219,7 +228,10 @@ function findTopLevelColon(input: string): number {
 	return -1;
 }
 
-function parseObjectType(inner: string, resolveToolType?: ToolResolver): string {
+function parseObjectType(
+	inner: string,
+	resolveToolType?: ToolResolver,
+): string {
 	const fields = splitTopLevel(inner, ",")
 		.map((rawField) => rawField.trim())
 		.filter(Boolean)
@@ -229,7 +241,9 @@ function parseObjectType(inner: string, resolveToolType?: ToolResolver): string 
 				return `${rawField}: any;`;
 			}
 			const rawName = rawField.slice(0, colon).trim();
-			const fieldName = rawName.endsWith("?") ? rawName.slice(0, -1).trim() : rawName;
+			const fieldName = rawName.endsWith("?")
+				? rawName.slice(0, -1).trim()
+				: rawName;
 			const optional = rawName.endsWith("?");
 			const rawType = rawField.slice(colon + 1).trim();
 			const tsType = paramTypeToTs(rawType, resolveToolType);
@@ -240,13 +254,18 @@ function parseObjectType(inner: string, resolveToolType?: ToolResolver): string 
 	return `{ ${fields.join(" ")} }`;
 }
 
-export function paramTypeToTs(typeDef: string, resolveToolType?: ToolResolver): string {
+export function paramTypeToTs(
+	typeDef: string,
+	resolveToolType?: ToolResolver,
+): string {
 	const raw = typeDef.trim();
 	if (!raw) return "any";
 
 	const unionParts = splitTopLevel(raw, "|");
 	if (unionParts.length > 1) {
-		return unionParts.map((part) => paramTypeToTs(part, resolveToolType)).join(" | ");
+		return unionParts
+			.map((part) => paramTypeToTs(part, resolveToolType))
+			.join(" | ");
 	}
 
 	if (raw.startsWith("tools.")) {
@@ -294,7 +313,9 @@ export function paramTypeToTs(typeDef: string, resolveToolType?: ToolResolver): 
 }
 
 function isLikelyPattern(input: string): boolean {
-	return input.includes("$") || /\{[^}]*\/[^}]*\}/.test(input) || input.includes(" ");
+	return (
+		input.includes("$") || /\{[^}]*\/[^}]*\}/.test(input) || input.includes(" ")
+	);
 }
 
 export function isPatternDefinition(def: string): boolean {
@@ -322,7 +343,8 @@ export function parseParamDefinition(def: string): ParamDefinition {
 				}
 				return {
 					valid: false,
-					error: errors.length > 0 ? errors.join(" OR ") : "No union branch matched",
+					error:
+						errors.length > 0 ? errors.join(" OR ") : "No union branch matched",
 				};
 			},
 		};
@@ -340,7 +362,10 @@ export function parseParamDefinition(def: string): ParamDefinition {
 			rawDefinition: def,
 			validate: (value) => {
 				if (typeof value !== "string") {
-					return { valid: false, error: "Expected string for pattern parameter" };
+					return {
+						valid: false,
+						error: "Expected string for pattern parameter",
+					};
 				}
 				const extracted = matcher(value);
 				if (!extracted) {
@@ -370,7 +395,10 @@ export function parseParamDefinition(def: string): ParamDefinition {
 			rawDefinition: def,
 			validate: (value) => {
 				if (typeof value !== "string") {
-					return { valid: false, error: "Expected string for pattern parameter" };
+					return {
+						valid: false,
+						error: "Expected string for pattern parameter",
+					};
 				}
 				const extracted = matcher(value);
 				if (!extracted) {
@@ -383,11 +411,13 @@ export function parseParamDefinition(def: string): ParamDefinition {
 
 	const cleanType = rawType || "any";
 	const tsType = paramTypeToTs(cleanType);
-	const validator = TYPE_VALIDATORS[cleanType] || (cleanType.startsWith("object{") || cleanType.startsWith("{")
-		? TYPE_VALIDATORS.object
-		: cleanType.startsWith("array<") || cleanType.endsWith("[]")
-			? TYPE_VALIDATORS.array
-			: TYPE_VALIDATORS.any);
+	const validator =
+		TYPE_VALIDATORS[cleanType] ||
+		(cleanType.startsWith("object{") || cleanType.startsWith("{")
+			? TYPE_VALIDATORS.object
+			: cleanType.startsWith("array<") || cleanType.endsWith("[]")
+				? TYPE_VALIDATORS.array
+				: TYPE_VALIDATORS.any);
 
 	return {
 		name,

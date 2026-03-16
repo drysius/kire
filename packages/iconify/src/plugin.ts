@@ -1,26 +1,31 @@
-import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
+import { kirePlugin } from "kire";
 import { fetchIcon, processSvgAttributes } from "./api";
 import type { IconifyOptions } from "./types";
 
-export const KireIconify = kirePlugin<IconifyOptions>({
-    apiUrl: "https://api.iconify.design",
-    defaultClass: ""
-}, (kire, opts) => {
-    kire.kireSchema({
-        name: "@kirejs/iconify",
-        author: "Drysius",
-        repository: "https://github.com/drysius/kire",
-        version: "0.1.0"
-    });
+export const KireIconify = kirePlugin<IconifyOptions>(
+	{
+		apiUrl: "https://api.iconify.design",
+		defaultClass: "",
+	},
+	(kire, opts) => {
+		kire.kireSchema({
+			name: "@kirejs/iconify",
+			author: "Drysius",
+			repository: "https://github.com/drysius/kire",
+			version: "0.1.0",
+		});
 
-    const apiUrl = opts.apiUrl || "https://api.iconify.design";
-    const defaultClass = opts.defaultClass || "";
+		const apiUrl = opts.apiUrl || "https://api.iconify.design";
+		const defaultClass = opts.defaultClass || "";
 
-    const iconCache = kire.cached("@kirejs/iconify");
+		const iconCache = kire.cached("@kirejs/iconify");
 
 		kire.$global(
 			"fetchIcon",
-			async (name: string, params: Record<string, string> = kire.NullProtoObj()) => {
+			async (
+				name: string,
+				params: Record<string, string> = kire.NullProtoObj(),
+			) => {
 				return fetchIcon(name, apiUrl, params, iconCache);
 			},
 		);
@@ -35,7 +40,7 @@ export const KireIconify = kirePlugin<IconifyOptions>({
 				const classExpr = api.getArgument(1) || '""';
 				const attrsExpr = api.getArgument(2) || "{}";
 
-                api.markAsync();
+				api.markAsync();
 				api.write(`await (async () => {
                     const $rawAttrs = ${attrsExpr};
                     const $apiParams = {};
@@ -92,7 +97,9 @@ export const KireIconify = kirePlugin<IconifyOptions>({
 				const iconName = attrs.i || attrs.icon;
 
 				if (!iconName) {
-					api.write(`$kire_response += '<!-- <iconify> missing "i" or "icon" attribute -->';`);
+					api.write(
+						`$kire_response += '<!-- <iconify> missing "i" or "icon" attribute -->';`,
+					);
 					return;
 				}
 
@@ -121,8 +128,8 @@ export const KireIconify = kirePlugin<IconifyOptions>({
 					}
 				}
 
-                api.markAsync();
-                api.write(`await (async () => {
+				api.markAsync();
+				api.write(`await (async () => {
                     try {
                         const $svg = await $globals.fetchIcon(${JSON.stringify(iconName)}, ${JSON.stringify(apiParams)});
                         const $finalSvg = this.processSvgAttributes($svg, ${JSON.stringify(className)}, ${JSON.stringify(htmlAttrs)});
@@ -134,7 +141,7 @@ export const KireIconify = kirePlugin<IconifyOptions>({
 			},
 		});
 
-        // Add helper to process attributes
-        (kire as any).processSvgAttributes = processSvgAttributes;
-    }
+		// Add helper to process attributes
+		(kire as any).processSvgAttributes = processSvgAttributes;
+	},
 );

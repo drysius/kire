@@ -15,7 +15,11 @@ function isNameBreak(char: string | undefined): boolean {
 	return !char || /[\s=/>"'`]/.test(char);
 }
 
-function scanQuoted(text: string, start: number, quote: '"' | "'"): { valueEnd: number } {
+function scanQuoted(
+	text: string,
+	start: number,
+	quote: '"' | "'",
+): { valueEnd: number } {
 	let i = start;
 	while (i < text.length) {
 		const ch = text[i]!;
@@ -58,7 +62,8 @@ function scanUnquoted(text: string, start: number): { valueEnd: number } {
 		else if (ch === "{") depthBrace++;
 		else if (ch === "}") depthBrace = Math.max(0, depthBrace - 1);
 
-		const atTopLevel = depthParen === 0 && depthBracket === 0 && depthBrace === 0 && !inQuote;
+		const atTopLevel =
+			depthParen === 0 && depthBracket === 0 && depthBrace === 0 && !inQuote;
 		if (atTopLevel && (isWhitespace(ch) || ch === ">")) {
 			break;
 		}
@@ -96,7 +101,8 @@ export function extractTagAttributes(
 		}
 
 		let cursor = i + 1;
-		while (cursor < text.length && /[A-Za-z0-9:_-]/.test(text[cursor]!)) cursor++;
+		while (cursor < text.length && /[A-Za-z0-9:_-]/.test(text[cursor]!))
+			cursor++;
 		const tagName = text.slice(i + 1, cursor);
 		if (!tagName) {
 			i++;
@@ -176,11 +182,13 @@ export function extractTagAttributes(
 }
 
 export function extractJsAttributeExpressions(text: string): ParsedAttribute[] {
-	const attributes = extractTagAttributes(text, (name) =>
-		name.startsWith(":") ||
-		name.startsWith("@") ||
-		name.startsWith("x-") ||
-		name.startsWith("wire:"),
+	const attributes = extractTagAttributes(
+		text,
+		(name) =>
+			name.startsWith(":") ||
+			name.startsWith("@") ||
+			name.startsWith("x-") ||
+			name.startsWith("wire:"),
 	);
 
 	const allAttributes = extractTagAttributes(text);
@@ -210,7 +218,11 @@ function toForcedDynamicComponentExpression(
 
 	const raw = attr.value;
 	const trimmed = raw.trim();
-	if (!trimmed.startsWith("{") || !trimmed.endsWith("}") || trimmed.length <= 2) {
+	if (
+		!trimmed.startsWith("{") ||
+		!trimmed.endsWith("}") ||
+		trimmed.length <= 2
+	) {
 		return null;
 	}
 

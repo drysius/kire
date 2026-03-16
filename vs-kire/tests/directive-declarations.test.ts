@@ -65,7 +65,9 @@ describe("extractTopLevelDirectiveDeclarations", () => {
 			],
 		} as any);
 
-		const vars = extractTopLevelDirectiveDeclarations(`@const(title = "Orders")`);
+		const vars = extractTopLevelDirectiveDeclarations(
+			`@const(title = "Orders")`,
+		);
 		expect(vars.map((entry) => entry.name)).toEqual(["title"]);
 	});
 
@@ -77,12 +79,21 @@ describe("extractTopLevelDirectiveDeclarations", () => {
 					name: "const",
 					children: false,
 					signature: ["expr:string"],
-					declares: [{ fromArg: 0, pattern: "$name = $value", capture: "name", type: "any" }],
+					declares: [
+						{
+							fromArg: 0,
+							pattern: "$name = $value",
+							capture: "name",
+							type: "any",
+						},
+					],
 				},
 			],
 		} as any);
 
-		const vars = extractTopLevelDirectiveDeclarations(`@const(title = "Orders")`);
+		const vars = extractTopLevelDirectiveDeclarations(
+			`@const(title = "Orders")`,
+		);
 		expect(vars.map((entry) => entry.name)).toEqual(["title"]);
 	});
 
@@ -90,10 +101,16 @@ describe("extractTopLevelDirectiveDeclarations", () => {
 		const vars = extractTopLevelDirectiveDeclarations(
 			`@const(resolvedShellClass = \`mc-table-shell \${it.shellClass || ""}\`.trim())`,
 		);
+		const expectedInitializer = [
+			"`mc-table-shell ",
+			"$",
+			'{it.shellClass || ""}',
+			"`.trim()",
+		].join("");
 
 		expect(vars[0]?.name).toBe("resolvedShellClass");
 		expect(vars[0]?.declarationKind).toBe("const");
-		expect(vars[0]?.initializer).toBe("`mc-table-shell ${it.shellClass || \"\"}`.trim()");
+		expect(vars[0]?.initializer).toBe(expectedInitializer);
 		expect(vars[0]?.description).toBe("Constant declared by @const.");
 	});
 });

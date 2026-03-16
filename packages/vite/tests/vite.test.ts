@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import { EventEmitter } from "node:events";
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	mkdtempSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { Kire } from "kire";
@@ -84,7 +91,11 @@ describe("@kirejs/vite", () => {
 
 		const payloads: any[] = [];
 		const cleanup = (await plugin.configureServer?.({
-			ws: { send(payload: any) { payloads.push(payload); } },
+			ws: {
+				send(payload: any) {
+					payloads.push(payload);
+				},
+			},
 			watcher,
 			httpServer: bus as any,
 			resolvedUrls: { local: ["http://127.0.0.1:5173/"], network: [] },
@@ -107,7 +118,11 @@ describe("@kirejs/vite", () => {
 		plugin.handleHotUpdate?.({
 			file: "/app/views/home.kire",
 			server: {
-				ws: { send(payload: any) { sent.push(payload); } },
+				ws: {
+					send(payload: any) {
+						sent.push(payload);
+					},
+				},
 				watcher: createMockWatcher(),
 			},
 		} as any);
@@ -157,7 +172,9 @@ describe("@kirejs/vite", () => {
 		expect(html).toContain('href="/themes/phoenix/assets/app-a1b2.css"');
 		expect(html).toContain('href="/themes/phoenix/assets/app-c3d4.css"');
 		expect(html).toContain('href="/themes/phoenix/assets/vendor-e5f6.css"');
-		expect(html).toContain('rel="modulepreload" href="/themes/phoenix/assets/vendor-e5f6.js"');
+		expect(html).toContain(
+			'rel="modulepreload" href="/themes/phoenix/assets/vendor-e5f6.js"',
+		);
 		expect(html).toContain('src="/themes/phoenix/assets/app-c3d4.js"');
 	});
 
@@ -216,7 +233,10 @@ describe("@kirejs/vite", () => {
 
 		const viewsDir = path.join(root, "views");
 		mkdirSync(viewsDir, { recursive: true });
-		writeFileSync(path.join(viewsDir, "index.kire"), "<h1>Hello {{ name }}</h1>");
+		writeFileSync(
+			path.join(viewsDir, "index.kire"),
+			"<h1>Hello {{ name }}</h1>",
+		);
 
 		const plugin = kireVite({
 			kire: true,

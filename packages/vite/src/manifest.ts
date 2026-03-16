@@ -41,14 +41,21 @@ const DEFAULT_MANIFEST_FILENAME = "manifest.json";
 
 const manifestCache = new Map<string, ManifestCacheEntry>();
 
-export function resolveRuntimePaths(options: KireViteRenderOptions = {}): RuntimePaths {
+export function resolveRuntimePaths(
+	options: KireViteRenderOptions = {},
+): RuntimePaths {
 	const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
 	const publicDirectory = options.publicDirectory || DEFAULT_PUBLIC_DIRECTORY;
-	const buildDirectory = trimSlashes(options.buildDirectory || DEFAULT_BUILD_DIRECTORY);
-	const manifestFilename = options.manifestFilename || DEFAULT_MANIFEST_FILENAME;
+	const buildDirectory = trimSlashes(
+		options.buildDirectory || DEFAULT_BUILD_DIRECTORY,
+	);
+	const manifestFilename =
+		options.manifestFilename || DEFAULT_MANIFEST_FILENAME;
 
 	const publicPath = path.resolve(cwd, publicDirectory);
-	const outDir = buildDirectory ? path.join(publicPath, buildDirectory) : publicPath;
+	const outDir = buildDirectory
+		? path.join(publicPath, buildDirectory)
+		: publicPath;
 	const manifestPath = path.join(outDir, manifestFilename);
 	const hotFilePath = options.hotFile
 		? path.resolve(cwd, options.hotFile)
@@ -63,7 +70,9 @@ export function resolveRuntimePaths(options: KireViteRenderOptions = {}): Runtim
 	};
 }
 
-export function readHotServerUrl(options: KireViteRenderOptions = {}): string | null {
+export function readHotServerUrl(
+	options: KireViteRenderOptions = {},
+): string | null {
 	if (options.devServerUrl) {
 		return options.devServerUrl.trim().replace(/\/+$/, "");
 	}
@@ -142,7 +151,10 @@ function findManifestEntry(
 	for (const [key, chunk] of Object.entries(manifest)) {
 		const normalizedKey = normalizeEntry(key);
 		const normalizedSource = chunk.src ? normalizeEntry(chunk.src) : "";
-		if (variants.includes(normalizedKey) || variants.includes(normalizedSource)) {
+		if (
+			variants.includes(normalizedKey) ||
+			variants.includes(normalizedSource)
+		) {
 			return key;
 		}
 	}
@@ -199,7 +211,9 @@ function toPublicUrl(
 ): string {
 	const normalizedFile = normalizeEntry(file);
 	const normalizedBuild = trimSlashes(buildDirectory);
-	const joined = normalizedBuild ? `${normalizedBuild}/${normalizedFile}` : normalizedFile;
+	const joined = normalizedBuild
+		? `${normalizedBuild}/${normalizedFile}`
+		: normalizedFile;
 	if (assetUrl) {
 		return `${assetUrl.replace(/\/+$/, "")}/${joined}`;
 	}

@@ -23,7 +23,8 @@ const TYPE_VALIDATORS: Record<string, TypeChecker> = {
 	boolean: (value) => typeof value === "boolean",
 	any: () => true,
 	unknown: () => true,
-	object: (value) => typeof value === "object" && value !== null && !Array.isArray(value),
+	object: (value) =>
+		typeof value === "object" && value !== null && !Array.isArray(value),
 	array: (value) => Array.isArray(value),
 	null: (value) => value === null,
 	undefined: (value) => value === undefined,
@@ -34,7 +35,9 @@ function escapeRegex(text: string): string {
 	return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function createPatternMatcher(pattern: string): (input: string) => Record<string, string> | null {
+function createPatternMatcher(
+	pattern: string,
+): (input: string) => Record<string, string> | null {
 	let regex = "^";
 	let i = 0;
 
@@ -86,7 +89,13 @@ function createPatternMatcher(pattern: string): (input: string) => Record<string
 		}
 
 		const literalStart = i;
-		while (i < pattern.length && pattern[i] !== " " && pattern[i] !== "$" && pattern[i] !== "{") i++;
+		while (
+			i < pattern.length &&
+			pattern[i] !== " " &&
+			pattern[i] !== "$" &&
+			pattern[i] !== "{"
+		)
+			i++;
 		if (literalStart < i) regex += escapeRegex(pattern.slice(literalStart, i));
 		if (i < pattern.length && pattern[i] === " ") {
 			regex += "\\s+";
@@ -214,7 +223,9 @@ function parseObjectType(inner: string): string {
 			const colon = findTopLevelColon(rawField);
 			if (colon === -1) return `${rawField}: any;`;
 			const rawName = rawField.slice(0, colon).trim();
-			const fieldName = rawName.endsWith("?") ? rawName.slice(0, -1).trim() : rawName;
+			const fieldName = rawName.endsWith("?")
+				? rawName.slice(0, -1).trim()
+				: rawName;
 			const optional = rawName.endsWith("?");
 			const rawType = rawField.slice(colon + 1).trim();
 			return `${fieldName}${optional ? "?" : ""}: ${paramTypeToTs(rawType)};`;
@@ -229,7 +240,8 @@ export function paramTypeToTs(typeDef: string): string {
 	if (!raw) return "any";
 
 	const union = splitTopLevel(raw, "|");
-	if (union.length > 1) return union.map((part) => paramTypeToTs(part)).join(" | ");
+	if (union.length > 1)
+		return union.map((part) => paramTypeToTs(part)).join(" | ");
 
 	if (raw.startsWith("object{") && raw.endsWith("}")) {
 		return parseObjectType(raw.slice(7, -1));
@@ -266,7 +278,9 @@ export function paramTypeToTs(typeDef: string): string {
 }
 
 function isLikelyPattern(input: string): boolean {
-	return input.includes("$") || /\{[^}]*\/[^}]*\}/.test(input) || input.includes(" ");
+	return (
+		input.includes("$") || /\{[^}]*\/[^}]*\}/.test(input) || input.includes(" ")
+	);
 }
 
 export function isPatternDefinition(def: string): boolean {
@@ -302,9 +316,15 @@ export function parseParamDefinition(def: string): ParsedParamDefinition {
 			tstype: "any",
 			rawDefinition: def,
 			validate: (value) => {
-				if (typeof value !== "string") return { valid: false, error: "Expected string for pattern parameter" };
+				if (typeof value !== "string")
+					return {
+						valid: false,
+						error: "Expected string for pattern parameter",
+					};
 				const extracted = matcher(value);
-				return extracted ? { valid: true, extracted } : { valid: false, error: `Pattern mismatch: ${trimmed}` };
+				return extracted
+					? { valid: true, extracted }
+					: { valid: false, error: `Pattern mismatch: ${trimmed}` };
 			},
 		};
 	}
@@ -327,16 +347,24 @@ export function parseParamDefinition(def: string): ParsedParamDefinition {
 			optional,
 			rawDefinition: def,
 			validate: (value) => {
-				if (typeof value !== "string") return { valid: false, error: "Expected string for pattern parameter" };
+				if (typeof value !== "string")
+					return {
+						valid: false,
+						error: "Expected string for pattern parameter",
+					};
 				const extracted = matcher(value);
-				return extracted ? { valid: true, extracted } : { valid: false, error: `Pattern mismatch: ${rawType}` };
+				return extracted
+					? { valid: true, extracted }
+					: { valid: false, error: `Pattern mismatch: ${rawType}` };
 			},
 		};
 	}
 
 	const cleanType = rawType || "any";
-	const objectValidator = TYPE_VALIDATORS.object || TYPE_VALIDATORS.any || (() => true);
-	const arrayValidator = TYPE_VALIDATORS.array || TYPE_VALIDATORS.any || (() => true);
+	const objectValidator =
+		TYPE_VALIDATORS.object || TYPE_VALIDATORS.any || (() => true);
+	const arrayValidator =
+		TYPE_VALIDATORS.array || TYPE_VALIDATORS.any || (() => true);
 	const fallbackValidator = TYPE_VALIDATORS.any || (() => true);
 
 	const validator: TypeChecker =

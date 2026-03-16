@@ -44,7 +44,7 @@ export class HtmlDiagnosticProvider {
 		while ((match = tagRegex.exec(text)) !== null) {
 			const isClosing = match[1] === "/";
 			const tagName = match[2] as string;
-            const isSelfClosing = match[4] === "/";
+			const isSelfClosing = match[4] === "/";
 			const position = document.positionAt(match.index);
 
 			let isVoid = HtmlDiagnosticProvider.htmlVoidElements.has(
@@ -96,7 +96,7 @@ export class HtmlDiagnosticProvider {
 					match.index,
 					Math.min(match.index + 200, text.length),
 				);
-				const closingTagPattern = new RegExp(`</${tagName}\s*>`, "i");
+				const closingTagPattern = new RegExp(`</${tagName}s*>`, "i");
 				const closingMatch = closingTagPattern.exec(nextChars);
 
 				if (closingMatch) {
@@ -141,9 +141,12 @@ export class HtmlDiagnosticProvider {
 				for (const el of store.elements.values()) {
 					if (!el.attributes) continue;
 					if (Array.isArray(el.attributes)) {
-						const found = el.attributes.find((entry: any) => entry?.name === attr.name);
+						const found = el.attributes.find(
+							(entry: any) => entry?.name === attr.name,
+						);
 						if (found) {
-							def = typeof found === "string" ? { type: found } : (found as any);
+							def =
+								typeof found === "string" ? { type: found } : (found as any);
 							break;
 						}
 						continue;
@@ -161,7 +164,10 @@ export class HtmlDiagnosticProvider {
 				const pos = document.positionAt(attr.valueStart);
 				diagnostics.push(
 					new vscode.Diagnostic(
-						new vscode.Range(pos, pos.translate(0, Math.max(attr.value.length, 1))),
+						new vscode.Range(
+							pos,
+							pos.translate(0, Math.max(attr.value.length, 1)),
+						),
 						`JavaScript attribute "${attr.name}" should use quoted value to preserve parsing.`,
 						vscode.DiagnosticSeverity.Warning,
 					),
@@ -174,8 +180,15 @@ export class HtmlDiagnosticProvider {
 		while ((match = unquotedAttrRegex.exec(text)) !== null) {
 			const attrName = match[1] as string;
 			const attrValue = match[2] as string;
-			const position = document.positionAt(match.index + match[0]!.indexOf(attrValue));
-			if (attrValue.includes(" ") || attrValue.includes("=") || attrValue.includes(">") || attrValue.includes("{")) {
+			const position = document.positionAt(
+				match.index + match[0]!.indexOf(attrValue),
+			);
+			if (
+				attrValue.includes(" ") ||
+				attrValue.includes("=") ||
+				attrValue.includes(">") ||
+				attrValue.includes("{")
+			) {
 				diagnostics.push(
 					new vscode.Diagnostic(
 						new vscode.Range(position, position.translate(0, attrValue.length)),

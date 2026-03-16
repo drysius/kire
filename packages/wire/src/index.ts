@@ -1,62 +1,68 @@
 import type { Kire } from "kire";
-import { Kirewire, type KirewireOptions } from "./kirewire";
-import {
-    Component,
-    type WireCollectionAction,
-    type WireCollectionMode,
-    type WireCollectionPayload,
-} from "./component";
+import { FiveMAdapter } from "./adapters/fivem";
 import { HttpAdapter } from "./adapters/http";
 import { SocketAdapter } from "./adapters/socket";
-import { FiveMAdapter } from "./adapters/fivem";
+import {
+	Component,
+	type WireCollectionAction,
+	type WireCollectionMode,
+	type WireCollectionPayload,
+} from "./component";
 import { FileStore } from "./features/file-store";
-import { WireFile, Rule } from "./features/file-upload";
-import { WireBroadcast, type WireBroadcastOptions } from "./features/wire-broadcast";
-import { validateRuleString as validateRule, type ValidationResult } from "./validation/rule";
+import { Rule, WireFile } from "./features/file-upload";
+import {
+	WireBroadcast,
+	type WireBroadcastOptions,
+} from "./features/wire-broadcast";
+import { Kirewire, type KirewireOptions } from "./kirewire";
+import {
+	type ValidationResult,
+	validateRuleString as validateRule,
+} from "./validation/rule";
 
 export class KirewirePlugin {
-    public wire!: Kirewire;
-    public options: KirewireOptions;
+	public wire!: Kirewire;
+	public options: KirewireOptions;
 
-    constructor(options: KirewireOptions) {
-        this.options = options;
-    }
+	constructor(options: KirewireOptions) {
+		this.options = options;
+	}
 
-    public load(kire: Kire) {
-        this.wire = new Kirewire(this.options);
-        (kire as any).$wire = this.wire;
-        
-        const setup = (instance: any) => {
-            instance.wire = this.wire;
-            instance.$wire = this.wire;
-        };
+	public load(kire: Kire) {
+		this.wire = new Kirewire(this.options);
+		(kire as any).$wire = this.wire;
 
-        setup(kire);
-        kire.onFork(setup);
+		const setup = (instance: any) => {
+			instance.wire = this.wire;
+			instance.$wire = this.wire;
+		};
 
-        // Register default properties
-        this.wire.class('file', WireFile);
-        this.wire.class('broadcast', WireBroadcast);
+		setup(kire);
+		kire.onFork(setup);
 
-        kire.directive({
-            name: 'wire:id',
-            onCall: (api) => {
-                const id = api.getAttribute('id');
-                const state = api.getAttribute('state') || '{}';
-                
-                api.write(`{
+		// Register default properties
+		this.wire.class("file", WireFile);
+		this.wire.class("broadcast", WireBroadcast);
+
+		kire.directive({
+			name: "wire:id",
+			onCall: (api) => {
+				const id = api.getAttribute("id");
+				const state = api.getAttribute("state") || "{}";
+
+				api.write(`{
                     const $state = ${state};
                     const $id = ${id};
                     const $stateStr = JSON.stringify($state).replace(/'/g, "&#39;");
                     $kire_response += \` wire:id="\${$id}" wire:state='\${$stateStr}'\`;
                 }`);
-            }
-        });
+			},
+		});
 
-        kire.directive({
-            name: 'kirewire',
-            onCall: (api) => {
-                api.write(`{
+		kire.directive({
+			name: "kirewire",
+			onCall: (api) => {
+				api.write(`{
                     const $pageId = $globals.pageId || 'default-page';
                     const $busDelay = ${this.wire.options.bus_delay || 100};
                     const $transport = $globals.sharedTransport || 'sse';
@@ -115,18 +121,19 @@ export class KirewirePlugin {
                         </script>
                     \`;
                 }`);
-            }
-        });
+			},
+		});
 
-        kire.directive({
-            name: 'wire',
-            signature: ['name:string', 'locals:object'],
-            onCall: (api) => {
-                const nameExpr = api.getArgument(0) || api.getAttribute('name');
-                const localsExpr = api.getArgument(1) || api.getAttribute('locals') || '{}';
-                
-                api.markAsync();
-                api.write(`{
+		kire.directive({
+			name: "wire",
+			signature: ["name:string", "locals:object"],
+			onCall: (api) => {
+				const nameExpr = api.getArgument(0) || api.getAttribute("name");
+				const localsExpr =
+					api.getArgument(1) || api.getAttribute("locals") || "{}";
+
+				api.markAsync();
+				api.write(`{
                     const $name = (${nameExpr}).replace(/^['"]|['"]$/g, '');
                     const $locals = ${localsExpr};
                     const $userId = String($globals.user?.id || 'guest');
@@ -163,37 +170,48 @@ export class KirewirePlugin {
                         $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}'>\${$html}</div>\`;
                     }
                 }`);
-            }
-        });
+			},
+		});
 
-        if (this.wire.options.adapter) {
-            this.wire.options.adapter.install(this.wire, kire);
-        }
-    }
+		if (this.wire.options.adapter) {
+			this.wire.options.adapter.install(this.wire, kire);
+		}
+	}
 }
 
 export class PageComponent extends Component {
-    render() {
-        return this.view(""); // Should be overridden
-    }
+	render() {
+		return this.view(""); // Should be overridden
+	}
 }
 
 export const wirePlugin = KirewirePlugin;
 export {
-    Kirewire,
-    Component,
-    HttpAdapter,
-    SocketAdapter,
-    FiveMAdapter,
-    FileStore,
-    WireFile,
-    Rule,
-    WireBroadcast,
-    validateRule,
-    type ValidationResult,
-    type WireBroadcastOptions,
-    type WireCollectionAction,
-    type WireCollectionMode,
-    type WireCollectionPayload,
+	Kirewire,
+	Component,
+	HttpAdapter,
+	SocketAdapter,
+	FiveMAdapter,
+	FileStore,
+	WireFile,
+	Rule,
+	WireBroadcast,
+	validateRule,
+	type ValidationResult,
+	type WireBroadcastOptions,
+	type WireCollectionAction,
+	type WireCollectionMode,
+	type WireCollectionPayload,
 };
-export default { Kirewire, Component, HttpAdapter, SocketAdapter, FiveMAdapter, FileStore, WireFile, Rule, WireBroadcast, validateRule }
+export default {
+	Kirewire,
+	Component,
+	HttpAdapter,
+	SocketAdapter,
+	FiveMAdapter,
+	FileStore,
+	WireFile,
+	Rule,
+	WireBroadcast,
+	validateRule,
+};

@@ -10,7 +10,9 @@ describe("@interface tooling parser", () => {
 		const contexts = extractInterfaceContextsFromDirectives(directives);
 
 		expect(contexts.local.vars.get("user")?.type).toBe("Map<string, User>");
-		expect(contexts.local.vars.get("settings")?.type).toBe("Partial<AppSettings>");
+		expect(contexts.local.vars.get("settings")?.type).toBe(
+			"Partial<AppSettings>",
+		);
 	});
 
 	it("parses local thisType declarations", () => {
@@ -30,7 +32,9 @@ describe("@interface tooling parser", () => {
 		`);
 		const contexts = extractInterfaceContextsFromDirectives(directives);
 
-		expect(contexts.local.vars.get("type")?.description).toBe("Human readable table type");
+		expect(contexts.local.vars.get("type")?.description).toBe(
+			"Human readable table type",
+		);
 		expect(contexts.local.vars.get("size")?.description).toBe("Visual density");
 	});
 });

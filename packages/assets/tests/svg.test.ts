@@ -33,7 +33,7 @@ describe("KireAssets SVG", () => {
 
 	it("should load and cache local SVG via resolver", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireAssets);
-        kire.$files[kire.resolvePath("./local.svg")] = "<svg>local-icon</svg>";
+		kire.$files[kire.resolvePath("./local.svg")] = "<svg>local-icon</svg>";
 
 		const template = `@svg('./local.svg', { width: '24' })`;
 		const result = await kire.render(template);
@@ -44,7 +44,7 @@ describe("KireAssets SVG", () => {
 
 	it("should serve SVG assets with correct content type", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireAssets);
-        kire.$files[kire.resolvePath("./test.svg")] = "<svg>served-icon</svg>";
+		kire.$files[kire.resolvePath("./test.svg")] = "<svg>served-icon</svg>";
 
 		// Render to cache the asset
 		const html = await kire.render(`@svg('./test.svg')`);

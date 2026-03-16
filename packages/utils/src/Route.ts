@@ -1,218 +1,217 @@
 export class RouteManager {
-    private _path: string = "/";
-    private _name: string | null = null;
-    private _url: URL | null = null;
+	private _path: string = "/";
+	private _name: string | null = null;
+	private _url: URL | null = null;
 
-    /**
-     * Sets the current route context.
-     * @param path The current request path (e.g., /users/1).
-     * @param name Optional route name (e.g., users.show).
-     */
-    set(path: string, name: string | null = null) {
-        this._path = path;
-        this._name = name;
-        return this;
-    }
-    
-    setUrl(url: URL) {
-        this._url = url;
-        this._path = url.pathname;
-        return this;
-    }
+	/**
+	 * Sets the current route context.
+	 * @param path The current request path (e.g., /users/1).
+	 * @param name Optional route name (e.g., users.show).
+	 */
+	set(path: string, name: string | null = null) {
+		this._path = path;
+		this._name = name;
+		return this;
+	}
 
-    /**
-     * Get the current request URI.
-     */
-    current() {
-        return this._path;
-    }
-    
-    /**
-     * Get the current full URL.
-     */
-    url() {
-        return this._url?.toString() || this._path;
-    }
-    
-    /**
-     * Generate an absolute URL to the given path.
-     */
-    to(path: string = ''): string {
-        if (!this._url) return path;
-        try {
-            return new URL(path, this._url.origin).toString();
-        } catch {
-            return path;
-        }
-    }
+	setUrl(url: URL) {
+		this._url = url;
+		this._path = url.pathname;
+		return this;
+	}
 
-    /**
-     * Get the name of the current route.
-     */
-    currentRouteName() {
-        return this._name;
-    }
+	/**
+	 * Get the current request URI.
+	 */
+	current() {
+		return this._path;
+	}
 
-    /**
-     * Determine if the current route matches a given pattern.
-     * @param patterns One or more patterns to match against.
-     *                 Wildcards (*) are supported. Also accepts RegExp objects.
-     *                 Supports Laravel-like patterns with parameters.
-     */
-    is(...patterns: (string | RegExp)[]): boolean {
-        const currentPath = this._path;
-        const currentName = this._name;
+	/**
+	 * Get the current full URL.
+	 */
+	url() {
+		return this._url?.toString() || this._path;
+	}
 
-        for (const pattern of patterns) {
-            if (pattern instanceof RegExp) {
-                if (pattern.test(currentPath)) return true;
-                if (currentName && pattern.test(currentName)) return true;
-                continue;
-            }
+	/**
+	 * Generate an absolute URL to the given path.
+	 */
+	to(path: string = ""): string {
+		if (!this._url) return path;
+		try {
+			return new URL(path, this._url.origin).toString();
+		} catch {
+			return path;
+		}
+	}
 
-            if (pattern === currentPath || pattern === currentName) {
-                return true;
-            }
+	/**
+	 * Get the name of the current route.
+	 */
+	currentRouteName() {
+		return this._name;
+	}
 
-            // Convert pattern to regex, supporting:
-            // 1. Wildcards (*)
-            // 2. Laravel-like parameter patterns ({param})
-            // 3. Optional parameters ({param?})
-            // 4. Parameter constraints ({id:\d+})
-            const regexString = this.patternToRegex(pattern);
-            const regex = new RegExp(regexString);
+	/**
+	 * Determine if the current route matches a given pattern.
+	 * @param patterns One or more patterns to match against.
+	 *                 Wildcards (*) are supported. Also accepts RegExp objects.
+	 *                 Supports Laravel-like patterns with parameters.
+	 */
+	is(...patterns: (string | RegExp)[]): boolean {
+		const currentPath = this._path;
+		const currentName = this._name;
 
-            if (regex.test(currentPath)) {
-                return true;
-            }
+		for (const pattern of patterns) {
+			if (pattern instanceof RegExp) {
+				if (pattern.test(currentPath)) return true;
+				if (currentName && pattern.test(currentName)) return true;
+				continue;
+			}
 
-            if (currentName && regex.test(currentName)) {
-                return true;
-            }
-        }
+			if (pattern === currentPath || pattern === currentName) {
+				return true;
+			}
 
-        return false;
-    }
+			// Convert pattern to regex, supporting:
+			// 1. Wildcards (*)
+			// 2. Laravel-like parameter patterns ({param})
+			// 3. Optional parameters ({param?})
+			// 4. Parameter constraints ({id:\d+})
+			const regexString = this.patternToRegex(pattern);
+			const regex = new RegExp(regexString);
 
-    /**
-     * Convert route pattern to regex.
-     * Supports wildcards (*) and Laravel-style parameters.
-     */
-    private patternToRegex(pattern: string): string {
-        // If pattern contains no special characters, match exactly
-        if (!pattern.includes('*') && !pattern.includes('{')) {
-            return `^${this.escapeRegex(pattern)}$`;
-        }
+			if (regex.test(currentPath)) {
+				return true;
+			}
 
-        let regex = "^";
-        let index = 0;
+			if (currentName && regex.test(currentName)) {
+				return true;
+			}
+		}
 
-        while (index < pattern.length) {
-            const char = pattern[index]!;
+		return false;
+	}
 
-            if (char === '*') {
-                regex += ".*";
-                index++;
-                continue;
-            }
+	/**
+	 * Convert route pattern to regex.
+	 * Supports wildcards (*) and Laravel-style parameters.
+	 */
+	private patternToRegex(pattern: string): string {
+		// If pattern contains no special characters, match exactly
+		if (!pattern.includes("*") && !pattern.includes("{")) {
+			return `^${this.escapeRegex(pattern)}$`;
+		}
 
-            if (char === '{') {
-                const end = pattern.indexOf("}", index + 1);
-                if (end === -1) {
-                    regex += this.escapeRegex(char);
-                    index++;
-                    continue;
-                }
+		let regex = "^";
+		let index = 0;
 
-                const raw = pattern.slice(index + 1, end);
-                const isOptional = raw.endsWith('?');
-                const token = isOptional ? raw.slice(0, -1) : raw;
+		while (index < pattern.length) {
+			const char = pattern[index]!;
 
-                const separator = token.indexOf(":");
-                const constraint =
-                    separator >= 0 ? token.slice(separator + 1) : "";
-                const capture = constraint ? `(${constraint})` : "([^/]+)";
+			if (char === "*") {
+				regex += ".*";
+				index++;
+				continue;
+			}
 
-                // Optional params after "/" should make the full segment optional:
-                // "/users/{id?}" -> "^/users(?:/([^/]+))?$"
-                if (isOptional && index > 0 && pattern[index - 1] === "/") {
-                    if (regex.endsWith("/")) regex = regex.slice(0, -1);
-                    regex += `(?:/${capture})?`;
-                } else {
-                    regex += isOptional ? `(?:${capture})?` : capture;
-                }
+			if (char === "{") {
+				const end = pattern.indexOf("}", index + 1);
+				if (end === -1) {
+					regex += this.escapeRegex(char);
+					index++;
+					continue;
+				}
 
-                index = end + 1;
-                continue;
-            }
+				const raw = pattern.slice(index + 1, end);
+				const isOptional = raw.endsWith("?");
+				const token = isOptional ? raw.slice(0, -1) : raw;
 
-            regex += this.escapeRegex(char);
-            index++;
-        }
+				const separator = token.indexOf(":");
+				const constraint = separator >= 0 ? token.slice(separator + 1) : "";
+				const capture = constraint ? `(${constraint})` : "([^/]+)";
 
-        return `${regex}$`;
-    }
+				// Optional params after "/" should make the full segment optional:
+				// "/users/{id?}" -> "^/users(?:/([^/]+))?$"
+				if (isOptional && index > 0 && pattern[index - 1] === "/") {
+					if (regex.endsWith("/")) regex = regex.slice(0, -1);
+					regex += `(?:/${capture})?`;
+				} else {
+					regex += isOptional ? `(?:${capture})?` : capture;
+				}
 
-    /**
-     * Properly escape regex special characters.
-     */
-    private escapeRegex(pattern: string): string {
-        return pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    }
+				index = end + 1;
+				continue;
+			}
 
-    /**
-     * Extract route parameters from current path based on pattern.
-     * @param pattern Pattern with parameters (e.g., /users/{id})
-     * @returns Object with parameter values or null if no match
-     */
-    params(pattern: string): Record<string, string> | null {
-        const regexString = this.patternToRegex(pattern);
-        const regex = new RegExp(regexString);
-        const match = regex.exec(this._path);
-        
-        if (!match) return null;
-        
-        // Extract parameter names from pattern
-        const paramNames: string[] = [];
-        const paramPattern = /\{([^}]+)\}/g;
-        let paramMatch;
-        
-        while ((paramMatch = paramPattern.exec(pattern)) !== null) {
-            const fullParam = paramMatch[1];
-            // Remove optional indicator and regex constraint
-            const paramName = fullParam!.replace(/\?$/, '').split(':')[0];
-            paramNames.push(paramName!);
-        }
-        
-        // Create params object (skip first match which is full match)
-        const params: Record<string, string> = {};
-        paramNames.forEach((name, index) => {
-            if (match[index + 1] !== undefined) {
-                params[name] = match[index + 1] as string;
-            }
-        });
-        
-        return params;
-    }
+			regex += this.escapeRegex(char);
+			index++;
+		}
 
-    /**
-     * Check if current path starts with the given prefix.
-     */
-    startsWith(prefix: string): boolean {
-        return this._path.startsWith(prefix);
-    }
+		return `${regex}$`;
+	}
 
-    /**
-     * Check if current path ends with the given suffix.
-     */
-    endsWith(suffix: string): boolean {
-        return this._path.endsWith(suffix);
-    }
+	/**
+	 * Properly escape regex special characters.
+	 */
+	private escapeRegex(pattern: string): string {
+		return pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	}
 
-    /**
-     * Check if current path contains the given substring.
-     */
-    contains(substring: string): boolean {
-        return this._path.includes(substring);
-    }
+	/**
+	 * Extract route parameters from current path based on pattern.
+	 * @param pattern Pattern with parameters (e.g., /users/{id})
+	 * @returns Object with parameter values or null if no match
+	 */
+	params(pattern: string): Record<string, string> | null {
+		const regexString = this.patternToRegex(pattern);
+		const regex = new RegExp(regexString);
+		const match = regex.exec(this._path);
+
+		if (!match) return null;
+
+		// Extract parameter names from pattern
+		const paramNames: string[] = [];
+		const paramPattern = /\{([^}]+)\}/g;
+		let paramMatch: RegExpExecArray | null;
+
+		while ((paramMatch = paramPattern.exec(pattern)) !== null) {
+			const fullParam = paramMatch[1];
+			// Remove optional indicator and regex constraint
+			const paramName = fullParam!.replace(/\?$/, "").split(":")[0];
+			paramNames.push(paramName!);
+		}
+
+		// Create params object (skip first match which is full match)
+		const params: Record<string, string> = {};
+		paramNames.forEach((name, index) => {
+			if (match[index + 1] !== undefined) {
+				params[name] = match[index + 1] as string;
+			}
+		});
+
+		return params;
+	}
+
+	/**
+	 * Check if current path starts with the given prefix.
+	 */
+	startsWith(prefix: string): boolean {
+		return this._path.startsWith(prefix);
+	}
+
+	/**
+	 * Check if current path ends with the given suffix.
+	 */
+	endsWith(suffix: string): boolean {
+		return this._path.endsWith(suffix);
+	}
+
+	/**
+	 * Check if current path contains the given substring.
+	 */
+	contains(substring: string): boolean {
+		return this._path.includes(substring);
+	}
 }

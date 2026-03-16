@@ -16,13 +16,11 @@ describe("scanDirectives", () => {
 
 	it("keeps generic commas inside multiple directive arguments", () => {
 		const [directive] = scanDirectives(
-			'@interface({ user: Result<Account, Error> }, true)',
+			"@interface({ user: Result<Account, Error> }, true)",
 		);
 
 		expect(directive?.args).toHaveLength(2);
-		expect(directive?.args[0]?.value).toBe(
-			"{ user: Result<Account, Error> }",
-		);
+		expect(directive?.args[0]?.value).toBe("{ user: Result<Account, Error> }");
 		expect(directive?.args[1]?.value).toBe("true");
 	});
 });

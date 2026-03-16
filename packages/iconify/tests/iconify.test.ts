@@ -114,7 +114,9 @@ describe("KireIconify", () => {
 	});
 
 	it("should use default class from options if provided", async () => {
-		const kire = new Kire({ silent: true }).plugin(KireIconify, { defaultClass: "icon-default" });
+		const kire = new Kire({ silent: true }).plugin(KireIconify, {
+			defaultClass: "icon-default",
+		});
 
 		global.fetch = mock(async () => {
 			return new Response("<svg></svg>", { status: 200 });

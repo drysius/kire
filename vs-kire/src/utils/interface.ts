@@ -1,4 +1,4 @@
-import { type DirectiveCall } from "../core/directiveScan";
+import type { DirectiveCall } from "../core/directiveScan";
 
 export interface InterfaceVariableInfo {
 	type: string;
@@ -45,13 +45,16 @@ export function mergeInterfaceContext(
 }
 
 export function hasInterfaceContext(context: InterfaceContext): boolean {
-	return !!(context.thisType && context.thisType.trim()) || context.vars.size > 0;
+	return !!context.thisType?.trim() || context.vars.size > 0;
 }
 
 export function serializeInterfaceContext(context: InterfaceContext): string {
 	const vars = Array.from(context.vars.entries())
 		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([name, info]) => `${name}:${info.type}${info.description ? `#${info.description}` : ""}`)
+		.map(
+			([name, info]) =>
+				`${name}:${info.type}${info.description ? `#${info.description}` : ""}`,
+		)
 		.join("|");
 	return `${context.thisType?.trim() || ""}::${vars}`;
 }
@@ -275,7 +278,9 @@ function consumeTrailingDescription(input: string): {
 	return { value: trimmed };
 }
 
-function parseInterfaceObjectLiteral(raw: string): Map<string, InterfaceVariableInfo> {
+function parseInterfaceObjectLiteral(
+	raw: string,
+): Map<string, InterfaceVariableInfo> {
 	const vars = new Map<string, InterfaceVariableInfo>();
 	const trimmed = raw.trim();
 	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return vars;

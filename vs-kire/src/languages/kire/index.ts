@@ -32,10 +32,10 @@ export const activate = (context: vscode.ExtensionContext) => {
 			"@",
 			"<",
 			"{",
-            "/",
-            "\\",
-            ".",
-            ":"
+			"/",
+			"\\",
+			".",
+			":",
 		),
 		vscode.languages.registerHoverProvider(selector, new KireHoverProvider()),
 		vscode.languages.registerDocumentSymbolProvider(

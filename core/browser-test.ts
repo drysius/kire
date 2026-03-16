@@ -173,8 +173,12 @@ const indexHtml = `<!doctype html>
 </body>
 </html>`;
 
-const kireBrowserFile = Bun.file(new URL("./dist/browser/kire.js", import.meta.url));
-const kireBrowserMapFile = Bun.file(new URL("./dist/browser/kire.js.map", import.meta.url));
+const kireBrowserFile = Bun.file(
+	new URL("./dist/browser/kire.js", import.meta.url),
+);
+const kireBrowserMapFile = Bun.file(
+	new URL("./dist/browser/kire.js.map", import.meta.url),
+);
 
 const notFound = () => new Response("Not found", { status: 404 });
 

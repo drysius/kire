@@ -39,7 +39,9 @@ function findDeclarationOffset(
 	argStart: number,
 	name: string,
 ): { start: number; end: number } | undefined {
-	const pattern = new RegExp(`(^|[^$\\w])(${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})(?![$\\w])`);
+	const pattern = new RegExp(
+		`(^|[^$\\w])(${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})(?![$\\w])`,
+	);
 	const match = pattern.exec(argValue);
 	if (!match || typeof match.index !== "number") return undefined;
 
@@ -63,11 +65,13 @@ function mergeDeclaredVariable(
 	if (typeof existing.start !== "number") existing.start = entry.start;
 	if (typeof existing.end !== "number") existing.end = entry.end;
 	if (!existing.type && entry.type) existing.type = entry.type;
-	if (!existing.description && entry.description) existing.description = entry.description;
+	if (!existing.description && entry.description)
+		existing.description = entry.description;
 	if (!existing.declarationKind && entry.declarationKind) {
 		existing.declarationKind = entry.declarationKind;
 	}
-	if (!existing.initializer && entry.initializer) existing.initializer = entry.initializer;
+	if (!existing.initializer && entry.initializer)
+		existing.initializer = entry.initializer;
 }
 
 function normalizeDeclaredType(type?: string): string | undefined {
@@ -170,7 +174,9 @@ export function extractTopLevelDirectiveDeclarations(
 	text: string,
 ): DeclaredDirectiveVariable[] {
 	const state = kireStore.getState();
-	const engine = state.engine as { getDirective?: (name: string) => any } | null;
+	const engine = state.engine as {
+		getDirective?: (name: string) => any;
+	} | null;
 	const directives = scanDirectives(text);
 	const declared = new Map<string, DeclaredDirectiveVariable>();
 
@@ -222,7 +228,8 @@ export function extractTopLevelDirectiveDeclarations(
 			for (let index = 0; index < signature.length; index++) {
 				const rawParam = signature[index];
 				const rawArg = call.args[index]?.value;
-				if (typeof rawParam !== "string" || typeof rawArg !== "string") continue;
+				if (typeof rawParam !== "string" || typeof rawArg !== "string")
+					continue;
 
 				try {
 					const parsed = parseParamDefinition(rawParam);

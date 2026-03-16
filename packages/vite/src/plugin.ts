@@ -1,11 +1,7 @@
 import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { Kire } from "kire";
-import {
-	removeHotFile,
-	resolveRuntimePaths,
-	writeHotFile,
-} from "./manifest";
+import { removeHotFile, resolveRuntimePaths, writeHotFile } from "./manifest";
 import type {
 	KireVitePluginAssetOptions,
 	KireVitePluginOptions,
@@ -104,7 +100,10 @@ function createAssetPlugin(options: KireVitePluginAssetOptions): VitePlugin {
 			}
 
 			const input = normalizeInput(options.input);
-			if (input.length > 0 && config.build?.rollupOptions?.input === undefined) {
+			if (
+				input.length > 0 &&
+				config.build?.rollupOptions?.input === undefined
+			) {
 				next.build!.rollupOptions = {
 					input,
 				};
@@ -219,7 +218,10 @@ function compileKireTemplates(
 	options: KireVitePluginTemplateOptions,
 	projectRoot: string,
 ) {
-	const kireRoot = path.resolve(projectRoot, options.root || DEFAULT_TEMPLATE_ROOT);
+	const kireRoot = path.resolve(
+		projectRoot,
+		options.root || DEFAULT_TEMPLATE_ROOT,
+	);
 	const outfile = path.resolve(
 		projectRoot,
 		options.outfile || DEFAULT_TEMPLATE_OUTFILE,
@@ -240,7 +242,9 @@ function compileKireTemplates(
 	kire.compileAndBuild(targets.directories, outfile);
 }
 
-function createTemplatePlugin(options: KireVitePluginTemplateOptions): VitePlugin {
+function createTemplatePlugin(
+	options: KireVitePluginTemplateOptions,
+): VitePlugin {
 	let resolvedConfig: ViteResolvedConfig | undefined;
 	let running = false;
 	let rerun = false;
@@ -260,7 +264,10 @@ function createTemplatePlugin(options: KireVitePluginTemplateOptions): VitePlugi
 					compileKireTemplates(options, projectRoot);
 				} catch (error) {
 					if (throwOnError) throw error;
-					console.error("[@kirejs/vite] Failed to compile .kire bundle:", error);
+					console.error(
+						"[@kirejs/vite] Failed to compile .kire bundle:",
+						error,
+					);
 				}
 			} while (rerun);
 		} finally {

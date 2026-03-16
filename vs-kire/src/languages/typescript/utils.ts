@@ -1,10 +1,8 @@
 import * as vscode from "vscode";
-import { SourceMapper } from "../../utils/sourceMap";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
-import { parseParamDefinition, paramTypeToTs } from "../../utils/params";
-import { extractJsAttributeExpressions } from "../../utils/embedded";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
+import { extractJsAttributeExpressions } from "../../utils/embedded";
 import {
 	createInterfaceContext,
 	extractInterfaceContextsFromDirectives,
@@ -13,6 +11,8 @@ import {
 	mergeInterfaceContext,
 	serializeInterfaceContext,
 } from "../../utils/interface";
+import { paramTypeToTs, parseParamDefinition } from "../../utils/params";
+import { SourceMapper } from "../../utils/sourceMap";
 
 export const KIRE_TS_SCHEME = "kire-ts";
 
@@ -64,7 +64,9 @@ function resolveToolType(ref: string): string {
 			return normalizeType(direct.type);
 		}
 		if (Array.isArray(direct.type)) {
-			return direct.type.map((entry: string) => normalizeType(entry)).join(" | ");
+			return direct.type
+				.map((entry: string) => normalizeType(entry))
+				.join(" | ");
 		}
 	}
 
@@ -81,9 +83,7 @@ function resolveToolType(ref: string): string {
 				typeof def.tstype === "string"
 					? def.tstype
 					: Array.isArray(def.type)
-						? def.type
-								.map((entry: string) => normalizeType(entry))
-								.join(" | ")
+						? def.type.map((entry: string) => normalizeType(entry)).join(" | ")
 						: normalizeType((def.type as string) || "any");
 			return `${key}: ${fieldType};`;
 		})
@@ -136,7 +136,8 @@ function buildGlobalsDeclaration(interfaceContext: InterfaceContext): string {
 
 	if (!roots.kire) roots.kire = { _def: { type: "any" }, _children: {} };
 	if (!roots.$ctx) roots.$ctx = { _def: { type: "any" }, _children: {} };
-	if (!roots.it) roots.it = { _def: { type: "Record<string, any>" }, _children: {} };
+	if (!roots.it)
+		roots.it = { _def: { type: "Record<string, any>" }, _children: {} };
 	if (!roots.$props) {
 		roots.$props = { _def: { type: "Record<string, any>" }, _children: {} };
 	}
@@ -175,10 +176,13 @@ function buildGlobalsDeclaration(interfaceContext: InterfaceContext): string {
 	const evalThisType = thisType || "Record<string, any>";
 	let declarations = "";
 	declarations += `type __kire_this = ${evalThisType};\n`;
-	declarations += "type __kire_alpine_magic = { $refs: Record<string, any>; $nextTick: (callback: () => void) => void; $watch: (name: string, callback: (value: any) => void) => void; $dispatch: (name: string, detail?: any) => void; $el: any; $root: any; };\n";
+	declarations +=
+		"type __kire_alpine_magic = { $refs: Record<string, any>; $nextTick: (callback: () => void) => void; $watch: (name: string, callback: (value: any) => void) => void; $dispatch: (name: string, detail?: any) => void; $el: any; $root: any; };\n";
 	declarations += "declare function __kire_expect<T>(value: T): void;\n";
-	declarations += "declare function __kire_eval<T>(fn: (this: __kire_this) => T): T;\n";
-	declarations += "declare function __kire_alpine_data<T extends object>(value: T & ThisType<T & __kire_alpine_magic>): T;\n";
+	declarations +=
+		"declare function __kire_eval<T>(fn: (this: __kire_this) => T): T;\n";
+	declarations +=
+		"declare function __kire_alpine_data<T extends object>(value: T & ThisType<T & __kire_alpine_magic>): T;\n";
 	for (const [rootName, node] of Object.entries(roots)) {
 		const def = node._def;
 		const comment = def?.description || def?.comment;
@@ -215,7 +219,7 @@ function appendStatement(
 	statement: string,
 ): number {
 	const startLine = state.generatedLine;
-	state.content += statement + "\n";
+	state.content += `${statement}\n`;
 	state.generatedLine += statement.split("\n").length;
 	return startLine;
 }
@@ -236,8 +240,13 @@ function buildDirectiveDeclarationStatement(entry: {
 		lines.push(`/** ${escapeJsDocComment(entry.description)} */`);
 	}
 
-	if (entry.initializer && (entry.declarationKind === "const" || entry.declarationKind === "let")) {
-		lines.push(`${entry.declarationKind} ${entry.name} = ${entry.initializer};`);
+	if (
+		entry.initializer &&
+		(entry.declarationKind === "const" || entry.declarationKind === "let")
+	) {
+		lines.push(
+			`${entry.declarationKind} ${entry.name} = ${entry.initializer};`,
+		);
 		return lines.join("\n");
 	}
 
@@ -250,7 +259,9 @@ function buildDirectiveDeclarationStatement(entry: {
 	return lines.join("\n");
 }
 
-export class KireTsDocumentProvider implements vscode.TextDocumentContentProvider {
+export class KireTsDocumentProvider
+	implements vscode.TextDocumentContentProvider
+{
 	private virtualContent = new Map<string, string>();
 	private sourceMaps = new Map<string, SourceMapper>();
 	private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
@@ -283,12 +294,11 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		this.workspaceInterfacesLoaded = false;
 		if (this.workspaceScanTimer) clearTimeout(this.workspaceScanTimer);
 		this.workspaceScanTimer = setTimeout(() => {
-			this.workspaceScanPromise = this.scanWorkspaceForGlobalInterfaces().finally(
-				() => {
+			this.workspaceScanPromise =
+				this.scanWorkspaceForGlobalInterfaces().finally(() => {
 					this.workspaceScanPromise = null;
 					this.workspaceInterfacesLoaded = true;
-				},
-			);
+				});
 		}, 180);
 	}
 
@@ -336,14 +346,19 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			mergeInterfaceContext(next, context);
 		}
 
-		const prevSignature = serializeInterfaceContext(this.globalInterfaceContext);
+		const prevSignature = serializeInterfaceContext(
+			this.globalInterfaceContext,
+		);
 		const nextSignature = serializeInterfaceContext(next);
 		if (prevSignature === nextSignature) return false;
 		this.globalInterfaceContext = next;
 		return true;
 	}
 
-	private setGlobalInterfaceForUri(uri: vscode.Uri, context: InterfaceContext): boolean {
+	private setGlobalInterfaceForUri(
+		uri: vscode.Uri,
+		context: InterfaceContext,
+	): boolean {
 		const key = uri.toString();
 		if (!hasInterfaceContext(context)) {
 			const had = this.globalInterfaceByUri.delete(key);
@@ -362,7 +377,8 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 	private refreshOpenKireDocuments(exceptUri?: vscode.Uri) {
 		const except = exceptUri?.toString();
 		for (const doc of vscode.workspace.textDocuments) {
-			const isKire = doc.languageId === "kire" || doc.fileName.endsWith(".kire");
+			const isKire =
+				doc.languageId === "kire" || doc.fileName.endsWith(".kire");
 			if (!isKire) continue;
 			if (except && doc.uri.toString() === except) continue;
 			this.update(doc);
@@ -375,7 +391,8 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		this.bootstrapWorkspaceInterfaces();
 
 		const directives = scanDirectives(document.getText());
-		const interfaceContexts = extractInterfaceContextsFromDirectives(directives);
+		const interfaceContexts =
+			extractInterfaceContextsFromDirectives(directives);
 		const merged = createInterfaceContext();
 		mergeInterfaceContext(merged, this.globalInterfaceContext);
 		mergeInterfaceContext(merged, interfaceContexts.local);
@@ -383,7 +400,10 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		return merged;
 	}
 
-	public update(document: vscode.TextDocument): { virtualUri: vscode.Uri; mapper: SourceMapper } {
+	public update(document: vscode.TextDocument): {
+		virtualUri: vscode.Uri;
+		mapper: SourceMapper;
+	} {
 		this.bootstrapWorkspaceInterfaces();
 
 		const text = document.getText();
@@ -393,9 +413,13 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			path: `${originalUri.path}.ts`,
 		});
 
-		const mapper = new SourceMapper(originalUri.toString(), virtualUri.toString());
+		const mapper = new SourceMapper(
+			originalUri.toString(),
+			virtualUri.toString(),
+		);
 		const directives = scanDirectives(text);
-		const interfaceContexts = extractInterfaceContextsFromDirectives(directives);
+		const interfaceContexts =
+			extractInterfaceContextsFromDirectives(directives);
 		const globalChanged = this.setGlobalInterfaceForUri(
 			originalUri,
 			interfaceContexts.global,
@@ -431,7 +455,10 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			}
 
 			const startLine = appendStatement(state, statement);
-			const generatedExpressionCharacter = Math.max(statement.indexOf(clean), 0);
+			const generatedExpressionCharacter = Math.max(
+				statement.indexOf(clean),
+				0,
+			);
 			mapExpression(
 				document,
 				mapper,
@@ -463,7 +490,10 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		};
 
 		const jsBlockRegex = /<\?js\b([\s\S]*?)\?>/g;
-		for (let match: RegExpExecArray | null; (match = jsBlockRegex.exec(text)); ) {
+		for (
+			let match: RegExpExecArray | null;
+			(match = jsBlockRegex.exec(text));
+		) {
 			const block = match[1] || "";
 			const startOffset = match.index + 4;
 			const clean = block.trim();
@@ -479,13 +509,19 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		}
 
 		const rawInterpolationRegex = /\{\{\{([\s\S]*?)\}\}\}/g;
-		for (let match: RegExpExecArray | null; (match = rawInterpolationRegex.exec(text)); ) {
+		for (
+			let match: RegExpExecArray | null;
+			(match = rawInterpolationRegex.exec(text));
+		) {
 			const expr = match[1] || "";
 			addExpression(expr, match.index + 3);
 		}
 
 		const interpolationRegex = /\{\{([\s\S]*?)\}\}/g;
-		for (let match: RegExpExecArray | null; (match = interpolationRegex.exec(text)); ) {
+		for (
+			let match: RegExpExecArray | null;
+			(match = interpolationRegex.exec(text));
+		) {
 			if (text.slice(match.index, match.index + 3) === "{{{") continue;
 			const expr = match[1] || "";
 			addExpression(expr, match.index + 2);
@@ -495,7 +531,11 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		for (const attr of jsAttributes) {
 			const alpineMode =
 				attr.name === "x-data" || attr.name.startsWith("x-data.");
-			addExpression(attr.value, attr.valueStart, alpineMode ? "alpineData" : "default");
+			addExpression(
+				attr.value,
+				attr.valueStart,
+				alpineMode ? "alpineData" : "default",
+			);
 		}
 
 		const directiveDefs = kireStore.getState().directives;
@@ -503,11 +543,12 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			if (directive.name === "interface") continue;
 
 			const def = directiveDefs.get(directive.name);
-			const signature = Array.isArray(def?.signature)
-				? def.signature
-				: [];
+			const signature = Array.isArray(def?.signature) ? def.signature : [];
 			for (let i = 0; i < directive.args.length; i++) {
-				if ((directive.name === "const" || directive.name === "let") && i === 0) {
+				if (
+					(directive.name === "const" || directive.name === "let") &&
+					i === 0
+				) {
 					continue;
 				}
 

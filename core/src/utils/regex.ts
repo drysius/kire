@@ -5,9 +5,8 @@
 
 // Optimized Object with Null Prototype
 export const NullProtoObj = function (this: any) {
-    return Object.create(null);
+	return Object.create(null);
 } as unknown as { new <T = any>(): Record<string, T> };
-
 
 // Tag and Attribute Detection
 export const TAG_OPEN_REGEX = /^<([a-zA-Z0-9_\-:.]+)/;
@@ -20,14 +19,16 @@ export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_\-.:]+)/;
 
 // JS Identifier Validation and Extraction
 export const JS_IDENTIFIER_REGEX = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/;
-export const JS_EXTRACT_IDENTS_REGEX = /(?:['"`].*?['"`])|(?<=\.\s*)[a-zA-Z_$][a-zA-Z0-9_$]*|(?<![a-zA-Z0-9_$])([a-zA-Z_$][a-zA-Z0-9_$]*)(?![a-zA-Z0-9_$])/g;
+export const JS_EXTRACT_IDENTS_REGEX =
+	/(?:['"`].*?['"`])|(?<=\.\s*)[a-zA-Z_$][a-zA-Z0-9_$]*|(?<![a-zA-Z0-9_$])([a-zA-Z_$][a-zA-Z0-9_$]*)(?![a-zA-Z0-9_$])/g;
 export const FOR_VAR_EXTRACT_REGEX = /^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)/;
 
 // Interpolation and Dynamic Attributes
 export const INTERPOLATION_PURE_REGEX = /^\s*\{\{\s*(.*?)\s*\}\}\s*$/;
 export const INTERPOLATION_GLOBAL_REGEX = /\{\{\s*(.*?)\s*\}\}/g;
 
-export const RESERVED_KEYWORDS_REGEX = /^(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield|enum|await|true|false|null|of)$/;
+export const RESERVED_KEYWORDS_REGEX =
+	/^(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield|enum|await|true|false|null|of)$/;
 
 // Escaping HTML
 export const HTML_ESCAPE_CHECK_REGEX = /[&<>"']/;
@@ -48,8 +49,8 @@ export const WILDCARD_CHAR_REGEX = /\*/;
  * Designed to be used on code where string literals have been stripped.
  */
 export const createVarThenRegex = (name: string) => {
-    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
-    return new RegExp(`(?<![a-zA-Z0-9_$])${escaped}(?![a-zA-Z0-9_$])`);
+	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
+	return new RegExp(`(?<![a-zA-Z0-9_$])${escaped}(?![a-zA-Z0-9_$])`);
 };
 
 // String Manipulation
@@ -58,20 +59,22 @@ export const STRIP_QUOTES_REGEX = /^['"]|['"]$/g;
 export const JS_STRINGS_REGEX = /'[^']*'|"[^"]*"|`[^`]*`/g;
 
 export function createFastMatcher(list: (string | RegExp)[]): RegExp {
-    const sources = list.map(item => {
-        if (item instanceof RegExp) return item.source;
-        
-        if (item.includes('*')) {
-            const parts = item.split('*');
-            const escapedParts = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`));
-            return escapedParts.join('.*');
-        }
+	const sources = list.map((item) => {
+		if (item instanceof RegExp) return item.source;
 
-        return item.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
-    });
-    
-    // Sort by length (descending) to ensure specific matches come before general ones
-    sources.sort((a, b) => b.length - a.length);
-    
-    return new RegExp(`(?:${sources.join('|')})`);
+		if (item.includes("*")) {
+			const parts = item.split("*");
+			const escapedParts = parts.map((p) =>
+				p.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`),
+			);
+			return escapedParts.join(".*");
+		}
+
+		return item.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
+	});
+
+	// Sort by length (descending) to ensure specific matches come before general ones
+	sources.sort((a, b) => b.length - a.length);
+
+	return new RegExp(`(?:${sources.join("|")})`);
 }

@@ -6,7 +6,7 @@
 export * from "./compiler";
 export * from "./kire";
 export * from "./lexer";
-export * from "./types";
 export * from "./runtime";
+export * from "./types";
 export { escapeHtml } from "./utils/html";
 export { NullProtoObj } from "./utils/regex";

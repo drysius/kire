@@ -9,8 +9,8 @@ export default defineSchema({
 	dependencies: ["kire"],
 	handle: async (kire) => {
 		try {
-		const { default: KireAuth } = await import("@kirejs/auth");
-					if (KireAuth) kire.use(KireAuth);
+			const { default: KireAuth } = await import("@kirejs/auth");
+			if (KireAuth) kire.use(KireAuth);
 		} catch (_error) {}
 	},
 });

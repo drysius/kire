@@ -1,28 +1,34 @@
 import { createHash } from "node:crypto";
-import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
+import { kirePlugin } from "kire";
 import type { KireAsset, KireAssetsOptions } from "./types";
 
-export const KireAssets = kirePlugin<KireAssetsOptions>({
-    prefix: "_kire",
-    domain: ""
-}, (kire, opts) => {
-    kire.kireSchema({
-        name: "@kirejs/assets",
-        author: "Drysius",
-        repository: "https://github.com/drysius/kire",
-        version: "0.1.0"
-    });
+export const KireAssets = kirePlugin<KireAssetsOptions>(
+	{
+		prefix: "_kire",
+		domain: "",
+	},
+	(kire, opts) => {
+		kire.kireSchema({
+			name: "@kirejs/assets",
+			author: "Drysius",
+			repository: "https://github.com/drysius/kire",
+			version: "0.1.0",
+		});
 
-    const prefix = opts.prefix || "_kire";
-    const domain = opts.domain || "";
-    const MAX_CACHE_SIZE = 500;
-    const getBaseUrl = () => (domain ? `${domain}/${prefix}` : `/${prefix}`);
+		const prefix = opts.prefix || "_kire";
+		const domain = opts.domain || "";
+		const MAX_CACHE_SIZE = 500;
+		const getBaseUrl = () => (domain ? `${domain}/${prefix}` : `/${prefix}`);
 
-    const cache = kire.cached("@kirejs/assets");
+		const cache = kire.cached("@kirejs/assets");
 
-        kire.existVar('__kire_assets', (api) => {
-            api.prologue(`const __kire_assets = { scripts: [], styles: [], baseUrl: "${getBaseUrl()}" };`);
-            api.epilogue(`
+		kire.existVar(
+			"__kire_assets",
+			(api) => {
+				api.prologue(
+					`const __kire_assets = { scripts: [], styles: [], baseUrl: "${getBaseUrl()}" };`,
+				);
+				api.epilogue(`
                 if (typeof __kire_assets !== 'undefined') {
                     const _assets_placeholder = '<!-- KIRE:assets -->';
                     const _assets_baseUrl = __kire_assets.baseUrl;
@@ -61,11 +67,13 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
                     }
                 }
             `);
-        },true);
+			},
+			true,
+		);
 
 		const addToCache = (key: string, value: KireAsset) => {
 			if (cache[key]) return;
-            const keys = Object.keys(cache);
+			const keys = Object.keys(cache);
 			if (keys.length >= MAX_CACHE_SIZE) {
 				const firstKey = keys[0];
 				if (firstKey) delete cache[firstKey];
@@ -124,7 +132,7 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 				const pathExpr = api.getArgument(0);
 				const attrsExpr = api.getArgument(1) || "{}";
 
-                api.markAsync();
+				api.markAsync();
 				api.write(`await (async () => {
                     const $hash = await $globals.$loadSVGAsset(${pathExpr});
                     const $attrs = ${attrsExpr};
@@ -148,24 +156,25 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 			description: `Captures inline styles to be injected via @assets.`,
 			example: `<style>body { color: red; }</style>`,
 			onCall(api) {
-                api.write(`__kire_assets;`);
-                const attrs = api.node.attributes || {};
+				api.write(`__kire_assets;`);
+				const attrs = api.node.attributes || {};
 				if (attrs.nocache !== undefined) {
-                    api.append('<style');
-                    for (const [key, val] of Object.entries(attrs)) {
-                        api.append(` ${key}=${JSON.stringify(val)}`);
-                    }
-                    api.append('>');
-                    api.renderChildren();
-                    api.append('</style>');
-                    return;
-                }
+					api.append("<style");
+					for (const [key, val] of Object.entries(attrs)) {
+						api.append(` ${key}=${JSON.stringify(val)}`);
+					}
+					api.append(">");
+					api.renderChildren();
+					api.append("</style>");
+					return;
+				}
 
-                let content = "";
-                for (const child of api.node.children || []) {
-                    if (child.type === "text") content += child.content;
-                    else if (child.type === "interpolation") content += `{{ ${child.content} }}`;
-                }
+				let content = "";
+				for (const child of api.node.children || []) {
+					if (child.type === "text") content += child.content;
+					else if (child.type === "interpolation")
+						content += `{{ ${child.content} }}`;
+				}
 
 				if (!content.trim()) return;
 
@@ -176,7 +185,9 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 
 				addToCache(hash, { hash, content, type: "css" });
 
-                api.write(`if (typeof __kire_assets !== 'undefined' && __kire_assets.styles.indexOf("${hash}") === -1) __kire_assets.styles.push("${hash}");`);
+				api.write(
+					`if (typeof __kire_assets !== 'undefined' && __kire_assets.styles.indexOf("${hash}") === -1) __kire_assets.styles.push("${hash}");`,
+				);
 			},
 		});
 
@@ -186,27 +197,25 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 			description: `Captures inline scripts to be injected via @assets.`,
 			example: `<script>console.log('hello');</script>`,
 			onCall(api) {
-                api.write(`__kire_assets;`);
-                const attrs = api.node.attributes || {};
-				if (
-					attrs.src ||
-					attrs.nocache !== undefined
-				) {
-                    api.append('<script');
-                    for (const [key, val] of Object.entries(attrs)) {
-                        api.append(` ${key}=${JSON.stringify(val)}`);
-                    }
-                    api.append('>');
-                    api.renderChildren();
-                    api.append('</script>');
-                    return;
-                }
+				api.write(`__kire_assets;`);
+				const attrs = api.node.attributes || {};
+				if (attrs.src || attrs.nocache !== undefined) {
+					api.append("<script");
+					for (const [key, val] of Object.entries(attrs)) {
+						api.append(` ${key}=${JSON.stringify(val)}`);
+					}
+					api.append(">");
+					api.renderChildren();
+					api.append("</script>");
+					return;
+				}
 
-                let content = "";
-                for (const child of api.node.children || []) {
-                    if (child.type === "text") content += child.content;
-                    else if (child.type === "interpolation") content += `{{ ${child.content} }}`;
-                }
+				let content = "";
+				for (const child of api.node.children || []) {
+					if (child.type === "text") content += child.content;
+					else if (child.type === "interpolation")
+						content += `{{ ${child.content} }}`;
+				}
 
 				if (!content.trim()) return;
 
@@ -227,7 +236,9 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 
 				addToCache(hash, { hash, content, type });
 
-                api.write(`if (typeof __kire_assets !== 'undefined' && __kire_assets.scripts.indexOf("${hash}") === -1) __kire_assets.scripts.push("${hash}");`);
+				api.write(
+					`if (typeof __kire_assets !== 'undefined' && __kire_assets.scripts.indexOf("${hash}") === -1) __kire_assets.scripts.push("${hash}");`,
+				);
 			},
 		});
 
@@ -238,9 +249,9 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 			description: `Injects the assets placeholder where scripts and styles will be output.`,
 			example: `@assets()`,
 			onCall(api) {
-                api.write(`__kire_assets;`);
+				api.write(`__kire_assets;`);
 				api.write(`$kire_response += '<!-- KIRE:assets -->';\n`);
 			},
 		});
-	}
+	},
 );

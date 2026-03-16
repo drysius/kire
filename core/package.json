@@ -1,48 +1,48 @@
 {
-  "name": "kire",
-  "description": "A simple view system inspired by Blade.",
-  "version": "0.1.2",
-  "main": "dist/cjs/index.cjs",
-  "module": "dist/mjs/index.js",
-  "types": "dist/types/index.d.ts",
-  "typings": "dist/types/index.d.ts",
-  "scripts": {
-    "prebuild": "bun run build.ts"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/mjs/index.js",
-      "require": "./dist/cjs/index.cjs"
-    },
-    "./browser": {
-      "types": "./dist/types/browser.d.ts",
-      "import": "./dist/browser/kire.js"
-    }
-  },
-  "type": "module",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drysius/kire.git"
-  },
-  "keywords": [
-    "backend",
-    "standardization",
-    "standard",
-    "blade",
-    "npm",
-    "node",
-    "bun",
-    "deno",
-    "typescript",
-    "debug",
-    "output",
-    "performance"
-  ],
-  "author": "drysius",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/drysius/kire/issues"
-  },
-  "homepage": "https://github.com/drysius/kire/tree/main/core#readme"
+	"name": "kire",
+	"description": "A simple view system inspired by Blade.",
+	"version": "0.1.2",
+	"main": "dist/cjs/index.cjs",
+	"module": "dist/mjs/index.js",
+	"types": "dist/types/index.d.ts",
+	"typings": "dist/types/index.d.ts",
+	"scripts": {
+		"prebuild": "bun run build.ts"
+	},
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/mjs/index.js",
+			"require": "./dist/cjs/index.cjs"
+		},
+		"./browser": {
+			"types": "./dist/types/browser.d.ts",
+			"import": "./dist/browser/kire.js"
+		}
+	},
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"keywords": [
+		"backend",
+		"standardization",
+		"standard",
+		"blade",
+		"npm",
+		"node",
+		"bun",
+		"deno",
+		"typescript",
+		"debug",
+		"output",
+		"performance"
+	],
+	"author": "drysius",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/drysius/kire/issues"
+	},
+	"homepage": "https://github.com/drysius/kire/tree/main/core#readme"
 }

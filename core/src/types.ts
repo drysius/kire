@@ -4,27 +4,26 @@ import type { Kire } from "./kire";
 // Kire Render & Options
 // ==========================================
 
-export type KireRendered<Asyncronos extends boolean = true> = 
-    Asyncronos extends true ? Promise<string> : 
-    string;
+export type KireRendered<Asyncronos extends boolean = true> =
+	Asyncronos extends true ? Promise<string> : string;
 
 export interface KireOptions<Asyncronos extends boolean = boolean> {
-    production?: boolean;
-    async?: Asyncronos;
-    root?: string;
-    extension?: string;
-    silent?: boolean;
-    strict_directives?: boolean;
-    local_variable?: string;
-    max_renders?: number;
-    // Option to define the initial cache/bundle file
-    files?: Record<string, string | KireTplFunction>;
-    // Override default platform APIs (filesystem/path/env/runtime)
-    platform?: Partial<KirePlatform>;
-    // If true, doesn't load native elements and directives
-    emptykire?: boolean;
-    // Internal use for forking
-    parent?: Kire<any>;
+	production?: boolean;
+	async?: Asyncronos;
+	root?: string;
+	extension?: string;
+	silent?: boolean;
+	strict_directives?: boolean;
+	local_variable?: string;
+	max_renders?: number;
+	// Option to define the initial cache/bundle file
+	files?: Record<string, string | KireTplFunction>;
+	// Override default platform APIs (filesystem/path/env/runtime)
+	platform?: Partial<KirePlatform>;
+	// If true, doesn't load native elements and directives
+	emptykire?: boolean;
+	// Internal use for forking
+	parent?: Kire<any>;
 }
 
 // ==========================================
@@ -36,70 +35,74 @@ export interface KireOptions<Asyncronos extends boolean = boolean> {
 // ==========================================
 
 export interface KirePlatform {
-    readFile(path: string): string;
-    exists(path: string): boolean;
-    readDir(path: string): string[];
-    stat(path: string): any;
-    writeFile(path: string, data: string): void;
-    resolve(...args: string[]): string;
-    join(...args: string[]): string;
-    isAbsolute(path: string): boolean;
-    relative(from: string, to: string): string;
-    cwd(): string;
-    env(key: string): string | undefined;
-    isProd(): boolean;
+	readFile(path: string): string;
+	exists(path: string): boolean;
+	readDir(path: string): string[];
+	stat(path: string): any;
+	writeFile(path: string, data: string): void;
+	resolve(...args: string[]): string;
+	join(...args: string[]): string;
+	isAbsolute(path: string): boolean;
+	relative(from: string, to: string): string;
+	cwd(): string;
+	env(key: string): string | undefined;
+	isProd(): boolean;
 }
 
 export interface KireConfig {
-    production: boolean;
-    async: boolean;
-    root: string;
-    extension: string;
-    silent: boolean;
-    strict_directives: boolean;
-    var_locals: string;
-    namespaces: Record<string, string>;
-    max_renders: number;
+	production: boolean;
+	async: boolean;
+	root: string;
+	extension: string;
+	silent: boolean;
+	strict_directives: boolean;
+	var_locals: string;
+	namespaces: Record<string, string>;
+	max_renders: number;
 }
 
 export interface KireRuntime {
-    escapeHtml(v: any): string;
-    NullProtoObj: any;
-    KireError: any;
-    renderErrorHtml: any;
-    createKireFunction: any;
+	escapeHtml(v: any): string;
+	NullProtoObj: any;
+	KireError: any;
+	renderErrorHtml: any;
+	createKireFunction: any;
 }
 
 export interface KireCacheEntry {
-    ast?: Node[];
-    fn?: KireTplFunction;
-    code?: string;
-    async: boolean;
-    time: number;
-    dependencies: Record<string, string>;
-    source: string;
-    // Unique ID for sourcemaps/debug
-    id?: string;
+	ast?: Node[];
+	fn?: KireTplFunction;
+	code?: string;
+	async: boolean;
+	time: number;
+	dependencies: Record<string, string>;
+	source: string;
+	// Unique ID for sourcemaps/debug
+	id?: string;
 }
-
 
 export interface DependencyMetadata {
-    execute: KireTplFunction;
-    async: boolean;
+	execute: KireTplFunction;
+	async: boolean;
 }
 
-export type KireTplFunctionBase = (this: Kire<any>, locals?: object, globals?: object, template?:KireTplFunction) => string | Promise<string>;
+export type KireTplFunctionBase = (
+	this: Kire<any>,
+	locals?: object,
+	globals?: object,
+	template?: KireTplFunction,
+) => string | Promise<string>;
 
 export interface KireTplFunction extends KireTplFunctionBase {
-    /** Metadata about the compiled template */
-    meta: {
-        async: boolean;
-        path: string;
-        source: string;
-        code: string;
-        map?: any;
-        dependencies: Record<string, string>;    
-    }
+	/** Metadata about the compiled template */
+	meta: {
+		async: boolean;
+		path: string;
+		source: string;
+		code: string;
+		map?: any;
+		dependencies: Record<string, string>;
+	};
 }
 
 // ==========================================
@@ -107,35 +110,39 @@ export interface KireTplFunction extends KireTplFunctionBase {
 // ==========================================
 
 export interface CompilerApi {
-    prologue(jsCode: string): void;
-    write(jsCode: string): void;
-    epilogue(jsCode: string): void;
-    after(jsCode: string): void;
-    markAsync(): void;
-    getDependency(path: string): KireTplFunction;
-    depend(path: string): string;
-    append(content: string | number | boolean): void;
-    renderChildren(nodes?: Node[]): void;
-    uid(prefix: string): string;
-    getAttribute(name: string): any;
-    getArgument(index: number): any;
-    transform(code: string): string;
-    raw(jsCode: string): void;
-    res(content: any): void;
-    set(nodes: Node[]): void;
-    attribute(name: string): any;
-    param(name: string | number): any;
-    inject(jsCode: string): void;
-    existVar(name: string, callback: (api: CompilerApi) => void, unique?: boolean): void;
-    
-    kire: Kire<any>;
-    node: Node;
-    editable: boolean;
-    fullBody: string;
-    allIdentifiers: Set<string>;
-    wildcard?: string;
-    children?: Node[];
-    [key: string]: any;
+	prologue(jsCode: string): void;
+	write(jsCode: string): void;
+	epilogue(jsCode: string): void;
+	after(jsCode: string): void;
+	markAsync(): void;
+	getDependency(path: string): KireTplFunction;
+	depend(path: string): string;
+	append(content: string | number | boolean): void;
+	renderChildren(nodes?: Node[]): void;
+	uid(prefix: string): string;
+	getAttribute(name: string): any;
+	getArgument(index: number): any;
+	transform(code: string): string;
+	raw(jsCode: string): void;
+	res(content: any): void;
+	set(nodes: Node[]): void;
+	attribute(name: string): any;
+	param(name: string | number): any;
+	inject(jsCode: string): void;
+	existVar(
+		name: string,
+		callback: (api: CompilerApi) => void,
+		unique?: boolean,
+	): void;
+
+	kire: Kire<any>;
+	node: Node;
+	editable: boolean;
+	fullBody: string;
+	allIdentifiers: Set<string>;
+	wildcard?: string;
+	children?: Node[];
+	[key: string]: any;
 }
 
 export type KireHandler = (api: CompilerApi) => void;
@@ -145,58 +152,58 @@ export type KireHandler = (api: CompilerApi) => void;
 // ==========================================
 
 export interface ElementDefinition {
-    // Runtime matching
-    name: string | RegExp;
-    onCall?: KireHandler;
+	// Runtime matching
+	name: string | RegExp;
+	onCall?: KireHandler;
 
-    // Kernel Metadata
-    relatedTo?: string[];
-    closeBy?: string | string[];
-    raw?: boolean;
-    scope?: (args: any[], attributes?: Record<string, string>) => string[];
-    isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
-    
-    // Schema/Doc Metadata
-    void?: boolean;
-    description?: string;
-    example?: string;
-    related?: string[];
-    attributes?: KireAttributeDeclaration[];
-    declares?: KireDeclareDeclaration[];
+	// Kernel Metadata
+	relatedTo?: string[];
+	closeBy?: string | string[];
+	raw?: boolean;
+	scope?: (args: any[], attributes?: Record<string, string>) => string[];
+	isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
+
+	// Schema/Doc Metadata
+	void?: boolean;
+	description?: string;
+	example?: string;
+	related?: string[];
+	attributes?: KireAttributeDeclaration[];
+	declares?: KireDeclareDeclaration[];
 }
 
 export interface DirectiveDefinition {
-    // Runtime matching
-    name: string;
-    onCall: KireHandler;
+	// Runtime matching
+	name: string;
+	onCall: KireHandler;
 
-    // Kernel Metadata
-    relatedTo?: string[];
-    closeBy?: string | string[];
-    scope?: (args: any[], attributes?: Record<string, string>) => string[];
-    isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
-    
-    // Schema/Doc Metadata
-    signature?: string[];
-    declares?: KireDeclareDeclaration[];
-    children?: boolean | "auto";
-    related?: string[];
-    exposes?: string[];
-    description?: string;
-    example?: string;
+	// Kernel Metadata
+	relatedTo?: string[];
+	closeBy?: string | string[];
+	scope?: (args: any[], attributes?: Record<string, string>) => string[];
+	isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
+
+	// Schema/Doc Metadata
+	signature?: string[];
+	declares?: KireDeclareDeclaration[];
+	children?: boolean | "auto";
+	related?: string[];
+	exposes?: string[];
+	description?: string;
+	example?: string;
 }
 
 export interface KirePlugin<Options extends object = {}> {
-    name?: string;
-    sort?: number;
-    options?: Options;
-    load(kire: Kire<any>, opts: Options): void;
+	name?: string;
+	sort?: number;
+	options?: Options;
+	load(kire: Kire<any>, opts: Options): void;
 }
 
 export interface KireExistVar {
-    name: string | RegExp; // String or Regex pattern
-    unique: boolean;
-    callback: KireHandler;
+	name: string | RegExp; // String or Regex pattern
+	unique: boolean;
+	callback: KireHandler;
 }
 
 // ==========================================
@@ -204,73 +211,73 @@ export interface KireExistVar {
 // ==========================================
 
 export interface KireSchemaObject {
-    name: string;
-    version: string;
-    description?: string;
-    author?:string;
-    repository?: string;
-    dependencies: string[];
-    directives: KireDirectiveDeclaration[];
-    elements: KireElementDeclaration[];
-    attributes: KireAttributeDeclaration[];
-    types: TypeDefinition[];
-    tools?: Record<string, any>;
+	name: string;
+	version: string;
+	description?: string;
+	author?: string;
+	repository?: string;
+	dependencies: string[];
+	directives: KireDirectiveDeclaration[];
+	elements: KireElementDeclaration[];
+	attributes: KireAttributeDeclaration[];
+	types: TypeDefinition[];
+	tools?: Record<string, any>;
 }
 
 export interface KireDeclareDeclaration {
-    name?: string;
-    type?: string;
-    description?: string;
-    fromArg?: number;
-    fromAttribute?: string;
-    pattern?: string;
-    capture?: string | string[];
+	name?: string;
+	type?: string;
+	description?: string;
+	fromArg?: number;
+	fromAttribute?: string;
+	pattern?: string;
+	capture?: string | string[];
 }
 
 export interface KireDirectiveDeclaration {
-    name: string;
-    description?: string;
-    signature?: string[];
-    declares?: KireDeclareDeclaration[];
-    children?: boolean | "auto";
-    example?: string;
-    related?: string[];
-    exposes?: string[];
+	name: string;
+	description?: string;
+	signature?: string[];
+	declares?: KireDeclareDeclaration[];
+	children?: boolean | "auto";
+	example?: string;
+	related?: string[];
+	exposes?: string[];
 }
 
 export interface KireElementDeclaration {
-    name: string;
-    description?: string;
-    void?: boolean;
-    attributes?: KireAttributeDeclaration[];
-    example?: string;
-    related?: string[];
-    declares?: KireDeclareDeclaration[];
+	name: string;
+	description?: string;
+	void?: boolean;
+	attributes?: KireAttributeDeclaration[];
+	example?: string;
+	related?: string[];
+	declares?: KireDeclareDeclaration[];
 }
 
 export interface KireAttributeDeclaration {
-    name: string;
-    type?: string | string[];
-    description?: string;
-    example?: string;
+	name: string;
+	type?: string | string[];
+	description?: string;
+	example?: string;
 }
 
 export interface TypeDefinition {
-    variable: string;
-    type: "global" | "context" | "prop";
-    comment?: string;
-    tstype: string;
+	variable: string;
+	type: "global" | "context" | "prop";
+	comment?: string;
+	tstype: string;
 }
 
 export interface KireSchemaDefinition {
-    name?: string;
-    version?: string;
-    description?: string;
-    author?: string;
-    repository?: string;
-    dependencies?: string[];
-    tools?: Record<string, any>;
-    handle(kire: Kire<any>): void | Promise<void>;
+	name?: string;
+	version?: string;
+	description?: string;
+	author?: string;
+	repository?: string;
+	dependencies?: string[];
+	tools?: Record<string, any>;
+	handle(kire: Kire<any>): void | Promise<void>;
 }
 
 // ==========================================
@@ -278,41 +285,55 @@ export interface KireSchemaDefinition {
 // ==========================================
 
 export interface IParser {
-    parse(): Node[];
+	parse(): Node[];
 }
-export type IParserConstructor = new (template: string, kire: Kire<any>) => IParser;
+export type IParserConstructor = new (
+	template: string,
+	kire: Kire<any>,
+) => IParser;
 
 export interface ICompiler {
-    compile(nodes: Node[], extraGlobals?: string[]): string;
-    async: boolean;
-    getDependencies(): Record<string, string>;
+	compile(nodes: Node[], extraGlobals?: string[]): string;
+	async: boolean;
+	getDependencies(): Record<string, string>;
 }
-export type ICompilerConstructor = new (kire: Kire<any>, filename?: string) => ICompiler;
+export type ICompilerConstructor = new (
+	kire: Kire<any>,
+	filename?: string,
+) => ICompiler;
 
 // ==========================================
 // AST Nodes
 // ==========================================
 
-export type NodeType = "text" | "interpolation" | "directive" | "js" | "element";
+export type NodeType =
+	| "text"
+	| "interpolation"
+	| "directive"
+	| "js"
+	| "element";
 
 export interface Node {
-    type: NodeType;
-    content?: string;
-    name?: string; 
-    args?: any[]; 
-    attributes?: Record<string, string>; 
-    attributeMeta?: Record<string, {
-        quoted: boolean;
-        quote?: '"' | "'";
-    }>;
-    tagName?: string; 
-    wildcard?: string; 
-    children?: Node[]; 
-    related?: Node[]; 
-    raw?: boolean;
-    void?: boolean; 
-    loc?: {
-        line: number;
-        column: number;
-    };
+	type: NodeType;
+	content?: string;
+	name?: string;
+	args?: any[];
+	attributes?: Record<string, string>;
+	attributeMeta?: Record<
+		string,
+		{
+			quoted: boolean;
+			quote?: '"' | "'";
+		}
+	>;
+	tagName?: string;
+	wildcard?: string;
+	children?: Node[];
+	related?: Node[];
+	raw?: boolean;
+	void?: boolean;
+	loc?: {
+		line: number;
+		column: number;
+	};
 }

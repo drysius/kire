@@ -43,7 +43,8 @@ export function isGlobPattern(value: string): boolean {
 export function extractGlobBase(pattern: string): string {
 	const normalized = normalizeSlashes(pattern);
 	const wildcardIndex = normalized.search(GLOB_MAGIC_REGEX);
-	let base = wildcardIndex === -1 ? normalized : normalized.slice(0, wildcardIndex);
+	let base =
+		wildcardIndex === -1 ? normalized : normalized.slice(0, wildcardIndex);
 	base = base.replace(/\/+$/, "");
 	if (!base) return ".";
 	return base;
@@ -96,9 +97,12 @@ export function matchesRefresh(
 		if (!pattern) continue;
 
 		if (!isGlobPattern(pattern)) {
-			if (pattern.startsWith(".") && absoluteFile.endsWith(pattern)) return true;
-			if (relativeFile === pattern || relativeFile.endsWith(`/${pattern}`)) return true;
-			if (absoluteFile === pattern || absoluteFile.endsWith(`/${pattern}`)) return true;
+			if (pattern.startsWith(".") && absoluteFile.endsWith(pattern))
+				return true;
+			if (relativeFile === pattern || relativeFile.endsWith(`/${pattern}`))
+				return true;
+			if (absoluteFile === pattern || absoluteFile.endsWith(`/${pattern}`))
+				return true;
 			continue;
 		}
 

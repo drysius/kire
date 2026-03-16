@@ -1,5 +1,8 @@
 import * as vscode from "vscode";
-import { getLanguageService, type HoverSettings } from "vscode-html-languageservice";
+import {
+	getLanguageService,
+	type HoverSettings,
+} from "vscode-html-languageservice";
 import { hasKireHoverTarget } from "../kire/schemaHover";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 

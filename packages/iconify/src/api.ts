@@ -5,7 +5,9 @@ function createNullProtoObj<T extends object = Record<string, never>>(): T {
 export async function fetchIcon(
 	iconName: string,
 	apiUrl: string,
-	queryParams: Record<string, string> = createNullProtoObj<Record<string, string>>(),
+	queryParams: Record<string, string> = createNullProtoObj<
+		Record<string, string>
+	>(),
 	cache?: Record<string, string>,
 ): Promise<string> {
 	// Create a cache key that includes the query parameters to differentiate variants
@@ -16,7 +18,7 @@ export async function fetchIcon(
 		.join("&");
 	const cacheKey = `${iconName}?${queryString}`;
 
-	if (cache && cache[cacheKey]) {
+	if (cache?.[cacheKey]) {
 		return cache[cacheKey]!;
 	}
 

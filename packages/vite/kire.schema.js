@@ -3,7 +3,8 @@ const defineSchema = (schema) => schema;
 export default defineSchema({
 	name: "@kirejs/vite",
 	version: "0.1.0",
-	description: "Vite integration for Kire with @vite runtime directive support.",
+	description:
+		"Vite integration for Kire with @vite runtime directive support.",
 	author: "drysius",
 	repository: "git+https://github.com/drysius/kire.git",
 	dependencies: ["kire"],

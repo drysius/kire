@@ -1,132 +1,132 @@
 {
-  "name": "kire-intellisense",
-  "displayName": "KIRE IntelliSense",
-  "description": "Advanced language support and IntelliSense for the Kire templating engine.",
-  "version": "0.1.3",
-  "type": "module",
-  "publisher": "Kire",
-  "icon": "image.png",
-  "engines": {
-    "vscode": "^1.104.0"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/drysius/kire.git"
-  },
-  "categories": [
-    "Programming Languages"
-  ],
-  "main": "./dist/extension.js",
-  "activationEvents": [
-    "onLanguage:kire"
-  ],
-  "dependencies": {
-    "vscode-html-languageservice": "^5.5.1",
-    "vscode-languageserver-textdocument": "^1.0.12",
-    "zustand": "^5.0.8"
-  },
-  "devDependencies": {
-    "@types/vscode": "^1.104.0",
-    "@types/node": "^24.10.1",
-    "typescript": "^5.9.2"
-  },
-  "contributes": {
-    "commands": [
-      {
-        "command": "kire.reloadSchemas",
-        "title": "Kire: Reload Schemas"
-      },
-      {
-        "command": "kire.showLogs",
-        "title": "Kire: Show Logs"
-      }
-    ],
-    "configuration": {
-      "title": "Kire",
-      "properties": {
-        "kire.logs.debug": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable verbose debug logs in the Kire output channel."
-        },
-        "kire.schema.scanNodeModules": {
-          "type": "boolean",
-          "default": false,
-          "description": "Scan node_modules for kire.schema.js files. Disable for faster schema loading."
-        }
-      }
-    },
-    "languages": [
-      {
-        "id": "kire",
-        "aliases": [
-          "Kire",
-          "kire"
-        ],
-        "extensions": [
-          ".kire",
-          ".kire.html"
-        ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "icon.svg",
-          "dark": "icon.svg"
-        }
-      }
-    ],
-    "grammars": [
-      {
-        "language": "kire",
-        "scopeName": "text.html.kire",
-        "path": "./syntaxes/kire.tmLanguage.json",
-        "embeddedLanguages": {
-          "source.js": "javascript",
-          "source.ts": "typescript",
-          "source.css": "css"
-        }
-      }
-    ],
-    "semanticTokenScopes": [
-      {
-        "language": "kire",
-        "scopes": {
-          "keyword": [
-            "keyword.control.directive.kire",
-            "keyword.control.kire",
-            "keyword.control"
-          ],
-          "class": [
-            "entity.name.tag.custom.kire",
-            "entity.name.tag.html",
-            "entity.name.type.class"
-          ],
-          "type": [
-            "entity.name.type",
-            "support.type"
-          ],
-          "parameter": [
-            "variable.parameter"
-          ],
-          "variable": [
-            "variable.other.readwrite",
-            "variable.other.constant",
-            "meta.definition.variable"
-          ],
-          "property": [
-            "variable.other.property",
-            "entity.other.attribute-name.html"
-          ],
-          "string": [
-            "string.quoted"
-          ]
-        }
-      }
-    ]
-  },
-  "scripts": {
-    "build": "vsce package",
-    "vscode:prepublish": "bun build.ts",
-    "watch": "bun build.ts --watch",
-    "check": "tsc --noEmit --project tsconfig.json"
-  }
+	"name": "kire-intellisense",
+	"displayName": "KIRE IntelliSense",
+	"description": "Advanced language support and IntelliSense for the Kire templating engine.",
+	"version": "0.1.3",
+	"type": "module",
+	"publisher": "Kire",
+	"icon": "image.png",
+	"engines": {
+		"vscode": "^1.104.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"categories": [
+		"Programming Languages"
+	],
+	"main": "./dist/extension.js",
+	"activationEvents": [
+		"onLanguage:kire"
+	],
+	"dependencies": {
+		"vscode-html-languageservice": "^5.5.1",
+		"vscode-languageserver-textdocument": "^1.0.12",
+		"zustand": "^5.0.8"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.104.0",
+		"@types/node": "^24.10.1",
+		"typescript": "^5.9.2"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "kire.reloadSchemas",
+				"title": "Kire: Reload Schemas"
+			},
+			{
+				"command": "kire.showLogs",
+				"title": "Kire: Show Logs"
+			}
+		],
+		"configuration": {
+			"title": "Kire",
+			"properties": {
+				"kire.logs.debug": {
+					"type": "boolean",
+					"default": false,
+					"description": "Enable verbose debug logs in the Kire output channel."
+				},
+				"kire.schema.scanNodeModules": {
+					"type": "boolean",
+					"default": false,
+					"description": "Scan node_modules for kire.schema.js files. Disable for faster schema loading."
+				}
+			}
+		},
+		"languages": [
+			{
+				"id": "kire",
+				"aliases": [
+					"Kire",
+					"kire"
+				],
+				"extensions": [
+					".kire",
+					".kire.html"
+				],
+				"configuration": "./language-configuration.json",
+				"icon": {
+					"light": "icon.svg",
+					"dark": "icon.svg"
+				}
+			}
+		],
+		"grammars": [
+			{
+				"language": "kire",
+				"scopeName": "text.html.kire",
+				"path": "./syntaxes/kire.tmLanguage.json",
+				"embeddedLanguages": {
+					"source.js": "javascript",
+					"source.ts": "typescript",
+					"source.css": "css"
+				}
+			}
+		],
+		"semanticTokenScopes": [
+			{
+				"language": "kire",
+				"scopes": {
+					"keyword": [
+						"keyword.control.directive.kire",
+						"keyword.control.kire",
+						"keyword.control"
+					],
+					"class": [
+						"entity.name.tag.custom.kire",
+						"entity.name.tag.html",
+						"entity.name.type.class"
+					],
+					"type": [
+						"entity.name.type",
+						"support.type"
+					],
+					"parameter": [
+						"variable.parameter"
+					],
+					"variable": [
+						"variable.other.readwrite",
+						"variable.other.constant",
+						"meta.definition.variable"
+					],
+					"property": [
+						"variable.other.property",
+						"entity.other.attribute-name.html"
+					],
+					"string": [
+						"string.quoted"
+					]
+				}
+			}
+		]
+	},
+	"scripts": {
+		"build": "vsce package",
+		"vscode:prepublish": "bun build.ts",
+		"watch": "bun build.ts --watch",
+		"check": "tsc --noEmit --project tsconfig.json"
+	}
 }

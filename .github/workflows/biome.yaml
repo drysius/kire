@@ -24,4 +24,4 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run Biome Check
-        run: bunx biome check --write **/src/**
+        run: bun run biome:check

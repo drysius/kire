@@ -1,4 +1,4 @@
-import { kirePlugin, type Kire } from "kire";
+import { type Kire, kirePlugin } from "kire";
 import { marked } from "marked";
 
 declare module "kire" {
@@ -135,90 +135,95 @@ function protectKireSyntaxInCode(html: string): string {
 		return `${tokenPrefix}${idx}__`;
 	};
 
-	let out = html.replace(/<pre\b[\s\S]*?<\/pre>/gi, (segment) => stash(segment));
+	let out = html.replace(/<pre\b[\s\S]*?<\/pre>/gi, (segment) =>
+		stash(segment),
+	);
 	out = out.replace(/<code\b[\s\S]*?<\/code>/gi, (segment) => stash(segment));
 	out = out.replace(/@([A-Za-z_][\w.-]*)\/([A-Za-z0-9._-]+)/g, "&#64;$1/$2");
-	out = out.replace(new RegExp(`${tokenPrefix}(\\d+)__`, "g"), (_, rawIdx: string) => {
-		const idx = Number(rawIdx);
-		return chunks[idx] ?? "";
-	});
+	out = out.replace(
+		new RegExp(`${tokenPrefix}(\\d+)__`, "g"),
+		(_, rawIdx: string) => {
+			const idx = Number(rawIdx);
+			return chunks[idx] ?? "";
+		},
+	);
 	return out;
 }
 
 export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
-    kire.kireSchema({
-        name: "@kirejs/markdown",
-        author: "Drysius",
-        repository: "https://github.com/drysius/kire",
-        version: "0.1.0"
-    });
+	kire.kireSchema({
+		name: "@kirejs/markdown",
+		author: "Drysius",
+		repository: "https://github.com/drysius/kire",
+		version: "0.1.0",
+	});
 
-    const _fnCache = kire.cached("@kirejs/markdown");
+	const _fnCache = kire.cached("@kirejs/markdown");
 
-		kire.mdrender = async (
-			content: string,
-			locals: Record<string, any> = {},
-		) => {
-			const html = protectKireSyntaxInCode(await marked.parse(content));
-			return await kire.render(html, locals) as any;
-		};
+	kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {
+		const html = protectKireSyntaxInCode(await marked.parse(content));
+		return (await kire.render(html, locals)) as any;
+	};
 
-		kire.mdview = async (path: string, locals: Record<string, any> = {}) => {
-			const cacheKey = `file:${path}`;
+	kire.mdview = async (path: string, locals: Record<string, any> = {}) => {
+		const cacheKey = `file:${path}`;
 
-			if (kire.$production && _fnCache[cacheKey]) {
-				return kire.run(_fnCache[cacheKey], locals) as any;
+		if (kire.$production && _fnCache[cacheKey]) {
+			return kire.run(_fnCache[cacheKey], locals) as any;
+		}
+
+		try {
+			const resolved = resolveMarkdownPath(kire, path);
+			const content = kire.readFile(resolved);
+			const htmlTemplate = protectKireSyntaxInCode(await marked.parse(content));
+			const entry = kire.compile(htmlTemplate, resolved);
+
+			if (kire.$production) _fnCache[cacheKey] = entry.fn;
+
+			return kire.run(entry.fn!, locals) as any;
+		} catch (e) {
+			if (!kire.$silent) {
+				console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
 			}
+			return "";
+		}
+	};
 
-			try {
-				const resolved = resolveMarkdownPath(kire, path);
-				const content = kire.readFile(resolved);
-				const htmlTemplate = protectKireSyntaxInCode(await marked.parse(content));
-				const entry = kire.compile(htmlTemplate, resolved);
+	kire.$global("$readdir", async (pattern: string) => {
+		const cacheKey = `glob:${pattern}`;
+		if (kire.$production && Array.isArray(_fnCache[cacheKey])) {
+			return _fnCache[cacheKey];
+		}
 
-				if (kire.$production) _fnCache[cacheKey] = entry.fn;
+		const files = findMarkdownFiles(kire, pattern);
+		if (kire.$production) _fnCache[cacheKey] = files;
+		return files;
+	});
 
-				return kire.run(entry.fn!, locals) as any;
-			} catch (e) {
-				if (!kire.$silent) {
-					console.warn(`[KireMarkdown] Failed to view ${path}:`, e);
-				}
-				return "";
-			}
-		};
+	kire.$global("$mdrender", async (source: string) => {
+		if (!source) return "";
 
-		kire.$global("$readdir", async (pattern: string) => {
-			const cacheKey = `glob:${pattern}`;
-			if (kire.$production && Array.isArray(_fnCache[cacheKey])) {
-				return _fnCache[cacheKey];
-			}
+		if (
+			typeof source === "string" &&
+			(source.endsWith(".md") || source.endsWith(".markdown"))
+		) {
+			const html = await kire.mdview(source);
+			if (html) return html;
+		}
 
-			const files = findMarkdownFiles(kire, pattern);
-			if (kire.$production) _fnCache[cacheKey] = files;
-			return files;
-		});
+		return await kire.mdrender(source);
+	});
 
-		kire.$global("$mdrender", async (source: string) => {
-			if (!source) return "";
+	kire.directive({
+		name: "markdown",
+		signature: ["source"],
+		description: "Renders Markdown content from a string or file path.",
+		example: "@markdown('path/to/file.md')",
+		onCall(api) {
+			const source = api.getArgument(0) ?? "";
 
-			if (typeof source === 'string' && (source.endsWith(".md") || source.endsWith(".markdown"))) {
-				const html = await kire.mdview(source);
-				if (html) return html;
-			}
-
-			return await kire.mdrender(source);
-		});
-
-		kire.directive({
-			name: "markdown",
-			signature: ["source"],
-			description: "Renders Markdown content from a string or file path.",
-			example: "@markdown('path/to/file.md')",
-			onCall(api) {
-				const source = api.getArgument(0) ?? "";
-
-                api.markAsync();
-				api.write(`await (async () => {
+			api.markAsync();
+			api.write(`await (async () => {
                     const $source = ${source};
                     const $isGlobPattern =
                         typeof $source === 'string' &&
@@ -237,21 +242,21 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
                         $kire_response += $html;
                     }
                 })();`);
-			},
-		});
+		},
+	});
 
-		kire.directive({
-			name: "mdslots",
-			signature: ["pattern", "name"],
-			description:
-				"Loads Markdown files matching a glob pattern into a context variable.",
-			example: "@mdslots('posts/*.md', 'posts')",
-			onCall(api) {
-				const pattern = api.getArgument(0);
-				const name = api.getArgument(1) || "'$mdslot'";
+	kire.directive({
+		name: "mdslots",
+		signature: ["pattern", "name"],
+		description:
+			"Loads Markdown files matching a glob pattern into a context variable.",
+		example: "@mdslots('posts/*.md', 'posts')",
+		onCall(api) {
+			const pattern = api.getArgument(0);
+			const name = api.getArgument(1) || "'$mdslot'";
 
-                api.markAsync();
-				api.write(`await (async () => {
+			api.markAsync();
+			api.write(`await (async () => {
 					const $files = await $globals.$readdir(${pattern});
 					const $slots = {};
 					for (const $file of $files) {
@@ -260,9 +265,8 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 					$globals[${name}] = $slots;
 					$kire_response += "<!-- KIRE_GEN:" + ${pattern} + " -->";
 				})();`);
-			},
-		});
-    }
-);
+		},
+	});
+});
 
 export default KireMarkdown;

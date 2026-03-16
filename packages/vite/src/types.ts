@@ -107,11 +107,14 @@ export interface ViteHotUpdateContext {
 export interface VitePlugin {
 	name: string;
 	enforce?: "pre" | "post";
-	config?: (config: ViteUserConfig, env: ViteConfigEnv) => ViteUserConfig | void;
+	config?: (
+		config: ViteUserConfig,
+		env: ViteConfigEnv,
+	) => ViteUserConfig | undefined;
 	configResolved?: (config: ViteResolvedConfig) => void | Promise<void>;
 	configureServer?: (
 		server: ViteDevServer,
-	) => void | (() => void) | Promise<void | (() => void)>;
+	) => void | (() => void) | Promise<undefined | (() => void)>;
 	handleHotUpdate?: (ctx: ViteHotUpdateContext) => void | Promise<void>;
 	buildStart?: () => void | Promise<void>;
 }

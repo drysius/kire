@@ -4,7 +4,9 @@ import { createKireFS, KireAssets } from "../src/index";
 
 describe("KireAssets", () => {
 	it("should remove script and style tags and replace with placeholders", async () => {
-		const kire = new Kire({ silent: true }).plugin(KireAssets, { prefix: "_assets" });
+		const kire = new Kire({ silent: true }).plugin(KireAssets, {
+			prefix: "_assets",
+		});
 
 		const template = `<html><head>@assets()<style>body { color: red; }</style></head><body><h1>Hello</h1><script>console.log('test');</script></body></html>`;
 
@@ -20,7 +22,9 @@ describe("KireAssets", () => {
 	});
 
 	it("should ignore script and style tags with nocache attribute", async () => {
-		const kire = new Kire({ silent: true }).plugin(KireAssets, { prefix: "_assets" });
+		const kire = new Kire({ silent: true }).plugin(KireAssets, {
+			prefix: "_assets",
+		});
 
 		const template = `<html><head>@assets()<style nocache>.dynamic { color: {{ $props.color }}; }</style></head><body><script nocache>const user = "{{ $props.name }}";</script></body></html>`;
 
@@ -43,20 +47,20 @@ describe("KireAssets", () => {
 		const kire = new Kire({ silent: true }).plugin(KireAssets);
 
 		// Render first to populate cache
-		const html = await kire.render(`@assets()<script>var x = 1;</script><style>.test { color: blue; }</style>`);
+		const html = await kire.render(
+			`@assets()<script>var x = 1;</script><style>.test { color: blue; }</style>`,
+		);
 
 		// Extract hash from html to test middleware
 		const scriptMatch = html.match(/src="\/_kire\/([a-f0-9]+)\.js"/);
 		const styleMatch = html.match(/href="\/_kire\/([a-f0-9]+)\.css"/);
 
 		if (!scriptMatch || !styleMatch) {
-			throw new Error("Could not find injected assets in HTML: " + html);
+			throw new Error(`Could not find injected assets in HTML: ${html}`);
 		}
 
 		const scriptHash = scriptMatch[1];
-		const styleHash = styleMatch[1];
 		const scriptPath = `/_kire/${scriptHash}.js`;
-		const stylePath = `/_kire/${styleHash}.css`;
 
 		const kireFS = createKireFS(kire);
 

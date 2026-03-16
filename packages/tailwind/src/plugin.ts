@@ -3,23 +3,25 @@ import { compileCSSWithTailwind } from "./compiler";
 import { loadModule, loadStylesheet } from "./loader";
 import type { TailwindCompileOptions } from "./types";
 
-export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) => {
-    kire.kireSchema({
-        name: "@kirejs/tailwind",
-        author: "Drysius",
-        repository: "https://github.com/drysius/kire",
-        version: "0.1.0"
-    });
+export const KireTailwind = kirePlugin<TailwindCompileOptions>(
+	{},
+	(kire, opts) => {
+		kire.kireSchema({
+			name: "@kirejs/tailwind",
+			author: "Drysius",
+			repository: "https://github.com/drysius/kire",
+			version: "0.1.0",
+		});
 
-    const tailwindOptions: TailwindCompileOptions = {
-        ...opts,
-        loadStylesheet,
-        loadModule,
-        from: undefined,
-    };
+		const tailwindOptions: TailwindCompileOptions = {
+			...opts,
+			loadStylesheet,
+			loadModule,
+			from: undefined,
+		};
 
-    const cache = kire.cached("@kirejs/tailwind");
-        cache.options = tailwindOptions;
+		const cache = kire.cached("@kirejs/tailwind");
+		cache.options = tailwindOptions;
 
 		/**
 		 * <tailwind> element for CSS content processing
@@ -30,20 +32,22 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
 			example:
 				"<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>",
 			onCall(api) {
-                const attrs = api.node.attributes || {};
-                const id = attrs.id;
+				const attrs = api.node.attributes || {};
+				const id = attrs.id;
 
-                api.markAsync();
-                
-                // Build content expression
-                const $children = api.node.children || [];
-                let contentExpr = '""';
-                for (const $child of $children) {
-                    if ($child.type === "text") contentExpr += ` + ${JSON.stringify($child.content)}`;
-                    else if ($child.type === "interpolation") contentExpr += ` + (${$child.content})`;
-                }
+				api.markAsync();
 
-                api.write(`await (async () => {
+				// Build content expression
+				const $children = api.node.children || [];
+				let contentExpr = '""';
+				for (const $child of $children) {
+					if ($child.type === "text")
+						contentExpr += ` + ${JSON.stringify($child.content)}`;
+					else if ($child.type === "interpolation")
+						contentExpr += ` + (${$child.content})`;
+				}
+
+				api.write(`await (async () => {
                     try {
                         const $id = ${JSON.stringify(id)};
                         const $tailwindCache = this.cached("@kirejs/tailwind");
@@ -102,26 +106,26 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
 				"@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end",
 			onCall(api) {
 				const codeExpr = api.getArgument(0);
-                api.markAsync();
-                
-                api.write(`await (async () => {
+				api.markAsync();
+
+				api.write(`await (async () => {
                     try {
                         const $tailwindCache = this.cached("@kirejs/tailwind");
                         let $tailwind_content = ${codeExpr ? `String(${codeExpr})` : '""'};
                 `);
 
-                if (!codeExpr) {
-                    const contentId = api.uid("tw_content");
-                    api.write(`{ 
+				if (!codeExpr) {
+					const contentId = api.uid("tw_content");
+					api.write(`{ 
                         const _oldRes${contentId} = $kire_response; $kire_response = "";`);
-                    api.renderChildren();
-                    api.write(`
+					api.renderChildren();
+					api.write(`
                         $tailwind_content = $kire_response;
                         $kire_response = _oldRes${contentId};
                     }`);
-                }
+				}
 
-                api.write(`
+				api.write(`
                         if (!$tailwind_content.includes('@import "tailwindcss"')) {
                             $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
                         }
@@ -161,7 +165,7 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
 			},
 		});
 
-        // Inject helpers into Kire instance
-        (kire as any).compileCSSWithTailwind = compileCSSWithTailwind;
-    }
+		// Inject helpers into Kire instance
+		(kire as any).compileCSSWithTailwind = compileCSSWithTailwind;
+	},
 );

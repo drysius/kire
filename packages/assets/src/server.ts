@@ -27,8 +27,6 @@ function getContentType(type: "js" | "css" | "mjs" | "svg"): string {
 			return "text/css";
 		case "svg":
 			return "image/svg+xml";
-		case "mjs":
-		case "js":
 		default:
 			return "application/javascript";
 	}

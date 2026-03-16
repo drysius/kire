@@ -18,7 +18,7 @@ export class KireDocumentSymbolProvider
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i] as string;
-			const dirMatch = /@([a-zA-Z0-9_\.\/:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
+			const dirMatch = /@([a-zA-Z0-9_./:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
 
 			if (dirMatch) {
 				const fullMatch = dirMatch[0];

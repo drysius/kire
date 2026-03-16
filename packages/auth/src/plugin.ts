@@ -1,20 +1,22 @@
-import { kirePlugin, type KirePlugin, type KireHandler } from "kire";
+import { type KireHandler, kirePlugin } from "kire";
 import type { AuthOptions } from "./types";
 
-export const KireAuth = kirePlugin<AuthOptions>({
-    canPerm: async () => false,
-    getUser: async () => null,
-}, (kire, options) => {
-    kire.kireSchema({
-        name: "@kirejs/auth",
-        author: "Drysius",
-        repository: "https://github.com/drysius/kire",
-        version: "0.1.0"
-    });
+export const KireAuth = kirePlugin<AuthOptions>(
+	{
+		canPerm: async () => false,
+		getUser: async () => null,
+	},
+	(kire, options) => {
+		kire.kireSchema({
+			name: "@kirejs/auth",
+			author: "Drysius",
+			repository: "https://github.com/drysius/kire",
+			version: "0.1.0",
+		});
 
-    // Register global helpers
-    kire.$global("$auth_getUser", options.getUser);
-    kire.$global("$auth_can", options.canPerm);
+		// Register global helpers
+		kire.$global("$auth_getUser", options.getUser);
+		kire.$global("$auth_can", options.canPerm);
 
 		// @auth
 		kire.directive({
@@ -23,47 +25,74 @@ export const KireAuth = kirePlugin<AuthOptions>({
 			description: "Renders the block if the user is authenticated.",
 			example: "@auth\n  <p>Welcome back!</p>\n@end",
 			onCall(api) {
-                api.markAsync();
+				api.markAsync();
 				api.write("if (await $globals.$auth_getUser.call(this, $props)) {");
 				api.renderChildren();
-                if (api.node.related) {
-                    api.renderChildren(api.node.related);
-                }
+				if (api.node.related) {
+					api.renderChildren(api.node.related);
+				}
 				api.write("}");
 			},
 		});
 
 		// @guest / @notlogged
 		const guestHandler: KireHandler = (api) => {
-            api.markAsync();
-            api.write("if (!(await $globals.$auth_getUser.call(this, $props))) {");
-            api.renderChildren();
-            if (api.node.related) api.renderChildren(api.node.related);
-            api.write("}");
-        };
+			api.markAsync();
+			api.write("if (!(await $globals.$auth_getUser.call(this, $props))) {");
+			api.renderChildren();
+			if (api.node.related) api.renderChildren(api.node.related);
+			api.write("}");
+		};
 
-		kire.directive({ name: "guest", children: true, onCall: guestHandler, description: "Renders the block if the user is NOT authenticated.", example: "@guest\n  <a href='/login'>Login</a>\n@end" });
-		kire.directive({ name: "notlogged", children: true, onCall: guestHandler, description: "Renders the block if the user is NOT authenticated.", example: "@notlogged\n  <a href='/login'>Login</a>\n@end" });
+		kire.directive({
+			name: "guest",
+			children: true,
+			onCall: guestHandler,
+			description: "Renders the block if the user is NOT authenticated.",
+			example: "@guest\n  <a href='/login'>Login</a>\n@end",
+		});
+		kire.directive({
+			name: "notlogged",
+			children: true,
+			onCall: guestHandler,
+			description: "Renders the block if the user is NOT authenticated.",
+			example: "@notlogged\n  <a href='/login'>Login</a>\n@end",
+		});
 
 		// @logged / @authenticated
 		const loggedHandler: KireHandler = (api) => {
-            api.markAsync();
-            api.write("if (await $globals.$auth_getUser.call(this, $props)) {");
-            api.renderChildren();
-            if (api.node.related) api.renderChildren(api.node.related);
-            api.write("}");
-        };
-		kire.directive({ name: "logged", children: true, onCall: loggedHandler, description: "Alias for @auth. Renders the block if the user is authenticated.", example: "@logged\n  <p>You are logged in.</p>\n@end" });
-		kire.directive({ name: "authenticated", children: true, onCall: loggedHandler, description: "Alias for @auth. Renders the block if the user is authenticated.", example: "@authenticated\n  <p>You are logged in.</p>\n@end" });
+			api.markAsync();
+			api.write("if (await $globals.$auth_getUser.call(this, $props)) {");
+			api.renderChildren();
+			if (api.node.related) api.renderChildren(api.node.related);
+			api.write("}");
+		};
+		kire.directive({
+			name: "logged",
+			children: true,
+			onCall: loggedHandler,
+			description:
+				"Alias for @auth. Renders the block if the user is authenticated.",
+			example: "@logged\n  <p>You are logged in.</p>\n@end",
+		});
+		kire.directive({
+			name: "authenticated",
+			children: true,
+			onCall: loggedHandler,
+			description:
+				"Alias for @auth. Renders the block if the user is authenticated.",
+			example: "@authenticated\n  <p>You are logged in.</p>\n@end",
+		});
 
 		// @user
 		kire.directive({
 			name: "user",
 			children: false,
-			description: "Injects the current user object into a variable named 'user'.",
+			description:
+				"Injects the current user object into a variable named 'user'.",
 			example: "@user\n<p>Hello, {{ user.name }}</p>",
 			onCall(api) {
-                api.markAsync();
+				api.markAsync();
 				api.write("user = await $globals.$auth_getUser.call(this, $props);");
 			},
 		});
@@ -77,12 +106,12 @@ export const KireAuth = kirePlugin<AuthOptions>({
 			example: "@can('edit_posts')\n  <button>Edit</button>\n@end",
 			onCall(api) {
 				const perm = api.getArgument(0);
-                api.markAsync();
+				api.markAsync();
 				api.write(
 					`if (await $globals.$auth_can.call(this, ${perm}, await $globals.$auth_getUser.call(this, $props))) {`,
 				);
 				api.renderChildren();
-                if (api.node.related) api.renderChildren(api.node.related);
+				if (api.node.related) api.renderChildren(api.node.related);
 				api.write("}");
 			},
 		});
@@ -96,12 +125,12 @@ export const KireAuth = kirePlugin<AuthOptions>({
 			example: "@notcan('view_admin')\n  <p>Access Denied</p>\n@end",
 			onCall(api) {
 				const perm = api.getArgument(0);
-                api.markAsync();
+				api.markAsync();
 				api.write(
 					`if (!(await $globals.$auth_can.call(this, ${perm}, await $globals.$auth_getUser.call(this, $props)))) {`,
 				);
 				api.renderChildren();
-                if (api.node.related) api.renderChildren(api.node.related);
+				if (api.node.related) api.renderChildren(api.node.related);
 				api.write("}");
 			},
 		});
@@ -115,7 +144,7 @@ export const KireAuth = kirePlugin<AuthOptions>({
 			example: "@canany(['edit', 'delete'])\n  <button>Manage</button>\n@end",
 			onCall(api) {
 				const perms = api.getArgument(0);
-                api.markAsync();
+				api.markAsync();
 				api.write(`
 						await (async () => {
 							const $perms = ${perms};
@@ -131,8 +160,8 @@ export const KireAuth = kirePlugin<AuthOptions>({
 						`);
 				api.renderChildren();
 				api.write("   } else { ");
-                if (api.node.related) api.renderChildren(api.node.related);
-                api.write(" } })();");
+				if (api.node.related) api.renderChildren(api.node.related);
+				api.write(" } })();");
 			},
 		});
 
@@ -140,15 +169,16 @@ export const KireAuth = kirePlugin<AuthOptions>({
 		kire.directive({
 			name: "noauth",
 			children: true,
-			description: "Renders the block if the user is NOT authenticated. Alias for @guest.",
+			description:
+				"Renders the block if the user is NOT authenticated. Alias for @guest.",
 			example: "@noauth\n  <p>Please log in.</p>\n@end",
 			onCall(api) {
-                api.markAsync();
+				api.markAsync();
 				api.write("if (!(await $globals.$auth_getUser.call(this, $props))) {");
 				api.renderChildren();
-                if (api.node.related) api.renderChildren(api.node.related);
+				if (api.node.related) api.renderChildren(api.node.related);
 				api.write("}");
 			},
 		});
-	}
+	},
 );

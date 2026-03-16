@@ -22,7 +22,9 @@
 		"publish": "bun run tools/publish.ts",
 		"llms": "bun run tools/llms.ts",
 		"install:all": "bun run tools/install.ts",
-		"check": "bunx biome check --write **/src/**"
+		"biome:check": "bunx biome check biome.json package.json .github/workflows core packages/assets packages/auth packages/iconify packages/markdown packages/tailwind packages/utils packages/vite packages/wire/src packages/wire/tests packages/wire/web/directives/file.ts packages/wire/web/features/file-upload.ts packages/wire/web/features/navigate.ts packages/wire/web/kirewire.ts vs-kire tools",
+		"biome:write": "bunx biome check --write biome.json package.json .github/workflows core packages/assets packages/auth packages/iconify packages/markdown packages/tailwind packages/utils packages/vite packages/wire/src packages/wire/tests packages/wire/web/directives/file.ts packages/wire/web/features/file-upload.ts packages/wire/web/features/navigate.ts packages/wire/web/kirewire.ts vs-kire tools",
+		"check": "bun run biome:check"
 	},
 	"devDependencies": {
 		"@eslint/js": "^9.39.2",

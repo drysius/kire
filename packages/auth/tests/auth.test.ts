@@ -10,7 +10,9 @@ describe("KireAuth", () => {
 				if (!user) return false;
 				return user.perms.includes(perm);
 			},
-			getUser: function(this: Kire, props: any) { return props?.user; },
+			getUser: function (this: Kire, props: any) {
+				return props?.user;
+			},
 		});
 		return kire;
 	};
@@ -68,7 +70,9 @@ describe("KireAuth", () => {
 		});
 		expect(htmlAdmin.trim().replace(/\s+/g, " ")).toContain("Admin");
 		expect(htmlAdmin.trim().replace(/\s+/g, " ")).not.toContain("No Admin");
-		expect(htmlAdmin.trim().replace(/\s+/g, " ")).not.toContain("Missing Admin");
+		expect(htmlAdmin.trim().replace(/\s+/g, " ")).not.toContain(
+			"Missing Admin",
+		);
 
 		const kireUser = createKire();
 		const htmlUser = await kireUser.render(template, {

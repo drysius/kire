@@ -5,4 +5,3 @@ import { platform as nodePlatform } from "./utils/node";
 setDefaultKirePlatform(nodePlatform);
 
 export * from "./public";
-

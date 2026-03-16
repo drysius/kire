@@ -9,8 +9,8 @@ export default defineSchema({
 	dependencies: ["kire"],
 	handle: async (kire) => {
 		try {
-		const { default: KireIconify } = await import("@kirejs/iconify");
-					if (KireIconify) kire.use(KireIconify);
+			const { default: KireIconify } = await import("@kirejs/iconify");
+			if (KireIconify) kire.use(KireIconify);
 		} catch (_error) {}
 	},
 });

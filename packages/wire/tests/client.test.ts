@@ -1,10 +1,10 @@
-import { expect, test, describe, beforeEach, spyOn, afterEach } from "bun:test";
+import { beforeEach, describe, expect, spyOn, test } from "bun:test";
 import { JSDOM } from "jsdom";
 
 // Setup JSDOM environment before any imports
-const dom = new JSDOM('<!DOCTYPE html><html><body></body></html>', {
-    url: "http://localhost/",
-    pretendToBeVisual: true
+const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
+	url: "http://localhost/",
+	pretendToBeVisual: true,
 });
 (global as any).window = dom.window;
 (global as any).document = dom.window.document;
@@ -24,120 +24,132 @@ import { KirewireClient, type WireAdapter } from "../web/kirewire";
 import { MessageBus } from "../web/utils/message-bus";
 
 describe("Kirewire Client Unit Logic", () => {
-    let wire: KirewireClient;
-    let bus: MessageBus;
-    let adapter: WireAdapter;
+	let wire: KirewireClient;
+	let bus: MessageBus;
+	let adapter: WireAdapter;
 
-    beforeEach(() => {
-        bus = new MessageBus(10); // 10ms delay
-        wire = new KirewireClient();
-        
-        // Mock Adapter
-        adapter = {
-            call: async (id, method, params) => {
-                return bus.enqueue({ id, method, params, pageId: "p" });
-            },
-            defer: (id, prop, value) => {
-                (wire as any).deferredUpdates.set(id, { ...((wire as any).deferredUpdates.get(id) || {}), [prop]: value });
-                const proxy = wire.components.get(id);
-                if (proxy && (proxy as any).__target) {
-                    (proxy as any).__target[prop] = value;
-                }
-            },
-            upload: async () => ({})
-        };
-        wire.adapter = adapter;
-        
-        document.body.innerHTML = '';
+	beforeEach(() => {
+		bus = new MessageBus(10); // 10ms delay
+		wire = new KirewireClient();
 
-        // Mock Fetch
-        (global as any).fetch = async (url: string, opts: any) => {
-            const body = JSON.parse(opts.body);
-            return {
-                ok: true,
-                status: 200,
-                json: async () => body.batch.map((a: any) => ({
-                    id: a.id,
-                    success: true,
-                    state: { ...(a.method === "$set" ? { [a.params[0]]: a.params[1] } : {}) }
-                }))
-            };
-        };
+		// Mock Adapter
+		adapter = {
+			call: async (id, method, params) => {
+				return bus.enqueue({ id, method, params, pageId: "p" });
+			},
+			defer: (id, prop, value) => {
+				(wire as any).deferredUpdates.set(id, {
+					...((wire as any).deferredUpdates.get(id) || {}),
+					[prop]: value,
+				});
+				const proxy = wire.components.get(id);
+				if (proxy && (proxy as any).__target) {
+					(proxy as any).__target[prop] = value;
+				}
+			},
+			upload: async () => ({}),
+		};
+		wire.adapter = adapter;
 
-        // Manual bus flush bridge
-        window.addEventListener('wire:bus:flush' as any, async (e: any) => {
-            const { batch, finish } = e.detail;
-            const response = await fetch('', { method: 'POST', body: JSON.stringify({ batch }) });
-            finish(await response.json());
-        });
-    });
+		document.body.innerHTML = "";
 
-    test("MessageBus should correctly batch actions", async () => {
-        const fetchSpy = spyOn(global as any, "fetch");
+		// Mock Fetch
+		(global as any).fetch = async (_url: string, opts: any) => {
+			const body = JSON.parse(opts.body);
+			return {
+				ok: true,
+				status: 200,
+				json: async () =>
+					body.batch.map((a: any) => ({
+						id: a.id,
+						success: true,
+						state: {
+							...(a.method === "$set" ? { [a.params[0]]: a.params[1] } : {}),
+						},
+					})),
+			};
+		};
 
-        bus.enqueue({ id: "A", method: "act", params: [], pageId: "p" });
-        bus.enqueue({ id: "B", method: "act", params: [], pageId: "p" });
+		// Manual bus flush bridge
+		window.addEventListener("wire:bus:flush" as any, async (e: any) => {
+			const { batch, finish } = e.detail;
+			const response = await fetch("", {
+				method: "POST",
+				body: JSON.stringify({ batch }),
+			});
+			finish(await response.json());
+		});
+	});
 
-        await new Promise(r => setTimeout(r, 100));
+	test("MessageBus should correctly batch actions", async () => {
+		const fetchSpy = spyOn(global as any, "fetch");
 
-        expect(fetchSpy).toHaveBeenCalled();
-        const body = JSON.parse(fetchSpy.mock.calls[0]![1].body);
-        expect(body.batch).toHaveLength(2);
-    });
+		bus.enqueue({ id: "A", method: "act", params: [], pageId: "p" });
+		bus.enqueue({ id: "B", method: "act", params: [], pageId: "p" });
 
-    test("wire.call should flush deferred updates", async () => {
-        const fetchSpy = spyOn(global as any, "fetch");
+		await new Promise((r) => setTimeout(r, 100));
 
-        document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"text": ""}'></div>`;
-        const root = document.getElementById('root')!;
+		expect(fetchSpy).toHaveBeenCalled();
+		const body = JSON.parse(fetchSpy.mock.calls[0]![1].body);
+		expect(body.batch).toHaveLength(2);
+	});
 
-        // 1. Defer an update via adapter
-        wire.adapter.defer('comp1', 'text', 'hello');
+	test("wire.call should flush deferred updates", async () => {
+		const fetchSpy = spyOn(global as any, "fetch");
 
-        // 2. Call an action
-        const mockCall = spyOn(wire.adapter, "call");
-        await wire.call(root, 'send');
+		document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"text": ""}'></div>`;
+		const root = document.getElementById("root")!;
 
-        // Allow MessageBus timer to finish
-        await new Promise(r => setTimeout(r, 50));
+		// 1. Defer an update via adapter
+		wire.adapter.defer("comp1", "text", "hello");
 
-        expect(mockCall).toHaveBeenCalled();
-        expect(fetchSpy).toHaveBeenCalled();
-    });
+		// 2. Call an action
+		const mockCall = spyOn(wire.adapter, "call");
+		await wire.call(root, "send");
 
-    test("wire proxy should trigger defer via wire client queue", async () => {
-        document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"count": 0}'></div>`;
-        const root = document.getElementById('root')!;
-        
-        // Manually create and register proxy for test
-        const proxy = (wire as any).createProxy('comp1', root);
-        wire.components.set('comp1', proxy);
+		// Allow MessageBus timer to finish
+		await new Promise((r) => setTimeout(r, 50));
 
-        // 1. Set property via proxy
-        proxy.count = 10;
+		expect(mockCall).toHaveBeenCalled();
+		expect(fetchSpy).toHaveBeenCalled();
+	});
 
-        // 2. Verify deferred state was queued on wire core
-        const deferred = (wire as any).deferredUpdates.get("comp1");
-        expect(deferred).toEqual({ count: 10 });
-    });
+	test("wire proxy should trigger defer via wire client queue", async () => {
+		document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"count": 0}'></div>`;
+		const root = document.getElementById("root")!;
 
-    test("wire.call restores deferred updates when transport call fails", async () => {
-        document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"text": ""}'></div>`;
-        const root = document.getElementById("root")!;
+		// Manually create and register proxy for test
+		const proxy = (wire as any).createProxy("comp1", root);
+		wire.components.set("comp1", proxy);
 
-        wire.defer("comp1", "text", "draft-value");
-        expect((wire as any).deferredUpdates.get("comp1")).toEqual({ text: "draft-value" });
+		// 1. Set property via proxy
+		proxy.count = 10;
 
-        wire.adapter = {
-            call: async () => {
-                throw new Error("transport failed");
-            },
-            defer: adapter.defer,
-            upload: adapter.upload,
-        };
+		// 2. Verify deferred state was queued on wire core
+		const deferred = (wire as any).deferredUpdates.get("comp1");
+		expect(deferred).toEqual({ count: 10 });
+	});
 
-        await expect(wire.call(root, "send")).rejects.toThrow("transport failed");
-        expect((wire as any).deferredUpdates.get("comp1")).toEqual({ text: "draft-value" });
-    });
+	test("wire.call restores deferred updates when transport call fails", async () => {
+		document.body.innerHTML = `<div id="root" wire:id="comp1" wire:state='{"text": ""}'></div>`;
+		const root = document.getElementById("root")!;
+
+		wire.defer("comp1", "text", "draft-value");
+		expect((wire as any).deferredUpdates.get("comp1")).toEqual({
+			text: "draft-value",
+		});
+
+		wire.adapter = {
+			call: async () => {
+				throw new Error("transport failed");
+			},
+			defer: adapter.defer,
+			upload: adapter.upload,
+		};
+
+		await expect(wire.call(root, "send")).rejects.toThrow("transport failed");
+		expect((wire as any).deferredUpdates.get("comp1")).toEqual({
+			text: "draft-value",
+		});
+	});
 });
-

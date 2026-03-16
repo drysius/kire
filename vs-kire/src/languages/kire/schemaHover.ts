@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import {
-	kireStore,
 	type AttributeDefinition,
 	type ElementDefinition,
+	kireStore,
 } from "../../core/store";
 
 type ModifierLike = {
@@ -155,7 +155,9 @@ function parseLegacyModifiers(comment?: string): ModifierEntry[] {
 	return out;
 }
 
-function collectModifiers(attrDef: AttributeDefinition): Map<string, ModifierEntry> {
+function collectModifiers(
+	attrDef: AttributeDefinition,
+): Map<string, ModifierEntry> {
 	const map = new Map<string, ModifierEntry>();
 
 	const structured = flattenModifiers((attrDef as any).extends);
@@ -296,7 +298,9 @@ function normalizeInlineAttribute(name: string, raw: any): AttributeDefinition {
 	};
 }
 
-function findAttributeInElements(name: string): AttributeDefinition | undefined {
+function findAttributeInElements(
+	name: string,
+): AttributeDefinition | undefined {
 	const { elements } = kireStore.getState();
 	for (const element of elements.values()) {
 		if (!element.attributes) continue;
@@ -356,7 +360,8 @@ function getElementAttributes(elementDef: ElementDefinition): Array<{
 	if (Array.isArray(elementDef.attributes)) {
 		for (const raw of elementDef.attributes) {
 			if (!raw || typeof raw !== "object") continue;
-			const name = typeof (raw as any).name === "string" ? (raw as any).name : "";
+			const name =
+				typeof (raw as any).name === "string" ? (raw as any).name : "";
 			if (!name) continue;
 			out.push({ name, def: normalizeInlineAttribute(name, raw) });
 		}
@@ -392,7 +397,7 @@ function getHoverToken(
 ): HoverToken | undefined {
 	const range = document.getWordRangeAtPosition(
 		position,
-		/(@?[a-zA-Z0-9_\-:\.]+)/,
+		/(@?[a-zA-Z0-9_\-:.]+)/,
 	);
 	if (!range) return undefined;
 	const word = document.getText(range);
@@ -434,7 +439,10 @@ function buildElementHover(
 	if (!/<(\/)?\s*$/.test(before)) return undefined;
 
 	const md = new vscode.MarkdownString();
-	md.appendCodeblock(elementDef.void ? `<${elementDef.name} />` : `<${elementDef.name}>`, "html");
+	md.appendCodeblock(
+		elementDef.void ? `<${elementDef.name} />` : `<${elementDef.name}>`,
+		"html",
+	);
 
 	const description = getDescription(elementDef as any);
 	if (description) md.appendMarkdown(`\n\n${description}`);
@@ -487,7 +495,9 @@ function buildAttributeHover(
 	if (def.example) md.appendCodeblock(String(def.example), "html");
 
 	const modifiers = collectModifiers(def);
-	const topLevel = Array.from(modifiers.values()).filter((entry) => entry.depth === 0);
+	const topLevel = Array.from(modifiers.values()).filter(
+		(entry) => entry.depth === 0,
+	);
 	if (topLevel.length > 0) {
 		md.appendMarkdown(`\n\n**Extends / Modifiers**`);
 		for (const item of topLevel) {
@@ -548,7 +558,9 @@ function buildAttributeHover(
 				const params = formatSignature(getSignature(parent.def as any));
 				if (params) {
 					md.appendMarkdown(`\n\n**Current Segment**`);
-					md.appendMarkdown(`\n\n\`${activeValue}\` as parameter for \`.${parent.path.join(".")}\``);
+					md.appendMarkdown(
+						`\n\n\`${activeValue}\` as parameter for \`.${parent.path.join(".")}\``,
+					);
 					md.appendMarkdown(`\n\nExpected arguments: \`${params}\``);
 				}
 			}

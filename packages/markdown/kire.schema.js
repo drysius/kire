@@ -6,11 +6,11 @@ export default defineSchema({
 	description: "Markdown plugin for Kire.",
 	author: "drysius",
 	repository: "git+https://github.com/drysius/kire.git",
-	dependencies: ["kire","marked"],
+	dependencies: ["kire", "marked"],
 	handle: async (kire) => {
 		try {
-		const { default: KireMarkdown } = await import("@kirejs/markdown");
-					if (KireMarkdown) kire.use(KireMarkdown);
+			const { default: KireMarkdown } = await import("@kirejs/markdown");
+			if (KireMarkdown) kire.use(KireMarkdown);
 		} catch (_error) {}
 	},
 });

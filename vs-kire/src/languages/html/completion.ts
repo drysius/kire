@@ -4,7 +4,9 @@ import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();
 
-export class HtmlCompletionItemProvider implements vscode.CompletionItemProvider {
+export class HtmlCompletionItemProvider
+	implements vscode.CompletionItemProvider
+{
 	provideCompletionItems(
 		document: vscode.TextDocument,
 		position: vscode.Position,

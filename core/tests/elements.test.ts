@@ -8,7 +8,9 @@ describe("Kire Elements System (Pattern-based)", () => {
 		kire.element({
 			name: "test:*",
 			onCall(ctx) {
-				ctx.write(`$kire_response += 'Wildcard: ' + ${JSON.stringify(ctx.wildcard)};`);
+				ctx.write(
+					`$kire_response += 'Wildcard: ' + ${JSON.stringify(ctx.wildcard)};`,
+				);
 			},
 		});
 
@@ -21,7 +23,8 @@ describe("Kire Elements System (Pattern-based)", () => {
 
 	it("should handle element with wildcard pattern (x-*)", async () => {
 		const kire = new Kire({ silent: true });
-        kire.$files[kire.resolvePath("button")] = "<button>@yield('default')</button>";
+		kire.$files[kire.resolvePath("button")] =
+			"<button>@yield('default')</button>";
 
 		const template = "<x-button>Click Me</x-button>";
 		const result = await kire.render(template);
@@ -31,19 +34,23 @@ describe("Kire Elements System (Pattern-based)", () => {
 
 	it("should treat quoted x-* attributes as literal strings", async () => {
 		const kire = new Kire({ silent: true });
-		kire.$files[kire.resolvePath("alert")] = "<section><h1>{{ title }}</h1><p>{{ description }}</p></section>";
+		kire.$files[kire.resolvePath("alert")] =
+			"<section><h1>{{ title }}</h1><p>{{ description }}</p></section>";
 
 		const result = await kire.render(
 			'<x-alert title="ChatAI" description="Configure AI providers by queue and context markdown." />',
 		);
 
 		expect(result).toContain("<h1>ChatAI</h1>");
-		expect(result).toContain("<p>Configure AI providers by queue and context markdown.</p>");
+		expect(result).toContain(
+			"<p>Configure AI providers by queue and context markdown.</p>",
+		);
 	});
 
 	it("should allow dynamic x-* props via colon binding and explicit braces", async () => {
 		const kire = new Kire({ silent: true });
-		kire.$files[kire.resolvePath("badge")] = "<span>{{ label }}|{{ tone }}</span>";
+		kire.$files[kire.resolvePath("badge")] =
+			"<span>{{ label }}|{{ tone }}</span>";
 
 		const result = await kire.render(
 			'<x-badge :label="user.name" tone="{variant}" />',
@@ -61,7 +68,9 @@ describe("Kire Elements System (Pattern-based)", () => {
             </kire:if>
         `;
 
-		expect((await kire.render(template, { show: true })).trim()).toBe("Visible");
+		expect((await kire.render(template, { show: true })).trim()).toBe(
+			"Visible",
+		);
 		expect((await kire.render(template, { show: false })).trim()).toBe("");
 	});
 
@@ -114,7 +123,7 @@ describe("Kire Elements System (Pattern-based)", () => {
 		const result = await kire.render("<my-custom title=\"'Hello'\" />");
 		expect(result).toBe("Title: Hello");
 
-		const result2 = await kire.render("<my-custom title=\"name\" />", {
+		const result2 = await kire.render('<my-custom title="name" />', {
 			name: "Kire",
 		});
 		expect(result2).toBe("Title: Kire");
@@ -122,7 +131,7 @@ describe("Kire Elements System (Pattern-based)", () => {
 
 	it("should handle x-* components with x-slot", async () => {
 		const kire = new Kire({ silent: true });
-        kire.$files[kire.resolvePath("card")] = `
+		kire.$files[kire.resolvePath("card")] = `
                     <div class="card">
                         <div class="header">@yield('header')</div>
                         <div class="body">@yield('default')</div>
@@ -143,8 +152,9 @@ describe("Kire Elements System (Pattern-based)", () => {
 
 	it("should handle dotted x-* component names (x-ui.list)", async () => {
 		const kire = new Kire({ silent: true });
-		kire.namespace("components", kire.$root + "/components");
-		kire.$files[kire.resolvePath("components.ui.list")] = "<section>@yield('default')</section>";
+		kire.namespace("components", `${kire.$root}/components`);
+		kire.$files[kire.resolvePath("components.ui.list")] =
+			"<section>@yield('default')</section>";
 
 		const template = `<x-ui.list>Item</x-ui.list>`;
 		const result = await kire.render(template);

@@ -35,7 +35,7 @@ describe("KireMarkdown", () => {
 
 	it("should render markdown from file", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
-        kire.$files[kire.resolvePath(TEMP_MD)] = TEMP_MD_CONTENT;
+		kire.$files[kire.resolvePath(TEMP_MD)] = TEMP_MD_CONTENT;
 
 		const tpl = `@markdown('${TEMP_MD}')`;
 		const result = await kire.render(tpl);
@@ -45,7 +45,7 @@ describe("KireMarkdown", () => {
 
 	it("should render markdown with dynamic locals (mdview)", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
-        kire.$files[kire.resolvePath("dynamic.md")] = "# Hello {{ $props.name }}";
+		kire.$files[kire.resolvePath("dynamic.md")] = "# Hello {{ $props.name }}";
 
 		const html = await kire.mdview("dynamic.md", { name: "Kire" });
 		expect(html).toContain("<h1>Hello Kire</h1>");
