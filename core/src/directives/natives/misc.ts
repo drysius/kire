@@ -3,7 +3,7 @@ import type { Kire } from "../../kire";
 export default (kire: Kire<any>) => {
     kire.directive({
         name: "interface",
-        params: ["shape_or_type:object|string", "global:boolean"],
+        signature: ["shape_or_type:object|string", "global:boolean"],
         children: false,
         description:
             "Type-only directive for tooling. Does not render output. Use @interface(Type) for local typing or @interface({ user: Type }, true) for workspace-global typing in editors.",
@@ -27,7 +27,12 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `error`,
-        params: [`field:string`],
+        signature: [`field:string`],
+        declares: [{
+            name: "$message",
+            type: "string",
+            description: "Validation message exposed inside the current @error block.",
+        }],
         children: true,
         closeBy: [`enderror`, `end`],
         scope: () => [`$message`],
@@ -55,7 +60,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `method`,
-        params: [`method:string`],
+        signature: [`method:string`],
         children: false,
         onCall: (api) => {
             const method = api.getArgument(0) ?? api.getAttribute("method");
@@ -65,7 +70,14 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `const`,
-        params: [`expr:string`],
+        signature: [`expr:string`],
+        declares: [{
+            fromArg: 0,
+            pattern: "$name = $value",
+            capture: "name",
+            type: "any",
+            description: "Constant declared by @const.",
+        }],
         children: false,
         scope: (args) => {
             const expr = args[0] || "";
@@ -79,7 +91,14 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `let`,
-        params: [`expr:string`],
+        signature: [`expr:string`],
+        declares: [{
+            fromArg: 0,
+            pattern: "$name = $value",
+            capture: "name",
+            type: "any",
+            description: "Variable declared by @let.",
+        }],
         children: false,
         scope: (args) => {
             const expr = args[0] || "";
@@ -91,3 +110,4 @@ export default (kire: Kire<any>) => {
         },
     });
 };
+

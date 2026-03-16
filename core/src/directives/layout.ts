@@ -34,7 +34,7 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: `define`,
-		params: [`name:string`],
+		signature: [`name:string`],
 		children: true,
 		onCall: (api) => {
             const id = api.uid("def");
@@ -51,7 +51,7 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: `defined`,
-		params: [`name:string`],
+		signature: [`name:string`],
 		children: `auto`,
 		onCall: (api) => {
             const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
@@ -66,7 +66,7 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: `stack`,
-		params: [`name:string`],
+		signature: [`name:string`],
 		children: false,
 		onCall: (api) => {
             const name = normalizeStackNameLiteral(api.getArgument(0) || api.getAttribute("name"));
@@ -86,7 +86,7 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: `push`,
-		params: [`name:string`],
+		signature: [`name:string`],
 		children: true,
 		onCall: (api) => {
             const id = api.uid("push");
@@ -103,3 +103,4 @@ export default (kire: Kire<any>) => {
 		},
 	});
 };
+

@@ -27,7 +27,7 @@ export const KireIconify = kirePlugin<IconifyOptions>({
 
 		kire.directive({
 			name: "icon",
-			params: ["name", "className", "attrs"],
+			signature: ["name", "className", "attrs"],
 			description: "Renders an Iconify icon SVG.",
 			example: "@icon('mdi:home', 'text-blue-500', { width: '24' })",
 			onCall(api) {

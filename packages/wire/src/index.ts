@@ -66,14 +66,18 @@ export class KirewirePlugin {
                     const $uploadUrl = (this.wire.options.adapter && typeof this.wire.options.adapter.getUploadUrl === 'function')
                         ? this.wire.options.adapter.getUploadUrl()
                         : ($wireUrl.replace(/\\/+$/, '') + '/upload');
+                    const $previewUrl = this.wire.getReference('wire:preview-url', { adapter: this.wire.options.adapter })
+                        || (($wireUrl.replace(/\\/+$/, '') + '/preview'));
                     const $pageIdAttr = String($pageId).replace(/"/g, '&quot;');
                     const $wireUrlAttr = String($wireUrl).replace(/"/g, '&quot;');
                     const $uploadUrlAttr = String($uploadUrl).replace(/"/g, '&quot;');
+                    const $previewUrlAttr = String($previewUrl).replace(/"/g, '&quot;');
                     const $transportAttr = String($transport).replace(/"/g, '&quot;');
                     $kire_response += \`
                         <meta name="kirewire:page-id" content="\${$pageIdAttr}">
                         <meta name="kirewire:url" content="\${$wireUrlAttr}">
                         <meta name="kirewire:upload-url" content="\${$uploadUrlAttr}">
+                        <meta name="kirewire:preview-url" content="\${$previewUrlAttr}">
                         <meta name="kirewire:transport" content="\${$transportAttr}">
                         <meta name="kirewire:bus-delay" content="\${Number($busDelay) || 0}">
                         <script type="module" src="\${$wireUrl}/kirewire.js" data-kirewire-skip></script>
@@ -82,6 +86,7 @@ export class KirewirePlugin {
                                 pageId: \${JSON.stringify($pageId)},
                                 url: \${JSON.stringify($wireUrl)},
                                 uploadUrl: \${JSON.stringify($uploadUrl)},
+                                previewUrl: \${JSON.stringify($previewUrl)},
                                 transport: \${JSON.stringify($transport)},
                                 busDelay: \${Number($busDelay) || 0}
                             });
@@ -115,7 +120,7 @@ export class KirewirePlugin {
 
         kire.directive({
             name: 'wire',
-            params: ['name:string', 'locals:object'],
+            signature: ['name:string', 'locals:object'],
             onCall: (api) => {
                 const nameExpr = api.getArgument(0) || api.getAttribute('name');
                 const localsExpr = api.getArgument(1) || api.getAttribute('locals') || '{}';

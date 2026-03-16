@@ -14,7 +14,7 @@ const normalizeSlotNameExpression = (value: any, fallback = '"default"') => {
 export default (kire: Kire<any>) => {
 	kire.directive({
 		name: `slot`,
-		params: [`name:string`],
+		signature: [`name:string`],
 		children: true,
 		onCall: (api) => {
 			const nameExpr = normalizeSlotNameExpression(api.getArgument(0) || api.getAttribute("name"));
@@ -31,7 +31,7 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: `yield`,
-		params: [`name:string`, `default:string`],
+		signature: [`name:string`, `default:string`],
         children: false,
 		onCall: (api) => {
 			const nameExpr = normalizeSlotNameExpression(api.getArgument(0) || api.getAttribute("name"));
@@ -50,7 +50,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: 'component',
-        params: ['path:string', 'locals:object'],
+        signature: ['path:string', 'locals:object'],
         children: true,
         isDependency: (args) => {
             const rawPath = args[0];
@@ -115,3 +115,4 @@ export default (kire: Kire<any>) => {
         onCall: (api) => kire.getDirective('slot')?.onCall(api) 
     });
 };
+

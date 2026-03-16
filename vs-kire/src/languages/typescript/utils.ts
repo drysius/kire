@@ -1,195 +1,20 @@
 import * as vscode from "vscode";
 import { SourceMapper } from "../../utils/sourceMap";
-import { scanDirectives, type DirectiveCall } from "../../core/directiveScan";
+import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
-import { parseParamDefinition, paramTypeToTs, splitTopLevelArgs } from "../../utils/params";
+import { parseParamDefinition, paramTypeToTs } from "../../utils/params";
 import { extractJsAttributeExpressions } from "../../utils/embedded";
+import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
+import {
+	createInterfaceContext,
+	extractInterfaceContextsFromDirectives,
+	hasInterfaceContext,
+	type InterfaceContext,
+	mergeInterfaceContext,
+	serializeInterfaceContext,
+} from "../../utils/interface";
 
 export const KIRE_TS_SCHEME = "kire-ts";
-
-interface InterfaceContext {
-	thisType?: string;
-	vars: Map<string, string>;
-}
-
-interface InterfaceDirectiveContexts {
-	local: InterfaceContext;
-	global: InterfaceContext;
-}
-
-function createInterfaceContext(): InterfaceContext {
-	return { vars: new Map() };
-}
-
-function mergeType(existing: string | undefined, incoming: string | undefined): string | undefined {
-	const next = incoming?.trim();
-	if (!next) return existing;
-	if (!existing || !existing.trim()) return next;
-	if (existing.trim() === next) return existing.trim();
-	return `(${existing.trim()}) & (${next})`;
-}
-
-function mergeInterfaceContext(target: InterfaceContext, source: InterfaceContext) {
-	target.thisType = mergeType(target.thisType, source.thisType);
-	for (const [name, type] of source.vars.entries()) {
-		target.vars.set(name, type);
-	}
-}
-
-function hasInterfaceContext(context: InterfaceContext): boolean {
-	return !!(context.thisType && context.thisType.trim()) || context.vars.size > 0;
-}
-
-function serializeInterfaceContext(context: InterfaceContext): string {
-	const vars = Array.from(context.vars.entries())
-		.sort(([a], [b]) => a.localeCompare(b))
-		.map(([name, type]) => `${name}:${type}`)
-		.join("|");
-	return `${context.thisType?.trim() || ""}::${vars}`;
-}
-
-function isValidVariableName(name: string): boolean {
-	return /^[$A-Z_a-z][$\w]*$/.test(name);
-}
-
-function normalizeObjectKey(raw: string): string | undefined {
-	let key = raw.trim();
-	if (!key) return undefined;
-	if (key.startsWith("[")) return undefined;
-
-	if (key.endsWith("?")) {
-		key = key.slice(0, -1).trim();
-	}
-
-	if (
-		(key.startsWith('"') && key.endsWith('"')) ||
-		(key.startsWith("'") && key.endsWith("'")) ||
-		(key.startsWith("`") && key.endsWith("`"))
-	) {
-		key = key.slice(1, -1).trim();
-	}
-
-	return isValidVariableName(key) ? key : undefined;
-}
-
-function findTopLevelChar(input: string, target: string): number {
-	let inQuote: string | null = null;
-	let depthParen = 0;
-	let depthBracket = 0;
-	let depthBrace = 0;
-	let depthAngle = 0;
-
-	for (let i = 0; i < input.length; i++) {
-		const ch = input[i]!;
-		const prev = i > 0 ? input[i - 1] : "";
-
-		if (inQuote) {
-			if (ch === inQuote && prev !== "\\") inQuote = null;
-			continue;
-		}
-
-		if (ch === '"' || ch === "'" || ch === "`") {
-			inQuote = ch;
-			continue;
-		}
-
-		if (ch === "(") depthParen++;
-		else if (ch === ")") depthParen--;
-		else if (ch === "[") depthBracket++;
-		else if (ch === "]") depthBracket--;
-		else if (ch === "{") depthBrace++;
-		else if (ch === "}") depthBrace--;
-		else if (ch === "<") depthAngle++;
-		else if (ch === ">") depthAngle--;
-
-		if (
-			ch === target &&
-			depthParen === 0 &&
-			depthBracket === 0 &&
-			depthBrace === 0 &&
-			depthAngle === 0
-		) {
-			return i;
-		}
-	}
-
-	return -1;
-}
-
-function parseInterfaceObjectLiteral(raw: string): Map<string, string> {
-	const vars = new Map<string, string>();
-	const trimmed = raw.trim();
-	if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return vars;
-
-	const body = trimmed.slice(1, -1).trim();
-	if (!body) return vars;
-
-	const fields = splitTopLevelArgs(body);
-	for (const fieldRaw of fields) {
-		const field = fieldRaw.trim();
-		if (!field || field.startsWith("...")) continue;
-
-		const colon = findTopLevelChar(field, ":");
-		if (colon === -1) continue;
-
-		const key = normalizeObjectKey(field.slice(0, colon));
-		if (!key) continue;
-
-		const typeExpr = field.slice(colon + 1).trim();
-		if (!typeExpr) continue;
-		vars.set(key, typeExpr);
-	}
-
-	return vars;
-}
-
-function parseBooleanLiteral(raw?: string): boolean {
-	if (!raw) return false;
-	const value = raw.trim();
-	if (!value) return false;
-	if (value === "true" || value === "1") return true;
-	if (value === '"true"' || value === "'true'") return true;
-	return false;
-}
-
-function parseInterfaceTarget(raw?: string): InterfaceContext {
-	const context = createInterfaceContext();
-	if (!raw) return context;
-
-	const trimmed = raw.trim();
-	if (!trimmed) return context;
-
-	if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
-		const vars = parseInterfaceObjectLiteral(trimmed);
-		for (const [name, type] of vars.entries()) {
-			context.vars.set(name, type);
-		}
-		return context;
-	}
-
-	context.thisType = trimmed;
-	return context;
-}
-
-function extractInterfaceContextsFromDirectives(directives: DirectiveCall[]): InterfaceDirectiveContexts {
-	const local = createInterfaceContext();
-	const global = createInterfaceContext();
-
-	for (const directive of directives) {
-		if (directive.name !== "interface") continue;
-		if (directive.args.length === 0) continue;
-
-		const target = parseInterfaceTarget(directive.args[0]?.value);
-		const useGlobal = parseBooleanLiteral(directive.args[1]?.value);
-		if (useGlobal) {
-			mergeInterfaceContext(global, target);
-			continue;
-		}
-		mergeInterfaceContext(local, target);
-	}
-
-	return { local, global };
-}
 
 function normalizeType(typeName: string): string {
 	const clean = typeName.trim();
@@ -300,12 +125,12 @@ function buildGlobalsDeclaration(interfaceContext: InterfaceContext): string {
 		}
 	});
 
-	for (const [name, type] of interfaceContext.vars.entries()) {
+	for (const [name, info] of interfaceContext.vars.entries()) {
 		if (!roots[name]) roots[name] = { _children: {} };
 		roots[name]._def = {
-			type,
-			tstype: type,
-			comment: "Declared by @interface",
+			type: info.type,
+			tstype: info.type,
+			comment: info.description || "Declared by @interface",
 		};
 	}
 
@@ -393,6 +218,36 @@ function appendStatement(
 	state.content += statement + "\n";
 	state.generatedLine += statement.split("\n").length;
 	return startLine;
+}
+
+function escapeJsDocComment(value: string): string {
+	return value.replace(/\*\//g, "* /").trim();
+}
+
+function buildDirectiveDeclarationStatement(entry: {
+	name: string;
+	type?: string;
+	description?: string;
+	declarationKind?: "const" | "let" | "var";
+	initializer?: string;
+}): string {
+	const lines: string[] = [];
+	if (entry.description?.trim()) {
+		lines.push(`/** ${escapeJsDocComment(entry.description)} */`);
+	}
+
+	if (entry.initializer && (entry.declarationKind === "const" || entry.declarationKind === "let")) {
+		lines.push(`${entry.declarationKind} ${entry.name} = ${entry.initializer};`);
+		return lines.join("\n");
+	}
+
+	if (entry.type && entry.type !== "any") {
+		lines.push(`let ${entry.name}: ${entry.type};`);
+		return lines.join("\n");
+	}
+
+	lines.push(`let ${entry.name}: any;`);
+	return lines.join("\n");
 }
 
 export class KireTsDocumentProvider implements vscode.TextDocumentContentProvider {
@@ -514,6 +369,20 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 		}
 	}
 
+	public getInterfaceContextForDocument(
+		document: vscode.TextDocument,
+	): InterfaceContext {
+		this.bootstrapWorkspaceInterfaces();
+
+		const directives = scanDirectives(document.getText());
+		const interfaceContexts = extractInterfaceContextsFromDirectives(directives);
+		const merged = createInterfaceContext();
+		mergeInterfaceContext(merged, this.globalInterfaceContext);
+		mergeInterfaceContext(merged, interfaceContexts.local);
+		mergeInterfaceContext(merged, interfaceContexts.global);
+		return merged;
+	}
+
 	public update(document: vscode.TextDocument): { virtualUri: vscode.Uri; mapper: SourceMapper } {
 		this.bootstrapWorkspaceInterfaces();
 
@@ -542,6 +411,11 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			generatedLine: 0,
 		};
 		state.generatedLine = state.content.split("\n").length - 1;
+
+		const topLevelDeclarations = extractTopLevelDirectiveDeclarations(text);
+		for (const entry of topLevelDeclarations) {
+			appendStatement(state, buildDirectiveDeclarationStatement(entry));
+		}
 
 		const addExpression = (
 			expression: string,
@@ -629,10 +503,16 @@ export class KireTsDocumentProvider implements vscode.TextDocumentContentProvide
 			if (directive.name === "interface") continue;
 
 			const def = directiveDefs.get(directive.name);
-			const params = Array.isArray(def?.params) ? def.params : [];
+			const signature = Array.isArray(def?.signature)
+				? def.signature
+				: [];
 			for (let i = 0; i < directive.args.length; i++) {
+				if ((directive.name === "const" || directive.name === "let") && i === 0) {
+					continue;
+				}
+
 				const arg = directive.args[i]!;
-				const rawParamDef = params[i];
+				const rawParamDef = signature[i];
 				const parsedParam = rawParamDef
 					? parseParamDefinition(String(rawParamDef))
 					: undefined;

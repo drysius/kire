@@ -12,7 +12,16 @@ interface KireSchemaShape {
 
 export interface DirectiveDefinition {
     name: string;
-    params?: string[];
+    signature?: string[];
+    declares?: Array<{
+        name?: string;
+        type?: string;
+        description?: string;
+        fromArg?: number;
+        fromAttribute?: string;
+        pattern?: string;
+        capture?: string | string[];
+    }>;
     children?: boolean | "auto";
     description?: string;
     example?: string;
@@ -27,6 +36,15 @@ export interface ElementDefinition {
     example?: string;
     void?: boolean;
     attributes?: Array<AttributeDefinition | { name: string; type?: string | string[]; description?: string; example?: string }> | Record<string, AttributeDefinition | string>;
+    declares?: Array<{
+        name?: string;
+        type?: string;
+        description?: string;
+        fromArg?: number;
+        fromAttribute?: string;
+        pattern?: string;
+        capture?: string | string[];
+    }>;
     [key: string]: any;
 }
 

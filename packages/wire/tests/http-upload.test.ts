@@ -111,6 +111,46 @@ describe("HttpAdapter upload parsing", () => {
         expect(String((response.result as any)?.error || "")).toContain("Failed to store uploaded file");
     });
 
+    test("serves uploaded previews from the built-in preview endpoint", async () => {
+        const tempDir = join(process.cwd(), "node_modules", `.kirewire_preview_test_${Date.now()}`);
+        tempDirs.push(tempDir);
+
+        const adapter = new HttpAdapter({ route: "/_wire", tempDir });
+        const fakePart = {
+            filename: "hello.png",
+            mimetype: "image/png",
+            toBuffer: async () => Buffer.from("preview-bytes"),
+        };
+
+        const upload = await adapter.handleRequest(
+            {
+                method: "POST",
+                url: "/_wire/upload",
+                body: {
+                    files: { value: fakePart },
+                },
+            },
+            "user-1",
+            "session-1",
+        );
+
+        const fileId = String((upload.result as any)?.files?.[0]?.id || "");
+        expect(fileId).not.toBe("");
+
+        const preview = await adapter.handleRequest(
+            {
+                method: "GET",
+                url: `/_wire/preview?id=${encodeURIComponent(fileId)}&mime=image/png`,
+            },
+            "user-1",
+            "session-1",
+        );
+
+        expect(preview.status).toBe(200);
+        expect(preview.headers?.["Content-Type"]).toBe("image/png");
+        expect(preview.headers?.["Cache-Control"]).toBe("no-store");
+    });
+
     test("returns explicit adapter install error for component calls when not installed", async () => {
         const adapter = new HttpAdapter({ route: "/_wire" });
 

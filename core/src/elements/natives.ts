@@ -107,6 +107,11 @@ export default (kire: Kire<any>) => {
 
     kire.element({
         name: 'kire:for',
+        declares: [
+            { fromAttribute: "as", type: "any" },
+            { fromAttribute: "index", type: "number" },
+            { name: "$loop", type: "any" },
+        ],
         scope: (args, attrs) => {
             const as = attrs?.as || 'item';
             const indexAs = attrs?.index || 'index';

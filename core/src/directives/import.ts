@@ -3,7 +3,7 @@ import type { Kire } from "../kire";
 export default (kire: Kire<any>) => {
     kire.directive({
         name: `include`,
-        params: [`path:string`, `locals:object`],
+        signature: [`path:string`, `locals:object`],
         children: false, 
         isDependency: (args) => {
             const rawPath = args[0];
@@ -32,3 +32,4 @@ export default (kire: Kire<any>) => {
         },
     });
 };
+

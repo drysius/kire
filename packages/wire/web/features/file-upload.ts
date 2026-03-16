@@ -39,6 +39,34 @@ function normalizeUploadResult(result: any, multiple: boolean): any {
     return files[0] || null;
 }
 
+function toOptimisticFileEntry(file: File) {
+    return {
+        name: String(file?.name || "file"),
+        size: Number(file?.size || 0),
+        mime: String(file?.type || ""),
+        type: String(file?.type || ""),
+        file,
+    };
+}
+
+function seedOptimisticPreview(ctx: WireClientContext, files: FileList | File[]) {
+    const proxy = ctx.wire.components.get(ctx.componentId) as any;
+    if (!proxy || !proxy.__target) return;
+
+    const list = Array.isArray(files) ? files : Array.from(files || []);
+    const FileCtor = typeof File !== "undefined" ? File : null;
+    const normalized = FileCtor
+        ? list.filter((entry): entry is File => entry instanceof FileCtor)
+        : [];
+    if (normalized.length === 0) return;
+
+    const nextValue = normalized.length > 1
+        ? normalized.map((file) => toOptimisticFileEntry(file))
+        : toOptimisticFileEntry(normalized[0]!);
+
+    setPathValue(proxy.__target as Record<string, any>, ctx.expression, nextValue);
+}
+
 function updateUploadState(ctx: WireClientContext, uploading: any) {
     const proxy = ctx.wire.components.get(ctx.componentId) as any;
     if (!proxy || !proxy.__target) return;
@@ -71,6 +99,7 @@ Kirewire.directive("model", (ctx) => {
         }
 
         ctx.wire.$emit("upload:started", { componentId, property: ctx.expression });
+        seedOptimisticPreview(ctx, files);
         updateUploadState(ctx, { percent: 0, status: "uploading", loaded: 0, total: 0 });
 
         try {

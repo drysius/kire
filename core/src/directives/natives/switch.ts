@@ -3,7 +3,7 @@ import type { Kire } from "../../kire";
 export default (kire: Kire<any>) => {
     kire.directive({
         name: `switch`,
-        params: [`expr:any`],
+        signature: [`expr:any`],
         children: true,
         onCall: (api) => {
             const expr = api.getArgument(0) ?? api.getAttribute("expr");
@@ -20,7 +20,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `case`,
-        params: [`val:any`],
+        signature: [`val:any`],
         children: true,
         relatedTo: [`switch`, `case`, `default`],
         onCall: (api) => {
@@ -42,3 +42,4 @@ export default (kire: Kire<any>) => {
         },
     });
 };
+

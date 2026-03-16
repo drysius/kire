@@ -25,12 +25,15 @@ export function attribute(this: Kire<any>, def: KireAttributeDeclaration) {
 }
 
 export function directive(this: Kire<any>, def: DirectiveDefinition) {
-    this.$kire["~directives"].records[def.name] = def;
+    this.$kire["~directives"].records[def.name] = {
+        ...def,
+    };
     this.$kire["~directives"].pattern = createFastMatcher(Object.keys(this.$kire["~directives"].records));
     this.$schema.directives.push({
         name: def.name,
         description: def.description,
-        params: def.params,
+        signature: def.signature,
+        declares: def.declares,
         children: def.children,
         example: def.example,
         related: def.related ?? def.relatedTo,
@@ -47,7 +50,8 @@ export function element(this: Kire<any>, def: ElementDefinition) {
             void: def.void,
             attributes: def.attributes,
             example: def.example,
-            related: def.related ?? def.relatedTo
+            related: def.related ?? def.relatedTo,
+            declares: def.declares,
         });
     }
 

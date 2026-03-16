@@ -162,6 +162,7 @@ export interface ElementDefinition {
     example?: string;
     related?: string[];
     attributes?: KireAttributeDeclaration[];
+    declares?: KireDeclareDeclaration[];
 }
 
 export interface DirectiveDefinition {
@@ -176,7 +177,8 @@ export interface DirectiveDefinition {
     isDependency?: (args: any[], attributes?: Record<string, string>) => string[];
     
     // Schema/Doc Metadata
-    params?: string[];
+    signature?: string[];
+    declares?: KireDeclareDeclaration[];
     children?: boolean | "auto";
     related?: string[];
     exposes?: string[];
@@ -215,10 +217,21 @@ export interface KireSchemaObject {
     tools?: Record<string, any>;
 }
 
+export interface KireDeclareDeclaration {
+    name?: string;
+    type?: string;
+    description?: string;
+    fromArg?: number;
+    fromAttribute?: string;
+    pattern?: string;
+    capture?: string | string[];
+}
+
 export interface KireDirectiveDeclaration {
     name: string;
     description?: string;
-    params?: string[];
+    signature?: string[];
+    declares?: KireDeclareDeclaration[];
     children?: boolean | "auto";
     example?: string;
     related?: string[];
@@ -232,6 +245,7 @@ export interface KireElementDeclaration {
     attributes?: KireAttributeDeclaration[];
     example?: string;
     related?: string[];
+    declares?: KireDeclareDeclaration[];
 }
 
 export interface KireAttributeDeclaration {

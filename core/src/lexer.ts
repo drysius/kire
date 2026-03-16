@@ -150,9 +150,9 @@ export class Lexer {
                 matchedName = candidate;
             } else {
                 const def = registered[candidate];
-                const hasParams = !!def?.params?.length;
+                const hasSignature = !!def?.signature?.length;
                 const nextAfterRaw = this.template[this.cursor + 1 + rawName.length];
-                const looksLikeAnotherDirectiveCall = hasParams && nextAfterRaw === "(";
+                const looksLikeAnotherDirectiveCall = hasSignature && nextAfterRaw === "(";
                 if (!looksLikeAnotherDirectiveCall) {
                     matchedName = candidate;
                 }

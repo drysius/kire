@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 import * as path from "node:path";
 import { kireStore } from "../../core/store";
+import { provider as tsProvider } from "../typescript/utils";
+import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 import { parseParamDefinition, splitTopLevelArgs } from "../../utils/params";
 
 export class KireCompletionItemProvider
@@ -57,8 +59,9 @@ export class KireCompletionItemProvider
                 const paramIndex = params.length - 1;
                 
                 const def = kireStore.getState().directives.get(dirName);
-                if (def && def.params && def.params[paramIndex]) {
-                    const paramDef = parseParamDefinition(def.params[paramIndex] as string);
+                const signature = Array.isArray(def?.signature) ? def.signature : undefined;
+                if (def && signature && signature[paramIndex]) {
+                    const paramDef = parseParamDefinition(signature[paramIndex] as string);
                     if (paramDef.type === 'filepath') {
                         isFilepathContext = true;
                     }
@@ -104,6 +107,18 @@ export class KireCompletionItemProvider
                 item.detail = "Defined in <?js ?> block";
                 items.push(item);
             });
+
+            const declaredByDirective = extractTopLevelDirectiveDeclarations(text);
+            declaredByDirective.forEach((entry) => {
+                const item = new vscode.CompletionItem(entry.name, vscode.CompletionItemKind.Variable);
+                const kindLabel = entry.declarationKind ? `${entry.declarationKind} ` : "";
+                const typeLabel = entry.type ? `: ${entry.type}` : "";
+                item.detail = `${kindLabel}declared by @${entry.directive}${typeLabel}`;
+                if (entry.description) {
+                    item.documentation = entry.description;
+                }
+                items.push(item);
+            });
             
             // Add globals if known (could come from schema)
             const globals = kireStore.getState().globals;
@@ -125,6 +140,26 @@ export class KireCompletionItemProvider
                     item.detail = "Kire Global";
                     items.push(item);
                 }
+            });
+
+            const interfaceContext = tsProvider.getInterfaceContextForDocument(document);
+            if (interfaceContext.thisType?.trim()) {
+                const itItem = new vscode.CompletionItem("it", vscode.CompletionItemKind.Variable);
+                itItem.detail = `Declared by @interface (${interfaceContext.thisType.trim()})`;
+                items.push(itItem);
+
+                const propsItem = new vscode.CompletionItem("$props", vscode.CompletionItemKind.Variable);
+                propsItem.detail = `Declared by @interface (${interfaceContext.thisType.trim()})`;
+                items.push(propsItem);
+            }
+
+            interfaceContext.vars.forEach((info, name) => {
+                const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable);
+                item.detail = `Declared by @interface (${info.type})`;
+                if (info.description) {
+                    item.documentation = info.description;
+                }
+                items.push(item);
             });
         }
 
@@ -304,9 +339,10 @@ export class KireCompletionItemProvider
 				}
 
 				let snippet = name;
-				if (def.params && def.params.length > 0) {
+				const signature = Array.isArray(def.signature) ? def.signature : undefined;
+				if (signature && signature.length > 0) {
 					snippet += "(";
-					snippet += def.params
+					snippet += signature
 						.map((p, i) => {
 							let label = p;
 							try {

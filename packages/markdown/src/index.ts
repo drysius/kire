@@ -211,7 +211,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 
 		kire.directive({
 			name: "markdown",
-			params: ["source"],
+			signature: ["source"],
 			description: "Renders Markdown content from a string or file path.",
 			example: "@markdown('path/to/file.md')",
 			onCall(api) {
@@ -242,7 +242,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 
 		kire.directive({
 			name: "mdslots",
-			params: ["pattern", "name"],
+			signature: ["pattern", "name"],
 			description:
 				"Loads Markdown files matching a glob pattern into a context variable.",
 			example: "@mdslots('posts/*.md', 'posts')",

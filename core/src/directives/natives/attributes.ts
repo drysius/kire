@@ -3,7 +3,7 @@ import type { Kire } from "../../kire";
 export default (kire: Kire) => {
     kire.directive({
         name: `attr`,
-        params: [`name:string`, `value:any`],
+        signature: [`name:string`, `value:any`],
         onCall(api) {
             const name = api.getArgument(0) ?? api.getAttribute("name");
             const value = api.getArgument(1) ?? api.getAttribute("value");
@@ -20,7 +20,7 @@ export default (kire: Kire) => {
 
     kire.directive({
         name: `attrs`,
-        params: [`attributes:any`],
+        signature: [`attributes:any`],
         onCall(api) {
             const attributes = api.getArgument(0) ?? api.getAttribute("attributes") ?? api.getAttribute("attrs");
             api.write(`{
@@ -54,7 +54,7 @@ export default (kire: Kire) => {
 
     kire.directive({
         name: `class`,
-        params: [`classes:any`],
+        signature: [`classes:any`],
         onCall(api) {
             const classes = api.getArgument(0) ?? api.getAttribute("classes");
             api.write(`{
@@ -89,7 +89,7 @@ export default (kire: Kire) => {
 
     kire.directive({
         name: `style`,
-        params: [`styles:any`],
+        signature: [`styles:any`],
         onCall(api) {
             const styles = api.getArgument(0) ?? api.getAttribute("styles");
             api.write(`{
@@ -107,7 +107,7 @@ export default (kire: Kire) => {
     for (const attr of booleanAttrs) {
         kire.directive({
             name: attr,
-            params: [`cond:any`],
+            signature: [`cond:any`],
             onCall(api) {
                 const cond = api.getArgument(0) ?? api.getAttribute("cond");
                 api.write(`if (${cond}) $kire_response += ' ${attr} ';`);
@@ -115,3 +115,4 @@ export default (kire: Kire) => {
         });
     }
 };
+

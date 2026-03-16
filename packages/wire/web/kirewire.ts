@@ -30,6 +30,7 @@ export interface WireClientConfig {
     pageId?: string;
     url?: string;
     uploadUrl?: string;
+    previewUrl?: string;
     busDelay?: number;
     transport?: string;
 }
@@ -53,6 +54,10 @@ function trimTrailingSlash(value: string): string {
 
 function resolveDefaultUploadUrl(url: string): string {
     return `${trimTrailingSlash(url)}/upload`;
+}
+
+function resolveDefaultPreviewUrl(url: string): string {
+    return `${trimTrailingSlash(url)}/preview`;
 }
 
 function pathParts(path: string): string[] {
@@ -139,9 +144,10 @@ export class KirewireClient extends EventController {
     private deferredUpdates = new Map<string, Record<string, any>>();
     private cleanupByElement = new WeakMap<HTMLElement, Array<() => void>>();
     private navigationInFlight = false;
-    private config: Required<Pick<WireClientConfig, "url" | "uploadUrl" | "transport">> = {
+    private config: Required<Pick<WireClientConfig, "url" | "uploadUrl" | "previewUrl" | "transport">> = {
         url: "/_wire",
         uploadUrl: "/_wire/upload",
+        previewUrl: "/_wire/preview",
         transport: "sse",
     };
 
@@ -175,11 +181,15 @@ export class KirewireClient extends EventController {
         const nextUpload = config.uploadUrl
             ? String(config.uploadUrl)
             : (config.url ? resolveDefaultUploadUrl(String(config.url)) : this.config.uploadUrl);
+        const nextPreview = config.previewUrl
+            ? String(config.previewUrl)
+            : (config.url ? resolveDefaultPreviewUrl(String(config.url)) : this.config.previewUrl);
         const nextTransport = config.transport ? String(config.transport) : this.config.transport;
 
         this.config = {
             url: nextUrl,
             uploadUrl: nextUpload,
+            previewUrl: nextPreview,
             transport: nextTransport,
         };
 
@@ -188,6 +198,7 @@ export class KirewireClient extends EventController {
                 pageId: this.pageId,
                 url: this.config.url,
                 uploadUrl: this.config.uploadUrl,
+                previewUrl: this.config.previewUrl,
                 transport: this.config.transport,
             });
         }
@@ -195,6 +206,32 @@ export class KirewireClient extends EventController {
 
     public getUploadUrl() {
         return this.config.uploadUrl;
+    }
+
+    public getPreviewUrl(value: string | { id?: string; upload_id?: string; mime?: string } | null | undefined, mime?: string) {
+        const rawId =
+            typeof value === "string"
+                ? value
+                : (typeof value === "object" && value
+                    ? String(value.id || value.upload_id || "")
+                    : "");
+        const id = String(rawId || "").trim();
+        if (!id) return "";
+
+        const resolvedMime =
+            typeof mime === "string" && mime.trim()
+                ? mime.trim()
+                : (typeof value === "object" && value ? String(value.mime || "").trim() : "");
+
+        const url = new URL(this.config.previewUrl, window.location.origin);
+        url.searchParams.set("id", id);
+        if (resolvedMime) {
+            url.searchParams.set("mime", resolvedMime);
+        }
+
+        return url.origin === window.location.origin
+            ? `${url.pathname}${url.search}${url.hash}`
+            : url.toString();
     }
 
     public setAdapter(adapter: WireAdapter) {

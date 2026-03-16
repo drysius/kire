@@ -1,5 +1,5 @@
 import { Adapter } from "../adapter";
-import { existsSync, readFileSync } from "node:fs";
+import { createReadStream, existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FileStore } from "../features/file-store";
@@ -58,6 +58,7 @@ export class HttpAdapter extends Adapter {
         console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
         this.wire.reference("wire:url", () => this.getClientUrl());
         this.wire.reference("wire:upload-url", () => this.getUploadUrl());
+        this.wire.reference("wire:preview-url", () => this.getPreviewUrl());
         this.wire.reference("wire:sse-url", () => `${this.route}/sse`);
         this.wire.reference("wire:session-url", () => `${this.route}/session`);
         this.wire.reference("wire:client-script-url", () => `${this.route}/kirewire.js`);
@@ -69,6 +70,10 @@ export class HttpAdapter extends Adapter {
 
     public getUploadUrl() {
         return `${this.route}/upload`;
+    }
+
+    public getPreviewUrl() {
+        return `${this.route}/preview`;
     }
 
     /**
@@ -83,6 +88,10 @@ export class HttpAdapter extends Adapter {
 
         if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
             return await this.handleUpload(req.body);
+        }
+
+        if (req.method === "GET" && url.pathname === `${this.route}/preview`) {
+            return this.handlePreview(url);
         }
 
         if (!this.wire) {
@@ -302,6 +311,54 @@ export class HttpAdapter extends Adapter {
         }
 
         return { status: 200, result: { files: uploaded } };
+    }
+
+    private handlePreview(url: URL) {
+        const id = String(url.searchParams.get("id") || "").trim();
+        if (!id) {
+            return {
+                status: 400,
+                headers: { "Content-Type": "application/json" },
+                result: { error: "Preview id is required." },
+            };
+        }
+
+        const filePath = this.fileStore.get(id);
+        if (!filePath || !existsSync(filePath)) {
+            return {
+                status: 404,
+                headers: { "Content-Type": "application/json" },
+                result: { error: "Preview file not found." },
+            };
+        }
+
+        const explicitMime = String(url.searchParams.get("mime") || "").trim();
+        const ext = filePath.split(".").pop()?.toLowerCase() || "";
+        const typeByExt: Record<string, string> = {
+            jpg: "image/jpeg",
+            jpeg: "image/jpeg",
+            png: "image/png",
+            gif: "image/gif",
+            webp: "image/webp",
+            svg: "image/svg+xml",
+            pdf: "application/pdf",
+            txt: "text/plain; charset=utf-8",
+            ogg: "audio/ogg",
+            mp3: "audio/mpeg",
+            wav: "audio/wav",
+            m4a: "audio/mp4",
+            mp4: "video/mp4",
+            webm: "video/webm",
+        };
+
+        return {
+            status: 200,
+            headers: {
+                "Cache-Control": "no-store",
+                "Content-Type": explicitMime || typeByExt[ext] || "application/octet-stream",
+            },
+            result: createReadStream(filePath),
+        };
     }
 
     private extractFilesFromBody(body: any): any[] {

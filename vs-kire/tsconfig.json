@@ -21,5 +21,7 @@
 			"kire": ["../core/src/index.ts"],
 			"@/*": ["./src/*"]
 		}
-	}
+	},
+	"include": ["src"],
+	"exclude": ["dist", "tests", "node_modules"]
 }

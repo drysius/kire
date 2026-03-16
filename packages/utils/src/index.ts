@@ -83,7 +83,12 @@ export const KireUtils = kirePlugin({}, (kire: Kire, _opts) => {
         // Register @error directive
         kire.directive({
             name: 'error',
-            params: ['name'],
+            signature: ['name'],
+            declares: [{
+                name: '$message',
+                type: 'string',
+                description: 'First validation error message for the selected field.',
+            }],
             children: true,
             description: "Renders the block if there are validation errors for the given field.",
             example: "@error('email')\n  <span class='error'>{{ $message }}</span>\n@end",
@@ -99,7 +104,7 @@ export const KireUtils = kirePlugin({}, (kire: Kire, _opts) => {
         // Register @old directive/helper
         kire.directive({
             name: 'old',
-            params: ['name', 'default'],
+            signature: ['name', 'default'],
             description: "Outputs the old input value for the given field.",
             example: "<input type='text' name='email' value='@old(\"email\")' />",
             onCall(api) {

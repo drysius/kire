@@ -30,7 +30,7 @@ export const KireVite = kirePlugin<KireViteRenderOptions>(
 
 		kire.directive({
 			name: "vite",
-			params: ["entries:string|string[]"],
+			signature: ["entries:string|string[]"],
 			children: false,
 			description:
 				"Inject Vite assets. Uses hot file in development and manifest.json in production.",

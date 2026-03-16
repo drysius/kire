@@ -71,7 +71,7 @@ export const KireAuth = kirePlugin<AuthOptions>({
 		// @can(perm)
 		kire.directive({
 			name: "can",
-			params: ["perm"],
+			signature: ["perm"],
 			children: true,
 			description: "Checks if the user has a specific permission.",
 			example: "@can('edit_posts')\n  <button>Edit</button>\n@end",
@@ -90,7 +90,7 @@ export const KireAuth = kirePlugin<AuthOptions>({
 		// @notcan(perm)
 		kire.directive({
 			name: "notcan",
-			params: ["perm"],
+			signature: ["perm"],
 			children: true,
 			description: "Checks if the user DOES NOT have a specific permission.",
 			example: "@notcan('view_admin')\n  <p>Access Denied</p>\n@end",
@@ -109,7 +109,7 @@ export const KireAuth = kirePlugin<AuthOptions>({
 		// @canany(perms)
 		kire.directive({
 			name: "canany",
-			params: ["perms"],
+			signature: ["perms"],
 			children: true,
 			description: "Checks if the user has ANY of the provided permissions.",
 			example: "@canany(['edit', 'delete'])\n  <button>Manage</button>\n@end",

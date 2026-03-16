@@ -117,7 +117,7 @@ export const KireAssets = kirePlugin<KireAssetsOptions>({
 		// @svg directive
 		kire.directive({
 			name: "svg",
-			params: ["path", "attrs"],
+			signature: ["path", "attrs"],
 			description: `Loads an SVG and renders it as an <img> tag pointing to the asset.`,
 			example: `@svg('./icons/logo.svg', { class: 'h-4 w-4' })`,
 			onCall(api) {

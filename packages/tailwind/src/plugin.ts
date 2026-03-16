@@ -95,7 +95,7 @@ export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) 
 		 */
 		kire.directive({
 			name: "tailwind",
-			params: ["code"],
+			signature: ["code"],
 			children: true,
 			description: "Processes CSS content within the block using Tailwind CSS.",
 			example:

@@ -20,6 +20,7 @@ const CONFIG_META_NAMES = [
     "kirewire:page-id",
     "kirewire:url",
     "kirewire:upload-url",
+    "kirewire:preview-url",
     "kirewire:transport",
     "kirewire:bus-delay",
 ];
@@ -299,6 +300,7 @@ function extractConfigFromDocument(doc: Document) {
         pageId: extractMetaContent(doc, "kirewire:page-id"),
         url: extractMetaContent(doc, "kirewire:url"),
         uploadUrl: extractMetaContent(doc, "kirewire:upload-url"),
+        previewUrl: extractMetaContent(doc, "kirewire:preview-url"),
         transport: extractMetaContent(doc, "kirewire:transport"),
         busDelay: Number.isFinite(parsedBusDelay) ? parsedBusDelay : undefined,
     };

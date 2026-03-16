@@ -171,12 +171,12 @@ function collectModifiers(attrDef: AttributeDefinition): Map<string, ModifierEnt
 	return map;
 }
 
-function formatParams(params: any): string {
-	if (!params) return "";
-	if (typeof params === "string") return params;
+function formatSignature(signature: any): string {
+	if (!signature) return "";
+	if (typeof signature === "string") return signature;
 
-	if (Array.isArray(params)) {
-		const labels = params
+	if (Array.isArray(signature)) {
+		const labels = signature
 			.map((entry) => {
 				if (typeof entry === "string") return entry;
 				if (!entry || typeof entry !== "object") return "value:any";
@@ -194,8 +194,8 @@ function formatParams(params: any): string {
 		return labels.join(", ");
 	}
 
-	if (typeof params === "object") {
-		const labels = Object.entries(params).map(([name, value]) => {
+	if (typeof signature === "object") {
+		const labels = Object.entries(signature).map(([name, value]) => {
 			if (typeof value === "string") return `${name}:${value}`;
 			if (Array.isArray(value)) return `${name}:${value.join("|")}`;
 			return `${name}:any`;
@@ -203,7 +203,46 @@ function formatParams(params: any): string {
 		return labels.join(", ");
 	}
 
-	return String(params);
+	return String(signature);
+}
+
+function getSignature(def: { signature?: any }): any {
+	return def.signature;
+}
+
+function formatDeclares(declares: any): string {
+	if (!Array.isArray(declares) || declares.length === 0) return "";
+
+	const labels = declares
+		.map((entry) => {
+			if (!entry || typeof entry !== "object") return "";
+			if (typeof entry.name === "string" && entry.name.trim()) {
+				return entry.type ? `${entry.name}:${entry.type}` : entry.name;
+			}
+
+			const source =
+				typeof entry.fromArg === "number"
+					? `arg[${entry.fromArg}]`
+					: typeof entry.fromAttribute === "string"
+						? `attr.${entry.fromAttribute}`
+						: "";
+			if (!source) return "";
+
+			const capture = Array.isArray(entry.capture)
+				? entry.capture.join("|")
+				: typeof entry.capture === "string"
+					? entry.capture
+					: "";
+
+			let label = source;
+			if (entry.pattern) label += ` via ${entry.pattern}`;
+			if (capture) label += ` => ${capture}`;
+			if (entry.type) label += `:${entry.type}`;
+			return label;
+		})
+		.filter(Boolean);
+
+	return labels.join(", ");
 }
 
 function getTokenSegments(word: string): TokenSegment[] {
@@ -368,12 +407,15 @@ function buildDirectiveHover(word: string): vscode.Hover | undefined {
 	if (!def) return undefined;
 
 	const md = new vscode.MarkdownString();
+	const signature = getSignature(def as any);
 	md.appendCodeblock(
-		`@${def.name}${def.params ? `(${def.params.join(", ")})` : ""}`,
+		`@${def.name}${signature ? `(${signature.join(", ")})` : ""}`,
 		"kire",
 	);
 	const description = getDescription(def as any);
 	if (description) md.appendMarkdown(`\n\n${description}`);
+	const declares = formatDeclares((def as any).declares);
+	if (declares) md.appendMarkdown(`\n\nDeclares: \`${declares}\``);
 	if (def.example) md.appendCodeblock(String(def.example), "kire");
 	return new vscode.Hover(md);
 }
@@ -418,6 +460,9 @@ function buildElementHover(
 		}
 	}
 
+	const declares = formatDeclares((elementDef as any).declares);
+	if (declares) md.appendMarkdown(`\n\n**Declares**\n\n\`${declares}\``);
+
 	appendModuleInfo(md);
 	return new vscode.Hover(md);
 }
@@ -447,10 +492,10 @@ function buildAttributeHover(
 		md.appendMarkdown(`\n\n**Extends / Modifiers**`);
 		for (const item of topLevel) {
 			const modifierDescription = getDescription(item.def as any);
-			const params = formatParams((item.def as any).params);
+			const params = formatSignature(getSignature(item.def as any));
 			let lineText = `\n- \`.${item.def.name}\``;
 			if (modifierDescription) lineText += ` - ${modifierDescription}`;
-			if (params) lineText += ` _(params: ${params})_`;
+			if (params) lineText += ` _(signature: ${params})_`;
 			md.appendMarkdown(lineText);
 		}
 	}
@@ -469,11 +514,11 @@ function buildAttributeHover(
 
 		if (current) {
 			const currentDescription = getDescription(current.def as any);
-			const params = formatParams((current.def as any).params);
+			const params = formatSignature(getSignature(current.def as any));
 			md.appendMarkdown(`\n\n**Current Segment**`);
 			md.appendMarkdown(`\n\n\`.${current.path.join(".")}\``);
 			if (currentDescription) md.appendMarkdown(` - ${currentDescription}`);
-			if (params) md.appendMarkdown(`\n\nExpected params: \`${params}\``);
+			if (params) md.appendMarkdown(`\n\nExpected arguments: \`${params}\``);
 			const next = Array.from(modifiers.values()).filter((entry) => {
 				if (entry.depth !== current.depth + 1) return false;
 				return entry.key.startsWith(`${current.key}.`);
@@ -500,11 +545,11 @@ function buildAttributeHover(
 			const parent = modifiers.get(parentPath);
 			const activeValue = active?.text || "";
 			if (parent && activeValue) {
-				const params = formatParams((parent.def as any).params);
+				const params = formatSignature(getSignature(parent.def as any));
 				if (params) {
 					md.appendMarkdown(`\n\n**Current Segment**`);
 					md.appendMarkdown(`\n\n\`${activeValue}\` as parameter for \`.${parent.path.join(".")}\``);
-					md.appendMarkdown(`\n\nExpected params: \`${params}\``);
+					md.appendMarkdown(`\n\nExpected arguments: \`${params}\``);
 				}
 			}
 		}

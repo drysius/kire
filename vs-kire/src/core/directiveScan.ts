@@ -53,6 +53,7 @@ function splitArgs(content: string, offset: number): DirectiveArgSpan[] {
     let depthParen = 0;
     let depthBrace = 0;
     let depthBracket = 0;
+    let depthAngle = 0;
     let inQuote: string | null = null;
 
     for (let i = 0; i < content.length; i++) {
@@ -75,8 +76,16 @@ function splitArgs(content: string, offset: number): DirectiveArgSpan[] {
         else if (char === "}") depthBrace--;
         else if (char === "[") depthBracket++;
         else if (char === "]") depthBracket--;
+        else if (char === "<") depthAngle++;
+        else if (char === ">") depthAngle--;
 
-        if (char === "," && depthParen === 0 && depthBrace === 0 && depthBracket === 0) {
+        if (
+            char === "," &&
+            depthParen === 0 &&
+            depthBrace === 0 &&
+            depthBracket === 0 &&
+            depthAngle === 0
+        ) {
             const raw = content.slice(start, i);
             const value = raw.trim();
             if (value) {

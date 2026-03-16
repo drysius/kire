@@ -1,12 +1,44 @@
 import * as vscode from "vscode";
 import { statSync } from "node:fs";
 import { createRequire } from "node:module";
+import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { kireStore } from "./store";
 import { kireLog } from "./log";
 
 const runtimeRequire = createRequire(import.meta.url);
-const { Kire } = runtimeRequire("kire") as { Kire: new (options?: any) => any };
+
+type KireCtor = new (options?: any) => any;
+
+function tryLoadKireFromBase(basePath: string): KireCtor | null {
+    try {
+        const requireFromBase = createRequire(basePath);
+        const mod = requireFromBase("kire") as { Kire?: KireCtor };
+        if (typeof mod?.Kire === "function") {
+            return mod.Kire;
+        }
+    } catch {}
+    return null;
+}
+
+function resolveKireConstructor(): KireCtor {
+    const folders = vscode.workspace.workspaceFolders || [];
+    for (const folder of folders) {
+        const kireCtor = tryLoadKireFromBase(join(folder.uri.fsPath, "package.json"));
+        if (kireCtor) {
+            kireLog("debug", `Using workspace Kire runtime from ${folder.uri.fsPath}`);
+            return kireCtor;
+        }
+    }
+
+    const fallback = tryLoadKireFromBase(import.meta.url) || tryLoadKireFromBase(join(process.cwd(), "package.json"));
+    if (fallback) return fallback;
+
+    const mod = runtimeRequire("kire") as { Kire?: KireCtor };
+    if (typeof mod?.Kire === "function") return mod.Kire;
+
+    throw new Error("Unable to resolve the Kire runtime for schema loading.");
+}
 
 interface KireSchemaDefinition {
     name?: string;
@@ -320,6 +352,7 @@ export async function loadSchemas(): Promise<void> {
     state.clear();
     kireLog("info", "Starting schema load.");
 
+    const Kire = resolveKireConstructor();
     const engine = new Kire({
         production: true,
         silent: true,

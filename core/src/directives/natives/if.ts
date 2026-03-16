@@ -15,7 +15,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `if`,
-        params: [`cond:any`],
+        signature: [`cond:any`],
         children: true,
         relatedTo: [],
         onCall: (api) => {
@@ -32,7 +32,7 @@ export default (kire: Kire<any>) => {
     kire.directive({
         ...elseDirective,
         name: `elseif`,
-        params: [`cond:any`],
+        signature: [`cond:any`],
         onCall: (api) => {
             const cond = api.getArgument(0) ?? api.getAttribute("cond");
             api.write(`} else if (${cond}) {`);
@@ -42,7 +42,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `unless`,
-        params: [`cond:any`],
+        signature: [`cond:any`],
         children: true,
         onCall: (api) => {
             const cond = api.getArgument(0) ?? api.getAttribute("cond");
@@ -57,3 +57,4 @@ export default (kire: Kire<any>) => {
 
     kire.directive(elseDirective);
 };
+

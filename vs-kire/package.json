@@ -21,7 +21,6 @@
     "onLanguage:kire"
   ],
   "dependencies": {
-    "kire": "^0.1.2",
     "vscode-html-languageservice": "^5.5.1",
     "vscode-languageserver-textdocument": "^1.0.12",
     "zustand": "^5.0.8"
@@ -82,6 +81,7 @@
         "path": "./syntaxes/kire.tmLanguage.json",
         "embeddedLanguages": {
           "source.js": "javascript",
+          "source.ts": "typescript",
           "source.css": "css"
         }
       }
@@ -91,16 +91,33 @@
         "language": "kire",
         "scopes": {
           "keyword": [
-            "keyword.control.kire"
-          ],
-          "property": [
-            "support.type.property-name.css"
+            "keyword.control.directive.kire",
+            "keyword.control.kire",
+            "keyword.control"
           ],
           "class": [
-            "entity.name.tag.css"
+            "entity.name.tag.custom.kire",
+            "entity.name.tag.html",
+            "entity.name.type.class"
+          ],
+          "type": [
+            "entity.name.type",
+            "support.type"
+          ],
+          "parameter": [
+            "variable.parameter"
+          ],
+          "variable": [
+            "variable.other.readwrite",
+            "variable.other.constant",
+            "meta.definition.variable"
+          ],
+          "property": [
+            "variable.other.property",
+            "entity.other.attribute-name.html"
           ],
           "string": [
-            "string.quoted.double.js"
+            "string.quoted"
           ]
         }
       }

@@ -125,12 +125,14 @@ function toPreviewItem(value: any, objectUrls: Set<string>): PreviewItem | null 
         const name = String(raw.name || raw.filename || raw.title || "file");
         const mime = String(raw.mime || raw.mimetype || raw.type || "");
         const size = Number(raw.size || 0);
+        const id = String(raw.id || raw.upload_id || "");
 
         let src = "";
         if (typeof raw.url === "string") src = raw.url;
         else if (typeof raw.src === "string") src = raw.src;
         else if (typeof raw.content === "string" && looksLikeUrl(raw.content)) src = raw.content;
         else if (raw.file) src = objectUrlForFileLike(raw.file, objectUrls) || "";
+        else if (id) src = Kirewire.getPreviewUrl({ id, mime });
 
         return {
             kind: detectPreviewKind(mime, name),

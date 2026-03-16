@@ -3,7 +3,14 @@ import type { Kire } from "../../kire";
 export default (kire: Kire<any>) => {
     kire.directive({
         name: `for`,
-        params: [`expr:any`],
+        signature: [`expr:any`],
+        declares: [
+            { fromArg: 0, pattern: "($item, $index) of $source", capture: ["item", "index"], type: "any" },
+            { fromArg: 0, pattern: "($item, $index) in $source", capture: ["item", "index"], type: "any" },
+            { fromArg: 0, pattern: "$item of $source", capture: "item", type: "any" },
+            { fromArg: 0, pattern: "$item in $source", capture: "item", type: "any" },
+            { name: "$loop", type: "any" },
+        ],
         children: true,
         // closeBy removed
         scope: (args) => {
@@ -67,7 +74,12 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `each`,
-        params: [`items:any`, `as:string`],
+        signature: [`items:any`, `as:string`],
+        declares: [
+            { fromArg: 1, type: "any" },
+            { name: "index", type: "number" },
+            { name: "$loop", type: "any" },
+        ],
         children: true,
         // closeBy removed
         scope: (args) => {
@@ -82,3 +94,4 @@ export default (kire: Kire<any>) => {
     });
 
 };
+

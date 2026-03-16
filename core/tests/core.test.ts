@@ -93,16 +93,35 @@ describe("Kire Core (Bun)", () => {
             name: "z-card",
             description: "Schema-only element declaration",
             attributes: [{ name: "title", type: "string" }],
+            declares: [{ fromAttribute: "title", type: "string" }],
         });
 
         const declared = k.$schema.elements.find((entry) => entry.name === "z-card");
         expect(declared?.name).toBe("z-card");
         expect(declared?.attributes?.[0]?.name).toBe("title");
+        expect(declared?.declares?.[0]?.fromAttribute).toBe("title");
 
         // No runtime transformer => render should keep original markup.
         const output = await k.render("<z-card title=\"Example\">Body</z-card>");
         expect(output).toContain("<z-card");
         expect(output).toContain("Body");
+    });
+
+    test("should publish signature and declares metadata for directives", () => {
+        const k = new Kire();
+        k.directive({
+            name: "typed-const",
+            signature: ["expr:string"],
+            declares: [{ fromArg: 0, pattern: "$name = $value", capture: "name", type: "any" }],
+            onCall: () => {},
+        });
+
+        const declared = k.$schema.directives.find((entry) => entry.name === "typed-const");
+        const runtime = k.getDirective("typed-const");
+
+        expect(declared?.signature).toEqual(["expr:string"]);
+        expect(declared?.declares?.[0]?.pattern).toBe("$name = $value");
+        expect(runtime?.signature).toEqual(["expr:string"]);
     });
 
     test("should handle prototype-based globals shadowing", async () => {

@@ -157,6 +157,10 @@ export class Kire<Asyncronos extends boolean = true> {
 
     public ["~parent"]?: Kire<any>;
     public ["~compiling"] = new Set<string>();
+    public ["~compile-context"]?: {
+        depth: number;
+        uniqueExistVarCallbacks: Set<KireHandler>;
+    };
     
     // Delegation getters
     public get $elements() { return this.$kire["~elements"]; }
@@ -477,12 +481,15 @@ export class Kire<Asyncronos extends boolean = true> {
     }
 
     public directive(def: DirectiveDefinition) {
-        this.$directives.records[def.name] = def;
+        this.$directives.records[def.name] = {
+            ...def,
+        };
         this.$directives.pattern = createFastMatcher(Object.keys(this.$directives.records));
         this.$schema.directives.push({
             name: def.name,
             description: def.description,
-            params: def.params,
+            signature: def.signature,
+            declares: def.declares,
             children: def.children,
             example: def.example,
             related: def.related ?? def.relatedTo,
@@ -503,7 +510,8 @@ export class Kire<Asyncronos extends boolean = true> {
                 void: def.void,
                 attributes: def.attributes,
                 example: def.example,
-                related: def.related ?? def.relatedTo
+                related: def.related ?? def.relatedTo,
+                declares: def.declares,
             });
         }
 
@@ -555,31 +563,49 @@ export class Kire<Asyncronos extends boolean = true> {
 
     public compile(content: string, filename = "template.kire", extraGlobals: string[] = [], isDependency = false): KireCacheEntry {
         try {
+            const root = this.$kire as Kire<any>;
+            let compileContext = root["~compile-context"];
+            if (!compileContext) {
+                compileContext = {
+                    depth: 0,
+                    uniqueExistVarCallbacks: new Set<KireHandler>(),
+                };
+                root["~compile-context"] = compileContext;
+            }
+            compileContext.depth += 1;
+
             const nodes = this.parse(content);
             const compilerInstance = new Compiler(this, filename);
-            const code = compilerInstance.compile(nodes, extraGlobals, isDependency);
-            const async = compilerInstance.async;
-            const dependencies = new NullProtoObj();
-            
-            for (const [path, id] of Object.entries(compilerInstance.getDependencies())) {
-                dependencies[path] = id;
+            try {
+                const code = compilerInstance.compile(nodes, extraGlobals, isDependency);
+                const async = compilerInstance.async;
+                const dependencies = new NullProtoObj();
+                
+                for (const [path, id] of Object.entries(compilerInstance.getDependencies())) {
+                    dependencies[path] = id;
+                }
+
+                const AsyncFunc = (async () => {}).constructor;
+                const coreFunction = async 
+                    ? new (AsyncFunc as any)("$props, $globals, $kire", code)
+                    : new Function("$props, $globals, $kire", code);
+
+                const fn = this.$runtime.createKireFunction(this, coreFunction, {
+                    async, 
+                    path: filename, 
+                    code, 
+                    source: content, 
+                    map: undefined, 
+                    dependencies
+                });
+
+                return { ast: nodes, code, fn, async, time: Date.now(), dependencies, source: content };
+            } finally {
+                compileContext.depth -= 1;
+                if (compileContext.depth <= 0) {
+                    delete root["~compile-context"];
+                }
             }
-
-            const AsyncFunc = (async () => {}).constructor;
-            const coreFunction = async 
-                ? new (AsyncFunc as any)("$props, $globals, $kire", code)
-                : new Function("$props, $globals, $kire", code);
-
-            const fn = this.$runtime.createKireFunction(this, coreFunction, {
-                async, 
-                path: filename, 
-                code, 
-                source: content, 
-                map: undefined, 
-                dependencies
-            });
-
-            return { ast: nodes, code, fn, async, time: Date.now(), dependencies, source: content };
         } catch (e) {
             if (!this.$silent) { 
                 console.error(`Compilation error in ${filename}:`); 

@@ -3,7 +3,7 @@ import type { Kire } from "../../kire";
 export default (kire: Kire<any>) => {
     kire.directive({
         name: `isset`,
-        params: [`expr:any`],
+        signature: [`expr:any`],
         children: true,
         closeBy: [`endisset`, `end`],
         onCall: (api) => {
@@ -16,7 +16,7 @@ export default (kire: Kire<any>) => {
 
     kire.directive({
         name: `empty`,
-        params: [`expr:any`],
+        signature: [`expr:any`],
         children: true,
         relatedTo: [`for`, `each`],
         closeBy: [`endempty`, `endfor`, `endeach`, `end`],
@@ -32,3 +32,4 @@ export default (kire: Kire<any>) => {
         },
     });
 };
+

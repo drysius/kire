@@ -125,6 +125,7 @@ export class Compiler {
 
         while (changed) {
             changed = false;
+            const compileContext = this.kire.$kire["~compile-context"];
 
             for (const [name, entries] of this.kire.$kire["~handlers"].exists_vars) {
                 const nameStr = name.toString();
@@ -139,7 +140,13 @@ export class Compiler {
                     }
                     
                     if (isUsed) {
+                        if (entry.unique && compileContext?.uniqueExistVarCallbacks.has(entry.callback)) {
+                            continue;
+                        }
                         entry.callback?.(this.createCompilerApi({ type: 'directive', name: 'existVar', loc: { line: 0, column: 0 } } as any, {}, true));
+                        if (entry.unique) {
+                            compileContext?.uniqueExistVarCallbacks.add(entry.callback);
+                        }
                         triggered.add(nameStr);
                         changed = true;
                     }
@@ -156,10 +163,21 @@ export class Compiler {
             const dependencyCodes: string[] = [];
             for (const path in this.dependencies) {
                 const id = this.dependencies[path]!;
-                const depNodes = this.kire.parse(this.kire.readFile(this.kire.resolvePath(path)));
-                const compilerInstance = new Compiler(this.kire, path);
-                const depCode = compilerInstance.compile(depNodes, [], true);
-                const asyncDep = compilerInstance.async;
+                const compiledDependency = this.kire.getOrCompile(path, true);
+                let fallbackAsync = false;
+                const depCode =
+                    typeof compiledDependency?.meta?.code === "string"
+                        ? compiledDependency.meta.code
+                        : (() => {
+                            const depNodes = this.kire.parse(this.kire.readFile(this.kire.resolvePath(path)));
+                            const compilerInstance = new Compiler(this.kire, path);
+                            const code = compilerInstance.compile(depNodes, [], true);
+                            fallbackAsync = compilerInstance.async;
+                            return code;
+                        })();
+                const asyncDep = compiledDependency?.meta?.async === undefined
+                    ? fallbackAsync
+                    : Boolean(compiledDependency.meta.async);
                 
                 dependencyCodes.push(`const ${id} = ${asyncDep ? 'async ' : ''}function($props = {}, $globals = {}) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: '${path}' };`);
             }

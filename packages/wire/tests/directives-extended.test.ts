@@ -574,6 +574,44 @@ describe("wire directives: extended behavior", () => {
         }
     });
 
+    test("wire:file.preview resolves WireFile-like ids through the preview endpoint", () => {
+        Kirewire.configure({ previewUrl: "/_wire/preview" });
+
+        const preview = document.createElement("div");
+        document.body.appendChild(preview);
+
+        const directive = Kirewire.getDirective("file")!;
+        const cleanupFns: Array<() => void> = [];
+        const { wire } = createFakeWire({
+            initialState: {
+                upload: {
+                    id: "preview-123",
+                    name: "photo.png",
+                    mime: "image/png",
+                    size: 128,
+                    __wire_type: "file",
+                },
+            },
+        });
+
+        directive({
+            el: preview,
+            value: "file",
+            expression: "upload",
+            modifiers: ["preview"],
+            cleanup: (fn) => cleanupFns.push(fn),
+            wire: wire as any,
+            adapter: {} as any,
+            componentId: "cmp-1",
+        });
+
+        expect(preview.innerHTML).toContain("<img");
+        expect(preview.innerHTML).toContain("/_wire/preview?id=preview-123");
+        expect(preview.innerHTML).toContain("mime=image%2Fpng");
+
+        cleanupFns.forEach((fn) => fn());
+    });
+
     test("stream effects ignore invalid CSS selectors without throwing", () => {
         expect(() => {
             Kirewire.processEffects([
