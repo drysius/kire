@@ -68,7 +68,7 @@ export class KireCompletionItemProvider
 				const signature = Array.isArray(def?.signature)
 					? def.signature
 					: undefined;
-				if (def && signature && signature[paramIndex]) {
+				if (def && signature?.[paramIndex]) {
 					const paramDef = parseParamDefinition(
 						signature[paramIndex] as string,
 					);

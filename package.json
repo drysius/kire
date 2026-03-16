@@ -16,7 +16,8 @@
 		"benchmark:build": "bun run benchmark/create.ts --prepare-only",
 		"benchmark:node": "node --import tsx benchmark/create.ts --runtime=node --skip-build",
 		"benchmark:bun": "bun run benchmark/create.ts --runtime=bun --skip-build",
-		"benchmark:all": "bun run benchmark/create.ts --runtime=both",
+		"benchmark:deno": "deno run --allow-read --allow-write --allow-env --allow-run --allow-sys --node-modules-dir=auto benchmark/create.ts --runtime=deno --skip-build",
+		"benchmark:all": "bun run benchmark/create.ts --runtime=all",
 		"schema": "bun run tools/schema.ts",
 		"build": "bun run tools/build.ts",
 		"publish": "bun run tools/publish.ts",
@@ -50,7 +51,7 @@
 		"esbuild"
 	],
 	"dependencies": {
-		"@biomejs/biome": "^2.3.11",
+		"@biomejs/biome": "^2.4.7",
 		"@citizenfx/http-wrapper": "^0.2.2",
 		"@playwright/test": "^1.58.2",
 		"express": "^5.2.1",
