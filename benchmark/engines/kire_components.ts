@@ -9,10 +9,15 @@ export async function createRunner(payload: BenchmarkPayload): Promise<Benchmark
     const kire = new Kire({
         production: true,
         async: false,
-        files: {
-            "component.kire": "<div>I am Component Implementation</div>",
-        },
     });
+    kire.namespace("components", "components");
+    kire.$files[kire.resolvePath("components.user-row")] = `
+<li class="{{ user.active ? 'active' : '' }}">
+    {{ user.name }} ({{ user.email }})
+    @if(user.isAdmin)
+        <span class="badge">Admin</span>
+    @endif
+</li>`.trim();
     const compiled = kire.compile(
         template,
         "__benchmark_kire_components__.kire",

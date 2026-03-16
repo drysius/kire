@@ -22,7 +22,7 @@ function main() {
         .sort();
 
     let markdown = "# Kire Performance Benchmarks\n\n";
-    markdown += "This report compares **Kire** with other popular template engines in various scenarios. ";
+    markdown += "This report compares **Kire** directives, elements, and components with other popular template engines in various scenarios. ";
     markdown += "Benchmarks are executed in isolated worker processes to ensure fair comparisons. ";
     markdown += "Templates are precompiled once per engine before the timed loop.\n\n";
     markdown += `Generated on: ${new Date().toUTCString()}\n\n`;
@@ -33,6 +33,15 @@ function main() {
 
     for (const runtimeData of allData) {
         markdown += `## Runtime: ${String(runtimeData.runtime).toUpperCase()}\n\n`;
+        const failures = Array.isArray(runtimeData.failures) ? runtimeData.failures : [];
+
+        if (failures.length > 0) {
+            markdown += "> Benchmark failures detected for this runtime:\n";
+            for (const failure of failures) {
+                markdown += `> - ${failure.scenario}/${failure.engine}: ${failure.message}\n`;
+            }
+            markdown += "\n";
+        }
 
         for (const scenario of runtimeData.scenarios || []) {
             markdown += `### Scenario: ${scenario.name} (${scenario.dataCount} items, ${scenario.iterations} iterations)\n\n`;
@@ -43,6 +52,11 @@ function main() {
                 (a: any, b: any) => (b[1]?.opsPerSec || 0) - (a[1]?.opsPerSec || 0),
             );
             const maxOps = engines.length > 0 ? (engines[0]![1] as any).opsPerSec || 0 : 0;
+
+            if (engines.length === 0) {
+                markdown += "| _No successful benchmark results_ | - | - | - |\n\n";
+                continue;
+            }
 
             for (const [name, stats] of engines as Array<[string, any]>) {
                 const ops = Number(stats?.opsPerSec || 0);

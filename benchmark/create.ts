@@ -1,5 +1,5 @@
 import { Worker as NodeWorker } from "node:worker_threads";
-import { writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path, { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,7 +8,8 @@ import type { BenchmarkPayload, BenchmarkScenario } from "./engines/base.ts";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CREATE_PATH = join(__dirname, "create.ts");
 
-type RuntimeTarget = "node" | "bun" | "both";
+type RuntimeTarget = "node" | "bun" | "deno" | "both" | "all";
+type RuntimeName = "node" | "bun" | "deno";
 
 interface CliOptions {
     runtime: RuntimeTarget;
@@ -31,7 +32,13 @@ function parseArgs(argv: string[]): CliOptions {
     for (const arg of argv) {
         if (arg.startsWith("--runtime=")) {
             const value = arg.slice("--runtime=".length).trim().toLowerCase();
-            if (value === "node" || value === "bun" || value === "both") {
+            if (
+                value === "node" ||
+                value === "bun" ||
+                value === "deno" ||
+                value === "both" ||
+                value === "all"
+            ) {
                 options.runtime = value;
             }
             continue;
@@ -113,6 +120,15 @@ const templates: Record<string, string> = {
         </kire:for>
     </ul>
 </div>`.trim(),
+    kire_components: `
+<div class="container">
+    <h1>{{ title }}</h1>
+    <ul>
+        @for(user of users)
+            <x-user-row :user="user" />
+        @endfor
+    </ul>
+</div>`.trim(),
     ejs: `
 <div class="container">
     <h1><%= title %></h1>
@@ -183,6 +199,7 @@ const templates: Record<string, string> = {
 const defaultEngineNames = [
     "kire",
     "kire_elements",
+    "kire_components",
     "ejs",
     "edge.js",
     "handlebars",
@@ -291,7 +308,88 @@ function runBunWorker(payload: BenchmarkPayload): Promise<any> {
     });
 }
 
-function writeResults(runtime: "node" | "bun", allResults: any) {
+function runDenoWorker(payload: BenchmarkPayload): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const tempDir = join(__dirname, "results", ".tmp");
+        if (!existsSync(tempDir)) {
+            mkdirSync(tempDir, { recursive: true });
+        }
+
+        const payloadPath = join(
+            tempDir,
+            `payload-${process.pid}-${Date.now()}-${Math.random()
+                .toString(16)
+                .slice(2)}.json`,
+        );
+
+        try {
+            writeFileSync(payloadPath, JSON.stringify(payload));
+
+            const workerPath = join(__dirname, "workers", "deno.ts");
+            const result = spawnSync(
+                "deno",
+                [
+                    "run",
+                    "--quiet",
+                    "--allow-read",
+                    "--allow-write",
+                    "--allow-env",
+                    "--allow-run",
+                    "--allow-sys",
+                    "--node-modules-dir=auto",
+                    workerPath,
+                    payloadPath,
+                ],
+                {
+                    encoding: "utf-8",
+                },
+            );
+
+            if (result.error) {
+                reject(
+                    new Error(
+                        `Failed to spawn Deno worker: ${result.error.message}`,
+                    ),
+                );
+                return;
+            }
+
+            if (result.status !== 0) {
+                reject(
+                    new Error(
+                        result.stderr?.trim() ||
+                            result.stdout?.trim() ||
+                            "Deno worker failed.",
+                    ),
+                );
+                return;
+            }
+
+            const stdout = result.stdout?.trim();
+            if (!stdout) {
+                reject(new Error("Deno worker produced no output."));
+                return;
+            }
+
+            const message = JSON.parse(stdout) as
+                | { result?: any; error?: string; stack?: string }
+                | undefined;
+
+            if (message?.error) {
+                reject(new Error(message.error));
+                return;
+            }
+
+            resolve(message?.result ?? message);
+        } catch (error: any) {
+            reject(error);
+        } finally {
+            rmSync(payloadPath, { force: true });
+        }
+    });
+}
+
+function writeResults(runtime: RuntimeName, allResults: any) {
     const resultsDir = join(__dirname, "results");
     if (!existsSync(resultsDir)) mkdirSync(resultsDir);
     writeFileSync(
@@ -301,7 +399,7 @@ function writeResults(runtime: "node" | "bun", allResults: any) {
 }
 
 async function runRuntimeBenchmarks(
-    runtime: "node" | "bun",
+    runtime: RuntimeName,
     scenarios: BenchmarkScenario[],
     engines: string[],
 ) {
@@ -311,7 +409,9 @@ async function runRuntimeBenchmarks(
         runtime,
         timestamp: new Date().toISOString(),
         scenarios: [],
+        failures: [],
     };
+    const failures: Array<{ scenario: string; engine: string; message: string }> = [];
 
     const startedAt = Date.now();
     const totalTasks = scenarios.length * engines.length;
@@ -339,7 +439,9 @@ async function runRuntimeBenchmarks(
                 const result =
                     runtime === "node"
                         ? await runNodeWorker(payload)
-                        : await runBunWorker(payload);
+                        : runtime === "bun"
+                            ? await runBunWorker(payload)
+                            : await runDenoWorker(payload);
 
                 scenarioResult.engines[engineName] = result;
                 completedTasks++;
@@ -353,12 +455,18 @@ async function runRuntimeBenchmarks(
                         `(ETA ${formatDuration(remainingSec)})`,
                 );
             } catch (error: any) {
+                const message = error?.message || String(error);
                 completedTasks++;
+                failures.push({
+                    scenario: scenario.name,
+                    engine: engineName,
+                    message,
+                });
                 const elapsedSec = (Date.now() - startedAt) / 1000;
                 const avgSec = completedTasks > 0 ? elapsedSec / completedTasks : 0;
                 const remainingSec = avgSec * (totalTasks - completedTasks);
                 console.log(
-                    `FAILED: ${error?.message || String(error)} ` +
+                    `FAILED: ${message} ` +
                         `(ETA ${formatDuration(remainingSec)})`,
                 );
             }
@@ -367,14 +475,22 @@ async function runRuntimeBenchmarks(
         allResults.scenarios.push(scenarioResult);
     }
 
+    allResults.failures = failures;
     writeResults(runtime, allResults);
     console.log(
         `Benchmarks for ${runtime} completed. Results saved to benchmark/results/results-${runtime}.json`,
     );
+
+    if (failures.length > 0) {
+        const formatted = failures
+            .map((failure) => `${failure.scenario}/${failure.engine}: ${failure.message}`)
+            .join("\n");
+        throw new Error(`Benchmark runtime "${runtime}" had failures:\n${formatted}`);
+    }
 }
 
 function runChildRuntime(
-    runtime: "node" | "bun",
+    runtime: RuntimeName,
     options: CliOptions,
 ) {
     const baseArgs = [
@@ -394,7 +510,28 @@ function runChildRuntime(
     const child =
         runtime === "node"
             ? spawnSync("node", ["--import", "tsx", ...baseArgs], { stdio: "inherit" })
-            : spawnSync("bun", ["run", ...baseArgs], { stdio: "inherit" });
+            : runtime === "bun"
+                ? spawnSync("bun", ["run", ...baseArgs], { stdio: "inherit" })
+                : spawnSync(
+                    "deno",
+                    [
+                        "run",
+                        "--allow-read",
+                        "--allow-write",
+                        "--allow-env",
+                        "--allow-run",
+                        "--allow-sys",
+                        "--node-modules-dir=auto",
+                        ...baseArgs,
+                    ],
+                    { stdio: "inherit" },
+                );
+
+    if (child.error) {
+        throw new Error(
+            `Failed to spawn ${runtime} benchmark subprocess: ${child.error.message}`,
+        );
+    }
 
     if (child.status !== 0) {
         throw new Error(`Failed to run ${runtime} benchmark subprocess.`);
@@ -425,14 +562,22 @@ async function main() {
             ? options.engines
             : defaultEngineNames;
 
-    if (options.runtime === "both") {
-        runChildRuntime("node", options);
-        runChildRuntime("bun", options);
+    const runtimes: RuntimeName[] =
+        options.runtime === "all"
+            ? ["node", "bun", "deno"]
+            : options.runtime === "both"
+                ? ["node", "bun"]
+                : [options.runtime];
+
+    if (runtimes.length > 1) {
+        for (const runtime of runtimes) {
+            runChildRuntime(runtime, options);
+        }
         await generateReportIfNeeded(options.noReport);
         return;
     }
 
-    await runRuntimeBenchmarks(options.runtime, scenarios, engines);
+    await runRuntimeBenchmarks(runtimes[0]!, scenarios, engines);
     await generateReportIfNeeded(options.noReport);
 }
 
