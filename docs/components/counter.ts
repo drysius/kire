@@ -1,6 +1,7 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "counter" })
 export default class Counter extends Component {
+	@Variable("number")
 	public count = 0;
 
 	async increment() {

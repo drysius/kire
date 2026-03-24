@@ -1,9 +1,9 @@
 import { Type } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import { WireProperty } from "../wire-property";
-import type { FileStore } from "./file-store";
+import type { FileStore, FileStoreMoveOptions } from "./file-store";
 
-type FileLike = {
+export type FileLike = {
 	id?: string;
 	name: string;
 	size: number;
@@ -22,7 +22,7 @@ const FILE_ENTRY_SCHEMA = Type.Object(
 	{ additionalProperties: true },
 );
 
-function normalizeFileList(value: any): FileLike[] {
+export function normalizeFileList(value: any): FileLike[] {
 	if (!value) return [];
 
 	if (Array.isArray(value)) {
@@ -138,6 +138,128 @@ export class WireFile extends WireProperty {
 	public getPath(store: FileStore): string | null {
 		return store.get(this.id);
 	}
+
+	/**
+	 * Move the uploaded file to a target path or directory.
+	 */
+	public moveTo(
+		store: FileStore,
+		destination: string,
+		options?: FileStoreMoveOptions,
+	): string | null {
+		if (!this.id) return null;
+		return store.move(this.id, destination, options);
+	}
+}
+
+export class WireUpload extends WireProperty {
+	public readonly __wire_type = "upload";
+	public files: WireFile[] = [];
+	public uploading: { percent?: number; loaded?: number; total?: number } | null =
+		null;
+
+	constructor(initial?: FileLike[] | FileLike | null) {
+		super();
+		this.hydrate(initial);
+	}
+
+	public hydrate(value: any): void {
+		const normalized = normalizeFileList(value);
+		const files: WireFile[] = [];
+		for (let i = 0; i < normalized.length; i++) {
+			const item = normalized[i]!;
+			files.push(
+				new WireFile({
+					id: String(item.id || ""),
+					name: String(item.name || ""),
+					size: Number(item.size || 0),
+					mime: String(item.mime || item.type || ""),
+				}),
+			);
+		}
+		this.files = files;
+
+		if (value && typeof value === "object" && (value as any).uploading) {
+			this.uploading = { ...(value as any).uploading };
+		}
+	}
+
+	public dehydrate(): any {
+		const first = this.file;
+		return {
+			files: this.files.map((file) => file.dehydrate()),
+			id: first?.id || "",
+			name: first?.name || "",
+			size: Number(first?.size || 0),
+			mime: first?.mime || "",
+			type: first?.mime || "",
+			uploading: this.uploading || undefined,
+			__wire_type: this.__wire_type,
+		};
+	}
+
+	public clear() {
+		this.files = [];
+		this.uploading = null;
+	}
+
+	public add(file: FileLike) {
+		this.files.push(
+			new WireFile({
+				id: String(file.id || ""),
+				name: String(file.name || ""),
+				size: Number(file.size || 0),
+				mime: String(file.mime || file.type || ""),
+			}),
+		);
+	}
+
+	public toArray() {
+		return this.files.map((item) => item.dehydrate());
+	}
+
+	public get file() {
+		return this.files[0] || null;
+	}
+
+	public get id() {
+		return this.file?.id || "";
+	}
+
+	public set id(value: string) {
+		if (!this.file) {
+			if (!value) return;
+			this.files = [new WireFile()];
+		}
+		this.files[0]!.id = String(value || "");
+	}
+
+	public get name() {
+		return this.file?.name || "";
+	}
+
+	public set name(value: string) {
+		if (!this.file) this.files = [new WireFile()];
+		this.files[0]!.name = String(value || "");
+	}
+
+	public get size() {
+		return Number(this.file?.size || 0);
+	}
+
+	public set size(value: number) {
+		if (!this.file) this.files = [new WireFile()];
+		this.files[0]!.size = Number(value || 0);
+	}
+
+	public get mime() {
+		return this.file?.mime || "";
+	}
+
+	public set mime(value: string) {
+		if (!this.file) this.files = [new WireFile()];
+		this.files[0]!.mime = String(value || "");
+	}
 }
 
 export class Rule {
@@ -197,8 +319,9 @@ export class Rule {
 			minItems: this.minItems,
 			maxItems: this.maxItems,
 		});
+		const checkInput: unknown = files;
 
-		if (!Value.Check(arraySchema, files)) {
+		if (!Value.Check(arraySchema, checkInput)) {
 			if (this.minItems !== undefined && files.length < this.minItems) {
 				return {
 					success: false,

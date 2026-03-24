@@ -1,5 +1,4 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
 type FeedEntry = {
     id: number;
     text: string;
@@ -16,8 +15,11 @@ const store = {
     ] as FeedEntry[],
 };
 
+@Wire({ name: "collection" })
 export default class CollectionDemo extends Component {
+    @Variable("string")
     public draft = "";
+    @Variable("array")
     public entries: FeedEntry[] = [];
 
     async mount() {

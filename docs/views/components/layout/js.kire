@@ -1,7 +1,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4" defer></script>
 <script>
     window.__WIRE_INITIAL_CONFIG__ = {
-        transport: "{{ sharedTransport || 'sse' }}"
+        transport: "{{ $globals.sharedTransport || 'sse' }}"
     };
 </script>
 <script>

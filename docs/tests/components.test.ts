@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { WireFile } from "../lib/wire";
+import { WireUpload } from "../lib/wire";
 
 import Chat from "../components/chat";
 import BattleTank from "../components/battle-tank";
@@ -302,7 +302,7 @@ describe("wire-example component behaviors", () => {
         expect((upload as any).__errors.file).toBe("Please select a file.");
 
         upload.description = "New file";
-        upload.file = new WireFile({
+        upload.file = new WireUpload({
             id: "file-1",
             name: "demo.txt",
             size: 1024,

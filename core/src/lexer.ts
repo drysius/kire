@@ -161,21 +161,41 @@ export class Lexer {
 			}
 		}
 
-		// 2. Find longest prefix
+		// 2. Match directive name.
+		// Exact names are preferred. Prefix fallback is only allowed for
+		// branch/related directives inside an active scope (e.g. @elseText).
 		let matchedName = "";
-		const m = rawName.match(this.kire.$directivesPattern);
-		if (m && m.index === 0) {
-			const candidate = m[0]!;
-			if (candidate === rawName) {
-				matchedName = candidate;
-			} else {
-				const def = registered[candidate];
-				const hasSignature = !!def?.signature?.length;
-				const nextAfterRaw = this.template[this.cursor + 1 + rawName.length];
-				const looksLikeAnotherDirectiveCall =
-					hasSignature && nextAfterRaw === "(";
-				if (!looksLikeAnotherDirectiveCall) {
-					matchedName = candidate;
+		if (registered[rawName]) {
+			matchedName = rawName;
+		} else {
+			const m = rawName.match(this.kire.$directivesPattern);
+			if (m && m.index === 0) {
+				const candidate = m[0]!;
+				if (candidate !== rawName && registered[candidate]) {
+					const nextAfterCandidate =
+						this.template[this.cursor + 1 + candidate.length];
+					const hasCallArgs = nextAfterCandidate === "(";
+
+					let allowPrefixInScope = false;
+					const current = this.stack[this.stack.length - 1];
+					if (current) {
+						const candidateDef = registered[candidate]!;
+						if (candidateDef.relatedTo?.includes(current.name!)) {
+							allowPrefixInScope = true;
+						} else {
+							const currentDef = registered[current.name!];
+							if (currentDef?.closeBy) {
+								const closeBy = Array.isArray(currentDef.closeBy)
+									? currentDef.closeBy
+									: [currentDef.closeBy];
+								allowPrefixInScope = closeBy.includes(candidate);
+							}
+						}
+					}
+
+					if (hasCallArgs || allowPrefixInScope) {
+						matchedName = candidate;
+					}
 				}
 			}
 		}

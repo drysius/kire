@@ -1,7 +1,9 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "textarea-test" })
 export default class TextareaTest extends Component {
+	@Variable("string")
 	public message = "";
+	@Variable("string")
 	public lastSent = "";
 
 	async submit() {

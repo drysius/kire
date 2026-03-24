@@ -1,17 +1,21 @@
-import { PageComponent } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
 // Mock data
 let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
 	id: i + 1,
 	name: `User ${i + 1}`,
 }));
 
-export default class Users extends PageComponent {
+@Wire({ name: "users" })
+export default class Users extends Component {
+	@Variable("string")
 	public search = "";
+	@Variable("number")
 	public page = 1;
+	@Variable("number")
 	public perPage = 10;
 
 	// Sync 'search' and 'page' with URL
+	@Variable("array")
 	public queryString = ["search", "page"];
 
 	public delete(id: number) {

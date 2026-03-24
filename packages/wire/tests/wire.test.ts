@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
+import { Type } from "@sinclair/typebox";
 import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Component } from "../src/component";
+import { Variable } from "../src/decorators";
 import { FileStore } from "../src/features/file-store";
 import { WireBroadcast } from "../src/features/wire-broadcast";
 import { Kirewire } from "../src/kirewire";
@@ -187,6 +189,40 @@ describe("Kirewire Kernel", () => {
 		expect(instance.$canSet("__proto__.polluted")).toBe(false);
 	});
 
+	test("@Variable accepts TypeBox schema declaration", () => {
+		class SchemaComponent extends Component {
+			@Variable(Type.Object({ age: Type.Number() }))
+			public profile: { age: number } = { age: 0 };
+
+			render() {
+				return "" as any;
+			}
+		}
+
+		const instance = new SchemaComponent();
+		instance.fill({ profile: { age: 21 } });
+		expect(instance.profile.age).toBe(21);
+
+		expect(() => instance.fill({ profile: { age: "invalid" } as any })).toThrow();
+	});
+
+	test("@Variable supports wildcard shape rules for arrays", () => {
+		class RulesComponent extends Component {
+			@Variable("array", { "*.age": "required|number" })
+			public users: Array<{ age: number }> = [];
+
+			render() {
+				return "" as any;
+			}
+		}
+
+		const instance = new RulesComponent();
+		instance.fill({ users: [{ age: 30 }, { age: 18 }] });
+		expect(instance.users).toEqual([{ age: 30 }, { age: 18 }]);
+
+		expect(() => instance.fill({ users: [{ age: 10 }, {}] as any })).toThrow();
+	});
+
 	test("should use UUID ids for component/session/file resources", () => {
 		const wire = new Kirewire({ secret: "id-secret" });
 
@@ -223,6 +259,38 @@ describe("Kirewire Kernel", () => {
 
 		(WireBroadcast as any).cleanupNow(Date.now());
 		expect(room.connections.size).toBe(0);
+	});
+
+	test("wire broadcast should keep one connection per session/page scope", () => {
+		const channel = `room-scope-${Date.now()}`;
+		const broadcast = new WireBroadcast({
+			name: channel,
+			ttlMs: 30_000,
+			autodelete: false,
+		});
+
+		const firstInstance = {
+			$id: "component-refresh-1",
+			$wire_scope_id: "session-1",
+			$wire_page_id: "page-home",
+			count: 1,
+		} as any;
+		const secondInstance = {
+			$id: "component-refresh-2",
+			$wire_scope_id: "session-1",
+			$wire_page_id: "page-home",
+			count: 2,
+		} as any;
+
+		broadcast.update(firstInstance);
+		broadcast.update(secondInstance);
+
+		const roomId = broadcast.getRoomId();
+		const rooms = (WireBroadcast as any).rooms as Map<string, any>;
+		const room = rooms.get(roomId);
+
+		expect(room).toBeDefined();
+		expect(room.connections.size).toBe(1);
 	});
 
 	test("destroy should release session state and registries", async () => {
@@ -340,5 +408,21 @@ describe("FileStore", () => {
 		if (path) {
 			expect(existsSync(path)).toBe(false);
 		}
+	});
+
+	test("move should relocate file and preserve id mapping", () => {
+		const store = new FileStore(testDir);
+		const id = store.store("hello.txt", Buffer.from("hello"));
+		const moved = store.move(id, join(testDir, "moved/"));
+
+		expect(typeof moved).toBe("string");
+		expect(String(moved)).toContain("moved");
+		expect(existsSync(String(moved))).toBe(true);
+		expect(readFileSync(String(moved), "utf8")).toBe("hello");
+
+		const resolved = store.get(id);
+		expect(resolved).toBe(String(moved));
+
+		store.destroy();
 	});
 });

@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	mock,
+	spyOn,
+	test,
+} from "bun:test";
 import { JSDOM } from "jsdom";
 import { Kire } from "kire";
 import { SocketAdapter } from "../src/adapters/socket";
@@ -93,6 +101,7 @@ describe("Socket transport E2E", () => {
 	});
 
 	afterEach(async () => {
+		mock.restore();
 		if (offPush) offPush();
 		if (clientAdapter) clientAdapter.destroy();
 		if (socketAdapter) socketAdapter.destroy();
@@ -198,5 +207,35 @@ describe("Socket transport E2E", () => {
 
 		expect(component.count).toBe(0);
 		expect((component as any).isAdmin).toBeUndefined();
+	});
+
+	test("keeps same socket connection when only pageId changes", async () => {
+		let createCount = 0;
+		let latestSocket: InMemorySocket | null = null;
+
+		const adapter = new SocketClientAdapter({
+			url: "/_wire",
+			pageId: "page-1",
+			sessionId: "session-1",
+			transport: "socket",
+			createSocket: () => {
+				createCount += 1;
+				latestSocket = new InMemorySocket(() => {});
+				return latestSocket as any;
+			},
+		});
+
+		try {
+			await new Promise((resolve) => setTimeout(resolve, 5));
+			const before = latestSocket;
+			adapter.reconfigure({ pageId: "page-2" });
+			await new Promise((resolve) => setTimeout(resolve, 5));
+
+			expect(createCount).toBe(1);
+			expect(latestSocket).toBe(before);
+			expect((latestSocket as any)?.readyState).toBe(1);
+		} finally {
+			adapter.destroy();
+		}
 	});
 });

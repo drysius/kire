@@ -1,5 +1,4 @@
-import { Component, WireBroadcast } from "../lib/wire";
-
+import { Component, Wire, Variable, WireBroadcast } from "../lib/wire";
 type Direction = "up" | "down" | "left" | "right";
 type Owner = "enemy" | `player:${string}`;
 
@@ -116,17 +115,27 @@ function resolveControlAction(key: unknown, code: unknown): ControlAction {
 	return byCode[normalizedCode] || byKey[normalizedKey] || null;
 }
 
+@Wire({ name: "battle-tank" })
 export default class BattleTank extends Component {
+	@Variable("string")
 	public readonly channel = "battle-tank";
+	@Variable("string")
 	public readonly roomChannel = "battle-tank-room";
 
+	@Variable("number")
 	public boardSize = 21;
+	@Variable("number")
 	public tileSize = 28;
+	@Variable("number")
 	public tankSize = 0.8;
+	@Variable("number")
 	public bulletRadius = 0.11;
 
+	@Variable("array")
 	public map: number[][] = [];
+	@Variable("any")
 	public players: Record<string, PlayerTank> = {};
+	@Variable("any")
 	public player: TankUnit = {
 		x: Math.floor(this.boardSize / 2),
 		y: this.boardSize - 2,
@@ -135,19 +144,31 @@ export default class BattleTank extends Component {
 		speed: 0.19,
 		cooldown: 0,
 	};
+	@Variable("array")
 	public enemies: TankUnit[] = [];
+	@Variable("array")
 	public bullets: Bullet[] = [];
 
+	@Variable("number")
 	public score = 0;
+	@Variable("any")
 	public lives = DEFAULT_LIVES;
+	@Variable("number")
 	public wave = 1;
+	@Variable("number")
 	public tickCount = 0;
+	@Variable("boolean")
 	public gameOver = false;
+	@Variable("string")
 	public status = "Hold Arrow/WASD + Space to defend the base";
+	@Variable("number")
 	public onlinePlayers = 1;
+	@Variable("string")
 	public currentPlayerId = "";
+	@Variable("boolean")
 	public spectator = false;
 
+	@Variable("any")
 	public shared = new WireBroadcast({
 		name: this.roomChannel,
 		autodelete: true,
@@ -501,7 +522,7 @@ export default class BattleTank extends Component {
 		}
 
 		if (!this.gameOver) {
-			this.status = `Wave ${this.wave} active • ${activePlayers.length} player(s) online`;
+			this.status = `Wave ${this.wave} active ï¿½ ${activePlayers.length} player(s) online`;
 		}
 	}
 

@@ -154,7 +154,28 @@ describe("Kire Core (Bun)", () => {
 		);
 	});
 
-	test("should allow locals to shadow globalThis identifiers while preserving fallback", async () => {
+	test("should not mark sync templates as async when 'await' appears inside string literals", () => {
+		const sync = new Kire({ production: true, async: false, silent: true });
+		const result = sync.render("{{ 'await' }}");
+		expect(result).toBe("await");
+	});
+
+	test("should not mark sync templates as async when await is used as property/key", () => {
+		const sync = new Kire({ production: true, async: false, silent: true });
+		const result = sync.render("{{ ({ await: 1 }).await }}");
+		expect(result).toBe("1");
+	});
+
+	test("should mark template async when await keyword is actually used", async () => {
+		const asyncKire = new Kire({ production: true, async: true, silent: true });
+		const result = await asyncKire.render(
+			"{{ await Promise.resolve('ok') }}",
+			{ Promise },
+		);
+		expect(result).toBe("ok");
+	});
+
+	test("should resolve identifiers only from props/globals (without globalThis fallback)", async () => {
 		const k = new Kire({ production: true, silent: true });
 
 		const shadowed = await k.render("{{ process ? 'YES' : 'NO' }}", {
@@ -162,7 +183,7 @@ describe("Kire Core (Bun)", () => {
 		} as any);
 		expect(shadowed).toBe("NO");
 
-		const fallback = await k.render("{{ typeof Math }}");
-		expect(fallback).toBe("object");
+		const isolated = await k.render("{{ typeof Math }}");
+		expect(isolated).toBe("undefined");
 	});
 });

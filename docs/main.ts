@@ -1,12 +1,16 @@
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import fs from "node:fs";
 import { wirePlugin, HttpAdapter, SocketAdapter } from "./lib/wire";
 import { KireMarkdown } from "@kirejs/markdown";
 import { Elysia } from "elysia";
 import { staticPlugin } from "@elysiajs/static";
-import { Kire } from "kire";
+import { Kire } from "../core/src/index.ts";
+import {
+    createDocsMarkdownReader,
+    parseCookieValue,
+    redirect,
+} from "./lib/server-utils";
 import {
     docsPages,
     docsNav,
@@ -24,11 +28,23 @@ type WireRoute = {
     title: string;
 };
 
-const useSocket = process.argv.includes("--socket");
-const appRoot = path.dirname(fileURLToPath(import.meta.url));
-const wireDistDir = path.resolve(appRoot, "../packages/wire/dist");
+type DocsContext = any;
+type KireEngine = any;
+type WireEngine = any;
+type SocketClient = any;
+type WireAdapterResponse = {
+    status?: number;
+    headers?: Record<string, string>;
+    result?: unknown;
+};
 
-const wireRoutes: WireRoute[] = [
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const USE_SOCKET = process.argv.includes("--socket");
+const APP_ROOT = path.dirname(fileURLToPath(import.meta.url));
+const VIEWS_ROOT = path.join(APP_ROOT, "views");
+const WIRE_DIST_DIR = path.resolve(APP_ROOT, "../packages/wire/dist");
+
+const WIRE_ROUTES: WireRoute[] = [
     { path: "/kirewire", view: "pages.index", title: "Dashboard" },
     { path: "/kirewire/features", view: "pages.features", title: "Feature Tour" },
     { path: "/kirewire/todo", view: "pages.todo", title: "Todo List" },
@@ -47,47 +63,14 @@ const wireRoutes: WireRoute[] = [
     { path: "/kirewire/battle-tank", view: "pages.battle-tank", title: "Battle Tank" },
 ];
 
-const wireNav: NavItem[] = wireRoutes.map((route) => ({
+const WIRE_NAV: NavItem[] = WIRE_ROUTES.map((route) => ({
     id: route.path.replace(/\W+/g, "-"),
     title: route.title,
     href: route.path,
     section: "KireWire Playground",
 }));
 
-const docsMarkdownCache = new Map<string, string>();
-
-function stripFrontmatter(source: string): string {
-    const normalized = String(source || "").replace(/^\uFEFF/, "");
-    const match = normalized.match(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/);
-    if (!match) return normalized;
-    return normalized.slice(match[0].length);
-}
-
-function resolveDocsMarkdownPath(relativeFile: string): string {
-    return path.resolve(path.join(appRoot, "views"), relativeFile);
-}
-
-function readDocsMarkdown(relativeFile: string): string {
-    const key = String(relativeFile || "").trim();
-    if (!key) return "";
-
-    const isProduction = process.env.NODE_ENV === "production";
-    if (isProduction && docsMarkdownCache.has(key)) {
-        return docsMarkdownCache.get(key) || "";
-    }
-
-    try {
-        const absolutePath = resolveDocsMarkdownPath(key);
-        const source = fs.readFileSync(absolutePath, "utf8");
-        const stripped = stripFrontmatter(source);
-        if (isProduction) docsMarkdownCache.set(key, stripped);
-        return stripped;
-    } catch {
-        return "";
-    }
-}
-
-const legacyWireRouteMap: Record<string, string> = {
+const LEGACY_WIRE_ROUTE_MAP: Record<string, string> = {
     "/features": "/kirewire/features",
     "/todo": "/kirewire/todo",
     "/chat": "/kirewire/chat",
@@ -106,237 +89,343 @@ const legacyWireRouteMap: Record<string, string> = {
     "/sse": "/kirewire/shared-components",
 };
 
-function redirect(context: any, to: string, status = 302) {
-    context.set.status = status;
-    context.set.headers["Location"] = to;
-    return "";
-}
-
-function parseCookieValue(cookieHeader: string, key: string): string {
-    const source = String(cookieHeader || "");
-    if (!source) return "";
-    const chunks = source.split(";");
-    for (let i = 0; i < chunks.length; i++) {
-        const part = chunks[i]!.trim();
-        if (!part) continue;
-        const eq = part.indexOf("=");
-        if (eq <= 0) continue;
-        const name = part.slice(0, eq).trim();
-        if (name !== key) continue;
-        const raw = part.slice(eq + 1);
-        try {
-            return decodeURIComponent(raw);
-        } catch {
-            return raw;
-        }
-    }
-    return "";
-}
-
-// Initialize Kire
-const kire = new Kire({
-    root: path.join(appRoot, "views"),
-    production: process.env.NODE_ENV === "production",
+const DOCS_NON_PACKAGES = docsPages.filter((item) => item.section !== "Packages");
+const DOCS_PACKAGES = docsPages.filter((item) => item.section === "Packages");
+const readDocsMarkdown = createDocsMarkdownReader({
+    viewsRoot: VIEWS_ROOT,
+    production: IS_PRODUCTION,
 });
 
-const app = new Elysia({
-    serve: {
-        maxRequestBodySize: 10000 * 600 * 1024 * 1024, // 600MB
-    },
-})
-    .use(staticPlugin({
-        assets: wireDistDir,
-        prefix: "/dist",
-    }))
-    .derive(() => ({ wireKey: "", user: {}, kire: kire.fork() }));
+const kire = createKireEngine();
+const app = createApp(kire);
 
-void (async () => {
+void bootstrap();
+
+async function bootstrap() {
     const wire = new wirePlugin({
         secret: "change-me-in-production",
         bus_delay: 10,
-        adapter: useSocket ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" }),
+        autoclean: true,
+        adapter: USE_SOCKET ? new SocketAdapter() : new HttpAdapter({ route: "/_wire" }),
     });
 
-    const socketClientsByUser = new Map<string, Set<any>>();
-    const addSocketClient = (userId: string, ws: any) => {
-        let bucket = socketClientsByUser.get(userId);
-        if (!bucket) {
-            bucket = new Set<any>();
-            socketClientsByUser.set(userId, bucket);
-        }
-        bucket.add(ws);
-    };
-    const removeSocketClient = (userId: string, ws: any) => {
-        const bucket = socketClientsByUser.get(userId);
-        if (!bucket) return;
-        bucket.delete(ws);
-        if (bucket.size === 0) socketClientsByUser.delete(userId);
-    };
+    const wireEngine = await setupKire(kire, wire);
+    if (USE_SOCKET) registerSocketBridge(app, wireEngine);
 
-    kire.plugin(KireMarkdown);
-    kire.plugin(wire);
+    registerGlobalContext(app);
+    registerGlobalErrorHandler(app);
+    registerDocumentationRoutes(app);
+    registerWirePlaygroundRoutes(app);
+    registerLegacyWireRedirects(app);
+    registerUnifiedWireHandler(app);
 
-    kire.namespace("views", path.join(appRoot, "views"));
-    kire.namespace("layouts", path.join(appRoot, "views/layouts"));
-    kire.namespace("components", path.join(appRoot, "views/components"));
-    kire.namespace("pages", path.join(appRoot, "views/pages"));
+    app.listen(3000);
+    console.log(`[docs] serving wire assets from ${WIRE_DIST_DIR}`);
+    console.log(`Check it out at http://localhost:3000 (${USE_SOCKET ? "socket mode" : "http+sse mode"})`);
+}
 
-    await (kire as any).$wire.wireRegister("components/*.ts", appRoot);
+function createKireEngine(): KireEngine {
+    return new Kire({
+        root: VIEWS_ROOT,
+        production: IS_PRODUCTION,
+    });
+}
 
-    if (useSocket) {
-        const wireEngine = (kire as any).$wire;
-        wireEngine.on("socket:push", (packet: any) => {
-            const userId = String(packet?.userId || "").trim();
-            if (!userId) return;
-            const clients = socketClientsByUser.get(userId);
-            if (!clients || clients.size === 0) return;
+function createApp(engine: KireEngine) {
+    return new Elysia({
+        serve: {
+            maxRequestBodySize: 10000 * 600 * 1024 * 1024,
+        },
+    })
+        .use(staticPlugin({
+            assets: WIRE_DIST_DIR,
+            prefix: "/dist",
+        }))
+        .derive(() => ({ wireKey: "", user: {}, kire: engine.fork() }));
+}
 
-            const raw = JSON.stringify({
-                event: String(packet?.event || ""),
-                payload: packet?.data,
-            });
+async function setupKire(engine: KireEngine, wire: any): Promise<WireEngine> {
+    engine.plugin(KireMarkdown);
+    engine.plugin(wire);
 
-            for (const ws of clients) {
+    engine.namespace("views", VIEWS_ROOT);
+    engine.namespace("layouts", path.join(VIEWS_ROOT, "layouts"));
+    engine.namespace("components", path.join(VIEWS_ROOT, "components"));
+    engine.namespace("pages", path.join(VIEWS_ROOT, "pages"));
+
+    const wireEngine = getWireEngine(engine);
+    await wireEngine.wireRegister("components/*.ts", APP_ROOT);
+
+    return wireEngine;
+}
+
+function getWireEngine(engine: KireEngine): WireEngine {
+    return engine?.$wire || engine?.wire;
+}
+
+function registerSocketBridge(server: any, wireEngine: WireEngine) {
+    const socketHub = createSocketHub();
+
+    wireEngine.on("socket:push", (packet: any) => {
+        const userId = String(packet?.userId || "").trim();
+        const sessionId = String(packet?.sessionId || "").trim();
+        if (!userId && !sessionId) return;
+
+        socketHub.broadcast({ userId, sessionId }, {
+            event: String(packet?.event || ""),
+            payload: packet?.data,
+        });
+    });
+
+    server.ws("/_wire/socket", {
+        open(ws: SocketClient) {
+            const request = ws.data?.request as Request | undefined;
+            const url = request ? new URL(request.url) : new URL("http://localhost/_wire/socket");
+            const cookieHeader = request?.headers.get("cookie") || "";
+            const userId = parseCookieValue(cookieHeader, "session") || "guest";
+            const sessionId = String(url.searchParams.get("sessionId") || userId);
+            const pageId = String(url.searchParams.get("pageId") || "default-page");
+
+            ws.data = ws.data || {};
+            ws.data.kirewire = { userId, sessionId, pageId };
+            socketHub.add(userId, sessionId, ws);
+        },
+        message(ws: SocketClient, message: any) {
+            const adapter = wireEngine?.options?.adapter;
+            if (!adapter || typeof adapter.onMessage !== "function") return;
+
+            let parsed: any;
+            try {
+                parsed = typeof message === "string" ? JSON.parse(message) : message;
+            } catch {
+                ws.send(JSON.stringify({
+                    event: "response",
+                    payload: { error: "Invalid JSON payload." },
+                }));
+                return;
+            }
+
+            const userId = String(ws.data?.kirewire?.userId || "guest");
+            const sessionId = String(ws.data?.kirewire?.sessionId || userId);
+            void adapter.onMessage(String(ws.id || ""), userId, sessionId, parsed);
+        },
+        close(ws: SocketClient) {
+            const userId = String(ws.data?.kirewire?.userId || "");
+            const sessionId = String(ws.data?.kirewire?.sessionId || userId);
+            if (userId || sessionId) socketHub.remove(userId, sessionId, ws);
+        },
+    });
+}
+
+function createSocketHub() {
+    const clientsByKey = new Map<string, Set<SocketClient>>();
+
+    return {
+        add(userId: string, sessionId: string, ws: SocketClient) {
+            const keys = [
+                String(sessionId || "").trim(),
+                String(userId || "").trim(),
+            ].filter(Boolean);
+
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i]!;
+                let bucket = clientsByKey.get(key);
+                if (!bucket) {
+                    bucket = new Set<SocketClient>();
+                    clientsByKey.set(key, bucket);
+                }
+                bucket.add(ws);
+            }
+        },
+        remove(userId: string, sessionId: string, ws: SocketClient) {
+            const keys = [
+                String(sessionId || "").trim(),
+                String(userId || "").trim(),
+            ].filter(Boolean);
+
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i]!;
+                const bucket = clientsByKey.get(key);
+                if (!bucket) continue;
+                bucket.delete(ws);
+                if (bucket.size === 0) clientsByKey.delete(key);
+            }
+        },
+        broadcast(
+            target: { userId?: string; sessionId?: string },
+            packet: { event: string; payload: unknown },
+        ) {
+            const sessionKey = String(target?.sessionId || "").trim();
+            const userKey = String(target?.userId || "").trim();
+            const bucket =
+                (sessionKey ? clientsByKey.get(sessionKey) : undefined) ||
+                (userKey ? clientsByKey.get(userKey) : undefined);
+            if (!bucket || bucket.size === 0) return;
+
+            const raw = JSON.stringify(packet);
+            for (const ws of bucket) {
                 try {
                     ws.send(raw);
                 } catch {}
             }
-        });
+        },
+    };
+}
 
-        app.ws("/_wire/socket", {
-            open(ws: any) {
-                const request = ws.data?.request as Request | undefined;
-                const url = request ? new URL(request.url) : new URL("http://localhost/_wire/socket");
-                const cookieHeader = request?.headers.get("cookie") || "";
-                const userId = parseCookieValue(cookieHeader, "session") || "guest";
-                const pageId = String(url.searchParams.get("pageId") || "default-page");
-
-                ws.data = ws.data || {};
-                ws.data.kirewire = { userId, pageId };
-                addSocketClient(userId, ws);
-            },
-            message(ws: any, message: any) {
-                const wireEngine = (kire as any).$wire;
-                const adapter = wireEngine?.options?.adapter;
-                if (!adapter || typeof adapter.onMessage !== "function") return;
-
-                let parsed: any;
-                try {
-                    parsed = typeof message === "string" ? JSON.parse(message) : message;
-                } catch {
-                    ws.send(JSON.stringify({
-                        event: "response",
-                        payload: { error: "Invalid JSON payload." },
-                    }));
-                    return;
-                }
-
-                const userId = String(ws.data?.kirewire?.userId || "guest");
-                void adapter.onMessage(String(ws.id || ""), userId, userId, parsed);
-            },
-            close(ws: any) {
-                const userId = String(ws.data?.kirewire?.userId || "");
-                if (userId) removeSocketClient(userId, ws);
-            },
-        });
-    }
-
-    app.derive({ as: "global" }, async (context) => {
-        const session = context.cookie.session;
-        if (!session.value) {
-            session.value = randomUUID();
-            session.path = "/";
-            session.httpOnly = true;
-        }
-
-        let ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
-        if (ip === "::1" || ip === "::ffff:127.0.0.1") ip = "127.0.0.1";
-
-        const wireKey = createHash("sha256")
-            .update(`${session.value}:${ip}`)
-            .digest("hex");
+function registerGlobalContext(server: any) {
+    server.derive({ as: "global" }, async (context: DocsContext) => {
+        const sessionId = ensureSession(context);
+        const ip = resolveRequestIp(context);
+        const wireKey = createHash("sha256").update(`${sessionId}:${ip}`).digest("hex");
 
         const url = new URL(context.request.url);
         const pageId = createHash("md5").update(url.pathname).digest("hex");
         const docsQuery = String(url.searchParams.get("q") || "").trim();
+        const sharedTransport = USE_SOCKET ? "socket" : "sse";
+        const user = { id: sessionId, name: "Guest" };
 
-        const isActive = (targetPath: string) => {
-            if (targetPath === "/") return url.pathname === "/";
-            return url.pathname === targetPath || url.pathname.startsWith(`${targetPath}/`);
-        };
-
-        const user = { id: session.value, name: "Guest" };
-        context.kire.$global("isActive", isActive);
-        context.kire.$global("request", context);
-        context.kire.$global("wireKey", wireKey);
-        context.kire.$global("pageId", pageId);
-        context.kire.$global("user", user);
-        context.kire.$global("sharedTransport", useSocket ? "socket" : "sse");
-        context.kire.$global("docsNav", docsNav);
-        context.kire.$global("docsNavGroups", docsNavGroups);
-        context.kire.$global("packageNav", packageNav);
-        context.kire.$global("packageNavGroups", packageNavGroups);
-        context.kire.$global("wireNav", wireNav);
-        context.kire.$global("docsQuery", docsQuery);
-        context.kire.$global("currentPath", url.pathname);
-        context.kire.$global("$docsMarkdown", (relativeFile: string) => readDocsMarkdown(relativeFile));
+        setKireGlobals(context, {
+            wireKey,
+            pageId,
+            user,
+            docsQuery,
+            currentPath: url.pathname,
+            sharedTransport,
+        });
 
         return {
             user,
             wireKey,
             pageId,
+            sharedTransport,
+            docsNav,
+            docsNavGroups,
+            packageNav,
+            packageNavGroups,
+            wireNav: WIRE_NAV,
         };
     });
+}
 
-    // Documentation routes
-    app.get("/", async (context) => {
+function registerGlobalErrorHandler(server: any) {
+    server.onError((context: any) => {
+        const status = resolveErrorStatusCode(context);
+        const request = context?.request as Request | undefined;
+
+        if (request && shouldRenderErrorHtml(request) && context?.kire) {
+            return renderKireErrorResponse(context, context.error, status);
+        }
+
+        context.set.status = status;
+        context.set.headers["Content-Type"] = "application/json";
+        return {
+            error: extractErrorMessage(context.error) || "Internal server error.",
+        };
+    });
+}
+
+function ensureSession(context: DocsContext): string {
+    const session = context.cookie.session;
+    if (!session.value) {
+        session.value = randomUUID();
+        session.path = "/";
+        session.httpOnly = true;
+    }
+    return String(session.value);
+}
+
+function resolveRequestIp(context: DocsContext): string {
+    let ip = context.server?.requestIP(context.request)?.address || "127.0.0.1";
+    if (ip === "::1" || ip === "::ffff:127.0.0.1") ip = "127.0.0.1";
+    return ip;
+}
+
+function setKireGlobals(
+    context: DocsContext,
+    payload: {
+        wireKey: string;
+        pageId: string;
+        user: { id: string; name: string };
+        docsQuery: string;
+        currentPath: string;
+        sharedTransport: string;
+    },
+) {
+    const isActive = (targetPath: string) => {
+        if (targetPath === "/") return payload.currentPath === "/";
+        return payload.currentPath === targetPath || payload.currentPath.startsWith(`${targetPath}/`);
+    };
+
+    const globals: Array<[string, unknown]> = [
+        ["isActive", isActive],
+        ["request", context],
+        ["Date", Date],
+        ["wireKey", payload.wireKey],
+        ["pageId", payload.pageId],
+        ["user", payload.user],
+        ["sharedTransport", payload.sharedTransport],
+        ["docsNav", docsNav],
+        ["docsNavGroups", docsNavGroups],
+        ["packageNav", packageNav],
+        ["packageNavGroups", packageNavGroups],
+        ["wireNav", WIRE_NAV],
+        ["docsQuery", payload.docsQuery],
+        ["currentPath", payload.currentPath],
+        ["$docsMarkdown", (relativeFile: string) => readDocsMarkdown(relativeFile)],
+    ];
+
+    for (const [key, value] of globals) {
+        context.kire.$global(key, value);
+    }
+}
+
+function registerDocumentationRoutes(server: any) {
+    server.get("/", async (context: DocsContext) => {
         context.set.headers["Content-Type"] = "text/html";
         return await context.kire.view("pages.docs-home", {
             title: "Kire Documentation",
-            featuredDocs: docsPages.filter((item) => item.section !== "Packages").slice(0, 4),
-            featuredPackages: docsPages.filter((item) => item.section === "Packages").slice(0, 4),
-            wireHighlights: wireNav.slice(0, 6),
+            featuredDocs: DOCS_NON_PACKAGES.slice(0, 4),
+            featuredPackages: DOCS_PACKAGES.slice(0, 4),
+            wireHighlights: WIRE_NAV.slice(0, 6),
         });
     });
 
-    app.get("/docs", async (context) => {
+    server.get("/docs", async (context: DocsContext) => {
         context.set.headers["Content-Type"] = "text/html";
         return await context.kire.view("pages.docs-home", {
             title: "Kire Documentation",
-            featuredDocs: docsPages.filter((item) => item.section !== "Packages").slice(0, 6),
-            featuredPackages: docsPages.filter((item) => item.section === "Packages").slice(0, 6),
-            wireHighlights: wireNav.slice(0, 6),
+            featuredDocs: DOCS_NON_PACKAGES.slice(0, 6),
+            featuredPackages: DOCS_PACKAGES.slice(0, 6),
+            wireHighlights: WIRE_NAV.slice(0, 6),
         });
     });
 
-    app.get("/docs/packages", async (context) => {
+    server.get("/docs/packages", async (context: DocsContext) => {
         context.set.headers["Content-Type"] = "text/html";
         return await context.kire.view("pages.docs-packages", {
             title: "Packages - Kire Docs",
-            packages: docsPages.filter((item) => item.section === "Packages"),
+            packages: DOCS_PACKAGES,
         });
     });
 
-    app.get("/docs/search", async (context) => {
+    server.get("/docs/search", async (context: DocsContext) => {
         const query = String(context.query?.q || "").trim();
-        const results = searchDocs(query);
 
         context.set.headers["Content-Type"] = "text/html";
         return await context.kire.view("pages.docs-search", {
             title: query ? `Search: ${query} - Kire Docs` : "Search - Kire Docs",
             query,
-            results,
+            results: searchDocs(query),
         });
     });
 
-    app.get("/llms.txt", async (context) => {
+    server.get("/llms.txt", async (context: DocsContext) => {
         context.set.headers["Content-Type"] = "text/plain; charset=utf-8";
-        return Bun.file(path.join(appRoot, "llms.txt"));
+        return Bun.file(path.join(APP_ROOT, "llms.txt"));
     });
 
-    for (let i = 0; i < docsPages.length; i++) {
-        const page = docsPages[i]!;
-        app.get(page.href, async (context) => {
+    for (const page of docsPages) {
+        server.get(page.href, async (context: DocsContext) => {
             context.set.headers["Content-Type"] = "text/html";
             const neighbors = getDocNeighbors(page.href);
             const related = docsPages
@@ -352,11 +441,11 @@ void (async () => {
             });
         });
     }
+}
 
-    // KireWire playground routes
-    for (let i = 0; i < wireRoutes.length; i++) {
-        const route = wireRoutes[i]!;
-        app.get(route.path, async (context) => {
+function registerWirePlaygroundRoutes(server: any) {
+    for (const route of WIRE_ROUTES) {
+        server.get(route.path, async (context: DocsContext) => {
             context.set.headers["Content-Type"] = "text/html";
             return await context.kire.view(route.view, {
                 title: `${route.title} - KireWire`,
@@ -364,48 +453,117 @@ void (async () => {
             });
         });
     }
+}
 
-    // Legacy wire routes -> /kirewire/*
-    for (const [legacy, target] of Object.entries(legacyWireRouteMap)) {
-        app.get(legacy, (context) => redirect(context, target, 302));
+function registerLegacyWireRedirects(server: any) {
+    for (const [legacy, target] of Object.entries(LEGACY_WIRE_ROUTE_MAP)) {
+        server.get(legacy, (context: DocsContext) => redirect(context, target, 302));
+    }
+}
+
+function registerUnifiedWireHandler(server: any) {
+    server.all("/_wire*", async (context: DocsContext) => {
+        const wireEngine = getWireEngine(context.kire);
+        const adapter = wireEngine?.options?.adapter;
+        if (!adapter) {
+            return respondWireError(context, "Wire adapter is not configured for this request.", 500);
+        }
+
+        try {
+            const response = await adapter.handleRequest({
+                method: context.request.method,
+                url: context.request.url,
+                query: context.query,
+                body: context.body,
+                userId: context.user.id,
+                sessionId: context.wireKey,
+                signal: context.request.signal,
+            }, context.user.id, context.wireKey) as WireAdapterResponse;
+
+            const status = response.status || 200;
+            const headers = (response.headers || {}) as Record<string, string>;
+            const contentType = String(headers["Content-Type"] || "");
+
+            if (
+                response.result instanceof ReadableStream ||
+                contentType.includes("text/event-stream")
+            ) {
+                return new Response(response.result as any, { status, headers });
+            }
+
+            if (response.headers) {
+                for (const [key, value] of Object.entries(response.headers)) {
+                    context.set.headers[key] = value as any;
+                }
+            }
+
+            if (status >= 500 && shouldRenderErrorHtml(context.request)) {
+                const errorMessage = extractErrorMessage(response.result) || `Wire request failed with status ${status}.`;
+                return renderKireErrorResponse(context, new Error(errorMessage), status);
+            }
+
+            context.set.status = status;
+            return response.result;
+        } catch (error) {
+            return respondWireError(context, error, 500);
+        }
+    });
+}
+
+function respondWireError(context: DocsContext, error: unknown, status: number) {
+    if (shouldRenderErrorHtml(context.request)) {
+        return renderKireErrorResponse(context, error, status);
     }
 
-    // Unified wire handler
-    app.all(`/_wire*`, async (context) => {
-        const wireEngine = (context.kire as any).$wire || (context.kire as any).wire;
-        if (!wireEngine?.options?.adapter) {
-            context.set.status = 500;
-            return { error: "Wire adapter is not configured for this request." };
-        }
+    context.set.status = status;
+    context.set.headers["Content-Type"] = "application/json";
+    return {
+        error: extractErrorMessage(error) || "Internal server error.",
+    };
+}
 
-        const res = await wireEngine.options.adapter.handleRequest({
-            method: context.request.method,
-            url: context.request.url,
-            query: context.query,
-            body: context.body,
-            userId: context.user.id,
-            sessionId: context.wireKey,
-            signal: context.request.signal,
-        }, context.user.id, context.wireKey);
+function renderKireErrorResponse(
+    context: DocsContext,
+    error: unknown,
+    status = 500,
+) {
+    const normalized =
+        error instanceof Error
+            ? error
+            : new Error(extractErrorMessage(error) || "Internal server error.");
 
-        const status = res.status || 200;
-        const headers = (res.headers || {}) as Record<string, string>;
+    context.set.status = status;
+    context.set.headers["Content-Type"] = "text/html; charset=utf-8";
+    const engine = context?.kire || kire;
+    return engine.renderError(normalized, context);
+}
 
-        if (res.result instanceof ReadableStream || String(headers["Content-Type"] || "").includes("text/event-stream")) {
-            return new Response(res.result as any, { status, headers });
-        }
+function shouldRenderErrorHtml(request: Request): boolean {
+    const accept = String(request.headers.get("accept") || "").toLowerCase();
+    const destination = String(request.headers.get("sec-fetch-dest") || "").toLowerCase();
 
-        if (res.headers) {
-            Object.entries(res.headers).forEach(([k, v]) => {
-                context.set.headers[k] = v as any;
-            });
-        }
-        context.set.status = status;
-        return res.result;
-    });
+    return destination === "document" || accept.includes("text/html");
+}
 
-    app.listen(3000);
-    console.log(`[docs] serving wire assets from ${wireDistDir}`);
-    console.log(`Check it out at http://localhost:3000 (${useSocket ? "socket mode" : "http+sse mode"})`);
-})();
+function extractErrorMessage(value: unknown): string {
+    if (!value) return "";
+    if (value instanceof Error) return String(value.message || value.toString() || "");
+    if (typeof value === "string") return value;
+    if (typeof value === "object" && "error" in (value as Record<string, unknown>)) {
+        const nested = (value as Record<string, unknown>).error;
+        if (typeof nested === "string") return nested;
+    }
+    return String(value);
+}
 
+function resolveErrorStatusCode(context: any): number {
+    const fromSet = Number(context?.set?.status);
+    if (Number.isFinite(fromSet) && fromSet >= 400) return fromSet;
+
+    const code = String(context?.code || "").toUpperCase();
+    if (code === "NOT_FOUND") return 404;
+    if (code === "PARSE") return 400;
+    if (code === "VALIDATION") return 422;
+
+    return 500;
+}

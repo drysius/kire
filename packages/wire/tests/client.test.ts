@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, spyOn, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from "bun:test";
 import { JSDOM } from "jsdom";
 
 // Setup JSDOM environment before any imports
@@ -81,6 +81,10 @@ describe("Kirewire Client Unit Logic", () => {
 		});
 	});
 
+	afterEach(() => {
+		mock.restore();
+	});
+
 	test("MessageBus should correctly batch actions", async () => {
 		const fetchSpy = spyOn(global as any, "fetch");
 
@@ -151,5 +155,71 @@ describe("Kirewire Client Unit Logic", () => {
 		expect((wire as any).deferredUpdates.get("comp1")).toEqual({
 			text: "draft-value",
 		});
+	});
+
+	test("live API initializes component, proxies methods/state and saves local changes", async () => {
+		const callSpy = spyOn(adapter, "call").mockImplementation(
+			async (_id, method) => {
+				if (method === "increment") {
+					return { state: { count: 1, pcount: 0 }, effects: [] };
+				}
+				return { state: { count: 0, pcount: 0 }, effects: [] };
+			},
+		);
+
+		const fetchSpy = spyOn(global as any, "fetch").mockImplementation(
+			async (url: string, opts: any) => {
+				const rawUrl = String(url || "");
+				const body = JSON.parse(String(opts?.body || "{}"));
+
+				if (rawUrl.includes("/live/init")) {
+					return {
+						ok: true,
+						status: 200,
+						json: async () => ({
+							id: "live-1",
+							state: { count: 0, pcount: body.locals?.pcount ?? 0 },
+							ready: true,
+						}),
+					} as any;
+				}
+
+				if (rawUrl.includes("/live/save")) {
+					return {
+						ok: true,
+						status: 200,
+						json: async () => ({
+							state: body.state || {},
+						}),
+					} as any;
+				}
+
+				return {
+					ok: true,
+					status: 200,
+					json: async () => ({}),
+				} as any;
+			},
+		);
+
+		const live = wire.live("counter", { pcount: 3 });
+		expect(live.loading).toBe(true);
+
+		await new Promise((resolve) => setTimeout(resolve, 0));
+
+		expect(live.ready).toBe(true);
+		expect(live.loading).toBe(false);
+		expect(live.$id).toBe("live-1");
+		expect(live.pcount).toBe(3);
+
+		await live.increment();
+		expect(callSpy).toHaveBeenCalledWith("live-1", "increment", []);
+		expect(live.count).toBe(1);
+
+		live.pcount = 12;
+		const saved = await live.save();
+
+		expect(saved.state.pcount).toBe(12);
+		expect(fetchSpy).toHaveBeenCalled();
 	});
 });

@@ -1,5 +1,4 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
 interface User {
 	id: number;
 	name: string;
@@ -15,8 +14,11 @@ const ALL_USERS: User[] = Array.from({ length: 50 }, (_, i) => ({
 	role: i % 3 === 0 ? "Admin" : "User",
 }));
 
+@Wire({ name: "searchable" })
 export default class Searchable extends Component {
+	@Variable("string")
 	public search = "";
+	@Variable("string")
 	public roleFilter = "";
 
 	get filteredUsers() {

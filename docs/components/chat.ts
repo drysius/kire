@@ -1,16 +1,18 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
 // Simple in-memory store for demo purposes
 const db = {
-	messages: [{ user: "System", text: "Welcome to the chat!" }] as Array<{
+	messages: [{ user: "System", text: "Welcome to the chat!", time: Date.now() }] as Array<{
 		user: string;
 		text: string;
 		time: number;
 	}>,
 };
 
+@Wire({ name: "chat" })
 export default class Chat extends Component {
+	@Variable("string")
 	public input = "";
+	@Variable("string")
 	public username = "Guest";
 
 	// Poll every 1s to get new messages
@@ -39,4 +41,3 @@ export default class Chat extends Component {
 		return this.view("components.chat");
 	}
 }
-

@@ -1,5 +1,5 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire } from "../lib/wire";
+@Wire({ name: "toast" })
 export default class Toast extends Component {
 	// This component manages the global toast state on the server if needed,
 	// or simply acts as a dispatcher.

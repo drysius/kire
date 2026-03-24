@@ -1,6 +1,7 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "sender" })
 export default class Sender extends Component {
+	@Variable("string")
 	public text = "Hello World";
 
 	async send() {

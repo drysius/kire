@@ -1,6 +1,7 @@
 import { Adapter } from "../adapter";
+import { Component } from "../component";
 import type { FileStore } from "../features/file-store";
-import { WireProperty } from "../wire-property";
+import { WireBroadcast } from "../features/wire-broadcast";
 import { HttpAdapter } from "./http";
 
 type HandleRequestInput = {
@@ -25,6 +26,7 @@ type FiveMIdentity = {
 
 type FiveMPushPacket = {
 	userId: string;
+	sessionId?: string;
 	sourceId?: string;
 	channel: string;
 	event: string;
@@ -46,6 +48,18 @@ const BLOCKED_SET_PATH_SEGMENTS = new Set([
 	"__proto__",
 	"constructor",
 	"prototype",
+]);
+
+const RESERVED_REMOTE_ACTIONS = new Set([
+	"constructor",
+	"render",
+	"mount",
+	"unmount",
+	"view",
+	"fill",
+	"validate",
+	"rule",
+	"getPublicState",
 ]);
 
 function normalizeRoute(route: string): string {
@@ -92,7 +106,7 @@ export class FiveMAdapter extends Adapter {
 		this.wire.reference("wire:fivem:route", () => this.route);
 
 		this.wire.on("component:update", (data) => {
-			this.pushToClient(data.userId, "update", data);
+			this.pushToClient(data.userId, "update", data, undefined, data.sessionId);
 		});
 	}
 
@@ -110,6 +124,12 @@ export class FiveMAdapter extends Adapter {
 
 	public getOutboundEventName() {
 		return this.outboundEvent;
+	}
+
+	public autoCleanUploads() {
+		if (typeof this.fallbackHttp.autoCleanUploads === "function") {
+			this.fallbackHttp.autoCleanUploads();
+		}
 	}
 
 	public async handleRequest(
@@ -136,7 +156,7 @@ export class FiveMAdapter extends Adapter {
 	public async onMessage(
 		sourceId: string,
 		userId: string,
-		_sessionId: string,
+		sessionId: string,
 		message: any,
 	) {
 		const source = String(sourceId || "").trim();
@@ -149,7 +169,13 @@ export class FiveMAdapter extends Adapter {
 		const payload = message?.payload || {};
 
 		if (event === "ping") {
-			this.pushToClient(wireUserId, "pong", { at: Date.now() }, source);
+			this.pushToClient(
+				wireUserId,
+				"pong",
+				{ at: Date.now() },
+				source,
+				sessionId,
+			);
 			return;
 		}
 
@@ -168,7 +194,12 @@ export class FiveMAdapter extends Adapter {
 			);
 
 			try {
-				const result = await this.executeAction(wireUserId, pageId, action);
+				const result = await this.executeAction(
+					wireUserId,
+					sessionId,
+					pageId,
+					action,
+				);
 				results.push({
 					requestId: actionRequestId,
 					...result,
@@ -191,6 +222,7 @@ export class FiveMAdapter extends Adapter {
 					results,
 				},
 				source,
+				sessionId,
 			);
 			return;
 		}
@@ -211,6 +243,7 @@ export class FiveMAdapter extends Adapter {
 					error: single.error,
 				},
 				source,
+				sessionId,
 			);
 			return;
 		}
@@ -223,11 +256,13 @@ export class FiveMAdapter extends Adapter {
 				result: single,
 			},
 			source,
+			sessionId,
 		);
 	}
 
 	private async executeAction(
 		userId: string,
+		sessionId: string,
 		pageId: string,
 		action: ActionPayload,
 	) {
@@ -236,7 +271,7 @@ export class FiveMAdapter extends Adapter {
 
 		const method = String(action?.method || "").trim();
 		const params = Array.isArray(action?.params) ? action.params : [];
-		const page = this.wire.sessions.getPage(userId, pageId);
+		const page = this.wire.sessions.getPage(userId, pageId, sessionId);
 		const instance = page.components.get(id) as any;
 		if (!instance) {
 			throw new Error(`Component ${id} not found.`);
@@ -248,13 +283,25 @@ export class FiveMAdapter extends Adapter {
 
 		await this.invokeComponentAction(instance, method, params);
 		const payload = await this.renderComponentPayload(id, instance);
+		const touchedBroadcastRooms = new Set(this.getBroadcastRoomIds(instance));
+		const skipRefs = new Set([
+			this.buildComponentRef(userId, sessionId, pageId, id),
+		]);
 
 		await this.wire.emit("component:update", {
 			userId,
+			sessionId,
 			pageId,
 			id,
 			...payload,
 		});
+
+		if (touchedBroadcastRooms.size > 0) {
+			await this.emitBroadcastUpdatesForAllPages({
+				roomIds: touchedBroadcastRooms,
+				skipRefs,
+			});
+		}
 
 		return {
 			id,
@@ -301,13 +348,36 @@ export class FiveMAdapter extends Adapter {
 			throw new Error(`Internal method "${name}" is not callable.`);
 		}
 
-		if (typeof instance[name] !== "function") {
+		if (!this.isAllowedActionMethod(instance, name)) {
 			throw new Error(
 				`Method "${name}" not found on component ${instance.$id}.`,
 			);
 		}
 
 		await instance[name](...callParams);
+	}
+
+	private isAllowedActionMethod(instance: any, name: string): boolean {
+		if (!instance || !name) return false;
+		if (RESERVED_REMOTE_ACTIONS.has(name)) return false;
+		if (typeof instance[name] !== "function") return false;
+
+		const exposed = instance.$actions;
+		if (Array.isArray(exposed) && exposed.length > 0) {
+			return exposed.includes(name);
+		}
+
+		if (Object.hasOwn(instance, name)) return true;
+
+		let proto = Object.getPrototypeOf(instance);
+		while (proto && proto !== Object.prototype) {
+			if (Object.hasOwn(proto, name)) {
+				return proto !== Component.prototype;
+			}
+			proto = Object.getPrototypeOf(proto);
+		}
+
+		return false;
 	}
 
 	private isWritableSetPath(instance: any, property: string): boolean {
@@ -377,7 +447,7 @@ export class FiveMAdapter extends Adapter {
 
 		const state = instance.getPublicState();
 		const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-		const skipRender = Boolean(instance.__skipRender);
+		const skipRender = Boolean(instance.__skipRender || instance.$live);
 		instance.__skipRender = false;
 		let html = "";
 
@@ -389,11 +459,97 @@ export class FiveMAdapter extends Adapter {
 		return { html, state, effects: instance.__effects, revision: nextRevision };
 	}
 
+	private async emitBroadcastUpdatesForAllPages(params: {
+		roomIds: Set<string>;
+		skipRefs: Set<string>;
+	}) {
+		const { roomIds, skipRefs } = params;
+		const activePages = this.wire.sessions.getActivePages();
+
+		for (let i = 0; i < activePages.length; i++) {
+			const { userId, sessionId, pageId, page } = activePages[i];
+			const entries = Array.from(page.components.entries());
+
+			for (let j = 0; j < entries.length; j++) {
+				const [id, instance] = entries[j];
+				const ref = this.buildComponentRef(userId, sessionId, pageId, id);
+				if (skipRefs.has(ref)) continue;
+
+				const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
+				if (matchedRooms.length === 0) continue;
+
+				if (typeof instance.$clearEffects === "function") {
+					instance.$clearEffects();
+				}
+
+				const typedInstance = instance as any;
+				const keys = Object.keys(typedInstance);
+				for (let k = 0; k < keys.length; k++) {
+					const val = typedInstance[keys[k]!];
+					if (val instanceof WireBroadcast) {
+						const roomId = val.getRoomId();
+						if (roomId && roomIds.has(roomId)) {
+							val.serverHydrate(instance);
+						}
+					}
+				}
+
+				const payload = await this.renderComponentPayload(id, instance);
+				await this.wire.emit("component:update", {
+					userId,
+					sessionId,
+					pageId,
+					id,
+					...payload,
+				});
+			}
+		}
+	}
+
+	private getBroadcastRoomIds(instance: any): string[] {
+		const out: string[] = [];
+		const keys = Object.keys(instance);
+		for (let i = 0; i < keys.length; i++) {
+			const value = instance[keys[i]];
+			if (value instanceof WireBroadcast) {
+				const roomId = value.getRoomId();
+				if (roomId) out.push(roomId);
+			}
+		}
+		return out;
+	}
+
+	private getMatchingBroadcastRooms(
+		instance: any,
+		roomIds: Set<string>,
+	): string[] {
+		const out: string[] = [];
+		const keys = Object.keys(instance);
+		for (let i = 0; i < keys.length; i++) {
+			const value = instance[keys[i]];
+			if (value instanceof WireBroadcast) {
+				const roomId = value.getRoomId();
+				if (roomId && roomIds.has(roomId)) out.push(roomId);
+			}
+		}
+		return out;
+	}
+
+	private buildComponentRef(
+		userId: string,
+		sessionId: string,
+		pageId: string,
+		id: string,
+	) {
+		return `${userId}::${sessionId}::${pageId}::${id}`;
+	}
+
 	private pushToClient(
 		userId: string,
 		event: string,
 		data: any,
 		sourceId?: string,
+		sessionId?: string,
 	) {
 		const resolvedUserId = String(userId || "guest");
 		const targetSource = String(
@@ -401,6 +557,7 @@ export class FiveMAdapter extends Adapter {
 		).trim();
 		const packet: FiveMPushPacket = {
 			userId: resolvedUserId,
+			sessionId: String(sessionId || "").trim() || undefined,
 			sourceId: targetSource || undefined,
 			channel: this.outboundEvent,
 			event: String(event || ""),
@@ -425,11 +582,7 @@ export class FiveMAdapter extends Adapter {
 			const value = instance[key];
 			if (!value || typeof value !== "object") continue;
 
-			if (
-				value instanceof WireProperty &&
-				value.__wire_type === "broadcast" &&
-				typeof value.disconnect === "function"
-			) {
+			if (value instanceof WireBroadcast) {
 				try {
 					value.disconnect(instance);
 				} catch {
@@ -454,3 +607,5 @@ export class FiveMAdapter extends Adapter {
 		}
 	}
 }
+
+export { FiveMAdapter as FivemAdapter };

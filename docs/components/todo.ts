@@ -1,7 +1,9 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "todo" })
 export default class Todo extends Component {
+	@Variable("string")
 	public task = "";
+	@Variable("array")
 	public todos: string[] = ["Buy milk", "Walk the dog"];
 
 	get todosWithIndex() {

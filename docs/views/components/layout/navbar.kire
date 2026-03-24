@@ -32,7 +32,7 @@
             </button>
             <input type="radio" class="theme-controller hidden" name="docs-theme" value="light" />
             <input type="radio" class="theme-controller hidden" name="docs-theme" value="dark" />
-            <span class="badge badge-outline hidden md:inline-flex">{{ sharedTransport || 'sse' }}</span>
+            <span class="badge badge-outline hidden md:inline-flex">{{ $globals.sharedTransport || 'sse' }}</span>
         </div>
     </div>
 </header>

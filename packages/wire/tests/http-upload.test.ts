@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { Kire } from "kire";
 import { HttpAdapter } from "../src/adapters/http";
@@ -161,6 +168,128 @@ describe("HttpAdapter upload parsing", () => {
 		expect(preview.status).toBe(200);
 		expect(preview.headers?.["Content-Type"]).toBe("image/png");
 		expect(preview.headers?.["Cache-Control"]).toBe("no-store");
+		expect(preview.headers?.["X-Content-Type-Options"]).toBe("nosniff");
+	});
+
+	test("ignores user-provided mime override on preview endpoint", async () => {
+		const tempDir = join(
+			process.cwd(),
+			"node_modules",
+			`.kirewire_preview_mime_test_${Date.now()}`,
+		);
+		tempDirs.push(tempDir);
+
+		const adapter = new HttpAdapter({ route: "/_wire", tempDir });
+		const fakePart = {
+			filename: "safe.png",
+			mimetype: "image/png",
+			toBuffer: async () => Buffer.from("preview-bytes"),
+		};
+
+		const upload = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire/upload",
+				body: {
+					files: { value: fakePart },
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		const fileId = String((upload.result as any)?.files?.[0]?.id || "");
+		expect(fileId).not.toBe("");
+
+		const preview = await adapter.handleRequest(
+			{
+				method: "GET",
+				url: `/_wire/preview?id=${encodeURIComponent(fileId)}&mime=text/html`,
+			},
+			"user-1",
+			"session-1",
+		);
+
+		expect(preview.status).toBe(200);
+		expect(preview.headers?.["Content-Type"]).toBe("image/png");
+		expect(preview.headers?.["X-Content-Type-Options"]).toBe("nosniff");
+	});
+
+	test("moves uploaded files using /upload/move endpoint", async () => {
+		const tempDir = join(
+			process.cwd(),
+			"node_modules",
+			`.kirewire_upload_move_test_${Date.now()}`,
+		);
+		tempDirs.push(tempDir);
+
+		const moveDir = join(tempDir, "moved");
+		const adapter = new HttpAdapter({ route: "/_wire", tempDir });
+		const fakePart = {
+			filename: "hello.txt",
+			mimetype: "text/plain",
+			toBuffer: async () => Buffer.from("hello upload"),
+		};
+
+		const upload = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire/upload",
+				body: {
+					files: { value: fakePart },
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		const fileId = String((upload.result as any)?.files?.[0]?.id || "");
+		expect(fileId).not.toBe("");
+
+		const move = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire/upload/move",
+				body: {
+					id: fileId,
+					destination: `${moveDir}/`,
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		expect(move.status).toBe(200);
+		const moved = (move.result as any)?.moved || [];
+		expect(Array.isArray(moved)).toBe(true);
+		expect(moved.length).toBe(1);
+		expect(String(moved[0]?.path || "")).toContain("moved");
+		expect(existsSync(String(moved[0]?.path || ""))).toBe(true);
+		expect(readFileSync(String(moved[0]?.path || ""), "utf8")).toBe("hello upload");
+	});
+
+	test("autoclean removes stale upload files on adapter setup", async () => {
+		const tempDir = join(
+			process.cwd(),
+			"node_modules",
+			`.kirewire_autoclean_test_${Date.now()}`,
+		);
+		tempDirs.push(tempDir);
+
+		const staleFile = join(tempDir, "stale.tmp");
+		mkdirSync(tempDir, { recursive: true });
+		writeFileSync(staleFile, "stale-data");
+		expect(existsSync(staleFile)).toBe(true);
+
+		const adapter = new HttpAdapter({
+			route: "/_wire",
+			tempDir,
+			autoClean: true,
+		});
+		adapter.install(new Kirewire({ secret: "autoclean-test" }), new Kire());
+
+		expect(existsSync(staleFile)).toBe(false);
+		expect(readdirSync(tempDir).length).toBe(0);
 	});
 
 	test("returns explicit adapter install error for component calls when not installed", async () => {
@@ -205,8 +334,7 @@ describe("HttpAdapter upload parsing", () => {
 		);
 
 		expect(response.status).toBe(200);
-		expect(String((response.result as any)?.error || "")).toContain(
-			"Component missing not found.",
-		);
+		expect((response.result as any)?.reload).toBe(true);
+		expect((response.result as any)?.reason).toBe("component-missing");
 	});
 });

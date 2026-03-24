@@ -64,6 +64,16 @@ class ModelHookComponent extends Component {
 	}
 }
 
+class LiveCounterComponent extends Component {
+	$live = true;
+	count = this.onlyserver(0);
+	pcount = 0;
+
+	async increment() {
+		this.count++;
+	}
+}
+
 describe("Kirewire Full Integration (Client + Server)", () => {
 	let kire: Kire;
 	let serverWire: Kirewire;
@@ -269,6 +279,26 @@ describe("Kirewire Full Integration (Client + Server)", () => {
 		expect(instance.search).toBe("");
 	});
 
+	test("HTTP adapter blocks calling base Component helper methods remotely", async () => {
+		serverWire.components.set("model-hook", ModelHookComponent as any);
+
+		const page = serverWire.sessions.getPage("user-1", "page-1");
+		const instance = new ModelHookComponent();
+		instance.$id = "m3";
+		instance.$kire = kire;
+		page.components.set("m3", instance);
+
+		document.body.innerHTML = `<div id="root" wire:id="m3" wire:state='{"search":""}'></div>`;
+
+		await expect(
+			clientWire.call(document.getElementById("root")!, "fill", [
+				{ search: "pwned" },
+			]),
+		).rejects.toBe('Method "fill" is not callable.');
+
+		expect(instance.search).toBe("");
+	});
+
 	test("Broadcast components sync through SSE updates and not inline response html", async () => {
 		const page = serverWire.sessions.getPage("user-1", "page-1");
 
@@ -355,5 +385,128 @@ describe("Kirewire Full Integration (Client + Server)", () => {
 			(window as any).KirewireNavigate = previousNavigate;
 			(global as any).EventSource = previousEventSource;
 		}
+	});
+
+	test("HttpClientAdapter reloads page when server reports missing component", async () => {
+		const previousNavigate = (window as any).KirewireNavigate;
+		const previousFetch = (global as any).fetch;
+		const refreshCalls: any[] = [];
+
+		(window as any).KirewireNavigate = {
+			navigateTo: async () => {},
+			refreshCurrentPage: async (options?: any) => {
+				refreshCalls.push(options || {});
+			},
+		};
+		(global as any).fetch = async () =>
+			({
+				ok: true,
+				status: 200,
+				json: async () => [
+					{
+						id: "missing-component",
+						reload: true,
+						reason: "component-missing",
+					},
+				],
+			}) as any;
+
+		const clientAdapter = new HttpClientAdapter({
+			url: "/_wire",
+			pageId: "page-1",
+			transport: "poll",
+		});
+
+		try {
+			await new Promise<void>((resolve, reject) => {
+				const event = new window.CustomEvent("wire:bus:flush", {
+					detail: {
+						batch: [
+							{
+								id: "missing-component",
+								method: "increment",
+								params: [],
+								pageId: "page-1",
+							},
+						],
+						finish: () => resolve(),
+						error: (err: any) => reject(err),
+						setCancel: () => {},
+					},
+				});
+				void (clientAdapter as any).onBusFlush?.(event);
+			});
+
+			expect(refreshCalls).toHaveLength(1);
+			expect(refreshCalls[0]?.replace).toBe(true);
+			expect(refreshCalls[0]?.force).toBe(true);
+			expect(refreshCalls[0]?.reason).toBe("component-missing");
+		} finally {
+			clientAdapter.destroy();
+			(window as any).KirewireNavigate = previousNavigate;
+			(global as any).fetch = previousFetch;
+		}
+	});
+
+	test("live init/save works without requiring SSR render()", async () => {
+		serverWire.components.set("live-counter", LiveCounterComponent as any);
+
+		const initResponse = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire/live/init",
+				body: {
+					name: "live-counter",
+					pageId: "page-1",
+					locals: { pcount: 2 },
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		expect(initResponse.status).toBe(200);
+		const initResult = initResponse.result as any;
+		expect(typeof initResult.id).toBe("string");
+		expect(initResult.id.length).toBeGreaterThan(0);
+		expect(initResult.state.pcount).toBe(2);
+
+		const callResponse = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire",
+				body: {
+					id: initResult.id,
+					method: "increment",
+					params: [],
+					pageId: "page-1",
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		expect(callResponse.status).toBe(200);
+		const callResult = callResponse.result as any;
+		expect(callResult.state.count).toBe(1);
+		expect(callResult.html).toBe("");
+
+		const saveResponse = await adapter.handleRequest(
+			{
+				method: "POST",
+				url: "/_wire/live/save",
+				body: {
+					id: initResult.id,
+					pageId: "page-1",
+					state: { pcount: 9 },
+				},
+			},
+			"user-1",
+			"session-1",
+		);
+
+		expect(saveResponse.status).toBe(200);
+		const saveResult = saveResponse.result as any;
+		expect(saveResult.state.pcount).toBe(9);
 	});
 });

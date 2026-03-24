@@ -19,7 +19,7 @@
             <ul class="mt-4 space-y-3 text-sm">
                 <li class="flex items-center justify-between rounded-lg bg-base-100/70 px-3 py-2">
                     <span>Transport</span>
-                    <span class="badge badge-outline">{{ sharedTransport || 'sse' }}</span>
+                    <span class="badge badge-outline">{{ $globals.sharedTransport || 'sse' }}</span>
                 </li>
                 <li class="flex items-center justify-between rounded-lg bg-base-100/70 px-3 py-2">
                     <span>Hydration</span>

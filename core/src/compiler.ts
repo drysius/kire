@@ -3,10 +3,13 @@ import type { CompilerApi, Node } from "./types";
 import { escapeHtml } from "./utils/html";
 import {
 	AWAIT_KEYWORD_REGEX,
+	createVarThenRegex,
 	INTERPOLATION_GLOBAL_REGEX,
 	INTERPOLATION_PURE_REGEX,
 	INTERPOLATION_START_REGEX,
+	JS_BLOCK_COMMENT_REGEX,
 	JS_EXTRACT_IDENTS_REGEX,
+	JS_LINE_COMMENT_REGEX,
 	JS_STRINGS_REGEX,
 	NullProtoObj,
 	RESERVED_KEYWORDS_REGEX,
@@ -22,6 +25,7 @@ export class Compiler {
 	private dependencies: Record<string, string> = new NullProtoObj();
 	private uidCounter: Record<string, number> = new NullProtoObj();
 	private _async: boolean = false;
+	private _isDependency: boolean = false;
 	private textBuffer: string = "";
 	private generator: SourceMapGenerator;
 	private mappings: { bodyIndex: number; node: Node; col: number }[] = [];
@@ -45,6 +49,50 @@ export class Compiler {
 	}
 	private markAsync() {
 		this._async = true;
+	}
+
+	private containsAwaitKeyword(code: string | undefined): boolean {
+		if (!code) return false;
+
+		// Strip strings/comments before checking token usage to avoid
+		// false positives like "{{ 'await' }}" or "/* await */".
+		const normalized = code
+			.replace(JS_STRINGS_REGEX, '""')
+			.replace(JS_LINE_COMMENT_REGEX, "")
+			.replace(JS_BLOCK_COMMENT_REGEX, "");
+
+		const awaitRegex = new RegExp(AWAIT_KEYWORD_REGEX.source, "g");
+		let match: RegExpExecArray | null;
+		while ((match = awaitRegex.exec(normalized)) !== null) {
+			const start = match.index;
+			const end = start + match[0].length;
+
+			const prev = this.getPrevNonWhitespaceChar(normalized, start - 1);
+			const next = this.getNextNonWhitespaceChar(normalized, end);
+
+			// Ignore property/object-key uses: obj.await / { await: 1 }
+			if (prev === "." || next === ":") continue;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	private getPrevNonWhitespaceChar(source: string, index: number): string {
+		for (let i = index; i >= 0; i--) {
+			const ch = source[i]!;
+			if (!/\s/.test(ch)) return ch;
+		}
+		return "";
+	}
+
+	private getNextNonWhitespaceChar(source: string, index: number): string {
+		for (let i = index; i < source.length; i++) {
+			const ch = source[i]!;
+			if (!/\s/.test(ch)) return ch;
+		}
+		return "";
 	}
 
 	private esc(str: string): string {
@@ -82,6 +130,7 @@ export class Compiler {
 		extraGlobals: string[] = [],
 		_isDependency = false,
 	): string {
+		this._isDependency = _isDependency;
 		this.body = [];
 		this.header = [];
 		this.footer = [];
@@ -94,13 +143,12 @@ export class Compiler {
 		this.allIdentifiers = new Set();
 		this.identifiers.clear();
 
-		this.header.push(
-			`$globals = Object.assign(Object.create(this.$globals), $globals);`,
-		);
-		this.header.push(`let $kire_response = "";`);
-		this.header.push(`const $escape = this.$escape;`);
-		this.header.push(`const NullProtoObj = this.NullProtoObj;`);
-		const localsAlias = this.kire.$var_locals || "it";
+			this.header.push(
+				`$globals = Object.assign(Object.create(this.$globals), $globals);`,
+			);
+			this.header.push(`let $kire_response = "";`);
+			const localsAlias = this.kire.$var_locals || "it";
+			const identifierDeclarations: Array<{ id: string; line: string }> = [];
 
 		// Deep identifier collection (including dependencies)
 		const localDecls = new Set<string>();
@@ -126,14 +174,11 @@ export class Compiler {
 			// Skip variables that have existVar handlers (they will be injected by the loop below)
 			if (this.kire.$kire["~handlers"].exists_vars.has(id)) continue;
 
-			this.header.push(
-				`let ${id} = $props['${id}'] ?? $globals['${id}'] ?? (typeof globalThis !== 'undefined' ? globalThis['${id}'] : undefined);`,
-			);
-		}
-
-		if (this.identifiers.has(localsAlias)) {
-			this.header.push(`const ${localsAlias} = $props;`);
-		}
+				identifierDeclarations.push({
+					id,
+					line: `let ${id} = $props['${id}'] ?? $globals['${id}'];`,
+				});
+			}
 
 		this.compileNodes(nodes);
 		this.flushText();
@@ -142,6 +187,7 @@ export class Compiler {
 		// We do this in a loop because one existVar might trigger another
 		let changed = true;
 		const triggered = new Set<string>();
+		const uniqueCallbacks = new Set<any>();
 		const activeIdentifiers = new Set(this.identifiers);
 
 		// Initial scan of generated code to detect identifiers injected by directives/elements
@@ -164,7 +210,6 @@ export class Compiler {
 
 		while (changed) {
 			changed = false;
-			const compileContext = this.kire.$kire["~compile-context"];
 
 			for (const [name, entries] of this.kire.$kire["~handlers"].exists_vars) {
 				const nameStr = name.toString();
@@ -182,9 +227,19 @@ export class Compiler {
 					}
 
 					if (isUsed) {
+						// In nested dependency compiles, unique providers should be injected
+						// by the parent template scope once to avoid duplicated declarations.
 						if (
 							entry.unique &&
-							compileContext?.uniqueExistVarCallbacks.has(entry.callback)
+							this._isDependency &&
+							(this.kire.$kire["~compile-context"]?.depth || 0) > 1
+						) {
+							triggered.add(nameStr);
+							break;
+						}
+						if (
+							entry.unique &&
+							uniqueCallbacks.has(entry.callback)
 						) {
 							continue;
 						}
@@ -200,7 +255,7 @@ export class Compiler {
 							),
 						);
 						if (entry.unique) {
-							compileContext?.uniqueExistVarCallbacks.add(entry.callback);
+							uniqueCallbacks.add(entry.callback);
 						}
 						triggered.add(nameStr);
 						changed = true;
@@ -213,38 +268,70 @@ export class Compiler {
 			}
 		}
 
-		// Finalize dependencies as Closures
-		if (Object.keys(this.dependencies).length > 0) {
-			const dependencyCodes: string[] = [];
-			for (const path in this.dependencies) {
-				const id = this.dependencies[path]!;
-				const compiledDependency = this.kire.getOrCompile(path, true);
-				let fallbackAsync = false;
-				const depCode =
-					typeof compiledDependency?.meta?.code === "string"
-						? compiledDependency.meta.code
-						: (() => {
-								const depNodes = this.kire.parse(
-									this.kire.readFile(this.kire.resolvePath(path)),
-								);
-								const compilerInstance = new Compiler(this.kire, path);
-								const code = compilerInstance.compile(depNodes, [], true);
-								fallbackAsync = compilerInstance.async;
-								return code;
-							})();
-				const asyncDep =
-					compiledDependency?.meta?.async === undefined
-						? fallbackAsync
-						: Boolean(compiledDependency.meta.async);
+			// Keep generated output lean: only emit helper aliases and variable declarations
+			// that are actually referenced by this template body/footer code.
+			// Dependencies are excluded from this scan so parent templates don't inherit
+			// declarations required only inside dependency closures.
+			const bodyFooterSource = `${this.body.join("\n")}\n${this.footer.join("\n")}`;
+			const bodyFooterNormalized = bodyFooterSource
+				.replace(JS_STRINGS_REGEX, '""')
+				.replace(JS_LINE_COMMENT_REGEX, "")
+				.replace(JS_BLOCK_COMMENT_REGEX, "");
 
-				dependencyCodes.push(
-					`const ${id} = ${asyncDep ? "async " : ""}function($props = {}, $globals = {}) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: '${path}' };`,
-				);
+			if (createVarThenRegex("$escape").test(bodyFooterNormalized)) {
+				this.header.push(`const $escape = this.$escape;`);
 			}
-			this.body.unshift(`// Dependencies`, ...dependencyCodes);
-		}
+			if (createVarThenRegex("NullProtoObj").test(bodyFooterNormalized)) {
+				this.header.push(`const NullProtoObj = this.NullProtoObj;`);
+			}
 
-		let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
+			for (let i = 0; i < identifierDeclarations.length; i++) {
+				const declaration = identifierDeclarations[i]!;
+				if (createVarThenRegex(declaration.id).test(bodyFooterNormalized)) {
+					this.header.push(declaration.line);
+				}
+			}
+
+			if (
+				this.identifiers.has(localsAlias) &&
+				createVarThenRegex(localsAlias).test(bodyFooterNormalized)
+			) {
+				this.header.push(`const ${localsAlias} = $props;`);
+			}
+
+			// Finalize dependencies as closures after header pruning.
+			// This avoids polluting parent declaration analysis with dependency internals.
+			if (Object.keys(this.dependencies).length > 0) {
+				const dependencyCodes: string[] = [];
+				for (const path in this.dependencies) {
+					const id = this.dependencies[path]!;
+					const compiledDependency = this.kire.getOrCompile(path, true);
+					let fallbackAsync = false;
+					const depCode =
+						typeof compiledDependency?.meta?.code === "string"
+							? compiledDependency.meta.code
+							: (() => {
+									const depNodes = this.kire.parse(
+										this.kire.readFile(this.kire.resolvePath(path)),
+									);
+									const compilerInstance = new Compiler(this.kire, path);
+									const code = compilerInstance.compile(depNodes, [], true);
+									fallbackAsync = compilerInstance.async;
+									return code;
+								})();
+					const asyncDep =
+						compiledDependency?.meta?.async === undefined
+							? fallbackAsync
+							: Boolean(compiledDependency.meta.async);
+
+					dependencyCodes.push(
+						`const ${id} = ${asyncDep ? "async " : ""}function($props = {}, $globals = {}, $kire) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: ${JSON.stringify(path)} };`,
+					);
+				}
+				this.body.unshift(`// Dependencies`, ...dependencyCodes);
+			}
+
+			let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
 		if (!this.kire.$production) {
 			const headerLines = `${this.header.join("\n")}\n`.split("\n").length + 1;
@@ -430,8 +517,7 @@ export class Compiler {
 					break;
 				case "interpolation":
 					this.flushText();
-					if (n.content && AWAIT_KEYWORD_REGEX.test(n.content))
-						this.markAsync();
+					if (this.containsAwaitKeyword(n.content)) this.markAsync();
 					if (!this.kire.$production && n.loc) {
 						this.mappings.push({
 							bodyIndex: this.body.length,
@@ -446,8 +532,7 @@ export class Compiler {
 					break;
 				case "js":
 					this.flushText();
-					if (n.content && AWAIT_KEYWORD_REGEX.test(n.content))
-						this.markAsync();
+					if (this.containsAwaitKeyword(n.content)) this.markAsync();
 					if (!this.kire.$production && n.content && n.loc) {
 						const lines = n.content.split("\n");
 						for (let i = 0; i < lines.length; i++) {
@@ -587,6 +672,7 @@ export class Compiler {
 			kire: this.kire,
 			node,
 			editable: true,
+			isDependency: this._isDependency,
 			get fullBody() {
 				return self.fullBody;
 			},
@@ -600,17 +686,17 @@ export class Compiler {
 				return node.children;
 			},
 			prologue: (js: string) => {
-				if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync();
+				if (this.containsAwaitKeyword(js)) this.markAsync();
 				this.header.unshift(js);
 			},
 			write: (js: string) => {
 				this.flushText();
-				if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync();
+				if (this.containsAwaitKeyword(js)) this.markAsync();
 				this.body.push(js);
 			},
 			epilogue: (js: string) => {
 				this.flushText();
-				if (AWAIT_KEYWORD_REGEX.test(js)) this.markAsync();
+				if (this.containsAwaitKeyword(js)) this.markAsync();
 				this.footer.push(js);
 			},
 			after: (js: string) => {

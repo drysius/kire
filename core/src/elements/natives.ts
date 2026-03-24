@@ -143,12 +143,13 @@ export default (kire: Kire<any>) => {
 				api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
 			api.write(`{
                 const _r${id} = ${items};
-                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || this.NullProtoObj);
+                const _it${id} = Array.isArray(_r${id})
+                    ? _r${id}
+                    : (_r${id} && typeof _r${id} === "object" ? Object.keys(_r${id}) : []);
                 const _len${id} = _it${id}.length;
                 let ${id} = 0;
                 while (${id} < _len${id}) {
-                    const _e${id} = _it${id}[${id}];
-                    let ${as} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
+                    let ${as} = _it${id}[${id}];
                     ${shouldExposeIndex ? `let ${indexAs} = ${id};` : ""}
                     ${shouldExposeLoop ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ""}`);
 			api.renderChildren();
@@ -245,54 +246,62 @@ export default (kire: Kire<any>) => {
 			const depId = api.depend(componentPath);
 			const dep = api.getDependency(componentPath);
 
-			const attrs = api.node.attributes || new NullProtoObj();
-			const attrMeta = api.node.attributeMeta || new NullProtoObj();
-			const propsStr = Object.keys(attrs)
-				.map((k) => {
-					const prop = toComponentPropExpression(
+				const attrs = api.node.attributes || new NullProtoObj();
+				const attrMeta = api.node.attributeMeta || new NullProtoObj();
+				const hasChildren = Boolean(
+					api.node.children && api.node.children.length > 0,
+				);
+				const propsStr = Object.keys(attrs)
+					.map((k) => {
+						const prop = toComponentPropExpression(
 						api,
 						k,
 						attrs[k]!,
 						!!attrMeta[k]?.quoted,
 					);
 					return `${JSON.stringify(prop.name)}: ${prop.expression}`;
-				})
-				.join(",");
+					})
+					.join(",");
 
-			api.write(`{
-                const $slots = new this.NullProtoObj();
-                const _oldRes${id} = $kire_response; $kire_response = "";`);
+				if (hasChildren) {
+					api.write(`{
+	                const $slots = new this.NullProtoObj();
+	                const _oldRes${id} = $kire_response; $kire_response = "";`);
+				} else {
+					api.write(`{`);
+				}
 
-			if (api.node.children) {
-				const slots = api.node.children.filter((c) => c.tagName === "x-slot");
-				const defContent = api.node.children.filter(
-					(c) => c.tagName !== "x-slot",
-				);
-				api.renderChildren(slots);
+				if (api.node.children) {
+					const slots = api.node.children.filter((c) => c.tagName === "x-slot");
+					const defContent = api.node.children.filter(
+						(c) => c.tagName !== "x-slot",
+					);
+					if (hasChildren) {
+						api.renderChildren(slots);
+					}
 
-				// Trim default content to avoid whitespace issues in tests and layouts
-				const hasRealContent = defContent.some(
-					(c) => c.type !== "text" || c.content?.trim(),
-				);
-				if (hasRealContent) {
-					const defId = api.uid("def");
-					api.write(
-						`{ const _defRes${defId} = $kire_response; $kire_response = "";`,
+					// Trim default content to avoid whitespace issues in tests and layouts
+					const hasRealContent = defContent.some(
+						(c) => c.type !== "text" || c.content?.trim(),
+					);
+					if (hasChildren && hasRealContent) {
+						const defId = api.uid("def");
+						api.write(
+							`{ const _defRes${defId} = $kire_response; $kire_response = "";`,
 					);
 					api.renderChildren(defContent);
 					api.write(
 						`$slots.default = $kire_response.trim(); $kire_response = _defRes${defId}; }`,
-					);
+						);
+					}
 				}
-			}
 
-			api.write(`
-                $kire_response = _oldRes${id};
-                const _oldProps${id} = $props;
-                $props = Object.assign(Object.create($globals), _oldProps${id}, { ${propsStr} }, { slots: $slots });
-                
-                const _dep${id} = ${depId};
-                const res${id} = _dep${id}.call(this, $props, $globals, _dep${id});
+					api.write(`
+	                ${hasChildren ? `$kire_response = _oldRes${id};` : ""}
+	                const _oldProps${id} = $props;
+	                $props = Object.assign(Object.create($globals), _oldProps${id}, { ${propsStr} }${hasChildren ? ", { slots: $slots }" : ""});
+	                
+	                const res${id} = ${depId}.call(this, $props, $globals, ${depId});
                 ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
                 
                 $props = _oldProps${id};

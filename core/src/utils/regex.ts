@@ -41,8 +41,8 @@ export const QUOTE_REGEX = /['"]/g;
 
 // Compiler Checks
 export const INTERPOLATION_START_REGEX = /{{/;
-export const AWAIT_KEYWORD_REGEX = /await/;
 export const WILDCARD_CHAR_REGEX = /\*/;
+export const AWAIT_KEYWORD_REGEX = /\bawait\b/g;
 
 /**
  * Regex for detecting varThen variables in generated code.
@@ -50,13 +50,20 @@ export const WILDCARD_CHAR_REGEX = /\*/;
  */
 export const createVarThenRegex = (name: string) => {
 	const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, (m) => `\\${m}`);
-	return new RegExp(`(?<![a-zA-Z0-9_$])${escaped}(?![a-zA-Z0-9_$])`);
+	// Avoid matching member access (obj.name) and object keys (name: value)
+	// so we only keep declarations for actual identifier reads/writes.
+	return new RegExp(
+		`(?<![a-zA-Z0-9_$.])${escaped}(?![a-zA-Z0-9_$])(?!(?:\\s)*:)`,
+	);
 };
 
 // String Manipulation
 export const QUOTED_STR_CHECK_REGEX = /^['"]/;
 export const STRIP_QUOTES_REGEX = /^['"]|['"]$/g;
-export const JS_STRINGS_REGEX = /'[^']*'|"[^"]*"|`[^`]*`/g;
+export const JS_STRINGS_REGEX =
+	/'(?:\\.|[^'\\])*'|"(?:\\.|[^"\\])*"|`(?:\\.|[^`\\])*`/g;
+export const JS_LINE_COMMENT_REGEX = /\/\/[^\n\r]*/g;
+export const JS_BLOCK_COMMENT_REGEX = /\/\*[\s\S]*?\*\//g;
 
 export function createFastMatcher(list: (string | RegExp)[]): RegExp {
 	const sources = list.map((item) => {

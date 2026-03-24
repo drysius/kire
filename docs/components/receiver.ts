@@ -1,8 +1,10 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "receiver" })
 export default class Receiver extends Component {
+	@Variable("string")
 	public message = "Waiting...";
 
+	@Variable("any")
 	public listeners = {
 		hello: "updateMessage",
 	};

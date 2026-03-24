@@ -1,8 +1,11 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "infinity-scroll" })
 export default class InfinityScroll extends Component {
+	@Variable("array")
 	public items: string[] = [];
+	@Variable("number")
 	public page = 1;
+	@Variable("boolean")
 	public hasMore = true;
 
 	async mount() {

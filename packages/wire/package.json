@@ -1,6 +1,6 @@
 {
   "name": "@kirejs/wire",
-  "description": "Kirewire framework inspirated in Livewire api with kire module.",
+  "description": "Kirewire v2 framework with decorators, live components and Kire-first adapters.",
   "version": "0.1.0",
   "type": "module",
   "main": "dist/cjs/index.js",
@@ -11,6 +11,16 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/esm/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./methods": {
+      "types": "./dist/types/methods/index.d.ts",
+      "import": "./dist/esm/methods/index.js",
+      "require": "./dist/cjs/methods/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/types/adapters/index.d.ts",
+      "import": "./dist/esm/adapters/index.js",
+      "require": "./dist/cjs/adapters/index.js"
     },
     "./client": {
       "import": "./dist/client/wire.js"

@@ -34,14 +34,18 @@ This example is a minimal end-to-end test for the `FiveMAdapter` transport.
 2. Start your FiveM resource with this example enabled.
 3. Open the NUI page configured in `fxmanifest.lua`:
    - `http://localhost:30120/fivem-example/`
-4. Click `+` / `-` / `Reset`.
+4. Press `H` to open the debug menu and run quick actions (`+`, `-`, `Reset`, `Probe`).
 5. Confirm the counter updates in real time without POST/SSE action flow.
 
 ## Focus helpers
 
 - UI starts hidden and without focus.
 - Press `M` to open/close the UI (toggles focus + cursor).
+- Press `H` to open/close the debug menu.
 - Commands:
   - `kirewire_open_ui`
   - `kirewire_close_ui`
   - `kirewire_toggle_ui`
+  - `kirewire_open_menu`
+  - `kirewire_close_menu`
+  - `kirewire_toggle_menu`

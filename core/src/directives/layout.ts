@@ -33,13 +33,18 @@ export default (kire: Kire<any>) => {
 			api.prologue(
 				`${api.editable ? "let" : "const"} __kire_defines = new this.NullProtoObj;`,
 			);
-			api.epilogue(`
-            if (typeof $kire_response === 'string') {
-                $kire_response = $kire_response.replace(/<!-- KIRE:defined\\((.*?)\\) -->([\\s\\S]*?)<!-- KIRE:enddefined -->/g, (match, name, fallback) => {
-                    return (__kire_defines && __kire_defines[name] !== undefined) ? __kire_defines[name] : fallback;
-                });
-            }
-        `);
+			// When a template is compiled as dependency (e.g. @include layout),
+			// keep placeholders unresolved so the parent template can define sections
+			// afterwards and resolve them at the outermost render.
+			if (!api.isDependency) {
+				api.epilogue(`
+	            if (typeof $kire_response === 'string') {
+	                $kire_response = $kire_response.replace(/<!-- KIRE:defined\\((.*?)\\) -->([\\s\\S]*?)<!-- KIRE:enddefined -->/g, (match, name, fallback) => {
+	                    return (__kire_defines && __kire_defines[name] !== undefined) ? __kire_defines[name] : fallback;
+	                });
+	            }
+	        `);
+			}
 		},
 		true,
 	);

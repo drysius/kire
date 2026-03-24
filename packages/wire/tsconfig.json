@@ -5,6 +5,8 @@
     "rootDir": ".",
     "outDir": "dist",
     "baseUrl": ".",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
     "paths": {
       "kire": ["../../core/src/index.ts"],
       "@kirejs/wire": ["src/index.ts"]

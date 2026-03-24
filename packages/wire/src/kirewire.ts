@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Component } from "./component";
 import { EventController } from "./event-controller";
+import { getWireComponentDefinition } from "./metadata";
 import { SessionManager } from "./session";
 import type { WireProperty } from "./wire-property";
 
@@ -8,6 +9,7 @@ export interface KirewireOptions {
 	secret: string;
 	bus_delay?: number;
 	expire_session?: string | number;
+	autoclean?: boolean;
 	adapter?: any;
 }
 
@@ -52,6 +54,24 @@ type ComponentListenerContext = {
 type ComponentListenerPayload = {
 	params?: unknown[];
 	sourceId?: string;
+};
+
+export type WireCacheStore = {
+	components: Map<string, typeof Component>;
+	propertyClasses: Map<string, new (...args: any[]) => WireProperty>;
+	sessions: SessionManager;
+	references: Map<string, WireReferenceResolver>;
+	routes: Map<
+		string,
+		{
+			name: string;
+			method: string;
+			path: string;
+			paramNames: string[];
+			matcher: RegExp;
+			handler: WireRouteHandler;
+		}
+	>;
 };
 
 function normalizeRoutePath(path: string): string {
@@ -226,6 +246,45 @@ export class Kirewire extends EventController {
 		return randomUUID();
 	}
 
+	/**
+	 * Registers a component class under a wire name.
+	 * Alias-friendly helper for app-level APIs (kire.wired / wire.wired).
+	 */
+	public wired(
+		nameOrClass: string | typeof Component,
+		ComponentClass?: typeof Component,
+	) {
+		let componentName = "";
+		let klass: typeof Component | undefined;
+
+		if (typeof nameOrClass === "function") {
+			klass = nameOrClass as typeof Component;
+			componentName = "";
+		} else {
+			componentName = String(nameOrClass || "").trim();
+			klass = ComponentClass;
+		}
+
+		if (typeof klass !== "function") {
+			throw new Error("Component class must be a class/function.");
+		}
+
+		const wireDefinition = getWireComponentDefinition(klass as any);
+		const resolvedName =
+			componentName ||
+			String(wireDefinition?.name || "").trim() ||
+			String((klass as any)?.name || "").trim();
+		const key = String(resolvedName || "").trim();
+		if (!key) throw new Error("Component name is required.");
+
+		if (wireDefinition?.live === true) {
+			(klass as any).prototype.$live = true;
+		}
+
+		this.components.set(key, klass);
+		return this;
+	}
+
 	public applySafeLocals(
 		instance: Record<string, any>,
 		locals: Record<string, any> = {},
@@ -371,6 +430,46 @@ export class Kirewire extends EventController {
 	}
 
 	/**
+	 * Returns live cache references so host applications can wire multiple
+	 * routers/transports against the same internal state.
+	 */
+	public getCache(): WireCacheStore {
+		return {
+			components: this.components,
+			propertyClasses: this.propertyClasses,
+			sessions: this.sessions,
+			references: this.references,
+			routes: this.routes,
+		};
+	}
+
+	/**
+	 * Replaces internal cache references when the host needs custom stores.
+	 */
+	public configureCache(next: Partial<WireCacheStore>) {
+		if (!next || typeof next !== "object") return this;
+		if (next.components instanceof Map) this.components = next.components;
+		if (next.propertyClasses instanceof Map)
+			this.propertyClasses = next.propertyClasses;
+		if (next.sessions instanceof SessionManager) this.sessions = next.sessions;
+		if (next.references instanceof Map) this.references = next.references;
+		if (next.routes instanceof Map) this.routes = next.routes as Map<
+			string,
+			RegisteredRoute
+		>;
+		return this;
+	}
+
+	/**
+	 * Mutates cache references in-place using a single callback.
+	 */
+	public mutateCache(mutator: (cache: WireCacheStore) => void) {
+		if (typeof mutator !== "function") return this;
+		mutator(this.getCache());
+		return this;
+	}
+
+	/**
 	 * Registers components using a glob-like pattern via node:fs.
 	 */
 	public async wireRegister(
@@ -418,14 +517,21 @@ export class Kirewire extends EventController {
 						);
 
 					if (componentClass) {
+						const wireDefinition = getWireComponentDefinition(componentClass);
 						const relPath = file.slice(searchDir.length + 1);
 						const parsed = parse(relPath);
 						const dirParts = parsed.dir ? parsed.dir.split(/[\\/]/) : [];
 						const localName = [...dirParts, parsed.name].join(".");
+						const decoratedName = String(wireDefinition?.name || "").trim();
 						const prefix = String(namePrefix || "")
 							.trim()
 							.replace(/\.+$/, "");
-						const name = prefix ? `${prefix}.${localName}` : localName;
+						const baseName = decoratedName || localName;
+						const name = prefix ? `${prefix}.${baseName}` : baseName;
+
+						if (wireDefinition?.live === true) {
+							(componentClass as any).prototype.$live = true;
+						}
 
 						this.components.set(name, componentClass);
 						console.log(`[Kirewire] Registered component: ${name}`);

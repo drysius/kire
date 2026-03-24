@@ -1,4 +1,11 @@
 import type { Kire, KireRendered } from "kire";
+import { Value } from "@sinclair/typebox/value";
+import { WireUpload, normalizeFileList } from "./features/file-upload";
+import { WireBroadcast } from "./features/wire-broadcast";
+import {
+	getWireVariables,
+	type WireVariableDefinition,
+} from "./metadata";
 import {
 	type ComponentRuleDescriptor,
 	isTypeBoxSchema,
@@ -44,7 +51,13 @@ const BLOCKED_SET_PATH_SEGMENTS = new Set([
 /**
  * Base Component class for Kirewire.
  */
-export abstract class Component {
+export class Component {
+	/**
+	 * Enables client-first/live mode where the component can be instantiated
+	 * and used without an initial server-side HTML render.
+	 */
+	public $live = false;
+
 	/**
 	 * Unique ID for this component instance on the page.
 	 * Managed by Kirewire.
@@ -105,14 +118,18 @@ export abstract class Component {
 
 		if (!normalizedProperty.includes(".")) {
 			const current = (this as any)[normalizedProperty];
+			const declaration = this.getVariableDeclaration(normalizedProperty);
 			(this as any)[normalizedProperty] = this.normalizeIncomingValue(
 				current,
 				value,
+				declaration,
 			);
 			return;
 		}
 
 		const parts = normalizedProperty.split(".");
+		const root = parts[0]!;
+		const rootDeclaration = this.getVariableDeclaration(root);
 		let obj = this as any;
 		for (let i = 0; i < parts.length - 1; i++) {
 			const part = parts[i]!;
@@ -127,6 +144,15 @@ export abstract class Component {
 		}
 		const leaf = parts[parts.length - 1]!;
 		obj[leaf] = this.normalizeIncomingValue(obj[leaf], value);
+
+		if (rootDeclaration) {
+			const rootValue = (this as any)[root];
+			(this as any)[root] = this.normalizeIncomingValue(
+				rootValue,
+				rootValue,
+				rootDeclaration,
+			);
+		}
 	}
 
 	/**
@@ -439,6 +465,27 @@ export abstract class Component {
 	 */
 	public fill(state: Record<string, any>) {
 		if (!state) return;
+		this.ensureDeclaredWireVariables();
+		const declarations = this.getVariableDeclarations();
+		if (declarations.size > 0) {
+			const keys = Object.keys(state);
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]!;
+				const declaration = declarations.get(key);
+				if (!declaration || declaration.isPrivate) continue;
+				if (!(key in this)) continue;
+
+				const current = (this as any)[key];
+				const value = state[key];
+				(this as any)[key] = this.normalizeIncomingValue(
+					current,
+					value,
+					declaration,
+				);
+			}
+			return;
+		}
+
 		const keys = Object.keys(state);
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
@@ -459,6 +506,31 @@ export abstract class Component {
 	 * Returns only serializable/public state for hydration roundtrips.
 	 */
 	public getPublicState(): Record<string, any> {
+		this.ensureDeclaredWireVariables();
+		const declarations = this.getVariableDeclarations();
+		if (declarations.size > 0) {
+			const declaredState: Record<string, any> = Object.create(null);
+			for (const [name, declaration] of declarations.entries()) {
+				if (declaration.isPrivate) continue;
+				const value = (this as any)[name];
+				if (typeof value === "function") continue;
+
+				if (value instanceof WireProperty) {
+					declaredState[name] = value.dehydrate();
+				} else if (declaration.kind === "files") {
+					const upload = this.normalizeIncomingValue(
+						value,
+						value,
+						declaration,
+					) as WireUpload;
+					declaredState[name] = upload.dehydrate();
+				} else {
+					declaredState[name] = value;
+				}
+			}
+			return declaredState;
+		}
+
 		const state: Record<string, any> = Object.create(null);
 		const keys = Object.keys(this);
 		for (let i = 0; i < keys.length; i++) {
@@ -477,17 +549,68 @@ export abstract class Component {
 		return state;
 	}
 
-	protected normalizeIncomingValue(current: any, value: any): any {
+	protected normalizeIncomingValue(
+		current: any,
+		value: any,
+		declaration?: WireVariableDefinition,
+	): any {
 		if (current instanceof WireProperty) {
 			current.hydrate(value);
 			return current;
 		}
+
+		if (!declaration) return value;
+
+		if (declaration.kind === "broadcast") {
+			const channel = declaration.room || declaration.name;
+			if (current instanceof WireBroadcast) {
+				if (value && typeof value === "object") current.hydrate(value);
+				return current;
+			}
+
+			const next = new WireBroadcast({
+				name: channel,
+			});
+			if (value && typeof value === "object") next.hydrate(value);
+			return next;
+		}
+
+		if (declaration.kind === "files") {
+			const upload =
+				current instanceof WireUpload ? current : new WireUpload(current);
+			upload.hydrate(value);
+			this.validateFilesVariable(declaration, upload);
+			return upload;
+		}
+
+		if (declaration.schema) {
+			const converted = Value.Convert(declaration.schema, value);
+			if (!Value.Check(declaration.schema, converted)) {
+				throw new Error(
+					`Invalid value for variable "${declaration.name}" (${declaration.raw || declaration.kind}).`,
+				);
+			}
+			this.validateDeclaredShapeRules(declaration, converted);
+			return converted;
+		}
+
+		this.validateDeclaredShapeRules(declaration, value);
+		return value;
+	}
+
+	/**
+	 * Marker helper for live-mode API ergonomics.
+	 * Currently a runtime no-op; state visibility is still controlled by
+	 * writable/public rules and serialization guards.
+	 */
+	public onlyserver<T>(value: T): T {
 		return value;
 	}
 
 	protected isPropertyWritable(property: string): boolean {
 		const normalized = String(property || "").trim();
 		if (!normalized) return false;
+		this.ensureDeclaredWireVariables();
 
 		const segments = normalized
 			.split(".")
@@ -503,6 +626,21 @@ export abstract class Component {
 		const first = root.charCodeAt(0);
 		if (first === 36 || first === 95) return false; // $ or _
 
+		const declarations = this.getVariableDeclarations();
+		if (declarations.size > 0) {
+			const declaration = declarations.get(root);
+			if (!declaration) return false;
+			if (declaration.isPrivate) return false;
+			if (declaration.kind === "broadcast") return false;
+
+			const fillable = (this as any).$fillable;
+			if (Array.isArray(fillable) && fillable.length > 0) {
+				return this.matchesFillablePath(normalized, fillable);
+			}
+
+			return true;
+		}
+
 		const fillable = (this as any).$fillable;
 		if (Array.isArray(fillable) && fillable.length > 0) {
 			return this.matchesFillablePath(normalized, fillable);
@@ -510,6 +648,76 @@ export abstract class Component {
 
 		const state = this.getPublicState();
 		return Object.hasOwn(state, root);
+	}
+
+	private getVariableDeclarations() {
+		return getWireVariables(this.constructor as Function);
+	}
+
+	private getVariableDeclaration(
+		propertyPath: string,
+	): WireVariableDefinition | undefined {
+		const root = String(propertyPath || "")
+			.split(".")
+			.map((entry) => entry.trim())
+			.filter(Boolean)[0];
+		if (!root) return undefined;
+		return this.getVariableDeclarations().get(root);
+	}
+
+	private ensureDeclaredWireVariables() {
+		const declarations = this.getVariableDeclarations();
+		if (declarations.size === 0) return;
+
+		for (const [name, declaration] of declarations.entries()) {
+			if ((this as any)[name] !== undefined) continue;
+
+			if (declaration.kind === "files") {
+				(this as any)[name] = new WireUpload();
+				continue;
+			}
+
+			if (declaration.kind === "broadcast") {
+				(this as any)[name] = new WireBroadcast({
+					name: declaration.room || name,
+				});
+			}
+		}
+	}
+
+	private validateFilesVariable(
+		declaration: WireVariableDefinition,
+		upload: WireUpload,
+	) {
+		const files = normalizeFileList(upload.dehydrate());
+		if (
+			typeof declaration.minItems === "number" &&
+			files.length < declaration.minItems
+		) {
+			throw new Error(
+				`Variable "${declaration.name}" requires at least ${declaration.minItems} file(s).`,
+			);
+		}
+
+		if (
+			typeof declaration.maxItems === "number" &&
+			files.length > declaration.maxItems
+		) {
+			throw new Error(
+				`Variable "${declaration.name}" accepts at most ${declaration.maxItems} file(s).`,
+			);
+		}
+
+		if (typeof declaration.maxBytes === "number" && declaration.maxBytes > 0) {
+			for (let i = 0; i < files.length; i++) {
+				const file = files[i]!;
+				if (Number(file.size || 0) > declaration.maxBytes) {
+					throw new Error(
+						`File "${file.name || "upload"}" exceeds max size for "${declaration.name}".`,
+					);
+				}
+			}
+		}
 	}
 
 	private matchesFillablePath(property: string, fillable: any[]): boolean {
@@ -667,6 +875,98 @@ export abstract class Component {
 		return current;
 	}
 
+	private validateDeclaredShapeRules(
+		declaration: WireVariableDefinition,
+		value: any,
+	) {
+		const shapeRules = declaration.shapeRules;
+		if (!shapeRules || typeof shapeRules !== "object") return;
+
+		const entries = Object.entries(shapeRules);
+		for (let i = 0; i < entries.length; i++) {
+			const [rawPath, rule] = entries[i]!;
+			const path = String(rawPath || "").trim();
+			const normalizedRule = String(rule || "").trim();
+			if (!path || !normalizedRule) continue;
+
+			const candidates = this.collectPathCandidates(value, path);
+			const hasWildcard = path.includes("*");
+			if (candidates.length === 0 && hasWildcard) continue;
+
+			const targets =
+				candidates.length > 0 ? candidates : [{ path, value: undefined }];
+			for (let j = 0; j < targets.length; j++) {
+				const candidate = targets[j]!;
+				const result = validateRuleString(
+					this.normalizeValidationValue(candidate.value),
+					normalizedRule,
+				);
+				if (result.success) continue;
+
+				const suffix = candidate.path ? `.${candidate.path}` : "";
+				throw new Error(
+					`Invalid value for variable "${declaration.name}${suffix}" (${result.error || "Invalid"}).`,
+				);
+			}
+		}
+	}
+
+	private collectPathCandidates(
+		source: any,
+		path: string,
+	): Array<{ path: string; value: any }> {
+		const segments = String(path || "")
+			.split(".")
+			.map((part) => part.trim())
+			.filter(Boolean);
+		if (segments.length === 0) return [{ path: "", value: source }];
+
+		const candidates: Array<{ path: string; value: any }> = [];
+		const hasWildcard = segments.includes("*");
+
+		const walk = (current: any, index: number, resolved: string[]) => {
+			if (index >= segments.length) {
+				candidates.push({
+					path: resolved.join("."),
+					value: current,
+				});
+				return;
+			}
+
+			const segment = segments[index]!;
+			if (segment === "*") {
+				if (!current || typeof current !== "object") return;
+
+				const keys = Array.isArray(current)
+					? current.map((_, itemIndex) => String(itemIndex))
+					: Object.keys(current);
+				for (let i = 0; i < keys.length; i++) {
+					const key = keys[i]!;
+					walk((current as any)[key], index + 1, [...resolved, key]);
+				}
+				return;
+			}
+
+			if (!current || typeof current !== "object") {
+				if (index === segments.length - 1) {
+					candidates.push({
+						path: [...resolved, segment].join("."),
+						value: undefined,
+					});
+				}
+				return;
+			}
+
+			walk((current as any)[segment], index + 1, [...resolved, segment]);
+		};
+
+		walk(source, 0, []);
+		if (candidates.length === 0 && !hasWildcard) {
+			return [{ path, value: undefined }];
+		}
+		return candidates;
+	}
+
 	/**
 	 * Lifecycle hook: Called after the component is instantiated and state is hydrated.
 	 */
@@ -679,8 +979,13 @@ export abstract class Component {
 	public unmount(): void | Promise<void> {}
 
 	/**
-	 * Default render method. Must be implemented by the user.
-	 * Should return a call to this.view().
+	 * Default render method.
+	 * Non-live components should override this and return this.view(...).
 	 */
-	abstract render(): KireRendered;
+	public render(): KireRendered {
+		if ((this as any).$live) return "" as unknown as KireRendered;
+		throw new Error(
+			`Component "${this.constructor?.name || "AnonymousComponent"}" must implement render() unless $live = true.`,
+		);
+	}
 }

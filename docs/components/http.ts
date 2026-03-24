@@ -1,7 +1,9 @@
-import { Component, WireBroadcast } from "../lib/wire";
-
+import { Component, Wire, Variable, WireBroadcast } from "../lib/wire";
+@Wire({ name: "http" })
 export default class Http extends Component {
+	@Variable("number")
 	public counter = 0;
+	@Variable("any")
 	public shared = new WireBroadcast({
 		name: "shared-counter",
 		autodelete: true,

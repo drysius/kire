@@ -12,7 +12,7 @@
             <div wire:key="{{ msg.time }}" class="chat {{ msg.user === username ? 'chat-end' : 'chat-start' }}">
                 <div class="chat-header text-xs opacity-50 mb-1">
                     {{ msg.user }}
-                    <time class="text-xs opacity-50">{{ new Date(msg.time).toLocaleTimeString() }}</time>
+                    <time class="text-xs opacity-50">{{ msg.time ? new Date(msg.time).toLocaleTimeString() : '--:--' }}</time>
                 </div>
                 <div class="chat-bubble {{ msg.user === username ? 'chat-bubble-primary' : 'chat-bubble-secondary' }}">
                     {{ msg.text }}

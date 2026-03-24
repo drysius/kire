@@ -1,9 +1,13 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "form" })
 export default class RegisterForm extends Component {
+	@Variable("string")
 	public name = "";
+	@Variable("string")
 	public email = "";
+	@Variable("string")
 	public password = "";
+	@Variable("string")
 	public successMessage = "";
 
 	async register() {

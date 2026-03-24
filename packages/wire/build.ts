@@ -1,79 +1,109 @@
 import { $ } from "bun";
-import { copyFileSync, existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-/**
- * Script to build the client-side Wire runtime.
- */
 const outDir = join(import.meta.dir, "dist/client");
 const esmDir = join(import.meta.dir, "dist/esm");
+const esmMethodsDir = join(esmDir, "methods");
+const esmAdaptersDir = join(esmDir, "adapters");
 const cjsDir = join(import.meta.dir, "dist/cjs");
+const cjsMethodsDir = join(cjsDir, "methods");
+const cjsAdaptersDir = join(cjsDir, "adapters");
 const distDir = join(import.meta.dir, "dist");
-if (!existsSync(outDir)) {
-    mkdirSync(outDir, { recursive: true });
-}
-if (!existsSync(esmDir)) {
-    mkdirSync(esmDir, { recursive: true });
-}
-if (!existsSync(cjsDir)) {
-    mkdirSync(cjsDir, { recursive: true });
-}
-if (!existsSync(distDir)) {
-    mkdirSync(distDir, { recursive: true });
+
+function ensureDir(dir: string) {
+	if (!existsSync(dir)) {
+		mkdirSync(dir, { recursive: true });
+	}
 }
 
-console.log("🚀 Building Wire Client (Web)...");
+ensureDir(outDir);
+ensureDir(esmDir);
+ensureDir(esmMethodsDir);
+ensureDir(esmAdaptersDir);
+ensureDir(cjsDir);
+ensureDir(cjsMethodsDir);
+ensureDir(cjsAdaptersDir);
+ensureDir(distDir);
+
+async function buildServerEntry(
+	entry: string,
+	outfile: string,
+	format: "esm" | "cjs",
+	label: string,
+) {
+	const result = await $`bun build ${entry} --outfile ${outfile} --format ${format} --target node --packages external`;
+	if (result.exitCode !== 0) {
+		throw new Error(`${label} build failed.`);
+	}
+}
+
+console.log("[wire] Building web client...");
 
 try {
-    // Using --outdir to support external sourcemaps
-    const result = await $`bun build ./web/index.ts --outdir ${outDir} --minify --sourcemap=external --target browser`;
-    
-    if (result.exitCode === 0) {
-        // Bun names the file based on entry point (index.ts -> index.js)
-        // We rename it to wire.js for better branding
-        const generatedFile = join(outDir, "index.js");
-        const targetFile = join(outDir, "wire.js");
-        
-        if (existsSync(generatedFile)) {
-            renameSync(generatedFile, targetFile);
-            // Also rename the sourcemap if it exists
-            if (existsSync(generatedFile + ".map")) {
-                renameSync(generatedFile + ".map", targetFile + ".map");
-            }
-        }
+	const clientResult = await $`bun build ./web/index.ts --outdir ${outDir} --minify --sourcemap=external --target browser`;
+	if (clientResult.exitCode !== 0) {
+		throw new Error("Wire client build failed.");
+	}
 
-        console.log("✅ Wire Client built successfully at dist/client/wire.js");
-    } else {
-        console.error("❌ Wire Client build failed!");
-        process.exit(1);
-    }
+	const generatedClientFile = join(outDir, "index.js");
+	const targetClientFile = join(outDir, "wire.js");
+	if (existsSync(generatedClientFile)) {
+		renameSync(generatedClientFile, targetClientFile);
+		if (existsSync(`${generatedClientFile}.map`)) {
+			renameSync(`${generatedClientFile}.map`, `${targetClientFile}.map`);
+		}
+	}
 
-    const esm = await $`bun build ./src/index.ts --outdir ${esmDir} --format esm --target node --packages external`;
-    if (esm.exitCode !== 0) {
-        console.error("❌ Wire server ESM build failed!");
-        process.exit(1);
-    }
+	await buildServerEntry(
+		"./src/index.ts",
+		join(esmDir, "index.js"),
+		"esm",
+		"Wire server ESM",
+	);
+	await buildServerEntry(
+		"./src/methods/index.ts",
+		join(esmMethodsDir, "index.js"),
+		"esm",
+		"Wire methods ESM",
+	);
+	await buildServerEntry(
+		"./src/adapters/index.ts",
+		join(esmAdaptersDir, "index.js"),
+		"esm",
+		"Wire adapters ESM",
+	);
 
-    const cjs = await $`bun build ./src/index.ts --outdir ${cjsDir} --format cjs --target node --packages external`;
-    if (cjs.exitCode !== 0) {
-        console.error("❌ Wire server CJS build failed!");
-        process.exit(1);
-    }
+	await buildServerEntry(
+		"./src/index.ts",
+		join(cjsDir, "index.js"),
+		"cjs",
+		"Wire server CJS",
+	);
+	await buildServerEntry(
+		"./src/methods/index.ts",
+		join(cjsMethodsDir, "index.js"),
+		"cjs",
+		"Wire methods CJS",
+	);
+	await buildServerEntry(
+		"./src/adapters/index.ts",
+		join(cjsAdaptersDir, "index.js"),
+		"cjs",
+		"Wire adapters CJS",
+	);
 
-    const fivemClientFile = join(distDir, "fivem-client.js");
-    const fivemClient = await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
-    if (fivemClient.exitCode !== 0) {
-        console.error("❌ Wire FiveM client build failed!");
-        process.exit(1);
-    }
-    copyFileSync(fivemClientFile, join(distDir, "fv-client.js"));
+	const fivemClientFile = join(distDir, "fivem-client.js");
+	const fivemClientResult = await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
+	if (fivemClientResult.exitCode !== 0) {
+		throw new Error("Wire FiveM client build failed.");
+	}
 
-    writeFileSync(join(esmDir, "package.json"), JSON.stringify({ type: "module" }));
-    writeFileSync(join(cjsDir, "package.json"), JSON.stringify({ type: "commonjs" }));
+	writeFileSync(join(esmDir, "package.json"), JSON.stringify({ type: "module" }));
+	writeFileSync(join(cjsDir, "package.json"), JSON.stringify({ type: "commonjs" }));
 
-    console.log("✅ Wire Server built successfully at dist/esm and dist/cjs");
-    console.log("✅ Wire FiveM client built at dist/fivem-client.js");
+	console.log("[wire] Build complete: client, server, methods, adapters, fivem-client.");
 } catch (error) {
-    console.error("❌ Error during build:", error);
-    process.exit(1);
+	console.error("[wire] Build error:", error);
+	process.exit(1);
 }

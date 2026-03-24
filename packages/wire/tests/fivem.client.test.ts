@@ -1,4 +1,12 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
+import {
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	mock,
+	spyOn,
+	test,
+} from "bun:test";
 import { JSDOM } from "jsdom";
 import { FiveMClientAdapter } from "../web/adapters/fivem";
 import { KirewireClient } from "../web/kirewire";
@@ -48,6 +56,7 @@ describe("FiveMClientAdapter", () => {
 	});
 
 	afterEach(() => {
+		mock.restore();
 		if (adapter) adapter.destroy();
 	});
 

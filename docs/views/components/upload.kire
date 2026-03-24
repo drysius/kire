@@ -45,11 +45,11 @@
             </div>
         </div>
 
-        <div wire:show="file && (file.name || file.id)" class="stats shadow mt-4 w-full">
+        <div wire:show="file && ((file.name || file.id) || (file.files && file.files.length > 0))" class="stats shadow mt-4 w-full">
             <div class="stat">
                 <div class="stat-title">Selected File</div>
-                <div x-text="$wire.file?.name || 'Unknown'" class="stat-value text-lg"></div>
-                <div x-text="(($wire.file?.size || 0) / 1024).toFixed(2) + ' KB'" class="stat-desc"></div>
+                <div x-text="$wire.file?.name || $wire.file?.files?.[0]?.name || 'Unknown'" class="stat-value text-lg"></div>
+                <div x-text="((($wire.file?.size || $wire.file?.files?.[0]?.size || 0) / 1024).toFixed(2)) + ' KB'" class="stat-desc"></div>
                 <div wire:file.preview="file" class="mt-2"></div>
             </div>
         </div>

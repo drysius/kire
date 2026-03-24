@@ -168,7 +168,6 @@ export class Kire<Asyncronos extends boolean = true> {
 	public "~compiling" = new Set<string>();
 	public "~compile-context"?: {
 		depth: number;
-		uniqueExistVarCallbacks: Set<KireHandler>;
 	};
 
 	// Delegation getters
@@ -661,7 +660,6 @@ export class Kire<Asyncronos extends boolean = true> {
 			if (!compileContext) {
 				compileContext = {
 					depth: 0,
-					uniqueExistVarCallbacks: new Set<KireHandler>(),
 				};
 				root["~compile-context"] = compileContext;
 			}

@@ -1,6 +1,21 @@
 import { randomUUID } from "node:crypto";
-import { existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
-import { basename, join } from "node:path";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	renameSync,
+	rmSync,
+	statSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
+import { basename, dirname, join } from "node:path";
+
+export type FileStoreMoveOptions = {
+	overwrite?: boolean;
+	keepName?: boolean;
+};
 
 export class FileStore {
 	private tempDir: string;
@@ -34,6 +49,50 @@ export class FileStore {
 		return id;
 	}
 
+	public move(
+		id: string,
+		destination: string,
+		options: FileStoreMoveOptions = {},
+	): string | null {
+		const entry = this.fileMap.get(String(id || "").trim());
+		if (!entry || !existsSync(entry.path)) return null;
+
+		const destRaw = String(destination || "").trim();
+		if (!destRaw) return null;
+
+		const keepName = options.keepName !== false;
+		const overwrite = options.overwrite === true;
+		const currentName = basename(entry.path);
+		const targetPath = this.resolveDestinationPath(
+			destRaw,
+			keepName ? currentName : undefined,
+		);
+		if (!targetPath) return null;
+
+		const targetDir = dirname(targetPath);
+		if (!existsSync(targetDir)) {
+			mkdirSync(targetDir, { recursive: true });
+		}
+
+		if (existsSync(targetPath)) {
+			const targetStat = statSync(targetPath);
+			if (targetStat.isDirectory()) return null;
+			if (!overwrite) return null;
+			unlinkSync(targetPath);
+		}
+
+		try {
+			renameSync(entry.path, targetPath);
+		} catch {
+			// Cross-device move fallback.
+			copyFileSync(entry.path, targetPath);
+			unlinkSync(entry.path);
+		}
+
+		this.fileMap.set(id, { ...entry, path: targetPath });
+		return targetPath;
+	}
+
 	public get(id: string): string | null {
 		const entry = this.fileMap.get(id);
 		if (entry && existsSync(entry.path)) {
@@ -59,11 +118,43 @@ export class FileStore {
 		}
 	}
 
-	public destroy() {
-		clearInterval(this.cleanupTimer);
+	public clearStorage() {
 		const ids = Array.from(this.fileMap.keys());
 		for (let i = 0; i < ids.length; i++) {
 			this.delete(ids[i]!);
 		}
+
+		if (!existsSync(this.tempDir)) return;
+		const entries = readdirSync(this.tempDir, { withFileTypes: true });
+		for (let i = 0; i < entries.length; i++) {
+			const entry = entries[i]!;
+			const path = join(this.tempDir, entry.name);
+			rmSync(path, { recursive: true, force: true });
+		}
+	}
+
+	public destroy() {
+		clearInterval(this.cleanupTimer);
+		this.clearStorage();
+	}
+
+	private resolveDestinationPath(
+		destination: string,
+		filename?: string,
+	): string | null {
+		const target = String(destination || "").trim();
+		if (!target) return null;
+
+		if (target.endsWith("/") || target.endsWith("\\")) {
+			if (!filename) return null;
+			return join(target, filename);
+		}
+
+		if (existsSync(target) && statSync(target).isDirectory()) {
+			if (!filename) return null;
+			return join(target, filename);
+		}
+
+		return target;
 	}
 }

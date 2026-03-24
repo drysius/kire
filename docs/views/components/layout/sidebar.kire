@@ -29,7 +29,7 @@
             </li>
         </ul>
 
-        @for(group of docsNavGroups)
+        @for(group of $globals.docsNavGroups)
             <ul class="menu mt-2 w-full gap-1 p-0">
                 <li class="menu-title w-full">{{ group.title }}</li>
                 @for(item of group.items)
@@ -42,7 +42,7 @@
             </ul>
         @end
 
-        @for(group of packageNavGroups)
+        @for(group of $globals.packageNavGroups)
             <ul class="menu mt-2 w-full gap-1 p-0">
                 <li class="menu-title w-full">{{ group.title }}</li>
                 @for(item of group.items)
@@ -57,7 +57,7 @@
 
         <ul class="menu mt-2 w-full gap-1 p-0">
             <li class="menu-title w-full">KireWire Playground</li>
-            @for(item of wireNav)
+            @for(item of $globals.wireNav)
                 <li class="w-full">
                     <a wire:navigate href="{{ item.href }}" class="w-full {{ $globals.currentPath === item.href || String($globals.currentPath || '').startsWith(item.href + '/') ? 'docs-active' : '' }}">
                         <span>{{ item.title }}</span>

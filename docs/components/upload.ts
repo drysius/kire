@@ -1,9 +1,12 @@
-import { Component, WireFile, Rule } from "../lib/wire";
-
+import { Component, Wire, Variable, WireUpload, Rule } from "../lib/wire";
+@Wire({ name: "upload" })
 export default class Upload extends Component {
-	// Using WireFile for robust file handling
-	public file = new WireFile();
+	// Using WireUpload for robust file handling
+	@Variable("any")
+	public file = new WireUpload();
+    @Variable("string")
     public description = "";
+	@Variable("string")
 	public message = "";
 
 	async save() {
@@ -30,7 +33,7 @@ export default class Upload extends Component {
 			await new Promise((r) => setTimeout(r, 1000));
             
             // Clear after upload
-            this.file = new WireFile();
+            this.file = new WireUpload();
             this.description = "";
 		} else {
 			this.message = "No file selected.";

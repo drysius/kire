@@ -95,6 +95,8 @@ async function ensureDemoComponent(userId: string, pageId: string) {
     instance = new DemoCounter();
     (instance as any).$id = COUNTER_COMPONENT_ID;
     (instance as any).$wire_instance = wire;
+    (instance as any).$wire_scope_id = safeUserId;
+    (instance as any).$wire_page_id = safePageId;
     await instance.mount();
 
     page.components.set(COUNTER_COMPONENT_ID, instance as any);
@@ -209,6 +211,90 @@ function buildHtmlPage(pageId: string, rootHtml: string) {
         button:active {
             transform: translateY(1px);
         }
+        .debug-hint {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 50;
+            border: 1px solid rgba(153, 175, 214, 0.3);
+            background: rgba(11, 15, 26, 0.82);
+            color: rgba(228, 237, 255, 0.9);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            pointer-events: none;
+        }
+        .debug-menu {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 60;
+            width: min(92vw, 320px);
+            border: 1px solid rgba(153, 175, 214, 0.35);
+            background: rgba(9, 13, 22, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+            pointer-events: auto;
+        }
+        .debug-menu[hidden] {
+            display: none !important;
+        }
+        .debug-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .debug-subtitle {
+            margin: 6px 0 0;
+            color: rgba(228, 237, 255, 0.72);
+            font-size: 12px;
+        }
+        .debug-status {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #b9caf1;
+            min-height: 18px;
+        }
+        .debug-status.error {
+            color: #ffb0b0;
+        }
+        .debug-badges {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .debug-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 11px;
+            background: #24334f;
+            color: #ebf2ff;
+        }
+        .debug-badge.ok {
+            background: #1f4733;
+            color: #c9f2db;
+        }
+        .debug-actions {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .debug-actions button {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .debug-close {
+            grid-column: 1 / -1;
+        }
     </style>
     <script type="module" src="${WIRE_ROUTE}/kirewire.js"></script>
     <script type="module">
@@ -230,22 +316,158 @@ function buildHtmlPage(pageId: string, rootHtml: string) {
 </head>
 <body class="nui-hidden">
     <div id="kirewire-nui-root">${rootHtml}</div>
+    <div class="debug-hint">M: abrir UI | H: menu debug</div>
+    <aside id="kirewire-debug-menu" class="debug-menu" hidden>
+        <h2 class="debug-title">KireWire Debug Menu</h2>
+        <p class="debug-subtitle">Pressione <strong>H</strong> para abrir/fechar</p>
+        <div id="kirewire-debug-status" class="debug-status">Menu pronto para teste.</div>
+        <div class="debug-badges">
+            <span id="kirewire-runtime-badge" class="debug-badge">runtime: checking...</span>
+            <span id="kirewire-component-badge" class="debug-badge">component: checking...</span>
+        </div>
+        <div class="debug-actions">
+            <button type="button" data-kirewire-action="increment">+ Increment</button>
+            <button type="button" data-kirewire-action="decrement">- Decrement</button>
+            <button type="button" data-kirewire-action="reset">Reset</button>
+            <button type="button" data-kirewire-action="probe">Probe</button>
+            <button type="button" class="debug-close" data-kirewire-action="close-menu">Fechar Menu (H)</button>
+        </div>
+    </aside>
     <script>
         (() => {
+            const debugMenu = document.getElementById("kirewire-debug-menu");
+            const debugStatus = document.getElementById("kirewire-debug-status");
+            const runtimeBadge = document.getElementById("kirewire-runtime-badge");
+            const componentBadge = document.getElementById("kirewire-component-badge");
+            const componentSelector = '[wire\\\\:id="${COUNTER_COMPONENT_ID}"], [wire-id="${COUNTER_COMPONENT_ID}"]';
+            let menuVisible = false;
+            let uiVisible = false;
+
             const setVisible = (visible) => {
-                const isVisible = Boolean(visible);
-                document.body.classList.toggle("nui-visible", isVisible);
-                document.body.classList.toggle("nui-hidden", !isVisible);
+                uiVisible = Boolean(visible);
+                document.body.classList.toggle("nui-visible", uiVisible);
+                document.body.classList.toggle("nui-hidden", !uiVisible);
+                if (!uiVisible) setMenuVisible(false);
+            };
+
+            const setStatus = (message, isError = false) => {
+                if (!debugStatus) return;
+                debugStatus.textContent = String(message || "");
+                debugStatus.classList.toggle("error", Boolean(isError));
+            };
+
+            const findCounterRoot = () => {
+                return document.querySelector(componentSelector);
+            };
+
+            const updateDiagnostics = () => {
+                const hasRuntime = Boolean(window.Kirewire && typeof window.Kirewire.call === "function");
+                const hasComponent = Boolean(findCounterRoot());
+
+                if (runtimeBadge) {
+                    runtimeBadge.textContent = hasRuntime ? "runtime: ok" : "runtime: missing";
+                    runtimeBadge.classList.toggle("ok", hasRuntime);
+                }
+
+                if (componentBadge) {
+                    componentBadge.textContent = hasComponent ? "component: ok" : "component: missing";
+                    componentBadge.classList.toggle("ok", hasComponent);
+                }
+            };
+
+            const setMenuVisible = (visible) => {
+                menuVisible = Boolean(visible);
+                if (debugMenu) debugMenu.hidden = !menuVisible;
+                updateDiagnostics();
+            };
+
+            const callWireMethod = async (method) => {
+                if (!uiVisible) {
+                    setStatus("Abra a UI com M antes de testar.", true);
+                    return;
+                }
+
+                const root = findCounterRoot();
+                const runtime = window.Kirewire;
+                if (!root || !runtime || typeof runtime.call !== "function") {
+                    setStatus("Runtime/componente indisponivel.", true);
+                    updateDiagnostics();
+                    return;
+                }
+
+                try {
+                    await runtime.call(root, method, []);
+                    setStatus("Acao executada: " + method);
+                } catch (error) {
+                    const message = error && error.message ? error.message : String(error || "erro desconhecido");
+                    setStatus("Falha na acao " + method + ": " + message, true);
+                }
+
+                updateDiagnostics();
+            };
+
+            const isTypingTarget = (target) => {
+                if (!target || !(target instanceof Element)) return false;
+                if (target instanceof HTMLInputElement) return true;
+                if (target instanceof HTMLTextAreaElement) return true;
+                if (target instanceof HTMLSelectElement) return true;
+                return Boolean(target.closest("[contenteditable=''], [contenteditable='true']"));
             };
 
             window.addEventListener("message", (event) => {
                 const data = event && event.data;
                 if (!data || typeof data !== "object") return;
-                if (data.__kirewire_ui !== true) return;
-                setVisible(Boolean(data.visible));
+                if (data.__kirewire_ui === true) {
+                    setVisible(Boolean(data.visible));
+                    return;
+                }
+                if (data.__kirewire_menu === true) {
+                    setMenuVisible(Boolean(data.visible));
+                    return;
+                }
+                if (data.__kirewire_menu_toggle === true) {
+                    setMenuVisible(!menuVisible);
+                }
+            });
+
+            document.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const button = target.closest("[data-kirewire-action]");
+                if (!(button instanceof HTMLElement)) return;
+
+                const action = String(button.getAttribute("data-kirewire-action") || "").trim();
+                if (!action) return;
+
+                if (action === "close-menu") {
+                    setMenuVisible(false);
+                    setStatus("Menu fechado.");
+                    return;
+                }
+
+                if (action === "probe") {
+                    updateDiagnostics();
+                    setStatus("Probe executado.");
+                    return;
+                }
+
+                void callWireMethod(action);
+            });
+
+            window.addEventListener("keydown", (event) => {
+                if (event.repeat) return;
+                if (isTypingTarget(event.target)) return;
+
+                const key = String(event.key || "").toLowerCase();
+                if (key !== "h") return;
+
+                event.preventDefault();
+                setMenuVisible(!menuVisible);
+                setStatus(menuVisible ? "Menu aberto." : "Menu fechado.");
             });
 
             setVisible(false);
+            updateDiagnostics();
         })();
     </script>
 </body>

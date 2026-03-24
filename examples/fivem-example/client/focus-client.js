@@ -1,70 +1,102 @@
-// FiveM NUI helper:
-// - Starts hidden/unfocused.
-// - Toggles open/close with a key.
-
-let nuiOpen = false;
-
-function postUiState(active) {
-    const payload = {
-        __kirewire_ui: true,
-        visible: Boolean(active),
+(() => {
+    const state = {
+        uiVisible: false,
+        menuVisible: false,
     };
 
-    if (typeof SendNUIMessage === "function") {
-        try {
-            SendNUIMessage(payload);
-            return;
-        } catch {
-            // Fall through to string variant.
+    const sendNui = (payload) => {
+        const sendObject = globalThis.SendNUIMessage;
+        if (typeof sendObject === "function") {
+            try {
+                sendObject(payload);
+                return;
+            } catch {}
         }
-    }
 
-    if (typeof SendNuiMessage === "function") {
+        const sendString = globalThis.SendNuiMessage;
+        if (typeof sendString !== "function") return;
         try {
-            SendNuiMessage(JSON.stringify(payload));
-        } catch {
-            // Ignore post failures.
+            sendString(JSON.stringify(payload));
+        } catch {}
+    };
+
+    const applyUiVisibility = (visible) => {
+        state.uiVisible = Boolean(visible);
+
+        if (typeof globalThis.SetNuiFocus === "function") {
+            try {
+                globalThis.SetNuiFocus(state.uiVisible, state.uiVisible);
+            } catch {}
         }
+
+        if (typeof globalThis.SetNuiFocusKeepInput === "function") {
+            try {
+                globalThis.SetNuiFocusKeepInput(false);
+            } catch {}
+        }
+
+        sendNui({
+            __kirewire_ui: true,
+            visible: state.uiVisible,
+        });
+
+        if (!state.uiVisible) {
+            state.menuVisible = false;
+            sendNui({
+                __kirewire_menu: true,
+                visible: false,
+            });
+        }
+    };
+
+    const applyMenuVisibility = (visible) => {
+        if (!state.uiVisible) applyUiVisibility(true);
+        state.menuVisible = Boolean(visible);
+        sendNui({
+            __kirewire_menu: true,
+            visible: state.menuVisible,
+        });
+    };
+
+    const toggleUi = () => {
+        applyUiVisibility(!state.uiVisible);
+    };
+
+    const toggleMenu = () => {
+        applyMenuVisibility(!state.menuVisible);
+    };
+
+    if (typeof globalThis.RegisterCommand === "function") {
+        globalThis.RegisterCommand("kirewire_open_ui", () => applyUiVisibility(true), false);
+        globalThis.RegisterCommand("kirewire_close_ui", () => applyUiVisibility(false), false);
+        globalThis.RegisterCommand("kirewire_toggle_ui", () => toggleUi(), false);
+
+        globalThis.RegisterCommand("kirewire_open_menu", () => applyMenuVisibility(true), false);
+        globalThis.RegisterCommand("kirewire_close_menu", () => applyMenuVisibility(false), false);
+        globalThis.RegisterCommand("kirewire_toggle_menu", () => toggleMenu(), false);
     }
-}
 
-function setUiOpen(active) {
-    const enabled = Boolean(active);
-
-    if (typeof SetNuiFocus === "function") {
-        SetNuiFocus(enabled, enabled);
+    if (typeof globalThis.RegisterKeyMapping === "function") {
+        globalThis.RegisterKeyMapping("kirewire_toggle_ui", "KireWire: Toggle UI", "keyboard", "M");
+        globalThis.RegisterKeyMapping("kirewire_toggle_menu", "KireWire: Toggle Debug Menu", "keyboard", "H");
     }
 
-    if (typeof SetNuiFocusKeepInput === "function") {
-        SetNuiFocusKeepInput(false);
+    if (
+        typeof globalThis.RegisterNuiCallbackType === "function" &&
+        typeof globalThis.on === "function"
+    ) {
+        globalThis.RegisterNuiCallbackType("kirewire_close_ui");
+        globalThis.on("__cfx_nui:kirewire_close_ui", (_data, cb) => {
+            applyUiVisibility(false);
+            if (typeof cb === "function") cb({ ok: true });
+        });
+
+        globalThis.RegisterNuiCallbackType("kirewire_toggle_menu");
+        globalThis.on("__cfx_nui:kirewire_toggle_menu", (_data, cb) => {
+            toggleMenu();
+            if (typeof cb === "function") cb({ ok: true, visible: state.menuVisible });
+        });
     }
 
-    if (enabled && typeof SetCursorLocation === "function") {
-        SetCursorLocation(0.5, 0.5);
-    }
-
-    postUiState(enabled);
-    nuiOpen = enabled;
-}
-
-const resourceName = typeof GetCurrentResourceName === "function"
-    ? String(GetCurrentResourceName() || "")
-    : "";
-
-on("onClientResourceStart", (startedResource) => {
-    if (resourceName && String(startedResource || "") !== resourceName) return;
-    setUiOpen(false);
-});
-
-on("onClientResourceStop", (stoppedResource) => {
-    if (resourceName && String(stoppedResource || "") !== resourceName) return;
-    setUiOpen(false);
-});
-
-RegisterCommand("kirewire_open_ui", () => setUiOpen(true), false);
-RegisterCommand("kirewire_close_ui", () => setUiOpen(false), false);
-RegisterCommand("kirewire_toggle_ui", () => setUiOpen(!nuiOpen), false);
-
-if (typeof RegisterKeyMapping === "function") {
-    RegisterKeyMapping("kirewire_toggle_ui", "Toggle KireWire NUI", "keyboard", "M");
-}
+    applyUiVisibility(false);
+})();

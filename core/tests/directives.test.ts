@@ -143,7 +143,7 @@ describe("Kire Directives & Elements", () => {
 		expect(disabled).toBe("<input></input>");
 	});
 
-	test("dependencies with nested x-* should compile with NullProtoObj available", async () => {
+	test("dependencies with nested x-* should compile without forcing a NullProtoObj alias", async () => {
 		const k = new Kire({ production: true, silent: true });
 		k.namespace("components", `${k.$root}/components`);
 		k.$files[k.resolvePath("components.inner")] =
@@ -155,11 +155,11 @@ describe("Kire Directives & Elements", () => {
 
 		const result = await k.view("page");
 		const outerEntry = k.$cache.files.get(k.resolvePath("components.outer"));
+		const outerCode = String(outerEntry?.code || "");
 
 		expect(result).toBe("<section><article>OK</article></section>");
-		expect(String(outerEntry?.code || "")).toContain(
-			"const NullProtoObj = this.NullProtoObj;",
-		);
+		expect(outerCode).toContain("new this.NullProtoObj()");
+		expect(outerCode).not.toContain("const NullProtoObj = this.NullProtoObj;");
 	});
 
 	test("@include and @component should not depend on a local NullProtoObj alias", async () => {
@@ -368,8 +368,15 @@ describe("Kire Directives & Elements", () => {
 	});
 
 	test("unknown directives should not be parsed by prefix", async () => {
-		const result = await kire.render("@ifx(true)A@endifx");
-		expect(result).toBe("@ifx(true)A@endifx");
+		const withArgs = await kire.render("@ifx(true)A@endifx");
+		const bareIf = await kire.render("@ifx");
+		const bareFor = await kire.render("@forbidden");
+		const bareStack = await kire.render("@stacker");
+
+		expect(withArgs).toBe("@ifx(true)A@endifx");
+		expect(bareIf).toBe("@ifx");
+		expect(bareFor).toBe("@forbidden");
+		expect(bareStack).toBe("@stacker");
 	});
 
 	test("strict_directives should throw on unknown directives", async () => {

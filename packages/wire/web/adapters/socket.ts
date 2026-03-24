@@ -5,6 +5,7 @@ import { syncModelElements } from "../utils/model-sync";
 type SocketClientAdapterOptions = {
     url: string;
     pageId: string;
+    sessionId?: string;
     uploadUrl?: string;
     transport?: string;
     socketUrl?: string;
@@ -16,6 +17,7 @@ type SocketClientAdapterOptions = {
 type NormalizedOptions = {
     url: string;
     pageId: string;
+    sessionId: string;
     uploadUrl: string;
     transport: string;
     socketUrl: string;
@@ -59,9 +61,10 @@ function resolveSocketUrl(baseUrl: string, explicitSocketUrl?: string): string {
     return url.toString();
 }
 
-function withSocketPageId(socketUrl: string, pageId: string): string {
+function withSocketContext(socketUrl: string, pageId: string, sessionId: string): string {
     const url = new URL(socketUrl, window.location.origin);
     url.searchParams.set("pageId", String(pageId || "default-page"));
+    url.searchParams.set("sessionId", String(sessionId || "guest"));
     return url.toString();
 }
 
@@ -128,6 +131,7 @@ export class SocketClientAdapter implements WireAdapter {
         this.options = {
             url: options.url || "/_wire",
             pageId: options.pageId || "default-page",
+            sessionId: String(options.sessionId || "guest"),
             uploadUrl: resolveUploadUrl(options.url || "/_wire", options.uploadUrl),
             transport: options.transport || "socket",
             socketUrl: resolveSocketUrl(options.url || "/_wire", options.socketUrl),
@@ -287,6 +291,9 @@ export class SocketClientAdapter implements WireAdapter {
         const current = this.options;
         const nextUrl = next.url ? String(next.url) : current.url;
         const nextPageId = next.pageId ? String(next.pageId) : current.pageId;
+        const nextSessionId = next.sessionId
+            ? String(next.sessionId)
+            : current.sessionId;
         const nextTransport = next.transport ? String(next.transport) : current.transport;
         const nextUploadUrl = next.uploadUrl
             ? String(next.uploadUrl)
@@ -298,11 +305,12 @@ export class SocketClientAdapter implements WireAdapter {
         const shouldReconnect =
             nextTransport !== current.transport ||
             nextSocketUrl !== current.socketUrl ||
-            nextPageId !== current.pageId;
+            nextSessionId !== current.sessionId;
 
         this.options = {
             url: nextUrl,
             pageId: nextPageId,
+            sessionId: nextSessionId,
             uploadUrl: nextUploadUrl,
             transport: nextTransport,
             socketUrl: nextSocketUrl,
@@ -349,7 +357,13 @@ export class SocketClientAdapter implements WireAdapter {
         this.connecting = true;
         let socket: SocketClientLike;
         try {
-            socket = this.createSocket(withSocketPageId(this.options.socketUrl, this.options.pageId));
+            socket = this.createSocket(
+                withSocketContext(
+                    this.options.socketUrl,
+                    this.options.pageId,
+                    this.options.sessionId,
+                ),
+            );
         } catch (error) {
             this.connecting = false;
             console.error("[Kirewire] Failed to create socket client:", error);

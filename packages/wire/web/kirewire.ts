@@ -23,14 +23,32 @@ export interface WireAdapter {
 		files: FileList | File[],
 		onProgress?: (progress: any) => void,
 	): Promise<any>;
+	liveInit?(
+		name: string,
+		locals?: Record<string, any>,
+		options?: { pageId?: string },
+	): Promise<any>;
+	liveSave?(
+		componentId: string,
+		state: Record<string, any>,
+		options?: { pageId?: string },
+	): Promise<any>;
 	reconfigure?(config: Partial<WireClientConfig>): void;
 	abortAllRequests?(): void;
 	setup?(): void;
 	destroy?(): void;
 }
 
+export interface WireLiveHandle {
+	loading: boolean;
+	ready: boolean;
+	error: any;
+	save(): Promise<any>;
+}
+
 export interface WireClientConfig {
 	pageId?: string;
+	sessionId?: string;
 	url?: string;
 	uploadUrl?: string;
 	previewUrl?: string;
@@ -123,6 +141,10 @@ function cloneWireValue<T>(value: T): T {
 	}
 }
 
+function isObjectLike(value: any): value is Record<string, any> {
+	return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
 function collectionKeyOf(value: any, key: string): string | number | undefined {
 	if (value == null || typeof value !== "object") return undefined;
 	const resolved = value[key];
@@ -163,13 +185,27 @@ export class KirewireClient extends EventController {
 	private cleanupByElement = new WeakMap<HTMLElement, Array<() => void>>();
 	private navigationInFlight = false;
 	private config: Required<
-		Pick<WireClientConfig, "url" | "uploadUrl" | "previewUrl" | "transport">
+		Pick<
+			WireClientConfig,
+			"url" | "uploadUrl" | "previewUrl" | "transport" | "sessionId"
+		>
 	> = {
 		url: "/_wire",
 		uploadUrl: "/_wire/upload",
 		previewUrl: "/_wire/preview",
 		transport: "sse",
+		sessionId: "guest",
 	};
+	private readonly liveReservedProps = new Set([
+		"loading",
+		"ready",
+		"error",
+		"save",
+		"$id",
+		"$name",
+		"__target",
+		"__live",
+	]);
 
 	public directive(pattern: RegExp | string, handler: WireClientDirective) {
 		this.directives.push({ pattern, handler });
@@ -198,6 +234,9 @@ export class KirewireClient extends EventController {
 		}
 
 		const nextUrl = config.url ? String(config.url) : this.config.url;
+		const nextSessionId = config.sessionId
+			? String(config.sessionId)
+			: this.config.sessionId;
 		const nextUpload = config.uploadUrl
 			? String(config.uploadUrl)
 			: config.url
@@ -217,11 +256,13 @@ export class KirewireClient extends EventController {
 			uploadUrl: nextUpload,
 			previewUrl: nextPreview,
 			transport: nextTransport,
+			sessionId: nextSessionId,
 		};
 
 		if (this.adapter && typeof this.adapter.reconfigure === "function") {
 			this.adapter.reconfigure({
 				pageId: this.pageId,
+				sessionId: this.config.sessionId,
 				url: this.config.url,
 				uploadUrl: this.config.uploadUrl,
 				previewUrl: this.config.previewUrl,
@@ -344,6 +385,7 @@ export class KirewireClient extends EventController {
 					url: this.config.url,
 					uploadUrl: this.config.uploadUrl,
 					pageId: this.pageId,
+					sessionId: this.config.sessionId,
 					transport: transport,
 				});
 			} else {
@@ -358,6 +400,7 @@ export class KirewireClient extends EventController {
 					url: this.config.url,
 					uploadUrl: this.config.uploadUrl,
 					pageId: this.pageId,
+					sessionId: this.config.sessionId,
 					transport: transport,
 				});
 			} else {
@@ -374,6 +417,7 @@ export class KirewireClient extends EventController {
 					url: this.config.url,
 					uploadUrl: this.config.uploadUrl,
 					pageId: this.pageId,
+					sessionId: this.config.sessionId,
 					transport: this.config.transport,
 				});
 			}
@@ -608,6 +652,212 @@ export class KirewireClient extends EventController {
 			this.emitSync("component:error", { ...callMeta, error });
 			throw error;
 		}
+	}
+
+	public live(
+		name: string,
+		locals: Record<string, any> = {},
+	): WireLiveHandle & Record<string, any> {
+		const componentName = String(name || "").trim();
+		if (!componentName) {
+			throw new Error("Live component name is required.");
+		}
+		if (!isObjectLike(locals)) {
+			throw new Error("Live component locals must be an object.");
+		}
+
+		const target: Record<string, any> = this.createReactiveTarget();
+		target.loading = true;
+		target.ready = false;
+		target.error = null;
+		target.$id = "";
+		target.$name = componentName;
+		target.__live = true;
+
+		let liveId = "";
+		const syncState = (state: any) => {
+			if (!isObjectLike(state)) return;
+			const keys = Object.keys(state);
+			for (let i = 0; i < keys.length; i++) {
+				const key = keys[i]!;
+				if (this.liveReservedProps.has(key)) continue;
+				target[key] = cloneWireValue(state[key]);
+			}
+		};
+
+		const initPromise = this.requestLiveInit(componentName, locals)
+			.then((payload) => {
+				liveId = String(payload?.id || "").trim();
+				if (!liveId) {
+					throw new Error(
+						`Live init for "${componentName}" returned an invalid component id.`,
+					);
+				}
+
+				target.$id = liveId;
+				syncState(payload?.state || {});
+				target.ready = true;
+				target.loading = false;
+				target.error = null;
+
+				if (!this.components.has(liveId)) {
+					const proxy = this.liveProxyFromTarget(
+						target,
+						syncState,
+						() => initPromise,
+					);
+					this.components.set(liveId, proxy);
+				}
+			})
+			.catch((error) => {
+				target.loading = false;
+				target.ready = false;
+				target.error = error;
+				throw error;
+			});
+
+		return this.liveProxyFromTarget(target, syncState, () => initPromise);
+	}
+
+	private liveProxyFromTarget(
+		target: Record<string, any>,
+		syncState: (state: any) => void,
+		getInitPromise: () => Promise<any>,
+	): WireLiveHandle & Record<string, any> {
+		const runAction = async (method: string, args: any[]) => {
+			await getInitPromise();
+			const id = String(target.$id || "").trim();
+			if (!id) throw new Error("Live component is not ready.");
+			const result = await this.liveCall(id, method, args);
+
+			if (isObjectLike(result?.state)) {
+				syncState(result.state);
+			}
+			if (Array.isArray(result?.effects)) {
+				this.processEffects(result.effects, id);
+			}
+			return result;
+		};
+
+		const saveState = async () => {
+			await getInitPromise();
+			const id = String(target.$id || "").trim();
+			if (!id) throw new Error("Live component is not ready.");
+			const payload = this.extractLiveClientState(target);
+			const result = await this.requestLiveSave(id, payload);
+			if (isObjectLike(result?.state)) {
+				syncState(result.state);
+			}
+			if (Array.isArray(result?.effects)) {
+				this.processEffects(result.effects, id);
+			}
+			return result;
+		};
+
+		return new Proxy(target, {
+			get: (_inner, prop: string) => {
+				if (prop === "__target") return target;
+				if (prop === "save") return saveState;
+				if (prop in target) return target[prop];
+
+				return (...args: any[]) => runAction(String(prop), args);
+			},
+			set: (_inner, prop: string, value: any) => {
+				target[String(prop)] = value;
+				return true;
+			},
+		}) as WireLiveHandle & Record<string, any>;
+	}
+
+	private async liveCall(componentId: string, method: string, params: any[]) {
+		if (!this.ensureAdapter()) {
+			throw new Error(
+				"[Kirewire] No adapter configured. Provide one before calling live actions.",
+			);
+		}
+		return this.adapter.call(componentId, method, params);
+	}
+
+	private extractLiveClientState(target: Record<string, any>) {
+		const state: Record<string, any> = Object.create(null);
+		const keys = Object.keys(target);
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]!;
+			if (this.liveReservedProps.has(key)) continue;
+			if (key.startsWith("$") || key.startsWith("_")) continue;
+			const value = target[key];
+			if (typeof value === "function") continue;
+			state[key] = cloneWireValue(value);
+		}
+		return state;
+	}
+
+	private async requestLiveInit(
+		name: string,
+		locals: Record<string, any>,
+	): Promise<any> {
+		const pageId = this.pageId || "default-page";
+
+		if (this.adapter && typeof this.adapter.liveInit === "function") {
+			return this.adapter.liveInit(name, locals, { pageId });
+		}
+
+		const response = await fetch(
+			`${trimTrailingSlash(this.config.url)}/live/init`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "same-origin",
+				body: JSON.stringify({ name, locals, pageId }),
+			},
+		);
+
+		const payload = await this.parseLiveResponse(response, "init");
+		return payload;
+	}
+
+	private async requestLiveSave(
+		componentId: string,
+		state: Record<string, any>,
+	): Promise<any> {
+		const pageId = this.pageId || "default-page";
+
+		if (this.adapter && typeof this.adapter.liveSave === "function") {
+			return this.adapter.liveSave(componentId, state, { pageId });
+		}
+
+		const response = await fetch(
+			`${trimTrailingSlash(this.config.url)}/live/save`,
+			{
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				credentials: "same-origin",
+				body: JSON.stringify({ id: componentId, state, pageId }),
+			},
+		);
+
+		const payload = await this.parseLiveResponse(response, "save");
+		return payload;
+	}
+
+	private async parseLiveResponse(response: Response, phase: "init" | "save") {
+		let parsed: any = null;
+		try {
+			parsed = await response.json();
+		} catch {}
+
+		if (!response.ok) {
+			const serverError =
+				String(parsed?.error || parsed?.result?.error || "").trim() ||
+				`Live ${phase} request failed (${response.status}).`;
+			throw new Error(serverError);
+		}
+
+		if (parsed && typeof parsed === "object" && "result" in parsed) {
+			return parsed.result;
+		}
+
+		return parsed;
 	}
 
 	private normalizeAction(method: string, params: any[]) {

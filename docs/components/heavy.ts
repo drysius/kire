@@ -1,7 +1,9 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire, Variable } from "../lib/wire";
+@Wire({ name: "heavy" })
 export default class Heavy extends Component {
+	@Variable("boolean")
 	public loaded = false;
+	@Variable("array")
 	public data: string[] = [];
 
 	async load() {

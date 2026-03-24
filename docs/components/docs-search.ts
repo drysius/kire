@@ -1,11 +1,15 @@
-import { Component } from "../lib/wire";
+import { Component, Wire, Variable } from "../lib/wire";
 import { searchDocs, type DocsPage } from "../lib/docs-index";
 
 type DocsResult = Pick<DocsPage, "id" | "href" | "title" | "section" | "summary">;
 
+@Wire({ name: "docs-search" })
 export default class DocsSearch extends Component {
+    @Variable("string")
     public query = "";
+    @Variable("string")
     public placeholder = "Search docs, directives, packages...";
+    @Variable("number")
     public limit = 8;
 
     get trimmedQuery(): string {

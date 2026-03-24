@@ -1,5 +1,5 @@
-import { Component } from "../lib/wire";
-
+import { Component, Wire } from "../lib/wire";
+@Wire({ name: "streamer" })
 export default class Streamer extends Component {
 	async addLog() {
 		const time = new Date().toLocaleTimeString();

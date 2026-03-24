@@ -1,9 +1,10 @@
-import { createReadStream, existsSync, readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { createReadStream, existsSync, readFileSync, statSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Adapter } from "../adapter";
+import { Component } from "../component";
 import { FileStore } from "../features/file-store";
-import { WireProperty } from "../wire-property";
+import { WireBroadcast } from "../features/wire-broadcast";
 
 type HandleRequestInput = {
 	method: string;
@@ -24,12 +25,25 @@ type HttpAdapterOptions = {
 	fileStore?: FileStore;
 	tempDir?: string;
 	maxUploadBytes?: number;
+	autoClean?: boolean;
 };
 
 const BLOCKED_SET_PATH_SEGMENTS = new Set([
 	"__proto__",
 	"constructor",
 	"prototype",
+]);
+
+const RESERVED_REMOTE_ACTIONS = new Set([
+	"constructor",
+	"render",
+	"mount",
+	"unmount",
+	"view",
+	"fill",
+	"validate",
+	"rule",
+	"getPublicState",
 ]);
 
 function normalizeRoute(route: string): string {
@@ -49,6 +63,7 @@ export class HttpAdapter extends Adapter {
 	private fileStore: FileStore;
 	private ownsFileStore: boolean;
 	private maxUploadBytes: number;
+	private autoCleanOnSetup: boolean;
 
 	constructor(options: HttpAdapterOptions = {}) {
 		super();
@@ -58,12 +73,18 @@ export class HttpAdapter extends Adapter {
 			new FileStore(options.tempDir || "node_modules/.kirewire_uploads");
 		this.ownsFileStore = !options.fileStore;
 		this.maxUploadBytes = this.normalizeMaxUploadBytes(options.maxUploadBytes);
+		this.autoCleanOnSetup = options.autoClean === true;
 	}
 
 	setup() {
+		if (this.autoCleanOnSetup) {
+			this.autoCleanUploads();
+		}
+
 		console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
 		this.wire.reference("wire:url", () => this.getClientUrl());
 		this.wire.reference("wire:upload-url", () => this.getUploadUrl());
+		this.wire.reference("wire:upload-move-url", () => this.getUploadMoveUrl());
 		this.wire.reference("wire:preview-url", () => this.getPreviewUrl());
 		this.wire.reference("wire:sse-url", () => `${this.route}/sse`);
 		this.wire.reference("wire:session-url", () => `${this.route}/session`);
@@ -81,6 +102,10 @@ export class HttpAdapter extends Adapter {
 		return `${this.route}/upload`;
 	}
 
+	public getUploadMoveUrl() {
+		return `${this.route}/upload/move`;
+	}
+
 	public getPreviewUrl() {
 		return `${this.route}/preview`;
 	}
@@ -91,7 +116,7 @@ export class HttpAdapter extends Adapter {
 	public async handleRequest(
 		req: HandleRequestInput,
 		userId: string,
-		_sessionId: string,
+		sessionId: string,
 	) {
 		const url = new URL(req.url, "http://localhost");
 
@@ -101,6 +126,10 @@ export class HttpAdapter extends Adapter {
 
 		if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
 			return await this.handleUpload(req.body);
+		}
+
+		if (req.method === "POST" && url.pathname === `${this.route}/upload/move`) {
+			return await this.handleUploadMove(req.body);
 		}
 
 		if (req.method === "GET" && url.pathname === `${this.route}/preview`) {
@@ -125,18 +154,29 @@ export class HttpAdapter extends Adapter {
 				req,
 				url,
 				userId,
-				_sessionId,
+				sessionId,
 			);
+		}
+
+		if (req.method === "POST" && url.pathname === `${this.route}/live/init`) {
+			return await this.handleLiveInit(req.body, userId, sessionId);
+		}
+
+		if (req.method === "POST" && url.pathname === `${this.route}/live/save`) {
+			return await this.handleLiveSave(req.body, userId, sessionId);
 		}
 
 		if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
 			const pageId = String(url.searchParams.get("pageId") || "");
-			return this.handleSse(req, userId, pageId);
+			return this.handleSse(req, userId, pageId, sessionId);
 		}
 
 		if (req.method === "GET" && url.pathname === `${this.route}/session`) {
 			const pageId = String(url.searchParams.get("pageId") || "");
-			return this.handleSessionStatus(userId, pageId);
+			const querySessionId = String(
+				url.searchParams.get("sessionId") || sessionId || "",
+			);
+			return this.handleSessionStatus(userId, pageId, querySessionId);
 		}
 
 		if (req.method !== "POST") {
@@ -163,15 +203,17 @@ export class HttpAdapter extends Adapter {
 			const action = actions[i] as ActionPayload;
 			try {
 				const { id, method, params } = action;
-				const page = this.wire.sessions.getPage(userId, pageId);
+				const page = this.wire.sessions.getPage(userId, pageId, sessionId);
 				const instance = page.components.get(id) as any;
 
 				if (!instance) {
-					console.error(
-						`[HttpAdapter] Component ${id} not found for userId=${userId} pageId=${pageId}. Available components in this page:`,
-						Array.from(page.components.keys()),
-					);
-					throw new Error(`Component ${id} not found.`);
+					results.push({
+						id,
+						reload: true,
+						reason: "component-missing",
+						message: "Component no longer exists. Reload required.",
+					});
+					continue;
 				}
 
 				// Reset side effects only once per component in each batch.
@@ -191,7 +233,7 @@ export class HttpAdapter extends Adapter {
 
 		// 2. Final render and SSE emit for each modified component
 		for (const id of modifiedComponents) {
-			const page = this.wire.sessions.getPage(userId, pageId);
+			const page = this.wire.sessions.getPage(userId, pageId, sessionId);
 			const instance = page.components.get(id) as any;
 			if (!instance) continue;
 
@@ -203,11 +245,12 @@ export class HttpAdapter extends Adapter {
 			// Emit single update per component
 			await this.wire.emit("component:update", {
 				userId,
+				sessionId,
 				pageId,
 				id,
 				...payload,
 			});
-			modifiedRefs.add(this.buildComponentRef(userId, pageId, id));
+			modifiedRefs.add(this.buildComponentRef(userId, sessionId, pageId, id));
 
 			for (let i = results.length - 1; i >= 0; i--) {
 				if (results[i].id === id && !results[i].error) {
@@ -299,6 +342,135 @@ export class HttpAdapter extends Adapter {
 		}
 	}
 
+	private async handleLiveInit(
+		body: any,
+		userId: string,
+		sessionId: string,
+	) {
+		const componentName = String(body?.name || "").trim();
+		if (!componentName) {
+			return {
+				status: 400,
+				headers: { "Content-Type": "application/json" },
+				result: { error: "Live component name is required." },
+			};
+		}
+
+		const ComponentClass = this.wire.components.get(componentName);
+		if (!ComponentClass) {
+			return {
+				status: 404,
+				headers: { "Content-Type": "application/json" },
+				result: { error: `Component "${componentName}" not found.` },
+			};
+		}
+
+		const pageId = String(body?.pageId || "default-page");
+		const locals =
+			body?.locals && typeof body.locals === "object" ? body.locals : {};
+
+		try {
+			const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+			const id = this.wire.createComponentId();
+			const instance = new ComponentClass() as any;
+			instance.$id = id;
+			instance.$kire = this.kire;
+			instance.$wire_instance = this.wire;
+			instance.$wire_scope_id = sessionId;
+			instance.$wire_page_id = pageId;
+
+			const listenerCleanup = this.wire.bindComponentListeners(instance, {
+				userId,
+				pageId,
+				id,
+			});
+			this.wire.attachLifecycleGuards(instance, listenerCleanup);
+			this.wire.applySafeLocals(instance, locals);
+			await instance.mount();
+
+			page.components.set(id, instance);
+			const state =
+				typeof instance.getPublicState === "function"
+					? instance.getPublicState()
+					: {};
+
+			return {
+				status: 200,
+				headers: { "Content-Type": "application/json" },
+				result: {
+					id,
+					state,
+					ready: true,
+				},
+			};
+		} catch (error: any) {
+			return {
+				status: 500,
+				headers: { "Content-Type": "application/json" },
+				result: {
+					error: String(error?.message || "Failed to init live component."),
+				},
+			};
+		}
+	}
+
+	private async handleLiveSave(
+		body: any,
+		userId: string,
+		sessionId: string,
+	) {
+		const id = String(body?.id || "").trim();
+		if (!id) {
+			return {
+				status: 400,
+				headers: { "Content-Type": "application/json" },
+				result: { error: "Live component id is required." },
+			};
+		}
+
+		const pageId = String(body?.pageId || "default-page");
+		const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+		const instance = page.components.get(id) as any;
+		if (!instance) {
+			return {
+				status: 404,
+				headers: { "Content-Type": "application/json" },
+				result: { error: `Component ${id} not found.` },
+			};
+		}
+
+		const nextState =
+			body?.state && typeof body.state === "object" ? body.state : {};
+
+		if (typeof instance.$clearEffects === "function") {
+			instance.$clearEffects();
+		}
+
+		const keys = Object.keys(nextState);
+		for (let i = 0; i < keys.length; i++) {
+			const key = keys[i]!;
+			if (!this.isWritableSetPath(instance, key)) continue;
+			const value = nextState[key];
+			instance.$set(key, value);
+			await this.runUpdatedHooks(instance, key, value);
+		}
+
+		const payload = await this.renderComponentPayload(id, instance);
+		await this.wire.emit("component:update", {
+			userId,
+			sessionId,
+			pageId,
+			id,
+			...payload,
+		});
+
+		return {
+			status: 200,
+			headers: { "Content-Type": "application/json" },
+			result: payload,
+		};
+	}
+
 	private async handleUpload(body: any) {
 		const files = this.extractFilesFromBody(body);
 		if (!files.length) {
@@ -366,6 +538,73 @@ export class HttpAdapter extends Adapter {
 		return { status: 200, result: { files: uploaded } };
 	}
 
+	private async handleUploadMove(body: any) {
+		const entries = this.extractUploadMoveEntries(body);
+		if (!entries.length) {
+			return {
+				status: 400,
+				result: { error: "No upload move entries provided." },
+			};
+		}
+
+		const moved: Array<{
+			id: string;
+			path: string;
+			name: string;
+			size: number;
+		}> = [];
+		const failed: Array<{ id: string; error: string }> = [];
+
+		for (let i = 0; i < entries.length; i++) {
+			const entry = entries[i]!;
+			const id = String(entry.id || "").trim();
+			const destination = String(entry.destination || "").trim();
+			if (!id || !destination) {
+				failed.push({
+					id,
+					error: "Upload move entry requires id and destination.",
+				});
+				continue;
+			}
+
+			let nextPath: string | null = null;
+			try {
+				nextPath = this.fileStore.move(id, destination, {
+					overwrite: entry.overwrite === true,
+					keepName: entry.keepName !== false,
+				});
+			} catch (error: any) {
+				failed.push({
+					id,
+					error: String(error?.message || "Failed to move upload."),
+				});
+				continue;
+			}
+
+			if (!nextPath) {
+				failed.push({
+					id,
+					error: "Upload not found or destination is invalid.",
+				});
+				continue;
+			}
+
+			const stats = statSync(nextPath);
+			moved.push({
+				id,
+				path: nextPath,
+				name: basename(nextPath),
+				size: Number(stats.size || 0),
+			});
+		}
+
+		const onlyFailed = failed.length > 0 && moved.length === 0;
+		return {
+			status: onlyFailed ? 400 : 200,
+			result: { moved, failed },
+		};
+	}
+
 	private handlePreview(url: URL) {
 		const id = String(url.searchParams.get("id") || "").trim();
 		if (!id) {
@@ -385,7 +624,6 @@ export class HttpAdapter extends Adapter {
 			};
 		}
 
-		const explicitMime = String(url.searchParams.get("mime") || "").trim();
 		const ext = filePath.split(".").pop()?.toLowerCase() || "";
 		const typeByExt: Record<string, string> = {
 			jpg: "image/jpeg",
@@ -408,8 +646,8 @@ export class HttpAdapter extends Adapter {
 			status: 200,
 			headers: {
 				"Cache-Control": "no-store",
-				"Content-Type":
-					explicitMime || typeByExt[ext] || "application/octet-stream",
+				"Content-Type": typeByExt[ext] || "application/octet-stream",
+				"X-Content-Type-Options": "nosniff",
 			},
 			result: createReadStream(filePath),
 		};
@@ -453,6 +691,67 @@ export class HttpAdapter extends Adapter {
 			}
 			return out.filter(Boolean);
 		}
+		return [];
+	}
+
+	private extractUploadMoveEntries(
+		body: any,
+	): Array<{
+		id: string;
+		destination: string;
+		overwrite?: boolean;
+		keepName?: boolean;
+	}> {
+		if (!body || typeof body !== "object") return [];
+
+		const destination = String((body as any).destination || "").trim();
+		const overwrite = (body as any).overwrite === true;
+		const keepName = (body as any).keepName !== false;
+		const out: Array<{
+			id: string;
+			destination: string;
+			overwrite?: boolean;
+			keepName?: boolean;
+		}> = [];
+
+		if (Array.isArray((body as any).moves)) {
+			const moves = (body as any).moves as any[];
+			for (let i = 0; i < moves.length; i++) {
+				const move = moves[i];
+				if (!move || typeof move !== "object") continue;
+				out.push({
+					id: String((move as any).id || "").trim(),
+					destination: String(
+						(move as any).destination || destination || "",
+					).trim(),
+					overwrite:
+						(move as any).overwrite === undefined
+							? overwrite
+							: (move as any).overwrite === true,
+					keepName:
+						(move as any).keepName === undefined
+							? keepName
+							: (move as any).keepName !== false,
+				});
+			}
+			return out.filter((item) => item.id && item.destination);
+		}
+
+		if (Array.isArray((body as any).ids)) {
+			const ids = (body as any).ids as any[];
+			for (let i = 0; i < ids.length; i++) {
+				const id = String(ids[i] || "").trim();
+				if (!id || !destination) continue;
+				out.push({ id, destination, overwrite, keepName });
+			}
+			return out;
+		}
+
+		const id = String((body as any).id || "").trim();
+		if (id && destination) {
+			return [{ id, destination, overwrite, keepName }];
+		}
+
 		return [];
 	}
 
@@ -578,13 +877,40 @@ export class HttpAdapter extends Adapter {
 			throw new Error(`Internal method "${name}" is not callable.`);
 		}
 
-		if (typeof instance[name] !== "function") {
-			throw new Error(
-				`Method "${name}" not found on component ${instance.$id}.`,
-			);
+		if (!this.isAllowedActionMethod(instance, name)) {
+			throw new Error(`Method "${name}" is not callable.`);
 		}
 
 		await instance[name](...callParams);
+	}
+
+	private isAllowedActionMethod(instance: any, name: string): boolean {
+		if (!instance || !name) return false;
+		if (RESERVED_REMOTE_ACTIONS.has(name)) return false;
+		if (typeof instance[name] !== "function") return false;
+
+		// Optional explicit allowlist: component.$actions = ["increment", "save"]
+		const exposed = instance.$actions;
+		if (Array.isArray(exposed) && exposed.length > 0) {
+			return exposed.includes(name);
+		}
+
+		// Accept instance-owned function properties (e.g. class fields with arrow fn).
+		if (Object.hasOwn(instance, name)) {
+			return true;
+		}
+
+		// Accept prototype methods declared by user components, but reject base
+		// helper methods inherited from Component.
+		let proto = Object.getPrototypeOf(instance);
+		while (proto && proto !== Object.prototype) {
+			if (Object.hasOwn(proto, name)) {
+				return proto !== Component.prototype;
+			}
+			proto = Object.getPrototypeOf(proto);
+		}
+
+		return false;
 	}
 
 	private isWritableSetPath(instance: any, property: string): boolean {
@@ -648,7 +974,12 @@ export class HttpAdapter extends Adapter {
 		await callHook("updated", [value, property]);
 	}
 
-	private handleSse(req: HandleRequestInput, userId: string, pageId?: string) {
+	private handleSse(
+		req: HandleRequestInput,
+		userId: string,
+		pageId?: string,
+		sessionId?: string,
+	) {
 		const encoder = new TextEncoder();
 		const stream = new ReadableStream({
 			start: (controller) => {
@@ -662,6 +993,8 @@ export class HttpAdapter extends Adapter {
 				controller.enqueue(encoder.encode(": connected\n\n"));
 				const cleanup = this.wire.on("component:update", (data: any) => {
 					if (data.userId !== userId) return;
+					if (sessionId && data.sessionId && data.sessionId !== sessionId)
+						return;
 					if (pageId && data.pageId !== pageId) return;
 					send({ type: "update", ...data });
 				});
@@ -693,10 +1026,15 @@ export class HttpAdapter extends Adapter {
 		};
 	}
 
-	private handleSessionStatus(userId: string, pageId?: string) {
-		const active = this.wire.sessions.hasActiveSession(userId);
+	private handleSessionStatus(
+		userId: string,
+		pageId?: string,
+		sessionId?: string,
+	) {
+		const sessionKey = String(sessionId || userId || "").trim();
+		const active = this.wire.sessions.hasActiveSession(sessionKey);
 		const pageActive = pageId
-			? this.wire.sessions.hasActivePage(userId, pageId)
+			? this.wire.sessions.hasActivePage(sessionKey, pageId)
 			: active;
 		const status = active && pageActive ? 200 : 410;
 
@@ -718,12 +1056,12 @@ export class HttpAdapter extends Adapter {
 		const activePages = this.wire.sessions.getActivePages();
 
 		for (let i = 0; i < activePages.length; i++) {
-			const { userId, pageId, page } = activePages[i];
+			const { userId, sessionId, pageId, page } = activePages[i];
 			const entries = Array.from(page.components.entries());
 
 			for (let j = 0; j < entries.length; j++) {
 				const [id, instance] = entries[j];
-				const ref = this.buildComponentRef(userId, pageId, id);
+				const ref = this.buildComponentRef(userId, sessionId, pageId, id);
 				if (skipRefs.has(ref)) continue;
 
 				const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
@@ -737,10 +1075,10 @@ export class HttpAdapter extends Adapter {
 				const keys = Object.keys(typedInstance);
 				for (let k = 0; k < keys.length; k++) {
 					const val = typedInstance[keys[k]!];
-					if (val instanceof WireProperty && val.__wire_type === "broadcast") {
-						const roomId = (val as any).getRoomId?.();
+					if (val instanceof WireBroadcast) {
+						const roomId = val.getRoomId();
 						if (roomIds.has(roomId)) {
-							(val as any).serverHydrate?.(instance);
+							val.serverHydrate(instance);
 						}
 					}
 				}
@@ -748,6 +1086,7 @@ export class HttpAdapter extends Adapter {
 				const payload = await this.renderComponentPayload(id, instance);
 				await this.wire.emit("component:update", {
 					userId,
+					sessionId,
 					pageId,
 					id,
 					...payload,
@@ -762,7 +1101,7 @@ export class HttpAdapter extends Adapter {
 
 		const state = instance.getPublicState();
 		const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-		const skipRender = Boolean(instance.__skipRender);
+		const skipRender = Boolean(instance.__skipRender || instance.$live);
 		instance.__skipRender = false;
 		let html = "";
 
@@ -779,8 +1118,8 @@ export class HttpAdapter extends Adapter {
 		const keys = Object.keys(instance);
 		for (let i = 0; i < keys.length; i++) {
 			const value = instance[keys[i]];
-			if (value instanceof WireProperty && value.__wire_type === "broadcast") {
-				const roomId = (value as any).getRoomId?.();
+			if (value instanceof WireBroadcast) {
+				const roomId = value.getRoomId();
 				if (roomId) out.push(roomId);
 			}
 		}
@@ -795,7 +1134,7 @@ export class HttpAdapter extends Adapter {
 		const keys = Object.keys(instance);
 		for (let i = 0; i < keys.length; i++) {
 			const value = instance[keys[i]];
-			if (value instanceof WireProperty && value.__wire_type === "broadcast") {
+			if (value instanceof WireBroadcast) {
 				const roomId = value.getRoomId();
 				if (roomId && roomIds.has(roomId)) out.push(roomId);
 			}
@@ -803,8 +1142,13 @@ export class HttpAdapter extends Adapter {
 		return out;
 	}
 
-	private buildComponentRef(userId: string, pageId: string, id: string) {
-		return `${userId}::${pageId}::${id}`;
+	private buildComponentRef(
+		userId: string,
+		sessionId: string,
+		pageId: string,
+		id: string,
+	) {
+		return `${userId}::${sessionId}::${pageId}::${id}`;
 	}
 
 	private handleClientScript() {
@@ -863,7 +1207,7 @@ export class HttpAdapter extends Adapter {
 		}
 
 		console.error(
-			"[Kirewire] Client script not found. Expected dist/client/wire.js",
+			"[Kirewire] Client script not found. Expected dist/client/wire.js (tip: run `bun run build.ts` in packages/wire).",
 		);
 		return `console.error("[Kirewire] Client script not found.");`;
 	}
@@ -886,6 +1230,15 @@ export class HttpAdapter extends Adapter {
 			current = parent;
 		}
 		return null;
+	}
+
+	public autoCleanUploads() {
+		if (
+			this.fileStore &&
+			typeof (this.fileStore as any).clearStorage === "function"
+		) {
+			(this.fileStore as any).clearStorage();
+		}
 	}
 
 	public destroy() {

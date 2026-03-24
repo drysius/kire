@@ -1,5 +1,5 @@
 // @bun
-// ../../packages/wire/fivem/client.ts
+// packages/wire/fivem/client.ts
 var runtimeConfig = globalThis.__KIREWIRE_FIVEM_CONFIG__;
 var config = {
   callEvent: String(runtimeConfig?.callEvent || "kirewire:call"),

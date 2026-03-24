@@ -77,18 +77,17 @@ export default (kire: Kire<any>) => {
                 const $slots = new this.NullProtoObj();
                 const _oldRes${id} = $kire_response; $kire_response = "";`);
 			api.renderChildren();
-			api.write(`
-                if (!$slots.default) $slots.default = $kire_response;
-                $kire_response = _oldRes${id};
-                const _oldProps${id} = $props;
-                $props = Object.assign(Object.create($globals), _oldProps${id}, ${locals}, { slots: $slots });
-                
-                const _dep${id} = ${depId};
-                const res${id} = _dep${id}.call(this, $props, $globals, _dep${id});
-                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
+				api.write(`
+	                if (!$slots.default) $slots.default = $kire_response;
+	                $kire_response = _oldRes${id};
+	                const _oldProps${id} = $props;
+	                $props = Object.assign(Object.create($globals), _oldProps${id}, ${locals}, { slots: $slots });
+	                
+	                const res${id} = ${depId}.call(this, $props, $globals, ${depId});
+	                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
 
-                $props = _oldProps${id};
-            }`);
+	                $props = _oldProps${id};
+	            }`);
 		},
 	});
 

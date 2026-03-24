@@ -66,17 +66,19 @@ export default (kire: Kire<any>) => {
 
 			api.write(`{
                 const _r${id} = ${items};
-                const _it${id} = Array.isArray(_r${id}) ? _r${id} : Object.entries(_r${id} || this.NullProtoObj);
+                const _it${id} = Array.isArray(_r${id})
+                    ? _r${id}
+                    : (_r${id} && typeof _r${id} === "object" ? Object.keys(_r${id}) : []);
                 const _len${id} = _it${id}.length;
                 if (_len${id} > 0) {
                     let ${id} = 0;
                     while (${id} < _len${id}) {
-                        const _e${id} = _it${id}[${id}];
-                        let ${finalAs} = Array.isArray(_r${id}) ? _e${id} : _e${id}[0];
+                        let ${finalAs} = _it${id}[${id}];
                         ${shouldExposeIndex ? `let ${finalIndex} = ${id};` : ""}
                         ${shouldExposeLoop ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ""}`);
 			api.renderChildren();
-			api.write(`    ${id}++;
+			api.write(`
+                        ${id}++;
                     }
                 }`);
 			if (hasEmptyBranch) {

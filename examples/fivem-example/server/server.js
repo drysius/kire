@@ -44,84 +44,84 @@ var __export = (target, all) => {
 };
 var __esm = (fn2, res) => () => (fn2 && (res = fn2(fn2 = 0)), res);
 
-// ../../node_modules/.bun/es-object-atoms@1.1.1/node_modules/es-object-atoms/index.js
+// node_modules/.bun/es-object-atoms@1.1.1/node_modules/es-object-atoms/index.js
 var require_es_object_atoms = __commonJS((exports2, module2) => {
   module2.exports = Object;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/index.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/index.js
 var require_es_errors = __commonJS((exports2, module2) => {
   module2.exports = Error;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/eval.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/eval.js
 var require_eval = __commonJS((exports2, module2) => {
   module2.exports = EvalError;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/range.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/range.js
 var require_range = __commonJS((exports2, module2) => {
   module2.exports = RangeError;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/ref.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/ref.js
 var require_ref = __commonJS((exports2, module2) => {
   module2.exports = ReferenceError;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/syntax.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/syntax.js
 var require_syntax = __commonJS((exports2, module2) => {
   module2.exports = SyntaxError;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/type.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/type.js
 var require_type = __commonJS((exports2, module2) => {
   module2.exports = TypeError;
 });
 
-// ../../node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/uri.js
+// node_modules/.bun/es-errors@1.3.0/node_modules/es-errors/uri.js
 var require_uri = __commonJS((exports2, module2) => {
   module2.exports = URIError;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/abs.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/abs.js
 var require_abs = __commonJS((exports2, module2) => {
   module2.exports = Math.abs;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/floor.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/floor.js
 var require_floor = __commonJS((exports2, module2) => {
   module2.exports = Math.floor;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/max.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/max.js
 var require_max = __commonJS((exports2, module2) => {
   module2.exports = Math.max;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/min.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/min.js
 var require_min = __commonJS((exports2, module2) => {
   module2.exports = Math.min;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/pow.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/pow.js
 var require_pow = __commonJS((exports2, module2) => {
   module2.exports = Math.pow;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/round.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/round.js
 var require_round = __commonJS((exports2, module2) => {
   module2.exports = Math.round;
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/isNaN.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/isNaN.js
 var require_isNaN = __commonJS((exports2, module2) => {
   module2.exports = Number.isNaN || function isNaN2(a) {
     return a !== a;
   };
 });
 
-// ../../node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/sign.js
+// node_modules/.bun/math-intrinsics@1.1.0/node_modules/math-intrinsics/sign.js
 var require_sign = __commonJS((exports2, module2) => {
   var $isNaN = require_isNaN();
   module2.exports = function sign(number) {
@@ -132,12 +132,12 @@ var require_sign = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/gopd@1.2.0/node_modules/gopd/gOPD.js
+// node_modules/.bun/gopd@1.2.0/node_modules/gopd/gOPD.js
 var require_gOPD = __commonJS((exports2, module2) => {
   module2.exports = Object.getOwnPropertyDescriptor;
 });
 
-// ../../node_modules/.bun/gopd@1.2.0/node_modules/gopd/index.js
+// node_modules/.bun/gopd@1.2.0/node_modules/gopd/index.js
 var require_gopd = __commonJS((exports2, module2) => {
   var $gOPD = require_gOPD();
   if ($gOPD) {
@@ -150,7 +150,7 @@ var require_gopd = __commonJS((exports2, module2) => {
   module2.exports = $gOPD;
 });
 
-// ../../node_modules/.bun/es-define-property@1.0.1/node_modules/es-define-property/index.js
+// node_modules/.bun/es-define-property@1.0.1/node_modules/es-define-property/index.js
 var require_es_define_property = __commonJS((exports2, module2) => {
   var $defineProperty = Object.defineProperty || false;
   if ($defineProperty) {
@@ -163,7 +163,7 @@ var require_es_define_property = __commonJS((exports2, module2) => {
   module2.exports = $defineProperty;
 });
 
-// ../../node_modules/.bun/has-symbols@1.1.0/node_modules/has-symbols/shams.js
+// node_modules/.bun/has-symbols@1.1.0/node_modules/has-symbols/shams.js
 var require_shams = __commonJS((exports2, module2) => {
   module2.exports = function hasSymbols() {
     if (typeof Symbol !== "function" || typeof Object.getOwnPropertySymbols !== "function") {
@@ -212,7 +212,7 @@ var require_shams = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/has-symbols@1.1.0/node_modules/has-symbols/index.js
+// node_modules/.bun/has-symbols@1.1.0/node_modules/has-symbols/index.js
 var require_has_symbols = __commonJS((exports2, module2) => {
   var origSymbol = typeof Symbol !== "undefined" && Symbol;
   var hasSymbolSham = require_shams();
@@ -233,18 +233,18 @@ var require_has_symbols = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/Reflect.getPrototypeOf.js
+// node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/Reflect.getPrototypeOf.js
 var require_Reflect_getPrototypeOf = __commonJS((exports2, module2) => {
   module2.exports = typeof Reflect !== "undefined" && Reflect.getPrototypeOf || null;
 });
 
-// ../../node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/Object.getPrototypeOf.js
+// node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/Object.getPrototypeOf.js
 var require_Object_getPrototypeOf = __commonJS((exports2, module2) => {
   var $Object = require_es_object_atoms();
   module2.exports = $Object.getPrototypeOf || null;
 });
 
-// ../../node_modules/.bun/function-bind@1.1.2/node_modules/function-bind/implementation.js
+// node_modules/.bun/function-bind@1.1.2/node_modules/function-bind/implementation.js
 var require_implementation = __commonJS((exports2, module2) => {
   var ERROR_MESSAGE = "Function.prototype.bind called on incompatible ";
   var toStr = Object.prototype.toString;
@@ -310,28 +310,28 @@ var require_implementation = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/function-bind@1.1.2/node_modules/function-bind/index.js
+// node_modules/.bun/function-bind@1.1.2/node_modules/function-bind/index.js
 var require_function_bind = __commonJS((exports2, module2) => {
   var implementation = require_implementation();
   module2.exports = Function.prototype.bind || implementation;
 });
 
-// ../../node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/functionCall.js
+// node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/functionCall.js
 var require_functionCall = __commonJS((exports2, module2) => {
   module2.exports = Function.prototype.call;
 });
 
-// ../../node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/functionApply.js
+// node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/functionApply.js
 var require_functionApply = __commonJS((exports2, module2) => {
   module2.exports = Function.prototype.apply;
 });
 
-// ../../node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/reflectApply.js
+// node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/reflectApply.js
 var require_reflectApply = __commonJS((exports2, module2) => {
   module2.exports = typeof Reflect !== "undefined" && Reflect && Reflect.apply;
 });
 
-// ../../node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/actualApply.js
+// node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/actualApply.js
 var require_actualApply = __commonJS((exports2, module2) => {
   var bind = require_function_bind();
   var $apply = require_functionApply();
@@ -340,7 +340,7 @@ var require_actualApply = __commonJS((exports2, module2) => {
   module2.exports = $reflectApply || bind.call($call, $apply);
 });
 
-// ../../node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/index.js
+// node_modules/.bun/call-bind-apply-helpers@1.0.2/node_modules/call-bind-apply-helpers/index.js
 var require_call_bind_apply_helpers = __commonJS((exports2, module2) => {
   var bind = require_function_bind();
   var $TypeError = require_type();
@@ -354,7 +354,7 @@ var require_call_bind_apply_helpers = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/dunder-proto@1.0.1/node_modules/dunder-proto/get.js
+// node_modules/.bun/dunder-proto@1.0.1/node_modules/dunder-proto/get.js
 var require_get = __commonJS((exports2, module2) => {
   var callBind = require_call_bind_apply_helpers();
   var gOPD = require_gopd();
@@ -374,7 +374,7 @@ var require_get = __commonJS((exports2, module2) => {
   } : false;
 });
 
-// ../../node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/index.js
+// node_modules/.bun/get-proto@1.0.1/node_modules/get-proto/index.js
 var require_get_proto = __commonJS((exports2, module2) => {
   var reflectGetProto = require_Reflect_getPrototypeOf();
   var originalGetProto = require_Object_getPrototypeOf();
@@ -391,7 +391,7 @@ var require_get_proto = __commonJS((exports2, module2) => {
   } : null;
 });
 
-// ../../node_modules/.bun/hasown@2.0.2/node_modules/hasown/index.js
+// node_modules/.bun/hasown@2.0.2/node_modules/hasown/index.js
 var require_hasown = __commonJS((exports2, module2) => {
   var call = Function.prototype.call;
   var $hasOwn = Object.prototype.hasOwnProperty;
@@ -399,7 +399,7 @@ var require_hasown = __commonJS((exports2, module2) => {
   module2.exports = bind.call(call, $hasOwn);
 });
 
-// ../../node_modules/.bun/get-intrinsic@1.3.0/node_modules/get-intrinsic/index.js
+// node_modules/.bun/get-intrinsic@1.3.0/node_modules/get-intrinsic/index.js
 var require_get_intrinsic = __commonJS((exports2, module2) => {
   var undefined2;
   var $Object = require_es_object_atoms();
@@ -725,7 +725,7 @@ var require_get_intrinsic = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/call-bound@1.0.4/node_modules/call-bound/index.js
+// node_modules/.bun/call-bound@1.0.4/node_modules/call-bound/index.js
 var require_call_bound = __commonJS((exports2, module2) => {
   var GetIntrinsic = require_get_intrinsic();
   var callBindBasic = require_call_bind_apply_helpers();
@@ -739,7 +739,7 @@ var require_call_bound = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/has-tostringtag@1.0.2/node_modules/has-tostringtag/shams.js
+// node_modules/.bun/has-tostringtag@1.0.2/node_modules/has-tostringtag/shams.js
 var require_shams2 = __commonJS((exports2, module2) => {
   var hasSymbols = require_shams();
   module2.exports = function hasToStringTagShams() {
@@ -747,7 +747,7 @@ var require_shams2 = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/is-regex@1.2.1/node_modules/is-regex/index.js
+// node_modules/.bun/is-regex@1.2.1/node_modules/is-regex/index.js
 var require_is_regex = __commonJS((exports2, module2) => {
   var callBound = require_call_bound();
   var hasToStringTag = require_shams2()();
@@ -801,7 +801,7 @@ var require_is_regex = __commonJS((exports2, module2) => {
   module2.exports = fn2;
 });
 
-// ../../node_modules/.bun/safe-regex-test@1.1.0/node_modules/safe-regex-test/index.js
+// node_modules/.bun/safe-regex-test@1.1.0/node_modules/safe-regex-test/index.js
 var require_safe_regex_test = __commonJS((exports2, module2) => {
   var callBound = require_call_bound();
   var isRegex = require_is_regex();
@@ -817,13 +817,13 @@ var require_safe_regex_test = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/generator-function@2.0.1/node_modules/generator-function/index.js
+// node_modules/.bun/generator-function@2.0.1/node_modules/generator-function/index.js
 var require_generator_function = __commonJS((exports2, module2) => {
   var cached = function* () {}.constructor;
   module2.exports = () => cached;
 });
 
-// ../../node_modules/.bun/is-generator-function@1.1.2/node_modules/is-generator-function/index.js
+// node_modules/.bun/is-generator-function@1.1.2/node_modules/is-generator-function/index.js
 var require_is_generator_function = __commonJS((exports2, module2) => {
   var callBound = require_call_bound();
   var safeRegexTest = require_safe_regex_test();
@@ -852,7 +852,7 @@ var require_is_generator_function = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/ms@2.1.3/node_modules/ms/index.js
+// node_modules/.bun/ms@2.1.3/node_modules/ms/index.js
 var require_ms = __commonJS((exports2, module2) => {
   var s = 1000;
   var m = s * 60;
@@ -962,7 +962,7 @@ var require_ms = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/debug@4.4.3/node_modules/debug/src/common.js
+// node_modules/.bun/debug@4.4.3/node_modules/debug/src/common.js
 var require_common = __commonJS((exports2, module2) => {
   function setup(env) {
     createDebug.debug = createDebug;
@@ -1137,7 +1137,7 @@ var require_common = __commonJS((exports2, module2) => {
   module2.exports = setup;
 });
 
-// ../../node_modules/.bun/debug@4.4.3/node_modules/debug/src/browser.js
+// node_modules/.bun/debug@4.4.3/node_modules/debug/src/browser.js
 var require_browser = __commonJS((exports2, module2) => {
   exports2.formatArgs = formatArgs;
   exports2.save = save;
@@ -1297,7 +1297,7 @@ var require_browser = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/has-flag@4.0.0/node_modules/has-flag/index.js
+// node_modules/.bun/has-flag@4.0.0/node_modules/has-flag/index.js
 var require_has_flag = __commonJS((exports2, module2) => {
   module2.exports = (flag, argv = process.argv) => {
     const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -1307,7 +1307,7 @@ var require_has_flag = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/supports-color@7.2.0/node_modules/supports-color/index.js
+// node_modules/.bun/supports-color@7.2.0/node_modules/supports-color/index.js
 var require_supports_color = __commonJS((exports2, module2) => {
   var os = require("os");
   var tty = require("tty");
@@ -1406,7 +1406,7 @@ var require_supports_color = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/debug@4.4.3/node_modules/debug/src/node.js
+// node_modules/.bun/debug@4.4.3/node_modules/debug/src/node.js
 var require_node = __commonJS((exports2, module2) => {
   var tty = require("tty");
   var util = require("util");
@@ -1577,7 +1577,7 @@ var require_node = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/debug@4.4.3/node_modules/debug/src/index.js
+// node_modules/.bun/debug@4.4.3/node_modules/debug/src/index.js
 var require_src = __commonJS((exports2, module2) => {
   if (typeof process === "undefined" || process.type === "renderer" || false || process.__nwjs) {
     module2.exports = require_browser();
@@ -1586,7 +1586,7 @@ var require_src = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/ee-first@1.1.1/node_modules/ee-first/index.js
+// node_modules/.bun/ee-first@1.1.1/node_modules/ee-first/index.js
 var require_ee_first = __commonJS((exports2, module2) => {
   /*!
    * ee-first
@@ -1644,7 +1644,7 @@ var require_ee_first = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/on-finished@2.4.1/node_modules/on-finished/index.js
+// node_modules/.bun/on-finished@2.4.1/node_modules/on-finished/index.js
 var require_on_finished = __commonJS((exports2, module2) => {
   /*!
    * on-finished
@@ -1756,7 +1756,7 @@ var require_on_finished = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/safe-buffer@5.2.1/node_modules/safe-buffer/index.js
+// node_modules/.bun/safe-buffer@5.2.1/node_modules/safe-buffer/index.js
 var require_safe_buffer = __commonJS((exports2, module2) => {
   /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
   var buffer = require("buffer");
@@ -1813,7 +1813,7 @@ var require_safe_buffer = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/content-disposition@0.5.4/node_modules/content-disposition/index.js
+// node_modules/.bun/content-disposition@0.5.4/node_modules/content-disposition/index.js
 var require_content_disposition = __commonJS((exports2, module2) => {
   /*!
    * content-disposition
@@ -1978,7 +1978,7 @@ var require_content_disposition = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/mime-db@1.52.0/node_modules/mime-db/db.json
+// node_modules/.bun/mime-db@1.52.0/node_modules/mime-db/db.json
 var require_db = __commonJS((exports2, module2) => {
   module2.exports = {
     "application/1d-interleaved-parityfec": {
@@ -10501,7 +10501,7 @@ var require_db = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/mime-db@1.52.0/node_modules/mime-db/index.js
+// node_modules/.bun/mime-db@1.52.0/node_modules/mime-db/index.js
 var require_mime_db = __commonJS((exports2, module2) => {
   /*!
    * mime-db
@@ -10512,7 +10512,7 @@ var require_mime_db = __commonJS((exports2, module2) => {
   module2.exports = require_db();
 });
 
-// ../../node_modules/.bun/mime-types@2.1.35/node_modules/mime-types/index.js
+// node_modules/.bun/mime-types@2.1.35/node_modules/mime-types/index.js
 var require_mime_types = __commonJS((exports2) => {
   /*!
    * mime-types
@@ -10606,7 +10606,7 @@ var require_mime_types = __commonJS((exports2) => {
   }
 });
 
-// ../../node_modules/.bun/ylru@1.4.0/node_modules/ylru/index.js
+// node_modules/.bun/ylru@1.4.0/node_modules/ylru/index.js
 var require_ylru = __commonJS((exports2, module2) => {
   class LRU {
     constructor(max) {
@@ -10701,7 +10701,7 @@ var require_ylru = __commonJS((exports2, module2) => {
   module2.exports = LRU;
 });
 
-// ../../node_modules/.bun/cache-content-type@1.0.1/node_modules/cache-content-type/index.js
+// node_modules/.bun/cache-content-type@1.0.1/node_modules/cache-content-type/index.js
 var require_cache_content_type = __commonJS((exports2, module2) => {
   var mimeTypes = require_mime_types();
   var LRU = require_ylru();
@@ -10716,7 +10716,7 @@ var require_cache_content_type = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/escape-html@1.0.3/node_modules/escape-html/index.js
+// node_modules/.bun/escape-html@1.0.3/node_modules/escape-html/index.js
 var require_escape_html = __commonJS((exports2, module2) => {
   /*!
    * escape-html
@@ -10767,7 +10767,7 @@ var require_escape_html = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/media-typer@0.3.0/node_modules/media-typer/index.js
+// node_modules/.bun/media-typer@0.3.0/node_modules/media-typer/index.js
 var require_media_typer = __commonJS((exports2) => {
   /*!
    * media-typer
@@ -10894,7 +10894,7 @@ var require_media_typer = __commonJS((exports2) => {
   }
 });
 
-// ../../node_modules/.bun/type-is@1.6.18/node_modules/type-is/index.js
+// node_modules/.bun/type-is@1.6.18/node_modules/type-is/index.js
 var require_type_is = __commonJS((exports2, module2) => {
   /*!
    * type-is
@@ -11002,7 +11002,7 @@ var require_type_is = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/statuses@1.5.0/node_modules/statuses/codes.json
+// node_modules/.bun/statuses@1.5.0/node_modules/statuses/codes.json
 var require_codes = __commonJS((exports2, module2) => {
   module2.exports = {
     "100": "Continue",
@@ -11072,7 +11072,7 @@ var require_codes = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/statuses@1.5.0/node_modules/statuses/index.js
+// node_modules/.bun/statuses@1.5.0/node_modules/statuses/index.js
 var require_statuses = __commonJS((exports2, module2) => {
   /*!
    * statuses
@@ -11137,7 +11137,7 @@ var require_statuses = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/destroy@1.2.0/node_modules/destroy/index.js
+// node_modules/.bun/destroy@1.2.0/node_modules/destroy/index.js
 var require_destroy = __commonJS((exports2, module2) => {
   /*!
    * destroy
@@ -11226,7 +11226,7 @@ var require_destroy = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/vary@1.1.2/node_modules/vary/index.js
+// node_modules/.bun/vary@1.1.2/node_modules/vary/index.js
 var require_vary = __commonJS((exports2, module2) => {
   /*!
    * vary
@@ -11301,7 +11301,7 @@ var require_vary = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/only@0.0.2/node_modules/only/index.js
+// node_modules/.bun/only@0.0.2/node_modules/only/index.js
 var require_only = __commonJS((exports2, module2) => {
   module2.exports = function(obj, keys) {
     obj = obj || {};
@@ -11316,7 +11316,7 @@ var require_only = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/encodeurl@1.0.2/node_modules/encodeurl/index.js
+// node_modules/.bun/encodeurl@1.0.2/node_modules/encodeurl/index.js
 var require_encodeurl = __commonJS((exports2, module2) => {
   /*!
    * encodeurl
@@ -11332,7 +11332,7 @@ var require_encodeurl = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/koa@2.16.4/node_modules/koa/lib/response.js
+// node_modules/.bun/koa@2.16.4/node_modules/koa/lib/response.js
 var require_response = __commonJS((exports2, module2) => {
   var contentDisposition = require_content_disposition();
   var getType = require_cache_content_type();
@@ -11584,7 +11584,7 @@ var require_response = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/koa-compose@4.1.0/node_modules/koa-compose/index.js
+// node_modules/.bun/koa-compose@4.1.0/node_modules/koa-compose/index.js
 var require_koa_compose = __commonJS((exports2, module2) => {
   module2.exports = compose;
   function compose(middleware) {
@@ -11616,7 +11616,7 @@ var require_koa_compose = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/callsite-tostring.js
+// node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/callsite-tostring.js
 var require_callsite_tostring = __commonJS((exports2, module2) => {
   /*!
    * depd
@@ -11690,7 +11690,7 @@ var require_callsite_tostring = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/event-listener-count.js
+// node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/event-listener-count.js
 var require_event_listener_count = __commonJS((exports2, module2) => {
   /*!
    * depd
@@ -11703,7 +11703,7 @@ var require_event_listener_count = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/index.js
+// node_modules/.bun/depd@1.1.2/node_modules/depd/lib/compat/index.js
 var require_compat = __commonJS((exports2, module2) => {
   /*!
    * depd
@@ -11750,7 +11750,7 @@ var require_compat = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/depd@1.1.2/node_modules/depd/index.js
+// node_modules/.bun/depd@1.1.2/node_modules/depd/index.js
 var require_depd = __commonJS((exports2, module2) => {
   /*!
    * depd
@@ -12059,7 +12059,7 @@ var require_depd = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/setprototypeof@1.2.0/node_modules/setprototypeof/index.js
+// node_modules/.bun/setprototypeof@1.2.0/node_modules/setprototypeof/index.js
 var require_setprototypeof = __commonJS((exports2, module2) => {
   module2.exports = Object.setPrototypeOf || ({ __proto__: [] } instanceof Array ? setProtoOf : mixinProperties);
   function setProtoOf(obj, proto) {
@@ -12076,7 +12076,7 @@ var require_setprototypeof = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/inherits@2.0.4/node_modules/inherits/inherits_browser.js
+// node_modules/.bun/inherits@2.0.4/node_modules/inherits/inherits_browser.js
 var require_inherits_browser = __commonJS((exports2, module2) => {
   if (typeof Object.create === "function") {
     module2.exports = function inherits(ctor, superCtor) {
@@ -12105,7 +12105,7 @@ var require_inherits_browser = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/inherits@2.0.4/node_modules/inherits/inherits.js
+// node_modules/.bun/inherits@2.0.4/node_modules/inherits/inherits.js
 var require_inherits = __commonJS((exports2, module2) => {
   try {
     util = require("util");
@@ -12118,7 +12118,7 @@ var require_inherits = __commonJS((exports2, module2) => {
   var util;
 });
 
-// ../../node_modules/.bun/toidentifier@1.0.1/node_modules/toidentifier/index.js
+// node_modules/.bun/toidentifier@1.0.1/node_modules/toidentifier/index.js
 var require_toidentifier = __commonJS((exports2, module2) => {
   /*!
    * toidentifier
@@ -12133,7 +12133,7 @@ var require_toidentifier = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/http-errors@1.8.1/node_modules/http-errors/index.js
+// node_modules/.bun/http-errors@1.8.1/node_modules/http-errors/index.js
 var require_http_errors = __commonJS((exports2, module2) => {
   /*!
    * http-errors
@@ -12307,7 +12307,7 @@ var require_http_errors = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/lib/keys.js
+// node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/lib/keys.js
 var require_keys = __commonJS((exports2, module2) => {
   exports2 = module2.exports = typeof Object.keys === "function" ? Object.keys : shim;
   exports2.shim = shim;
@@ -12319,7 +12319,7 @@ var require_keys = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/lib/is_arguments.js
+// node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/lib/is_arguments.js
 var require_is_arguments = __commonJS((exports2, module2) => {
   var supportsArgumentsClass = function() {
     return Object.prototype.toString.call(arguments);
@@ -12335,7 +12335,7 @@ var require_is_arguments = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/index.js
+// node_modules/.bun/deep-equal@1.0.1/node_modules/deep-equal/index.js
 var require_deep_equal = __commonJS((exports2, module2) => {
   var pSlice = Array.prototype.slice;
   var objectKeys = require_keys();
@@ -12414,7 +12414,7 @@ var require_deep_equal = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/http-assert@1.5.0/node_modules/http-assert/index.js
+// node_modules/.bun/http-assert@1.5.0/node_modules/http-assert/index.js
 var require_http_assert = __commonJS((exports2, module2) => {
   var createError = require_http_errors();
   var eql = require_deep_equal();
@@ -12450,7 +12450,7 @@ var require_http_assert = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/delegates@1.0.0/node_modules/delegates/index.js
+// node_modules/.bun/delegates@1.0.0/node_modules/delegates/index.js
 var require_delegates = __commonJS((exports2, module2) => {
   module2.exports = Delegator;
   function Delegator(proto, target) {
@@ -12509,7 +12509,7 @@ var require_delegates = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/depd@2.0.0/node_modules/depd/index.js
+// node_modules/.bun/depd@2.0.0/node_modules/depd/index.js
 var require_depd2 = __commonJS((exports2, module2) => {
   /*!
    * depd
@@ -12818,7 +12818,7 @@ var require_depd2 = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/tsscmp@1.0.6/node_modules/tsscmp/lib/index.js
+// node_modules/.bun/tsscmp@1.0.6/node_modules/tsscmp/lib/index.js
 var require_lib = __commonJS((exports2, module2) => {
   var crypto = require("crypto");
   function bufferEqual(a, b) {
@@ -12846,7 +12846,7 @@ var require_lib = __commonJS((exports2, module2) => {
   module2.exports = timeSafeCompare;
 });
 
-// ../../node_modules/.bun/keygrip@1.1.0/node_modules/keygrip/index.js
+// node_modules/.bun/keygrip@1.1.0/node_modules/keygrip/index.js
 var require_keygrip = __commonJS((exports2, module2) => {
   /*!
    * keygrip
@@ -12891,7 +12891,7 @@ var require_keygrip = __commonJS((exports2, module2) => {
   module2.exports = Keygrip;
 });
 
-// ../../node_modules/.bun/cookies@0.9.1/node_modules/cookies/index.js
+// node_modules/.bun/cookies@0.9.1/node_modules/cookies/index.js
 var require_cookies = __commonJS((exports2, module2) => {
   /*!
    * cookies
@@ -13088,7 +13088,7 @@ var require_cookies = __commonJS((exports2, module2) => {
   module2.exports = Cookies;
 });
 
-// ../../node_modules/.bun/koa@2.16.4/node_modules/koa/lib/context.js
+// node_modules/.bun/koa@2.16.4/node_modules/koa/lib/context.js
 var require_context = __commonJS((exports2, module2) => {
   var util = require("util");
   var createError = require_http_errors();
@@ -13171,7 +13171,7 @@ var require_context = __commonJS((exports2, module2) => {
   delegate(proto, "request").method("acceptsLanguages").method("acceptsEncodings").method("acceptsCharsets").method("accepts").method("get").method("is").access("querystring").access("idempotent").access("socket").access("search").access("method").access("query").access("path").access("url").access("accept").getter("origin").getter("href").getter("subdomains").getter("protocol").getter("host").getter("hostname").getter("URL").getter("header").getter("headers").getter("secure").getter("stale").getter("fresh").getter("ips").getter("ip");
 });
 
-// ../../node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/charset.js
+// node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/charset.js
 var require_charset = __commonJS((exports2, module2) => {
   module2.exports = preferredCharsets;
   module2.exports.preferredCharsets = preferredCharsets;
@@ -13256,7 +13256,7 @@ var require_charset = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/encoding.js
+// node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/encoding.js
 var require_encoding = __commonJS((exports2, module2) => {
   module2.exports = preferredEncodings;
   module2.exports.preferredEncodings = preferredEncodings;
@@ -13352,7 +13352,7 @@ var require_encoding = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/language.js
+// node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/language.js
 var require_language = __commonJS((exports2, module2) => {
   module2.exports = preferredLanguages;
   module2.exports.preferredLanguages = preferredLanguages;
@@ -13448,7 +13448,7 @@ var require_language = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/mediaType.js
+// node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/lib/mediaType.js
 var require_mediaType = __commonJS((exports2, module2) => {
   module2.exports = preferredMediaTypes;
   module2.exports.preferredMediaTypes = preferredMediaTypes;
@@ -13608,7 +13608,7 @@ var require_mediaType = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/index.js
+// node_modules/.bun/negotiator@0.6.3/node_modules/negotiator/index.js
 var require_negotiator = __commonJS((exports2, module2) => {
   /*!
    * negotiator
@@ -13667,7 +13667,7 @@ var require_negotiator = __commonJS((exports2, module2) => {
   Negotiator.prototype.preferredMediaTypes = Negotiator.prototype.mediaTypes;
 });
 
-// ../../node_modules/.bun/accepts@1.3.8/node_modules/accepts/index.js
+// node_modules/.bun/accepts@1.3.8/node_modules/accepts/index.js
 var require_accepts = __commonJS((exports2, module2) => {
   /*!
    * accepts
@@ -13751,7 +13751,7 @@ var require_accepts = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/content-type@1.0.5/node_modules/content-type/index.js
+// node_modules/.bun/content-type@1.0.5/node_modules/content-type/index.js
 var require_content_type = __commonJS((exports2) => {
   /*!
    * content-type
@@ -13857,7 +13857,7 @@ var require_content_type = __commonJS((exports2) => {
   }
 });
 
-// ../../node_modules/.bun/parseurl@1.3.3/node_modules/parseurl/index.js
+// node_modules/.bun/parseurl@1.3.3/node_modules/parseurl/index.js
 var require_parseurl = __commonJS((exports2, module2) => {
   /*!
    * parseurl
@@ -13938,7 +13938,7 @@ var require_parseurl = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/fresh@0.5.2/node_modules/fresh/index.js
+// node_modules/.bun/fresh@0.5.2/node_modules/fresh/index.js
 var require_fresh = __commonJS((exports2, module2) => {
   /*!
    * fresh
@@ -14014,7 +14014,7 @@ var require_fresh = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/koa@2.16.4/node_modules/koa/lib/request.js
+// node_modules/.bun/koa@2.16.4/node_modules/koa/lib/request.js
 var require_request = __commonJS((exports2, module2) => {
   var URL2 = require("url").URL;
   var net = require("net");
@@ -14269,7 +14269,7 @@ var require_request = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/co@4.6.0/node_modules/co/index.js
+// node_modules/.bun/co@4.6.0/node_modules/co/index.js
 var require_co = __commonJS((exports2, module2) => {
   var slice = Array.prototype.slice;
   module2.exports = co["default"] = co.co = co;
@@ -14388,7 +14388,7 @@ var require_co = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/koa-convert@2.0.0/node_modules/koa-convert/index.js
+// node_modules/.bun/koa-convert@2.0.0/node_modules/koa-convert/index.js
 var require_koa_convert = __commonJS((exports2, module2) => {
   var co = require_co();
   var compose = require_koa_compose();
@@ -14437,7 +14437,7 @@ var require_koa_convert = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/koa@2.16.4/node_modules/koa/lib/application.js
+// node_modules/.bun/koa@2.16.4/node_modules/koa/lib/application.js
 var require_application = __commonJS((exports2, module2) => {
   var isGeneratorFunction = require_is_generator_function();
   var debug = require_src()("koa:application");
@@ -14624,7 +14624,7 @@ ${msg.replace(/^/gm, "  ")}
   module2.exports.HttpError = HttpError;
 });
 
-// ../../node_modules/.bun/statuses@2.0.2/node_modules/statuses/codes.json
+// node_modules/.bun/statuses@2.0.2/node_modules/statuses/codes.json
 var require_codes2 = __commonJS((exports2, module2) => {
   module2.exports = {
     "100": "Continue",
@@ -14693,7 +14693,7 @@ var require_codes2 = __commonJS((exports2, module2) => {
   };
 });
 
-// ../../node_modules/.bun/statuses@2.0.2/node_modules/statuses/index.js
+// node_modules/.bun/statuses@2.0.2/node_modules/statuses/index.js
 var require_statuses2 = __commonJS((exports2, module2) => {
   /*!
    * statuses
@@ -14767,7 +14767,7 @@ var require_statuses2 = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/http-errors@2.0.1/node_modules/http-errors/index.js
+// node_modules/.bun/http-errors@2.0.1/node_modules/http-errors/index.js
 var require_http_errors2 = __commonJS((exports2, module2) => {
   /*!
    * http-errors
@@ -14934,7 +14934,7 @@ var require_http_errors2 = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/path-to-regexp@8.3.0/node_modules/path-to-regexp/dist/index.js
+// node_modules/.bun/path-to-regexp@8.3.0/node_modules/path-to-regexp/dist/index.js
 var require_dist = __commonJS((exports2) => {
   Object.defineProperty(exports2, "__esModule", { value: true });
   exports2.PathError = exports2.TokenData = undefined;
@@ -15286,7 +15286,7 @@ var require_dist = __commonJS((exports2) => {
   }
 });
 
-// ../../node_modules/.bun/koa-router@14.0.0/node_modules/koa-router/lib/layer.js
+// node_modules/.bun/koa-router@14.0.0/node_modules/koa-router/lib/layer.js
 var require_layer = __commonJS((exports2, module2) => {
   var { parse: parseUrl, format: formatUrl } = require("node:url");
   var { pathToRegexp, compile, parse } = require_dist();
@@ -15421,7 +15421,7 @@ var require_layer = __commonJS((exports2, module2) => {
   }
 });
 
-// ../../node_modules/.bun/koa-router@14.0.0/node_modules/koa-router/lib/router.js
+// node_modules/.bun/koa-router@14.0.0/node_modules/koa-router/lib/router.js
 var require_router = __commonJS((exports2, module2) => {
   var http = require("node:http");
   var debug = require_src()("koa-router");
@@ -15742,7 +15742,7 @@ var require_router = __commonJS((exports2, module2) => {
   module2.exports = Router;
 });
 
-// ../../node_modules/.bun/@citizenfx+http-wrapper@0.2.2/node_modules/@citizenfx/http-wrapper/index.js
+// node_modules/.bun/@citizenfx+http-wrapper@0.2.2/node_modules/@citizenfx/http-wrapper/index.js
 var require_http_wrapper = __commonJS((exports2, module2) => {
   var { Readable, Writable } = require("stream");
   var http = require("http");
@@ -15922,196 +15922,78 @@ var require_http_wrapper = __commonJS((exports2, module2) => {
   module2.exports.setHttpCallback = setHttpCallback;
 });
 
-// ../../packages/wire/src/wire-property.ts
-class WireProperty {
-}
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/value.mjs
-var exports_value = {};
-__export(exports_value, {
-  IsUndefined: () => IsUndefined,
-  IsUint8Array: () => IsUint8Array,
-  IsSymbol: () => IsSymbol,
-  IsString: () => IsString,
-  IsRegExp: () => IsRegExp,
-  IsObject: () => IsObject,
-  IsNumber: () => IsNumber,
-  IsNull: () => IsNull,
-  IsIterator: () => IsIterator,
-  IsFunction: () => IsFunction,
-  IsDate: () => IsDate,
-  IsBoolean: () => IsBoolean,
-  IsBigInt: () => IsBigInt,
-  IsAsyncIterator: () => IsAsyncIterator,
-  IsArray: () => IsArray,
-  HasPropertyKey: () => HasPropertyKey
-});
-function HasPropertyKey(value, key) {
-  return key in value;
-}
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/guard/guard.mjs
 function IsAsyncIterator(value) {
-  return IsObject(value) && !IsArray(value) && !IsUint8Array(value) && Symbol.asyncIterator in value;
-}
-function IsArray(value) {
-  return Array.isArray(value);
-}
-function IsBigInt(value) {
-  return typeof value === "bigint";
-}
-function IsBoolean(value) {
-  return typeof value === "boolean";
-}
-function IsDate(value) {
-  return value instanceof globalThis.Date;
-}
-function IsFunction(value) {
-  return typeof value === "function";
+  return IsObject(value) && globalThis.Symbol.asyncIterator in value;
 }
 function IsIterator(value) {
-  return IsObject(value) && !IsArray(value) && !IsUint8Array(value) && Symbol.iterator in value;
+  return IsObject(value) && globalThis.Symbol.iterator in value;
 }
-function IsNull(value) {
-  return value === null;
+function IsStandardObject(value) {
+  return IsObject(value) && (globalThis.Object.getPrototypeOf(value) === Object.prototype || globalThis.Object.getPrototypeOf(value) === null);
 }
-function IsNumber(value) {
-  return typeof value === "number";
+function IsPromise(value) {
+  return value instanceof globalThis.Promise;
 }
-function IsObject(value) {
-  return typeof value === "object" && value !== null;
+function IsDate(value) {
+  return value instanceof Date && globalThis.Number.isFinite(value.getTime());
 }
-function IsRegExp(value) {
-  return value instanceof globalThis.RegExp;
+function IsMap(value) {
+  return value instanceof globalThis.Map;
 }
-function IsString(value) {
-  return typeof value === "string";
+function IsSet(value) {
+  return value instanceof globalThis.Set;
 }
-function IsSymbol(value) {
-  return typeof value === "symbol";
+function IsTypedArray(value) {
+  return globalThis.ArrayBuffer.isView(value);
 }
 function IsUint8Array(value) {
   return value instanceof globalThis.Uint8Array;
 }
+function HasPropertyKey(value, key) {
+  return key in value;
+}
+function IsObject(value) {
+  return value !== null && typeof value === "object";
+}
+function IsArray(value) {
+  return globalThis.Array.isArray(value) && !globalThis.ArrayBuffer.isView(value);
+}
 function IsUndefined(value) {
   return value === undefined;
 }
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/value.mjs
-function ArrayType(value) {
-  return value.map((value2) => Visit(value2));
+function IsNull(value) {
+  return value === null;
 }
-function DateType(value) {
-  return new Date(value.getTime());
+function IsBoolean(value) {
+  return typeof value === "boolean";
 }
-function Uint8ArrayType(value) {
-  return new Uint8Array(value);
+function IsNumber(value) {
+  return typeof value === "number";
 }
-function RegExpType(value) {
-  return new RegExp(value.source, value.flags);
+function IsInteger(value) {
+  return globalThis.Number.isInteger(value);
 }
-function ObjectType(value) {
-  const result = {};
-  for (const key of Object.getOwnPropertyNames(value)) {
-    result[key] = Visit(value[key]);
-  }
-  for (const key of Object.getOwnPropertySymbols(value)) {
-    result[key] = Visit(value[key]);
-  }
-  return result;
+function IsBigInt(value) {
+  return typeof value === "bigint";
 }
-function Visit(value) {
-  return IsArray(value) ? ArrayType(value) : IsDate(value) ? DateType(value) : IsUint8Array(value) ? Uint8ArrayType(value) : IsRegExp(value) ? RegExpType(value) : IsObject(value) ? ObjectType(value) : value;
+function IsString(value) {
+  return typeof value === "string";
 }
-function Clone(value) {
-  return Visit(value);
+function IsFunction(value) {
+  return typeof value === "function";
 }
-var init_value = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/type.mjs
-function CloneType(schema, options) {
-  return options === undefined ? Clone(schema) : Clone({ ...options, ...schema });
+function IsSymbol(value) {
+  return typeof value === "symbol";
 }
-var init_type = __esm(() => {
-  init_value();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/index.mjs
-var init_clone = __esm(() => {
-  init_type();
-  init_value();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/guard/guard.mjs
-function IsAsyncIterator2(value2) {
-  return IsObject2(value2) && globalThis.Symbol.asyncIterator in value2;
-}
-function IsIterator2(value2) {
-  return IsObject2(value2) && globalThis.Symbol.iterator in value2;
-}
-function IsStandardObject(value2) {
-  return IsObject2(value2) && (globalThis.Object.getPrototypeOf(value2) === Object.prototype || globalThis.Object.getPrototypeOf(value2) === null);
-}
-function IsPromise(value2) {
-  return value2 instanceof globalThis.Promise;
-}
-function IsDate2(value2) {
-  return value2 instanceof Date && globalThis.Number.isFinite(value2.getTime());
-}
-function IsMap(value2) {
-  return value2 instanceof globalThis.Map;
-}
-function IsSet(value2) {
-  return value2 instanceof globalThis.Set;
-}
-function IsTypedArray(value2) {
-  return globalThis.ArrayBuffer.isView(value2);
-}
-function IsUint8Array2(value2) {
-  return value2 instanceof globalThis.Uint8Array;
-}
-function HasPropertyKey2(value2, key) {
-  return key in value2;
-}
-function IsObject2(value2) {
-  return value2 !== null && typeof value2 === "object";
-}
-function IsArray2(value2) {
-  return globalThis.Array.isArray(value2) && !globalThis.ArrayBuffer.isView(value2);
-}
-function IsUndefined2(value2) {
-  return value2 === undefined;
-}
-function IsNull2(value2) {
-  return value2 === null;
-}
-function IsBoolean2(value2) {
-  return typeof value2 === "boolean";
-}
-function IsNumber2(value2) {
-  return typeof value2 === "number";
-}
-function IsInteger(value2) {
-  return globalThis.Number.isInteger(value2);
-}
-function IsBigInt2(value2) {
-  return typeof value2 === "bigint";
-}
-function IsString2(value2) {
-  return typeof value2 === "string";
-}
-function IsFunction2(value2) {
-  return typeof value2 === "function";
-}
-function IsSymbol2(value2) {
-  return typeof value2 === "symbol";
-}
-function IsValueType(value2) {
-  return IsBigInt2(value2) || IsBoolean2(value2) || IsNull2(value2) || IsNumber2(value2) || IsString2(value2) || IsSymbol2(value2) || IsUndefined2(value2);
+function IsValueType(value) {
+  return IsBigInt(value) || IsBoolean(value) || IsNull(value) || IsNumber(value) || IsString(value) || IsSymbol(value) || IsUndefined(value);
 }
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/guard/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/guard/index.mjs
 var init_guard = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/policy.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/policy.mjs
 var TypeSystemPolicy;
 var init_policy = __esm(() => {
   init_guard();
@@ -16121,566 +16003,32 @@ var init_policy = __esm(() => {
     TypeSystemPolicy2.AllowArrayObject = false;
     TypeSystemPolicy2.AllowNaN = false;
     TypeSystemPolicy2.AllowNullVoid = false;
-    function IsExactOptionalProperty(value2, key) {
-      return TypeSystemPolicy2.ExactOptionalPropertyTypes ? key in value2 : value2[key] !== undefined;
+    function IsExactOptionalProperty(value, key) {
+      return TypeSystemPolicy2.ExactOptionalPropertyTypes ? key in value : value[key] !== undefined;
     }
     TypeSystemPolicy2.IsExactOptionalProperty = IsExactOptionalProperty;
-    function IsObjectLike(value2) {
-      const isObject = IsObject2(value2);
-      return TypeSystemPolicy2.AllowArrayObject ? isObject : isObject && !IsArray2(value2);
+    function IsObjectLike(value) {
+      const isObject = IsObject(value);
+      return TypeSystemPolicy2.AllowArrayObject ? isObject : isObject && !IsArray(value);
     }
     TypeSystemPolicy2.IsObjectLike = IsObjectLike;
-    function IsRecordLike(value2) {
-      return IsObjectLike(value2) && !(value2 instanceof Date) && !(value2 instanceof Uint8Array);
+    function IsRecordLike(value) {
+      return IsObjectLike(value) && !(value instanceof Date) && !(value instanceof Uint8Array);
     }
     TypeSystemPolicy2.IsRecordLike = IsRecordLike;
-    function IsNumberLike(value2) {
-      return TypeSystemPolicy2.AllowNaN ? IsNumber2(value2) : Number.isFinite(value2);
+    function IsNumberLike(value) {
+      return TypeSystemPolicy2.AllowNaN ? IsNumber(value) : Number.isFinite(value);
     }
     TypeSystemPolicy2.IsNumberLike = IsNumberLike;
-    function IsVoidLike(value2) {
-      const isUndefined = IsUndefined2(value2);
-      return TypeSystemPolicy2.AllowNullVoid ? isUndefined || value2 === null : isUndefined;
+    function IsVoidLike(value) {
+      const isUndefined = IsUndefined(value);
+      return TypeSystemPolicy2.AllowNullVoid ? isUndefined || value === null : isUndefined;
     }
     TypeSystemPolicy2.IsVoidLike = IsVoidLike;
   })(TypeSystemPolicy || (TypeSystemPolicy = {}));
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/immutable.mjs
-function ImmutableArray(value2) {
-  return globalThis.Object.freeze(value2).map((value3) => Immutable(value3));
-}
-function ImmutableDate(value2) {
-  return value2;
-}
-function ImmutableUint8Array(value2) {
-  return value2;
-}
-function ImmutableRegExp(value2) {
-  return value2;
-}
-function ImmutableObject(value2) {
-  const result = {};
-  for (const key of Object.getOwnPropertyNames(value2)) {
-    result[key] = Immutable(value2[key]);
-  }
-  for (const key of Object.getOwnPropertySymbols(value2)) {
-    result[key] = Immutable(value2[key]);
-  }
-  return globalThis.Object.freeze(result);
-}
-function Immutable(value2) {
-  return IsArray(value2) ? ImmutableArray(value2) : IsDate(value2) ? ImmutableDate(value2) : IsUint8Array(value2) ? ImmutableUint8Array(value2) : IsRegExp(value2) ? ImmutableRegExp(value2) : IsObject(value2) ? ImmutableObject(value2) : value2;
-}
-var init_immutable = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/type.mjs
-function CreateType(schema, options) {
-  const result = options !== undefined ? { ...options, ...schema } : schema;
-  switch (TypeSystemPolicy.InstanceMode) {
-    case "freeze":
-      return Immutable(result);
-    case "clone":
-      return Clone(result);
-    default:
-      return result;
-  }
-}
-var init_type2 = __esm(() => {
-  init_policy();
-  init_immutable();
-  init_value();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/index.mjs
-var init_create = __esm(() => {
-  init_type2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/error/error.mjs
-var TypeBoxError;
-var init_error = __esm(() => {
-  TypeBoxError = class TypeBoxError extends Error {
-    constructor(message2) {
-      super(message2);
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/error/index.mjs
-var init_error2 = __esm(() => {
-  init_error();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbols/symbols.mjs
-var TransformKind, ReadonlyKind, OptionalKind, Hint, Kind;
-var init_symbols = __esm(() => {
-  TransformKind = Symbol.for("TypeBox.Transform");
-  ReadonlyKind = Symbol.for("TypeBox.Readonly");
-  OptionalKind = Symbol.for("TypeBox.Optional");
-  Hint = Symbol.for("TypeBox.Hint");
-  Kind = Symbol.for("TypeBox.Kind");
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbols/index.mjs
-var init_symbols2 = __esm(() => {
-  init_symbols();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/kind.mjs
-function IsReadonly(value2) {
-  return IsObject(value2) && value2[ReadonlyKind] === "Readonly";
-}
-function IsOptional(value2) {
-  return IsObject(value2) && value2[OptionalKind] === "Optional";
-}
-function IsAny(value2) {
-  return IsKindOf(value2, "Any");
-}
-function IsArgument(value2) {
-  return IsKindOf(value2, "Argument");
-}
-function IsArray3(value2) {
-  return IsKindOf(value2, "Array");
-}
-function IsAsyncIterator3(value2) {
-  return IsKindOf(value2, "AsyncIterator");
-}
-function IsBigInt3(value2) {
-  return IsKindOf(value2, "BigInt");
-}
-function IsBoolean3(value2) {
-  return IsKindOf(value2, "Boolean");
-}
-function IsComputed(value2) {
-  return IsKindOf(value2, "Computed");
-}
-function IsConstructor(value2) {
-  return IsKindOf(value2, "Constructor");
-}
-function IsDate3(value2) {
-  return IsKindOf(value2, "Date");
-}
-function IsFunction3(value2) {
-  return IsKindOf(value2, "Function");
-}
-function IsInteger2(value2) {
-  return IsKindOf(value2, "Integer");
-}
-function IsIntersect(value2) {
-  return IsKindOf(value2, "Intersect");
-}
-function IsIterator3(value2) {
-  return IsKindOf(value2, "Iterator");
-}
-function IsKindOf(value2, kind) {
-  return IsObject(value2) && Kind in value2 && value2[Kind] === kind;
-}
-function IsLiteralValue(value2) {
-  return IsBoolean(value2) || IsNumber(value2) || IsString(value2);
-}
-function IsLiteral(value2) {
-  return IsKindOf(value2, "Literal");
-}
-function IsMappedKey(value2) {
-  return IsKindOf(value2, "MappedKey");
-}
-function IsMappedResult(value2) {
-  return IsKindOf(value2, "MappedResult");
-}
-function IsNever(value2) {
-  return IsKindOf(value2, "Never");
-}
-function IsNot(value2) {
-  return IsKindOf(value2, "Not");
-}
-function IsNull3(value2) {
-  return IsKindOf(value2, "Null");
-}
-function IsNumber3(value2) {
-  return IsKindOf(value2, "Number");
-}
-function IsObject3(value2) {
-  return IsKindOf(value2, "Object");
-}
-function IsPromise2(value2) {
-  return IsKindOf(value2, "Promise");
-}
-function IsRecord(value2) {
-  return IsKindOf(value2, "Record");
-}
-function IsRef(value2) {
-  return IsKindOf(value2, "Ref");
-}
-function IsRegExp2(value2) {
-  return IsKindOf(value2, "RegExp");
-}
-function IsString3(value2) {
-  return IsKindOf(value2, "String");
-}
-function IsSymbol3(value2) {
-  return IsKindOf(value2, "Symbol");
-}
-function IsTemplateLiteral(value2) {
-  return IsKindOf(value2, "TemplateLiteral");
-}
-function IsThis(value2) {
-  return IsKindOf(value2, "This");
-}
-function IsTransform(value2) {
-  return IsObject(value2) && TransformKind in value2;
-}
-function IsTuple(value2) {
-  return IsKindOf(value2, "Tuple");
-}
-function IsUndefined3(value2) {
-  return IsKindOf(value2, "Undefined");
-}
-function IsUnion(value2) {
-  return IsKindOf(value2, "Union");
-}
-function IsUint8Array3(value2) {
-  return IsKindOf(value2, "Uint8Array");
-}
-function IsUnknown(value2) {
-  return IsKindOf(value2, "Unknown");
-}
-function IsUnsafe(value2) {
-  return IsKindOf(value2, "Unsafe");
-}
-function IsVoid(value2) {
-  return IsKindOf(value2, "Void");
-}
-function IsKind(value2) {
-  return IsObject(value2) && Kind in value2 && IsString(value2[Kind]);
-}
-function IsSchema(value2) {
-  return IsAny(value2) || IsArgument(value2) || IsArray3(value2) || IsBoolean3(value2) || IsBigInt3(value2) || IsAsyncIterator3(value2) || IsComputed(value2) || IsConstructor(value2) || IsDate3(value2) || IsFunction3(value2) || IsInteger2(value2) || IsIntersect(value2) || IsIterator3(value2) || IsLiteral(value2) || IsMappedKey(value2) || IsMappedResult(value2) || IsNever(value2) || IsNot(value2) || IsNull3(value2) || IsNumber3(value2) || IsObject3(value2) || IsPromise2(value2) || IsRecord(value2) || IsRef(value2) || IsRegExp2(value2) || IsString3(value2) || IsSymbol3(value2) || IsTemplateLiteral(value2) || IsThis(value2) || IsTuple(value2) || IsUndefined3(value2) || IsUnion(value2) || IsUint8Array3(value2) || IsUnknown(value2) || IsUnsafe(value2) || IsVoid(value2) || IsKind(value2);
-}
-var init_kind = __esm(() => {
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/type.mjs
-var exports_type = {};
-__export(exports_type, {
-  TypeGuardUnknownTypeError: () => TypeGuardUnknownTypeError,
-  IsVoid: () => IsVoid2,
-  IsUnsafe: () => IsUnsafe2,
-  IsUnknown: () => IsUnknown2,
-  IsUnionLiteral: () => IsUnionLiteral,
-  IsUnion: () => IsUnion2,
-  IsUndefined: () => IsUndefined4,
-  IsUint8Array: () => IsUint8Array4,
-  IsTuple: () => IsTuple2,
-  IsTransform: () => IsTransform2,
-  IsThis: () => IsThis2,
-  IsTemplateLiteral: () => IsTemplateLiteral2,
-  IsSymbol: () => IsSymbol4,
-  IsString: () => IsString4,
-  IsSchema: () => IsSchema2,
-  IsRegExp: () => IsRegExp3,
-  IsRef: () => IsRef2,
-  IsRecursive: () => IsRecursive,
-  IsRecord: () => IsRecord2,
-  IsReadonly: () => IsReadonly2,
-  IsProperties: () => IsProperties,
-  IsPromise: () => IsPromise3,
-  IsOptional: () => IsOptional2,
-  IsObject: () => IsObject4,
-  IsNumber: () => IsNumber4,
-  IsNull: () => IsNull4,
-  IsNot: () => IsNot2,
-  IsNever: () => IsNever2,
-  IsMappedResult: () => IsMappedResult2,
-  IsMappedKey: () => IsMappedKey2,
-  IsLiteralValue: () => IsLiteralValue2,
-  IsLiteralString: () => IsLiteralString,
-  IsLiteralNumber: () => IsLiteralNumber,
-  IsLiteralBoolean: () => IsLiteralBoolean,
-  IsLiteral: () => IsLiteral2,
-  IsKindOf: () => IsKindOf2,
-  IsKind: () => IsKind2,
-  IsIterator: () => IsIterator4,
-  IsIntersect: () => IsIntersect2,
-  IsInteger: () => IsInteger3,
-  IsImport: () => IsImport,
-  IsFunction: () => IsFunction4,
-  IsDate: () => IsDate4,
-  IsConstructor: () => IsConstructor2,
-  IsComputed: () => IsComputed2,
-  IsBoolean: () => IsBoolean4,
-  IsBigInt: () => IsBigInt4,
-  IsAsyncIterator: () => IsAsyncIterator4,
-  IsArray: () => IsArray4,
-  IsArgument: () => IsArgument2,
-  IsAny: () => IsAny2
-});
-function IsPattern(value2) {
-  try {
-    new RegExp(value2);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function IsControlCharacterFree(value2) {
-  if (!IsString(value2))
-    return false;
-  for (let i = 0;i < value2.length; i++) {
-    const code = value2.charCodeAt(i);
-    if (code >= 7 && code <= 13 || code === 27 || code === 127) {
-      return false;
-    }
-  }
-  return true;
-}
-function IsAdditionalProperties(value2) {
-  return IsOptionalBoolean(value2) || IsSchema2(value2);
-}
-function IsOptionalBigInt(value2) {
-  return IsUndefined(value2) || IsBigInt(value2);
-}
-function IsOptionalNumber(value2) {
-  return IsUndefined(value2) || IsNumber(value2);
-}
-function IsOptionalBoolean(value2) {
-  return IsUndefined(value2) || IsBoolean(value2);
-}
-function IsOptionalString(value2) {
-  return IsUndefined(value2) || IsString(value2);
-}
-function IsOptionalPattern(value2) {
-  return IsUndefined(value2) || IsString(value2) && IsControlCharacterFree(value2) && IsPattern(value2);
-}
-function IsOptionalFormat(value2) {
-  return IsUndefined(value2) || IsString(value2) && IsControlCharacterFree(value2);
-}
-function IsOptionalSchema(value2) {
-  return IsUndefined(value2) || IsSchema2(value2);
-}
-function IsReadonly2(value2) {
-  return IsObject(value2) && value2[ReadonlyKind] === "Readonly";
-}
-function IsOptional2(value2) {
-  return IsObject(value2) && value2[OptionalKind] === "Optional";
-}
-function IsAny2(value2) {
-  return IsKindOf2(value2, "Any") && IsOptionalString(value2.$id);
-}
-function IsArgument2(value2) {
-  return IsKindOf2(value2, "Argument") && IsNumber(value2.index);
-}
-function IsArray4(value2) {
-  return IsKindOf2(value2, "Array") && value2.type === "array" && IsOptionalString(value2.$id) && IsSchema2(value2.items) && IsOptionalNumber(value2.minItems) && IsOptionalNumber(value2.maxItems) && IsOptionalBoolean(value2.uniqueItems) && IsOptionalSchema(value2.contains) && IsOptionalNumber(value2.minContains) && IsOptionalNumber(value2.maxContains);
-}
-function IsAsyncIterator4(value2) {
-  return IsKindOf2(value2, "AsyncIterator") && value2.type === "AsyncIterator" && IsOptionalString(value2.$id) && IsSchema2(value2.items);
-}
-function IsBigInt4(value2) {
-  return IsKindOf2(value2, "BigInt") && value2.type === "bigint" && IsOptionalString(value2.$id) && IsOptionalBigInt(value2.exclusiveMaximum) && IsOptionalBigInt(value2.exclusiveMinimum) && IsOptionalBigInt(value2.maximum) && IsOptionalBigInt(value2.minimum) && IsOptionalBigInt(value2.multipleOf);
-}
-function IsBoolean4(value2) {
-  return IsKindOf2(value2, "Boolean") && value2.type === "boolean" && IsOptionalString(value2.$id);
-}
-function IsComputed2(value2) {
-  return IsKindOf2(value2, "Computed") && IsString(value2.target) && IsArray(value2.parameters) && value2.parameters.every((schema) => IsSchema2(schema));
-}
-function IsConstructor2(value2) {
-  return IsKindOf2(value2, "Constructor") && value2.type === "Constructor" && IsOptionalString(value2.$id) && IsArray(value2.parameters) && value2.parameters.every((schema) => IsSchema2(schema)) && IsSchema2(value2.returns);
-}
-function IsDate4(value2) {
-  return IsKindOf2(value2, "Date") && value2.type === "Date" && IsOptionalString(value2.$id) && IsOptionalNumber(value2.exclusiveMaximumTimestamp) && IsOptionalNumber(value2.exclusiveMinimumTimestamp) && IsOptionalNumber(value2.maximumTimestamp) && IsOptionalNumber(value2.minimumTimestamp) && IsOptionalNumber(value2.multipleOfTimestamp);
-}
-function IsFunction4(value2) {
-  return IsKindOf2(value2, "Function") && value2.type === "Function" && IsOptionalString(value2.$id) && IsArray(value2.parameters) && value2.parameters.every((schema) => IsSchema2(schema)) && IsSchema2(value2.returns);
-}
-function IsImport(value2) {
-  return IsKindOf2(value2, "Import") && HasPropertyKey(value2, "$defs") && IsObject(value2.$defs) && IsProperties(value2.$defs) && HasPropertyKey(value2, "$ref") && IsString(value2.$ref) && value2.$ref in value2.$defs;
-}
-function IsInteger3(value2) {
-  return IsKindOf2(value2, "Integer") && value2.type === "integer" && IsOptionalString(value2.$id) && IsOptionalNumber(value2.exclusiveMaximum) && IsOptionalNumber(value2.exclusiveMinimum) && IsOptionalNumber(value2.maximum) && IsOptionalNumber(value2.minimum) && IsOptionalNumber(value2.multipleOf);
-}
-function IsProperties(value2) {
-  return IsObject(value2) && Object.entries(value2).every(([key, schema]) => IsControlCharacterFree(key) && IsSchema2(schema));
-}
-function IsIntersect2(value2) {
-  return IsKindOf2(value2, "Intersect") && (IsString(value2.type) && value2.type !== "object" ? false : true) && IsArray(value2.allOf) && value2.allOf.every((schema) => IsSchema2(schema) && !IsTransform2(schema)) && IsOptionalString(value2.type) && (IsOptionalBoolean(value2.unevaluatedProperties) || IsOptionalSchema(value2.unevaluatedProperties)) && IsOptionalString(value2.$id);
-}
-function IsIterator4(value2) {
-  return IsKindOf2(value2, "Iterator") && value2.type === "Iterator" && IsOptionalString(value2.$id) && IsSchema2(value2.items);
-}
-function IsKindOf2(value2, kind) {
-  return IsObject(value2) && Kind in value2 && value2[Kind] === kind;
-}
-function IsLiteralString(value2) {
-  return IsLiteral2(value2) && IsString(value2.const);
-}
-function IsLiteralNumber(value2) {
-  return IsLiteral2(value2) && IsNumber(value2.const);
-}
-function IsLiteralBoolean(value2) {
-  return IsLiteral2(value2) && IsBoolean(value2.const);
-}
-function IsLiteral2(value2) {
-  return IsKindOf2(value2, "Literal") && IsOptionalString(value2.$id) && IsLiteralValue2(value2.const);
-}
-function IsLiteralValue2(value2) {
-  return IsBoolean(value2) || IsNumber(value2) || IsString(value2);
-}
-function IsMappedKey2(value2) {
-  return IsKindOf2(value2, "MappedKey") && IsArray(value2.keys) && value2.keys.every((key) => IsNumber(key) || IsString(key));
-}
-function IsMappedResult2(value2) {
-  return IsKindOf2(value2, "MappedResult") && IsProperties(value2.properties);
-}
-function IsNever2(value2) {
-  return IsKindOf2(value2, "Never") && IsObject(value2.not) && Object.getOwnPropertyNames(value2.not).length === 0;
-}
-function IsNot2(value2) {
-  return IsKindOf2(value2, "Not") && IsSchema2(value2.not);
-}
-function IsNull4(value2) {
-  return IsKindOf2(value2, "Null") && value2.type === "null" && IsOptionalString(value2.$id);
-}
-function IsNumber4(value2) {
-  return IsKindOf2(value2, "Number") && value2.type === "number" && IsOptionalString(value2.$id) && IsOptionalNumber(value2.exclusiveMaximum) && IsOptionalNumber(value2.exclusiveMinimum) && IsOptionalNumber(value2.maximum) && IsOptionalNumber(value2.minimum) && IsOptionalNumber(value2.multipleOf);
-}
-function IsObject4(value2) {
-  return IsKindOf2(value2, "Object") && value2.type === "object" && IsOptionalString(value2.$id) && IsProperties(value2.properties) && IsAdditionalProperties(value2.additionalProperties) && IsOptionalNumber(value2.minProperties) && IsOptionalNumber(value2.maxProperties);
-}
-function IsPromise3(value2) {
-  return IsKindOf2(value2, "Promise") && value2.type === "Promise" && IsOptionalString(value2.$id) && IsSchema2(value2.item);
-}
-function IsRecord2(value2) {
-  return IsKindOf2(value2, "Record") && value2.type === "object" && IsOptionalString(value2.$id) && IsAdditionalProperties(value2.additionalProperties) && IsObject(value2.patternProperties) && ((schema) => {
-    const keys = Object.getOwnPropertyNames(schema.patternProperties);
-    return keys.length === 1 && IsPattern(keys[0]) && IsObject(schema.patternProperties) && IsSchema2(schema.patternProperties[keys[0]]);
-  })(value2);
-}
-function IsRecursive(value2) {
-  return IsObject(value2) && Hint in value2 && value2[Hint] === "Recursive";
-}
-function IsRef2(value2) {
-  return IsKindOf2(value2, "Ref") && IsOptionalString(value2.$id) && IsString(value2.$ref);
-}
-function IsRegExp3(value2) {
-  return IsKindOf2(value2, "RegExp") && IsOptionalString(value2.$id) && IsString(value2.source) && IsString(value2.flags) && IsOptionalNumber(value2.maxLength) && IsOptionalNumber(value2.minLength);
-}
-function IsString4(value2) {
-  return IsKindOf2(value2, "String") && value2.type === "string" && IsOptionalString(value2.$id) && IsOptionalNumber(value2.minLength) && IsOptionalNumber(value2.maxLength) && IsOptionalPattern(value2.pattern) && IsOptionalFormat(value2.format);
-}
-function IsSymbol4(value2) {
-  return IsKindOf2(value2, "Symbol") && value2.type === "symbol" && IsOptionalString(value2.$id);
-}
-function IsTemplateLiteral2(value2) {
-  return IsKindOf2(value2, "TemplateLiteral") && value2.type === "string" && IsString(value2.pattern) && value2.pattern[0] === "^" && value2.pattern[value2.pattern.length - 1] === "$";
-}
-function IsThis2(value2) {
-  return IsKindOf2(value2, "This") && IsOptionalString(value2.$id) && IsString(value2.$ref);
-}
-function IsTransform2(value2) {
-  return IsObject(value2) && TransformKind in value2;
-}
-function IsTuple2(value2) {
-  return IsKindOf2(value2, "Tuple") && value2.type === "array" && IsOptionalString(value2.$id) && IsNumber(value2.minItems) && IsNumber(value2.maxItems) && value2.minItems === value2.maxItems && (IsUndefined(value2.items) && IsUndefined(value2.additionalItems) && value2.minItems === 0 || IsArray(value2.items) && value2.items.every((schema) => IsSchema2(schema)));
-}
-function IsUndefined4(value2) {
-  return IsKindOf2(value2, "Undefined") && value2.type === "undefined" && IsOptionalString(value2.$id);
-}
-function IsUnionLiteral(value2) {
-  return IsUnion2(value2) && value2.anyOf.every((schema) => IsLiteralString(schema) || IsLiteralNumber(schema));
-}
-function IsUnion2(value2) {
-  return IsKindOf2(value2, "Union") && IsOptionalString(value2.$id) && IsObject(value2) && IsArray(value2.anyOf) && value2.anyOf.every((schema) => IsSchema2(schema));
-}
-function IsUint8Array4(value2) {
-  return IsKindOf2(value2, "Uint8Array") && value2.type === "Uint8Array" && IsOptionalString(value2.$id) && IsOptionalNumber(value2.minByteLength) && IsOptionalNumber(value2.maxByteLength);
-}
-function IsUnknown2(value2) {
-  return IsKindOf2(value2, "Unknown") && IsOptionalString(value2.$id);
-}
-function IsUnsafe2(value2) {
-  return IsKindOf2(value2, "Unsafe");
-}
-function IsVoid2(value2) {
-  return IsKindOf2(value2, "Void") && value2.type === "void" && IsOptionalString(value2.$id);
-}
-function IsKind2(value2) {
-  return IsObject(value2) && Kind in value2 && IsString(value2[Kind]) && !KnownTypes.includes(value2[Kind]);
-}
-function IsSchema2(value2) {
-  return IsObject(value2) && (IsAny2(value2) || IsArgument2(value2) || IsArray4(value2) || IsBoolean4(value2) || IsBigInt4(value2) || IsAsyncIterator4(value2) || IsComputed2(value2) || IsConstructor2(value2) || IsDate4(value2) || IsFunction4(value2) || IsInteger3(value2) || IsIntersect2(value2) || IsIterator4(value2) || IsLiteral2(value2) || IsMappedKey2(value2) || IsMappedResult2(value2) || IsNever2(value2) || IsNot2(value2) || IsNull4(value2) || IsNumber4(value2) || IsObject4(value2) || IsPromise3(value2) || IsRecord2(value2) || IsRef2(value2) || IsRegExp3(value2) || IsString4(value2) || IsSymbol4(value2) || IsTemplateLiteral2(value2) || IsThis2(value2) || IsTuple2(value2) || IsUndefined4(value2) || IsUnion2(value2) || IsUint8Array4(value2) || IsUnknown2(value2) || IsUnsafe2(value2) || IsVoid2(value2) || IsKind2(value2));
-}
-var TypeGuardUnknownTypeError, KnownTypes;
-var init_type3 = __esm(() => {
-  init_symbols2();
-  init_error2();
-  TypeGuardUnknownTypeError = class TypeGuardUnknownTypeError extends TypeBoxError {
-  };
-  KnownTypes = [
-    "Argument",
-    "Any",
-    "Array",
-    "AsyncIterator",
-    "BigInt",
-    "Boolean",
-    "Computed",
-    "Constructor",
-    "Date",
-    "Enum",
-    "Function",
-    "Integer",
-    "Intersect",
-    "Iterator",
-    "Literal",
-    "MappedKey",
-    "MappedResult",
-    "Not",
-    "Null",
-    "Number",
-    "Object",
-    "Promise",
-    "Record",
-    "Ref",
-    "RegExp",
-    "String",
-    "Symbol",
-    "TemplateLiteral",
-    "This",
-    "Tuple",
-    "Undefined",
-    "Union",
-    "Uint8Array",
-    "Unknown",
-    "Void"
-  ];
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/index.mjs
-var init_guard2 = __esm(() => {
-  init_kind();
-  init_type3();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/helpers/index.mjs
-var init_helpers = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/patterns/patterns.mjs
-var PatternBoolean = "(true|false)", PatternNumber = "(0|[1-9][0-9]*)", PatternString = "(.*)", PatternNever = "(?!.*)", PatternBooleanExact, PatternNumberExact, PatternStringExact, PatternNeverExact;
-var init_patterns = __esm(() => {
-  PatternBooleanExact = `^${PatternBoolean}$`;
-  PatternNumberExact = `^${PatternNumber}$`;
-  PatternStringExact = `^${PatternString}$`;
-  PatternNeverExact = `^${PatternNever}$`;
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/patterns/index.mjs
-var init_patterns2 = __esm(() => {
-  init_patterns();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/format.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/format.mjs
 var exports_format = {};
 __export(exports_format, {
   Set: () => Set2,
@@ -16713,9 +16061,9 @@ var init_format = __esm(() => {
   map = new Map;
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/type.mjs
-var exports_type2 = {};
-__export(exports_type2, {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/type.mjs
+var exports_type = {};
+__export(exports_type, {
   Set: () => Set3,
   Has: () => Has2,
   Get: () => Get2,
@@ -16742,144 +16090,251 @@ function Get2(kind) {
   return map2.get(kind);
 }
 var map2;
-var init_type4 = __esm(() => {
+var init_type = __esm(() => {
   map2 = new Map;
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/registry/index.mjs
 var init_registry = __esm(() => {
   init_format();
-  init_type4();
+  init_type();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/sets/set.mjs
-function SetIncludes(T, S) {
-  return T.includes(S);
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/value.mjs
+var exports_value = {};
+__export(exports_value, {
+  IsUndefined: () => IsUndefined2,
+  IsUint8Array: () => IsUint8Array2,
+  IsSymbol: () => IsSymbol2,
+  IsString: () => IsString2,
+  IsRegExp: () => IsRegExp,
+  IsObject: () => IsObject2,
+  IsNumber: () => IsNumber2,
+  IsNull: () => IsNull2,
+  IsIterator: () => IsIterator2,
+  IsFunction: () => IsFunction2,
+  IsDate: () => IsDate2,
+  IsBoolean: () => IsBoolean2,
+  IsBigInt: () => IsBigInt2,
+  IsAsyncIterator: () => IsAsyncIterator2,
+  IsArray: () => IsArray2,
+  HasPropertyKey: () => HasPropertyKey2
+});
+function HasPropertyKey2(value, key) {
+  return key in value;
 }
-function SetDistinct(T) {
-  return [...new Set(T)];
+function IsAsyncIterator2(value) {
+  return IsObject2(value) && !IsArray2(value) && !IsUint8Array2(value) && Symbol.asyncIterator in value;
 }
-function SetIntersect(T, S) {
-  return T.filter((L) => S.includes(L));
+function IsArray2(value) {
+  return Array.isArray(value);
 }
-function SetIntersectManyResolve(T, Init) {
-  return T.reduce((Acc, L) => {
-    return SetIntersect(Acc, L);
-  }, Init);
+function IsBigInt2(value) {
+  return typeof value === "bigint";
 }
-function SetIntersectMany(T) {
-  return T.length === 1 ? T[0] : T.length > 1 ? SetIntersectManyResolve(T.slice(1), T[0]) : [];
+function IsBoolean2(value) {
+  return typeof value === "boolean";
 }
-function SetUnionMany(T) {
-  const Acc = [];
-  for (const L of T)
-    Acc.push(...L);
-  return Acc;
+function IsDate2(value) {
+  return value instanceof globalThis.Date;
+}
+function IsFunction2(value) {
+  return typeof value === "function";
+}
+function IsIterator2(value) {
+  return IsObject2(value) && !IsArray2(value) && !IsUint8Array2(value) && Symbol.iterator in value;
+}
+function IsNull2(value) {
+  return value === null;
+}
+function IsNumber2(value) {
+  return typeof value === "number";
+}
+function IsObject2(value) {
+  return typeof value === "object" && value !== null;
+}
+function IsRegExp(value) {
+  return value instanceof globalThis.RegExp;
+}
+function IsString2(value) {
+  return typeof value === "string";
+}
+function IsSymbol2(value) {
+  return typeof value === "symbol";
+}
+function IsUint8Array2(value) {
+  return value instanceof globalThis.Uint8Array;
+}
+function IsUndefined2(value) {
+  return value === undefined;
 }
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/sets/index.mjs
-var init_sets = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/any/any.mjs
-function Any(options) {
-  return CreateType({ [Kind]: "Any" }, options);
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/immutable.mjs
+function ImmutableArray(value) {
+  return globalThis.Object.freeze(value).map((value2) => Immutable(value2));
 }
-var init_any = __esm(() => {
-  init_create();
-  init_symbols2();
+function ImmutableDate(value) {
+  return value;
+}
+function ImmutableUint8Array(value) {
+  return value;
+}
+function ImmutableRegExp(value) {
+  return value;
+}
+function ImmutableObject(value) {
+  const result = {};
+  for (const key of Object.getOwnPropertyNames(value)) {
+    result[key] = Immutable(value[key]);
+  }
+  for (const key of Object.getOwnPropertySymbols(value)) {
+    result[key] = Immutable(value[key]);
+  }
+  return globalThis.Object.freeze(result);
+}
+function Immutable(value) {
+  return IsArray2(value) ? ImmutableArray(value) : IsDate2(value) ? ImmutableDate(value) : IsUint8Array2(value) ? ImmutableUint8Array(value) : IsRegExp(value) ? ImmutableRegExp(value) : IsObject2(value) ? ImmutableObject(value) : value;
+}
+var init_immutable = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/value.mjs
+function ArrayType(value) {
+  return value.map((value2) => Visit(value2));
+}
+function DateType(value) {
+  return new Date(value.getTime());
+}
+function Uint8ArrayType(value) {
+  return new Uint8Array(value);
+}
+function RegExpType(value) {
+  return new RegExp(value.source, value.flags);
+}
+function ObjectType(value) {
+  const result = {};
+  for (const key of Object.getOwnPropertyNames(value)) {
+    result[key] = Visit(value[key]);
+  }
+  for (const key of Object.getOwnPropertySymbols(value)) {
+    result[key] = Visit(value[key]);
+  }
+  return result;
+}
+function Visit(value) {
+  return IsArray2(value) ? ArrayType(value) : IsDate2(value) ? DateType(value) : IsUint8Array2(value) ? Uint8ArrayType(value) : IsRegExp(value) ? RegExpType(value) : IsObject2(value) ? ObjectType(value) : value;
+}
+function Clone(value) {
+  return Visit(value);
+}
+var init_value = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/type.mjs
+function CreateType(schema, options) {
+  const result = options !== undefined ? { ...options, ...schema } : schema;
+  switch (TypeSystemPolicy.InstanceMode) {
+    case "freeze":
+      return Immutable(result);
+    case "clone":
+      return Clone(result);
+    default:
+      return result;
+  }
+}
+var init_type2 = __esm(() => {
+  init_policy();
+  init_immutable();
+  init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/any/index.mjs
-var init_any2 = __esm(() => {
-  init_any();
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbols/symbols.mjs
+var TransformKind, ReadonlyKind, OptionalKind, Hint, Kind;
+var init_symbols = __esm(() => {
+  TransformKind = Symbol.for("TypeBox.Transform");
+  ReadonlyKind = Symbol.for("TypeBox.Readonly");
+  OptionalKind = Symbol.for("TypeBox.Optional");
+  Hint = Symbol.for("TypeBox.Hint");
+  Kind = Symbol.for("TypeBox.Kind");
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/array/array.mjs
-function Array2(items, options) {
-  return CreateType({ [Kind]: "Array", type: "array", items }, options);
-}
-var init_array = __esm(() => {
-  init_type2();
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/array/index.mjs
-var init_array2 = __esm(() => {
-  init_array();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/argument/argument.mjs
-function Argument(index) {
-  return CreateType({ [Kind]: "Argument", index });
-}
-var init_argument = __esm(() => {
-  init_type2();
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/argument/index.mjs
-var init_argument2 = __esm(() => {
-  init_argument();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/async-iterator/async-iterator.mjs
-function AsyncIterator(items, options) {
-  return CreateType({ [Kind]: "AsyncIterator", type: "AsyncIterator", items }, options);
-}
-var init_async_iterator = __esm(() => {
-  init_symbols2();
-  init_type2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/async-iterator/index.mjs
-var init_async_iterator2 = __esm(() => {
-  init_async_iterator();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/computed/computed.mjs
-function Computed(target, parameters, options) {
-  return CreateType({ [Kind]: "Computed", target, parameters }, options);
-}
-var init_computed = __esm(() => {
-  init_create();
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbols/index.mjs
+var init_symbols2 = __esm(() => {
   init_symbols();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/computed/index.mjs
-var init_computed2 = __esm(() => {
-  init_computed();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/discard/discard.mjs
-function DiscardKey(value2, key) {
-  const { [key]: _, ...rest } = value2;
-  return rest;
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unsafe/unsafe.mjs
+function Unsafe(options = {}) {
+  return CreateType({ [Kind]: options[Kind] ?? "Unsafe" }, options);
 }
-function Discard(value2, keys) {
-  return keys.reduce((acc, key) => DiscardKey(acc, key), value2);
-}
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/discard/index.mjs
-var init_discard = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/never/never.mjs
-function Never(options) {
-  return CreateType({ [Kind]: "Never", not: {} }, options);
-}
-var init_never = __esm(() => {
+var init_unsafe = __esm(() => {
   init_type2();
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/never/index.mjs
-var init_never2 = __esm(() => {
-  init_never();
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unsafe/index.mjs
+var init_unsafe2 = __esm(() => {
+  init_unsafe();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped-key.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/error/error.mjs
+var TypeBoxError;
+var init_error = __esm(() => {
+  TypeBoxError = class TypeBoxError extends Error {
+    constructor(message2) {
+      super(message2);
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/error/index.mjs
+var init_error2 = __esm(() => {
+  init_error();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/system.mjs
+var TypeSystemDuplicateTypeKind, TypeSystemDuplicateFormat, TypeSystem;
+var init_system = __esm(() => {
+  init_registry();
+  init_unsafe2();
+  init_symbols2();
+  init_error2();
+  TypeSystemDuplicateTypeKind = class TypeSystemDuplicateTypeKind extends TypeBoxError {
+    constructor(kind) {
+      super(`Duplicate type kind '${kind}' detected`);
+    }
+  };
+  TypeSystemDuplicateFormat = class TypeSystemDuplicateFormat extends TypeBoxError {
+    constructor(kind) {
+      super(`Duplicate string format '${kind}' detected`);
+    }
+  };
+  (function(TypeSystem2) {
+    function Type(kind, check) {
+      if (exports_type.Has(kind))
+        throw new TypeSystemDuplicateTypeKind(kind);
+      exports_type.Set(kind, check);
+      return (options = {}) => Unsafe({ ...options, [Kind]: kind });
+    }
+    TypeSystem2.Type = Type;
+    function Format(format, check) {
+      if (exports_format.Has(format))
+        throw new TypeSystemDuplicateFormat(format);
+      exports_format.Set(format, check);
+      return format;
+    }
+    TypeSystem2.Format = Format;
+  })(TypeSystem || (TypeSystem = {}));
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/index.mjs
+var init_system2 = __esm(() => {
+  init_policy();
+  init_system();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped-key.mjs
 var init_mapped_key = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped-result.mjs
 function MappedResult(properties) {
   return CreateType({
     [Kind]: "MappedResult",
@@ -16891,7 +16346,47 @@ var init_mapped_result = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor/constructor.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/discard/discard.mjs
+function DiscardKey(value, key) {
+  const { [key]: _, ...rest } = value;
+  return rest;
+}
+function Discard(value, keys) {
+  return keys.reduce((acc, key) => DiscardKey(acc, key), value);
+}
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/discard/index.mjs
+var init_discard = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/array/array.mjs
+function Array2(items, options) {
+  return CreateType({ [Kind]: "Array", type: "array", items }, options);
+}
+var init_array = __esm(() => {
+  init_type2();
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/array/index.mjs
+var init_array2 = __esm(() => {
+  init_array();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/async-iterator/async-iterator.mjs
+function AsyncIterator(items, options) {
+  return CreateType({ [Kind]: "AsyncIterator", type: "AsyncIterator", items }, options);
+}
+var init_async_iterator = __esm(() => {
+  init_symbols2();
+  init_type2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/async-iterator/index.mjs
+var init_async_iterator2 = __esm(() => {
+  init_async_iterator();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor/constructor.mjs
 function Constructor(parameters, returns, options) {
   return CreateType({ [Kind]: "Constructor", type: "Constructor", parameters, returns }, options);
 }
@@ -16900,12 +16395,12 @@ var init_constructor = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor/index.mjs
 var init_constructor2 = __esm(() => {
   init_constructor();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/function/function.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/function/function.mjs
 function Function2(parameters, returns, options) {
   return CreateType({ [Kind]: "Function", type: "Function", parameters, returns }, options);
 }
@@ -16914,12 +16409,297 @@ var init_function = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/function/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/function/index.mjs
 var init_function2 = __esm(() => {
   init_function();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-create.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/create/index.mjs
+var init_create = __esm(() => {
+  init_type2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/computed/computed.mjs
+function Computed(target, parameters, options) {
+  return CreateType({ [Kind]: "Computed", target, parameters }, options);
+}
+var init_computed = __esm(() => {
+  init_create();
+  init_symbols();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/computed/index.mjs
+var init_computed2 = __esm(() => {
+  init_computed();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/never/never.mjs
+function Never(options) {
+  return CreateType({ [Kind]: "Never", not: {} }, options);
+}
+var init_never = __esm(() => {
+  init_type2();
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/never/index.mjs
+var init_never2 = __esm(() => {
+  init_never();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/kind.mjs
+function IsReadonly(value) {
+  return IsObject2(value) && value[ReadonlyKind] === "Readonly";
+}
+function IsOptional(value) {
+  return IsObject2(value) && value[OptionalKind] === "Optional";
+}
+function IsAny(value) {
+  return IsKindOf(value, "Any");
+}
+function IsArgument(value) {
+  return IsKindOf(value, "Argument");
+}
+function IsArray3(value) {
+  return IsKindOf(value, "Array");
+}
+function IsAsyncIterator3(value) {
+  return IsKindOf(value, "AsyncIterator");
+}
+function IsBigInt3(value) {
+  return IsKindOf(value, "BigInt");
+}
+function IsBoolean3(value) {
+  return IsKindOf(value, "Boolean");
+}
+function IsComputed(value) {
+  return IsKindOf(value, "Computed");
+}
+function IsConstructor(value) {
+  return IsKindOf(value, "Constructor");
+}
+function IsDate3(value) {
+  return IsKindOf(value, "Date");
+}
+function IsFunction3(value) {
+  return IsKindOf(value, "Function");
+}
+function IsInteger2(value) {
+  return IsKindOf(value, "Integer");
+}
+function IsIntersect(value) {
+  return IsKindOf(value, "Intersect");
+}
+function IsIterator3(value) {
+  return IsKindOf(value, "Iterator");
+}
+function IsKindOf(value, kind) {
+  return IsObject2(value) && Kind in value && value[Kind] === kind;
+}
+function IsLiteralValue(value) {
+  return IsBoolean2(value) || IsNumber2(value) || IsString2(value);
+}
+function IsLiteral(value) {
+  return IsKindOf(value, "Literal");
+}
+function IsMappedKey(value) {
+  return IsKindOf(value, "MappedKey");
+}
+function IsMappedResult(value) {
+  return IsKindOf(value, "MappedResult");
+}
+function IsNever(value) {
+  return IsKindOf(value, "Never");
+}
+function IsNot(value) {
+  return IsKindOf(value, "Not");
+}
+function IsNull3(value) {
+  return IsKindOf(value, "Null");
+}
+function IsNumber3(value) {
+  return IsKindOf(value, "Number");
+}
+function IsObject3(value) {
+  return IsKindOf(value, "Object");
+}
+function IsPromise2(value) {
+  return IsKindOf(value, "Promise");
+}
+function IsRecord(value) {
+  return IsKindOf(value, "Record");
+}
+function IsRef(value) {
+  return IsKindOf(value, "Ref");
+}
+function IsRegExp2(value) {
+  return IsKindOf(value, "RegExp");
+}
+function IsString3(value) {
+  return IsKindOf(value, "String");
+}
+function IsSymbol3(value) {
+  return IsKindOf(value, "Symbol");
+}
+function IsTemplateLiteral(value) {
+  return IsKindOf(value, "TemplateLiteral");
+}
+function IsThis(value) {
+  return IsKindOf(value, "This");
+}
+function IsTransform(value) {
+  return IsObject2(value) && TransformKind in value;
+}
+function IsTuple(value) {
+  return IsKindOf(value, "Tuple");
+}
+function IsUndefined3(value) {
+  return IsKindOf(value, "Undefined");
+}
+function IsUnion(value) {
+  return IsKindOf(value, "Union");
+}
+function IsUint8Array3(value) {
+  return IsKindOf(value, "Uint8Array");
+}
+function IsUnknown(value) {
+  return IsKindOf(value, "Unknown");
+}
+function IsUnsafe(value) {
+  return IsKindOf(value, "Unsafe");
+}
+function IsVoid(value) {
+  return IsKindOf(value, "Void");
+}
+function IsKind(value) {
+  return IsObject2(value) && Kind in value && IsString2(value[Kind]);
+}
+function IsSchema(value) {
+  return IsAny(value) || IsArgument(value) || IsArray3(value) || IsBoolean3(value) || IsBigInt3(value) || IsAsyncIterator3(value) || IsComputed(value) || IsConstructor(value) || IsDate3(value) || IsFunction3(value) || IsInteger2(value) || IsIntersect(value) || IsIterator3(value) || IsLiteral(value) || IsMappedKey(value) || IsMappedResult(value) || IsNever(value) || IsNot(value) || IsNull3(value) || IsNumber3(value) || IsObject3(value) || IsPromise2(value) || IsRecord(value) || IsRef(value) || IsRegExp2(value) || IsString3(value) || IsSymbol3(value) || IsTemplateLiteral(value) || IsThis(value) || IsTuple(value) || IsUndefined3(value) || IsUnion(value) || IsUint8Array3(value) || IsUnknown(value) || IsUnsafe(value) || IsVoid(value) || IsKind(value);
+}
+var init_kind = __esm(() => {
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/optional.mjs
+function RemoveOptional(schema) {
+  return CreateType(Discard(schema, [OptionalKind]));
+}
+function AddOptional(schema) {
+  return CreateType({ ...schema, [OptionalKind]: "Optional" });
+}
+function OptionalWithFlag(schema, F) {
+  return F === false ? RemoveOptional(schema) : AddOptional(schema);
+}
+function Optional(schema, enable) {
+  const F = enable ?? true;
+  return IsMappedResult(schema) ? OptionalFromMappedResult(schema, F) : OptionalWithFlag(schema, F);
+}
+var init_optional = __esm(() => {
+  init_type2();
+  init_symbols2();
+  init_discard();
+  init_optional_from_mapped_result();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/optional-from-mapped-result.mjs
+function FromProperties(P, F) {
+  const Acc = {};
+  for (const K2 of globalThis.Object.getOwnPropertyNames(P))
+    Acc[K2] = Optional(P[K2], F);
+  return Acc;
+}
+function FromMappedResult(R, F) {
+  return FromProperties(R.properties, F);
+}
+function OptionalFromMappedResult(R, F) {
+  const P = FromMappedResult(R, F);
+  return MappedResult(P);
+}
+var init_optional_from_mapped_result = __esm(() => {
+  init_mapped2();
+  init_optional();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/index.mjs
+var init_optional2 = __esm(() => {
+  init_optional_from_mapped_result();
+  init_optional();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-create.mjs
+function IntersectCreate(T, options = {}) {
+  const allObjects = T.every((schema) => IsObject3(schema));
+  const clonedUnevaluatedProperties = IsSchema(options.unevaluatedProperties) ? { unevaluatedProperties: options.unevaluatedProperties } : {};
+  return CreateType(options.unevaluatedProperties === false || IsSchema(options.unevaluatedProperties) || allObjects ? { ...clonedUnevaluatedProperties, [Kind]: "Intersect", type: "object", allOf: T } : { ...clonedUnevaluatedProperties, [Kind]: "Intersect", allOf: T }, options);
+}
+var init_intersect_create = __esm(() => {
+  init_type2();
+  init_symbols2();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-evaluated.mjs
+function IsIntersectOptional(types) {
+  return types.every((left) => IsOptional(left));
+}
+function RemoveOptionalFromType(type2) {
+  return Discard(type2, [OptionalKind]);
+}
+function RemoveOptionalFromRest(types) {
+  return types.map((left) => IsOptional(left) ? RemoveOptionalFromType(left) : left);
+}
+function ResolveIntersect(types, options) {
+  return IsIntersectOptional(types) ? Optional(IntersectCreate(RemoveOptionalFromRest(types), options)) : IntersectCreate(RemoveOptionalFromRest(types), options);
+}
+function IntersectEvaluated(types, options = {}) {
+  if (types.length === 1)
+    return CreateType(types[0], options);
+  if (types.length === 0)
+    return Never(options);
+  if (types.some((schema) => IsTransform(schema)))
+    throw new Error("Cannot intersect transform types");
+  return ResolveIntersect(types, options);
+}
+var init_intersect_evaluated = __esm(() => {
+  init_symbols2();
+  init_type2();
+  init_discard();
+  init_never2();
+  init_optional2();
+  init_intersect_create();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-type.mjs
+var init_intersect_type = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect.mjs
+function Intersect(types, options) {
+  if (types.length === 1)
+    return CreateType(types[0], options);
+  if (types.length === 0)
+    return Never(options);
+  if (types.some((schema) => IsTransform(schema)))
+    throw new Error("Cannot intersect transform types");
+  return IntersectCreate(types, options);
+}
+var init_intersect = __esm(() => {
+  init_type2();
+  init_never2();
+  init_intersect_create();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/index.mjs
+var init_intersect2 = __esm(() => {
+  init_intersect_evaluated();
+  init_intersect_type();
+  init_intersect();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-create.mjs
 function UnionCreate(T, options) {
   return CreateType({ [Kind]: "Union", anyOf: T }, options);
 }
@@ -16928,19 +16708,19 @@ var init_union_create = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-evaluated.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-evaluated.mjs
 function IsUnionOptional(types) {
-  return types.some((type3) => IsOptional(type3));
+  return types.some((type2) => IsOptional(type2));
 }
-function RemoveOptionalFromRest(types) {
-  return types.map((left) => IsOptional(left) ? RemoveOptionalFromType(left) : left);
+function RemoveOptionalFromRest2(types) {
+  return types.map((left) => IsOptional(left) ? RemoveOptionalFromType2(left) : left);
 }
-function RemoveOptionalFromType(T) {
+function RemoveOptionalFromType2(T) {
   return Discard(T, [OptionalKind]);
 }
 function ResolveUnion(types, options) {
   const isOptional = IsUnionOptional(types);
-  return isOptional ? Optional(UnionCreate(RemoveOptionalFromRest(types), options)) : UnionCreate(RemoveOptionalFromRest(types), options);
+  return isOptional ? Optional(UnionCreate(RemoveOptionalFromRest2(types), options)) : UnionCreate(RemoveOptionalFromRest2(types), options);
 }
 function UnionEvaluated(T, options) {
   return T.length === 1 ? CreateType(T[0], options) : T.length === 0 ? Never(options) : ResolveUnion(T, options);
@@ -16955,10 +16735,10 @@ var init_union_evaluated = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-type.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union-type.mjs
 var init_union_type = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/union.mjs
 function Union(types, options) {
   return types.length === 0 ? Never(options) : types.length === 1 ? CreateType(types[0], options) : UnionCreate(types, options);
 }
@@ -16968,14 +16748,14 @@ var init_union = __esm(() => {
   init_union_create();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/union/index.mjs
 var init_union2 = __esm(() => {
   init_union_evaluated();
   init_union_type();
   init_union();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/parse.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/parse.mjs
 function Unescape(pattern) {
   return pattern.replace(/\\\$/g, "$").replace(/\\\*/g, "*").replace(/\\\^/g, "^").replace(/\\\|/g, "|").replace(/\\\(/g, "(").replace(/\\\)/g, ")");
 }
@@ -17052,14 +16832,14 @@ function Or(pattern) {
   return { type: "or", expr: expressions };
 }
 function And(pattern) {
-  function Group(value2, index) {
-    if (!IsOpenParen(value2, index))
+  function Group(value, index) {
+    if (!IsOpenParen(value, index))
       throw new TemplateLiteralParserError(`TemplateLiteralParser: Index must point to open parens`);
     let count = 0;
-    for (let scan = index;scan < value2.length; scan++) {
-      if (IsOpenParen(value2, scan))
+    for (let scan = index;scan < value.length; scan++) {
+      if (IsOpenParen(value, scan))
         count += 1;
-      if (IsCloseParen(value2, scan))
+      if (IsCloseParen(value, scan))
         count -= 1;
       if (count === 0)
         return [index, scan];
@@ -17103,7 +16883,7 @@ var init_parse = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/finite.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/finite.mjs
 function IsNumberExpression(expression) {
   return expression.type === "or" && expression.expr.length === 2 && expression.expr[0].type === "const" && expression.expr[0].const === "0" && expression.expr[1].type === "const" && expression.expr[1].const === "[1-9][0-9]*";
 }
@@ -17130,7 +16910,7 @@ var init_finite = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/generate.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/generate.mjs
 function* GenerateReduce(buffer) {
   if (buffer.length === 1)
     return yield* buffer[0];
@@ -17168,12 +16948,12 @@ var init_generate = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/literal/literal.mjs
-function Literal(value2, options) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/literal/literal.mjs
+function Literal(value, options) {
   return CreateType({
     [Kind]: "Literal",
-    const: value2,
-    type: typeof value2
+    const: value,
+    type: typeof value
   }, options);
 }
 var init_literal = __esm(() => {
@@ -17181,12 +16961,12 @@ var init_literal = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/literal/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/literal/index.mjs
 var init_literal2 = __esm(() => {
   init_literal();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/boolean/boolean.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/boolean/boolean.mjs
 function Boolean2(options) {
   return CreateType({ [Kind]: "Boolean", type: "boolean" }, options);
 }
@@ -17195,12 +16975,12 @@ var init_boolean = __esm(() => {
   init_create();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/boolean/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/boolean/index.mjs
 var init_boolean2 = __esm(() => {
   init_boolean();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/bigint/bigint.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/bigint/bigint.mjs
 function BigInt2(options) {
   return CreateType({ [Kind]: "BigInt", type: "bigint" }, options);
 }
@@ -17209,12 +16989,12 @@ var init_bigint = __esm(() => {
   init_create();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/bigint/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/bigint/index.mjs
 var init_bigint2 = __esm(() => {
   init_bigint();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/number/number.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/number/number.mjs
 function Number2(options) {
   return CreateType({ [Kind]: "Number", type: "number" }, options);
 }
@@ -17223,12 +17003,12 @@ var init_number = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/number/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/number/index.mjs
 var init_number2 = __esm(() => {
   init_number();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/string/string.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/string/string.mjs
 function String2(options) {
   return CreateType({ [Kind]: "String", type: "string" }, options);
 }
@@ -17237,12 +17017,12 @@ var init_string = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/string/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/string/index.mjs
 var init_string2 = __esm(() => {
   init_string();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/syntax.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/syntax.mjs
 function* FromUnion(syntax) {
   const trim = syntax.trim().replace(/"|'/g, "");
   return trim === "boolean" ? yield Boolean2() : trim === "number" ? yield Number2() : trim === "bigint" ? yield BigInt2() : trim === "string" ? yield String2() : yield (() => {
@@ -17288,9 +17068,23 @@ var init_syntax = __esm(() => {
   init_never2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/pattern.mjs
-function Escape(value2) {
-  return value2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/patterns/patterns.mjs
+var PatternBoolean = "(true|false)", PatternNumber = "(0|[1-9][0-9]*)", PatternString = "(.*)", PatternNever = "(?!.*)", PatternBooleanExact, PatternNumberExact, PatternStringExact, PatternNeverExact;
+var init_patterns = __esm(() => {
+  PatternBooleanExact = `^${PatternBoolean}$`;
+  PatternNumberExact = `^${PatternNumber}$`;
+  PatternStringExact = `^${PatternString}$`;
+  PatternNeverExact = `^${PatternNever}$`;
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/patterns/index.mjs
+var init_patterns2 = __esm(() => {
+  init_patterns();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/pattern.mjs
+function Escape(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 function Visit2(schema, acc) {
   return IsTemplateLiteral(schema) ? schema.pattern.slice(1, schema.pattern.length - 1) : IsUnion(schema) ? `(${schema.anyOf.map((schema2) => Visit2(schema2, acc)).join("|")})` : IsNumber3(schema) ? `${acc}${PatternNumber}` : IsInteger2(schema) ? `${acc}${PatternNumber}` : IsBigInt3(schema) ? `${acc}${PatternNumber}` : IsString3(schema) ? `${acc}${PatternString}` : IsLiteral(schema) ? `${acc}${Escape(schema.const.toString())}` : IsBoolean3(schema) ? `${acc}${PatternBoolean}` : (() => {
@@ -17310,7 +17104,7 @@ var init_pattern = __esm(() => {
   };
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/union.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/union.mjs
 function TemplateLiteralToUnion(schema) {
   const R = TemplateLiteralGenerate(schema);
   const L = R.map((S) => Literal(S));
@@ -17322,9 +17116,9 @@ var init_union3 = __esm(() => {
   init_generate();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/template-literal.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/template-literal.mjs
 function TemplateLiteral(unresolved, options) {
-  const pattern = IsString(unresolved) ? TemplateLiteralPattern(TemplateLiteralSyntax(unresolved)) : TemplateLiteralPattern(unresolved);
+  const pattern = IsString2(unresolved) ? TemplateLiteralPattern(TemplateLiteralSyntax(unresolved)) : TemplateLiteralPattern(unresolved);
   return CreateType({ [Kind]: "TemplateLiteral", type: "string", pattern }, options);
 }
 var init_template_literal = __esm(() => {
@@ -17334,7 +17128,7 @@ var init_template_literal = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/template-literal/index.mjs
 var init_template_literal2 = __esm(() => {
   init_finite();
   init_generate();
@@ -17345,41 +17139,41 @@ var init_template_literal2 = __esm(() => {
   init_template_literal();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-property-keys.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-property-keys.mjs
 function FromTemplateLiteral(templateLiteral) {
   const keys = TemplateLiteralGenerate(templateLiteral);
   return keys.map((key) => key.toString());
 }
 function FromUnion2(types) {
   const result = [];
-  for (const type3 of types)
-    result.push(...IndexPropertyKeys(type3));
+  for (const type2 of types)
+    result.push(...IndexPropertyKeys(type2));
   return result;
 }
 function FromLiteral(literalValue) {
   return [literalValue.toString()];
 }
-function IndexPropertyKeys(type3) {
-  return [...new Set(IsTemplateLiteral(type3) ? FromTemplateLiteral(type3) : IsUnion(type3) ? FromUnion2(type3.anyOf) : IsLiteral(type3) ? FromLiteral(type3.const) : IsNumber3(type3) ? ["[number]"] : IsInteger2(type3) ? ["[number]"] : [])];
+function IndexPropertyKeys(type2) {
+  return [...new Set(IsTemplateLiteral(type2) ? FromTemplateLiteral(type2) : IsUnion(type2) ? FromUnion2(type2.anyOf) : IsLiteral(type2) ? FromLiteral(type2.const) : IsNumber3(type2) ? ["[number]"] : IsInteger2(type2) ? ["[number]"] : [])];
 }
 var init_indexed_property_keys = __esm(() => {
   init_template_literal2();
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-from-mapped-result.mjs
-function FromProperties(type3, properties, options) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-from-mapped-result.mjs
+function FromProperties2(type2, properties, options) {
   const result = {};
   for (const K2 of Object.getOwnPropertyNames(properties)) {
-    result[K2] = Index(type3, IndexPropertyKeys(properties[K2]), options);
+    result[K2] = Index(type2, IndexPropertyKeys(properties[K2]), options);
   }
   return result;
 }
-function FromMappedResult(type3, mappedResult, options) {
-  return FromProperties(type3, mappedResult.properties, options);
+function FromMappedResult2(type2, mappedResult, options) {
+  return FromProperties2(type2, mappedResult.properties, options);
 }
-function IndexFromMappedResult(type3, mappedResult, options) {
-  const properties = FromMappedResult(type3, mappedResult, options);
+function IndexFromMappedResult(type2, mappedResult, options) {
+  const properties = FromMappedResult2(type2, mappedResult, options);
   return MappedResult(properties);
 }
 var init_indexed_from_mapped_result = __esm(() => {
@@ -17388,12 +17182,12 @@ var init_indexed_from_mapped_result = __esm(() => {
   init_indexed2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed.mjs
 function FromRest(types, key) {
-  return types.map((type3) => IndexFromPropertyKey(type3, key));
+  return types.map((type2) => IndexFromPropertyKey(type2, key));
 }
 function FromIntersectRest(types) {
-  return types.filter((type3) => !IsNever(type3));
+  return types.filter((type2) => !IsNever(type2));
 }
 function FromIntersect(types, key) {
   return IntersectEvaluated(FromIntersectRest(FromRest(types, key)));
@@ -17407,33 +17201,33 @@ function FromUnion3(types, key) {
 function FromTuple(types, key) {
   return key in types ? types[key] : key === "[number]" ? UnionEvaluated(types) : Never();
 }
-function FromArray(type3, key) {
-  return key === "[number]" ? type3 : Never();
+function FromArray(type2, key) {
+  return key === "[number]" ? type2 : Never();
 }
 function FromProperty(properties, propertyKey) {
   return propertyKey in properties ? properties[propertyKey] : Never();
 }
-function IndexFromPropertyKey(type3, propertyKey) {
-  return IsIntersect(type3) ? FromIntersect(type3.allOf, propertyKey) : IsUnion(type3) ? FromUnion3(type3.anyOf, propertyKey) : IsTuple(type3) ? FromTuple(type3.items ?? [], propertyKey) : IsArray3(type3) ? FromArray(type3.items, propertyKey) : IsObject3(type3) ? FromProperty(type3.properties, propertyKey) : Never();
+function IndexFromPropertyKey(type2, propertyKey) {
+  return IsIntersect(type2) ? FromIntersect(type2.allOf, propertyKey) : IsUnion(type2) ? FromUnion3(type2.anyOf, propertyKey) : IsTuple(type2) ? FromTuple(type2.items ?? [], propertyKey) : IsArray3(type2) ? FromArray(type2.items, propertyKey) : IsObject3(type2) ? FromProperty(type2.properties, propertyKey) : Never();
 }
-function IndexFromPropertyKeys(type3, propertyKeys) {
-  return propertyKeys.map((propertyKey) => IndexFromPropertyKey(type3, propertyKey));
+function IndexFromPropertyKeys(type2, propertyKeys) {
+  return propertyKeys.map((propertyKey) => IndexFromPropertyKey(type2, propertyKey));
 }
-function FromSchema(type3, propertyKeys) {
-  return UnionEvaluated(IndexFromPropertyKeys(type3, propertyKeys));
+function FromSchema(type2, propertyKeys) {
+  return UnionEvaluated(IndexFromPropertyKeys(type2, propertyKeys));
 }
-function Index(type3, key, options) {
-  if (IsRef(type3) || IsRef(key)) {
+function Index(type2, key, options) {
+  if (IsRef(type2) || IsRef(key)) {
     const error2 = `Index types using Ref parameters require both Type and Key to be of TSchema`;
-    if (!IsSchema(type3) || !IsSchema(key))
+    if (!IsSchema(type2) || !IsSchema(key))
       throw new TypeBoxError(error2);
-    return Computed("Index", [type3, key]);
+    return Computed("Index", [type2, key]);
   }
   if (IsMappedResult(key))
-    return IndexFromMappedResult(type3, key, options);
+    return IndexFromMappedResult(type2, key, options);
   if (IsMappedKey(key))
-    return IndexFromMappedKey(type3, key, options);
-  return CreateType(IsSchema(key) ? FromSchema(type3, IndexPropertyKeys(key)) : FromSchema(type3, key), options);
+    return IndexFromMappedKey(type2, key, options);
+  return CreateType(IsSchema(key) ? FromSchema(type2, IndexPropertyKeys(key)) : FromSchema(type2, key), options);
 }
 var init_indexed = __esm(() => {
   init_type2();
@@ -17448,20 +17242,20 @@ var init_indexed = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-from-mapped-key.mjs
-function MappedIndexPropertyKey(type3, key, options) {
-  return { [key]: Index(type3, [key], Clone(options)) };
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/indexed-from-mapped-key.mjs
+function MappedIndexPropertyKey(type2, key, options) {
+  return { [key]: Index(type2, [key], Clone(options)) };
 }
-function MappedIndexPropertyKeys(type3, propertyKeys, options) {
+function MappedIndexPropertyKeys(type2, propertyKeys, options) {
   return propertyKeys.reduce((result, left) => {
-    return { ...result, ...MappedIndexPropertyKey(type3, left, options) };
+    return { ...result, ...MappedIndexPropertyKey(type2, left, options) };
   }, {});
 }
-function MappedIndexProperties(type3, mappedKey, options) {
-  return MappedIndexPropertyKeys(type3, mappedKey.keys, options);
+function MappedIndexProperties(type2, mappedKey, options) {
+  return MappedIndexPropertyKeys(type2, mappedKey.keys, options);
 }
-function IndexFromMappedKey(type3, mappedKey, options) {
-  const properties = MappedIndexProperties(type3, mappedKey, options);
+function IndexFromMappedKey(type2, mappedKey, options) {
+  const properties = MappedIndexProperties(type2, mappedKey, options);
   return MappedResult(properties);
 }
 var init_indexed_from_mapped_key = __esm(() => {
@@ -17470,7 +17264,7 @@ var init_indexed_from_mapped_key = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/indexed/index.mjs
 var init_indexed2 = __esm(() => {
   init_indexed_from_mapped_key();
   init_indexed_from_mapped_result();
@@ -17478,7 +17272,7 @@ var init_indexed2 = __esm(() => {
   init_indexed();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/iterator/iterator.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/iterator/iterator.mjs
 function Iterator(items, options) {
   return CreateType({ [Kind]: "Iterator", type: "Iterator", items }, options);
 }
@@ -17487,12 +17281,12 @@ var init_iterator = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/iterator/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/iterator/index.mjs
 var init_iterator2 = __esm(() => {
   init_iterator();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/object/object.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/object/object.mjs
 function RequiredArray(properties) {
   return globalThis.Object.keys(properties).filter((key) => !IsOptional(properties[key]));
 }
@@ -17509,12 +17303,12 @@ var init_object = __esm(() => {
   Object2 = _Object;
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/object/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/object/index.mjs
 var init_object2 = __esm(() => {
   init_object();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/promise/promise.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/promise/promise.mjs
 function Promise2(item, options) {
   return CreateType({ [Kind]: "Promise", type: "Promise", item }, options);
 }
@@ -17523,12 +17317,12 @@ var init_promise = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/promise/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/promise/index.mjs
 var init_promise2 = __esm(() => {
   init_promise();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/readonly.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/readonly.mjs
 function RemoveReadonly(schema) {
   return CreateType(Discard(schema, [ReadonlyKind]));
 }
@@ -17550,18 +17344,18 @@ var init_readonly = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/readonly-from-mapped-result.mjs
-function FromProperties2(K, F) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/readonly-from-mapped-result.mjs
+function FromProperties3(K, F) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(K))
     Acc[K2] = Readonly(K[K2], F);
   return Acc;
 }
-function FromMappedResult2(R, F) {
-  return FromProperties2(R.properties, F);
+function FromMappedResult3(R, F) {
+  return FromProperties3(R.properties, F);
 }
 function ReadonlyFromMappedResult(R, F) {
-  const P = FromMappedResult2(R, F);
+  const P = FromMappedResult3(R, F);
   return MappedResult(P);
 }
 var init_readonly_from_mapped_result = __esm(() => {
@@ -17569,13 +17363,13 @@ var init_readonly_from_mapped_result = __esm(() => {
   init_readonly();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly/index.mjs
 var init_readonly2 = __esm(() => {
   init_readonly_from_mapped_result();
   init_readonly();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/tuple/tuple.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/tuple/tuple.mjs
 function Tuple(types, options) {
   return CreateType(types.length > 0 ? { [Kind]: "Tuple", type: "array", items: types, additionalItems: false, minItems: types.length, maxItems: types.length } : { [Kind]: "Tuple", type: "array", minItems: types.length, maxItems: types.length }, options);
 }
@@ -17584,13 +17378,41 @@ var init_tuple = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/tuple/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/tuple/index.mjs
 var init_tuple2 = __esm(() => {
   init_tuple();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped.mjs
-function FromMappedResult3(K, P) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/sets/set.mjs
+function SetIncludes(T, S) {
+  return T.includes(S);
+}
+function SetDistinct(T) {
+  return [...new Set(T)];
+}
+function SetIntersect(T, S) {
+  return T.filter((L) => S.includes(L));
+}
+function SetIntersectManyResolve(T, Init) {
+  return T.reduce((Acc, L) => {
+    return SetIntersect(Acc, L);
+  }, Init);
+}
+function SetIntersectMany(T) {
+  return T.length === 1 ? T[0] : T.length > 1 ? SetIntersectManyResolve(T.slice(1), T[0]) : [];
+}
+function SetUnionMany(T) {
+  const Acc = [];
+  for (const L of T)
+    Acc.push(...L);
+  return Acc;
+}
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/sets/index.mjs
+var init_sets = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped.mjs
+function FromMappedResult4(K, P) {
   return K in P ? FromSchemaType(K, P[K]) : MappedResult(P);
 }
 function MappedKeyToKnownMappedResultProperties(K) {
@@ -17607,12 +17429,12 @@ function MappedKeyToMappedResultProperties(K, P) {
 }
 function FromMappedKey(K, P) {
   const R = MappedKeyToMappedResultProperties(K, P);
-  return FromMappedResult3(K, R);
+  return FromMappedResult4(K, R);
 }
 function FromRest2(K, T) {
   return T.map((L) => FromSchemaType(K, L));
 }
-function FromProperties3(K, T) {
+function FromProperties4(K, T) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(T))
     Acc[K2] = FromSchemaType(K, T[K2]);
@@ -17620,7 +17442,7 @@ function FromProperties3(K, T) {
 }
 function FromSchemaType(K, T) {
   const options = { ...T };
-  return IsOptional(T) ? Optional(FromSchemaType(K, Discard(T, [OptionalKind]))) : IsReadonly(T) ? Readonly(FromSchemaType(K, Discard(T, [ReadonlyKind]))) : IsMappedResult(T) ? FromMappedResult3(K, T.properties) : IsMappedKey(T) ? FromMappedKey(K, T.keys) : IsConstructor(T) ? Constructor(FromRest2(K, T.parameters), FromSchemaType(K, T.returns), options) : IsFunction3(T) ? Function2(FromRest2(K, T.parameters), FromSchemaType(K, T.returns), options) : IsAsyncIterator3(T) ? AsyncIterator(FromSchemaType(K, T.items), options) : IsIterator3(T) ? Iterator(FromSchemaType(K, T.items), options) : IsIntersect(T) ? Intersect(FromRest2(K, T.allOf), options) : IsUnion(T) ? Union(FromRest2(K, T.anyOf), options) : IsTuple(T) ? Tuple(FromRest2(K, T.items ?? []), options) : IsObject3(T) ? Object2(FromProperties3(K, T.properties), options) : IsArray3(T) ? Array2(FromSchemaType(K, T.items), options) : IsPromise2(T) ? Promise2(FromSchemaType(K, T.item), options) : T;
+  return IsOptional(T) ? Optional(FromSchemaType(K, Discard(T, [OptionalKind]))) : IsReadonly(T) ? Readonly(FromSchemaType(K, Discard(T, [ReadonlyKind]))) : IsMappedResult(T) ? FromMappedResult4(K, T.properties) : IsMappedKey(T) ? FromMappedKey(K, T.keys) : IsConstructor(T) ? Constructor(FromRest2(K, T.parameters), FromSchemaType(K, T.returns), options) : IsFunction3(T) ? Function2(FromRest2(K, T.parameters), FromSchemaType(K, T.returns), options) : IsAsyncIterator3(T) ? AsyncIterator(FromSchemaType(K, T.items), options) : IsIterator3(T) ? Iterator(FromSchemaType(K, T.items), options) : IsIntersect(T) ? Intersect(FromRest2(K, T.allOf), options) : IsUnion(T) ? Union(FromRest2(K, T.anyOf), options) : IsTuple(T) ? Tuple(FromRest2(K, T.items ?? []), options) : IsObject3(T) ? Object2(FromProperties4(K, T.properties), options) : IsArray3(T) ? Array2(FromSchemaType(K, T.items), options) : IsPromise2(T) ? Promise2(FromSchemaType(K, T.item), options) : T;
 }
 function MappedFunctionReturnType(K, T) {
   const Acc = {};
@@ -17656,132 +17478,14 @@ var init_mapped = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/mapped/index.mjs
 var init_mapped2 = __esm(() => {
   init_mapped_key();
   init_mapped_result();
   init_mapped();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/optional.mjs
-function RemoveOptional(schema) {
-  return CreateType(Discard(schema, [OptionalKind]));
-}
-function AddOptional(schema) {
-  return CreateType({ ...schema, [OptionalKind]: "Optional" });
-}
-function OptionalWithFlag(schema, F) {
-  return F === false ? RemoveOptional(schema) : AddOptional(schema);
-}
-function Optional(schema, enable) {
-  const F = enable ?? true;
-  return IsMappedResult(schema) ? OptionalFromMappedResult(schema, F) : OptionalWithFlag(schema, F);
-}
-var init_optional = __esm(() => {
-  init_type2();
-  init_symbols2();
-  init_discard();
-  init_optional_from_mapped_result();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/optional-from-mapped-result.mjs
-function FromProperties4(P, F) {
-  const Acc = {};
-  for (const K2 of globalThis.Object.getOwnPropertyNames(P))
-    Acc[K2] = Optional(P[K2], F);
-  return Acc;
-}
-function FromMappedResult4(R, F) {
-  return FromProperties4(R.properties, F);
-}
-function OptionalFromMappedResult(R, F) {
-  const P = FromMappedResult4(R, F);
-  return MappedResult(P);
-}
-var init_optional_from_mapped_result = __esm(() => {
-  init_mapped2();
-  init_optional();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/optional/index.mjs
-var init_optional2 = __esm(() => {
-  init_optional_from_mapped_result();
-  init_optional();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-create.mjs
-function IntersectCreate(T, options = {}) {
-  const allObjects = T.every((schema) => IsObject3(schema));
-  const clonedUnevaluatedProperties = IsSchema(options.unevaluatedProperties) ? { unevaluatedProperties: options.unevaluatedProperties } : {};
-  return CreateType(options.unevaluatedProperties === false || IsSchema(options.unevaluatedProperties) || allObjects ? { ...clonedUnevaluatedProperties, [Kind]: "Intersect", type: "object", allOf: T } : { ...clonedUnevaluatedProperties, [Kind]: "Intersect", allOf: T }, options);
-}
-var init_intersect_create = __esm(() => {
-  init_type2();
-  init_symbols2();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-evaluated.mjs
-function IsIntersectOptional(types) {
-  return types.every((left) => IsOptional(left));
-}
-function RemoveOptionalFromType2(type3) {
-  return Discard(type3, [OptionalKind]);
-}
-function RemoveOptionalFromRest2(types) {
-  return types.map((left) => IsOptional(left) ? RemoveOptionalFromType2(left) : left);
-}
-function ResolveIntersect(types, options) {
-  return IsIntersectOptional(types) ? Optional(IntersectCreate(RemoveOptionalFromRest2(types), options)) : IntersectCreate(RemoveOptionalFromRest2(types), options);
-}
-function IntersectEvaluated(types, options = {}) {
-  if (types.length === 1)
-    return CreateType(types[0], options);
-  if (types.length === 0)
-    return Never(options);
-  if (types.some((schema) => IsTransform(schema)))
-    throw new Error("Cannot intersect transform types");
-  return ResolveIntersect(types, options);
-}
-var init_intersect_evaluated = __esm(() => {
-  init_symbols2();
-  init_type2();
-  init_discard();
-  init_never2();
-  init_optional2();
-  init_intersect_create();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect-type.mjs
-var init_intersect_type = () => {};
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/intersect.mjs
-function Intersect(types, options) {
-  if (types.length === 1)
-    return CreateType(types[0], options);
-  if (types.length === 0)
-    return Never(options);
-  if (types.some((schema) => IsTransform(schema)))
-    throw new Error("Cannot intersect transform types");
-  return IntersectCreate(types, options);
-}
-var init_intersect = __esm(() => {
-  init_type2();
-  init_never2();
-  init_intersect_create();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intersect/index.mjs
-var init_intersect2 = __esm(() => {
-  init_intersect_evaluated();
-  init_intersect_type();
-  init_intersect();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/ref/ref.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/ref/ref.mjs
 function Ref(...args2) {
   const [$ref, options] = typeof args2[0] === "string" ? [args2[0], args2[1]] : [args2[0].$id, args2[1]];
   if (typeof $ref !== "string")
@@ -17794,61 +17498,25 @@ var init_ref = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/ref/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/ref/index.mjs
 var init_ref2 = __esm(() => {
   init_ref();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/awaited/awaited.mjs
-function FromComputed(target, parameters) {
-  return Computed("Awaited", [Computed(target, parameters)]);
-}
-function FromRef($ref) {
-  return Computed("Awaited", [Ref($ref)]);
-}
-function FromIntersect2(types) {
-  return Intersect(FromRest3(types));
-}
-function FromUnion4(types) {
-  return Union(FromRest3(types));
-}
-function FromPromise(type3) {
-  return Awaited(type3);
-}
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-property-keys.mjs
 function FromRest3(types) {
-  return types.map((type3) => Awaited(type3));
-}
-function Awaited(type3, options) {
-  return CreateType(IsComputed(type3) ? FromComputed(type3.target, type3.parameters) : IsIntersect(type3) ? FromIntersect2(type3.allOf) : IsUnion(type3) ? FromUnion4(type3.anyOf) : IsPromise2(type3) ? FromPromise(type3.item) : IsRef(type3) ? FromRef(type3.$ref) : type3, options);
-}
-var init_awaited = __esm(() => {
-  init_type2();
-  init_computed2();
-  init_intersect2();
-  init_union2();
-  init_ref2();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/awaited/index.mjs
-var init_awaited2 = __esm(() => {
-  init_awaited();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-property-keys.mjs
-function FromRest4(types) {
   const result = [];
   for (const L of types)
     result.push(KeyOfPropertyKeys(L));
   return result;
 }
-function FromIntersect3(types) {
-  const propertyKeysArray = FromRest4(types);
+function FromIntersect2(types) {
+  const propertyKeysArray = FromRest3(types);
   const propertyKeys = SetUnionMany(propertyKeysArray);
   return propertyKeys;
 }
-function FromUnion5(types) {
-  const propertyKeysArray = FromRest4(types);
+function FromUnion4(types) {
+  const propertyKeysArray = FromRest3(types);
   const propertyKeys = SetIntersectMany(propertyKeysArray);
   return propertyKeys;
 }
@@ -17869,8 +17537,8 @@ function FromPatternProperties(patternProperties) {
     return key[0] === "^" && key[key.length - 1] === "$" ? key.slice(1, key.length - 1) : key;
   });
 }
-function KeyOfPropertyKeys(type3) {
-  return IsIntersect(type3) ? FromIntersect3(type3.allOf) : IsUnion(type3) ? FromUnion5(type3.anyOf) : IsTuple(type3) ? FromTuple2(type3.items ?? []) : IsArray3(type3) ? FromArray2(type3.items) : IsObject3(type3) ? FromProperties5(type3.properties) : IsRecord(type3) ? FromPatternProperties(type3.patternProperties) : [];
+function KeyOfPropertyKeys(type2) {
+  return IsIntersect(type2) ? FromIntersect2(type2.allOf) : IsUnion(type2) ? FromUnion4(type2.anyOf) : IsTuple(type2) ? FromTuple2(type2.items ?? []) : IsArray3(type2) ? FromArray2(type2.items) : IsObject3(type2) ? FromProperties5(type2.properties) : IsRecord(type2) ? FromPatternProperties(type2.patternProperties) : [];
 }
 function KeyOfPattern(schema) {
   includePatternProperties = true;
@@ -17885,15 +17553,15 @@ var init_keyof_property_keys = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof.mjs
-function FromComputed2(target, parameters) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof.mjs
+function FromComputed(target, parameters) {
   return Computed("KeyOf", [Computed(target, parameters)]);
 }
-function FromRef2($ref) {
+function FromRef($ref) {
   return Computed("KeyOf", [Ref($ref)]);
 }
-function KeyOfFromType(type3, options) {
-  const propertyKeys = KeyOfPropertyKeys(type3);
+function KeyOfFromType(type2, options) {
+  const propertyKeys = KeyOfPropertyKeys(type2);
   const propertyKeyTypes = KeyOfPropertyKeysToRest(propertyKeys);
   const result = UnionEvaluated(propertyKeyTypes);
   return CreateType(result, options);
@@ -17901,8 +17569,8 @@ function KeyOfFromType(type3, options) {
 function KeyOfPropertyKeysToRest(propertyKeys) {
   return propertyKeys.map((L) => L === "[number]" ? Number2() : Literal(L));
 }
-function KeyOf(type3, options) {
-  return IsComputed(type3) ? FromComputed2(type3.target, type3.parameters) : IsRef(type3) ? FromRef2(type3.$ref) : IsMappedResult(type3) ? KeyOfFromMappedResult(type3, options) : KeyOfFromType(type3, options);
+function KeyOf(type2, options) {
+  return IsComputed(type2) ? FromComputed(type2.target, type2.parameters) : IsRef(type2) ? FromRef(type2.$ref) : IsMappedResult(type2) ? KeyOfFromMappedResult(type2, options) : KeyOfFromType(type2, options);
 }
 var init_keyof = __esm(() => {
   init_type2();
@@ -17916,7 +17584,7 @@ var init_keyof = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-from-mapped-result.mjs
 function FromProperties6(properties, options) {
   const result = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(properties))
@@ -17936,7 +17604,7 @@ var init_keyof_from_mapped_result = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-property-entries.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-property-entries.mjs
 function KeyOfPropertyEntries(schema) {
   const keys = KeyOfPropertyKeys(schema);
   const schemas = IndexFromPropertyKeys(schema, keys);
@@ -17947,7 +17615,7 @@ var init_keyof_property_entries = __esm(() => {
   init_keyof_property_keys();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/keyof/index.mjs
 var init_keyof2 = __esm(() => {
   init_keyof_from_mapped_result();
   init_keyof_property_entries();
@@ -17955,7 +17623,4378 @@ var init_keyof2 = __esm(() => {
   init_keyof();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/composite/composite.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-undefined.mjs
+function Intersect2(schema) {
+  return schema.allOf.every((schema2) => ExtendsUndefinedCheck(schema2));
+}
+function Union2(schema) {
+  return schema.anyOf.some((schema2) => ExtendsUndefinedCheck(schema2));
+}
+function Not(schema) {
+  return !ExtendsUndefinedCheck(schema.not);
+}
+function ExtendsUndefinedCheck(schema) {
+  return schema[Kind] === "Intersect" ? Intersect2(schema) : schema[Kind] === "Union" ? Union2(schema) : schema[Kind] === "Not" ? Not(schema) : schema[Kind] === "Undefined" ? true : false;
+}
+var init_extends_undefined = __esm(() => {
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/function.mjs
+function DefaultErrorFunction(error2) {
+  switch (error2.errorType) {
+    case ValueErrorType.ArrayContains:
+      return "Expected array to contain at least one matching value";
+    case ValueErrorType.ArrayMaxContains:
+      return `Expected array to contain no more than ${error2.schema.maxContains} matching values`;
+    case ValueErrorType.ArrayMinContains:
+      return `Expected array to contain at least ${error2.schema.minContains} matching values`;
+    case ValueErrorType.ArrayMaxItems:
+      return `Expected array length to be less or equal to ${error2.schema.maxItems}`;
+    case ValueErrorType.ArrayMinItems:
+      return `Expected array length to be greater or equal to ${error2.schema.minItems}`;
+    case ValueErrorType.ArrayUniqueItems:
+      return "Expected array elements to be unique";
+    case ValueErrorType.Array:
+      return "Expected array";
+    case ValueErrorType.AsyncIterator:
+      return "Expected AsyncIterator";
+    case ValueErrorType.BigIntExclusiveMaximum:
+      return `Expected bigint to be less than ${error2.schema.exclusiveMaximum}`;
+    case ValueErrorType.BigIntExclusiveMinimum:
+      return `Expected bigint to be greater than ${error2.schema.exclusiveMinimum}`;
+    case ValueErrorType.BigIntMaximum:
+      return `Expected bigint to be less or equal to ${error2.schema.maximum}`;
+    case ValueErrorType.BigIntMinimum:
+      return `Expected bigint to be greater or equal to ${error2.schema.minimum}`;
+    case ValueErrorType.BigIntMultipleOf:
+      return `Expected bigint to be a multiple of ${error2.schema.multipleOf}`;
+    case ValueErrorType.BigInt:
+      return "Expected bigint";
+    case ValueErrorType.Boolean:
+      return "Expected boolean";
+    case ValueErrorType.DateExclusiveMinimumTimestamp:
+      return `Expected Date timestamp to be greater than ${error2.schema.exclusiveMinimumTimestamp}`;
+    case ValueErrorType.DateExclusiveMaximumTimestamp:
+      return `Expected Date timestamp to be less than ${error2.schema.exclusiveMaximumTimestamp}`;
+    case ValueErrorType.DateMinimumTimestamp:
+      return `Expected Date timestamp to be greater or equal to ${error2.schema.minimumTimestamp}`;
+    case ValueErrorType.DateMaximumTimestamp:
+      return `Expected Date timestamp to be less or equal to ${error2.schema.maximumTimestamp}`;
+    case ValueErrorType.DateMultipleOfTimestamp:
+      return `Expected Date timestamp to be a multiple of ${error2.schema.multipleOfTimestamp}`;
+    case ValueErrorType.Date:
+      return "Expected Date";
+    case ValueErrorType.Function:
+      return "Expected function";
+    case ValueErrorType.IntegerExclusiveMaximum:
+      return `Expected integer to be less than ${error2.schema.exclusiveMaximum}`;
+    case ValueErrorType.IntegerExclusiveMinimum:
+      return `Expected integer to be greater than ${error2.schema.exclusiveMinimum}`;
+    case ValueErrorType.IntegerMaximum:
+      return `Expected integer to be less or equal to ${error2.schema.maximum}`;
+    case ValueErrorType.IntegerMinimum:
+      return `Expected integer to be greater or equal to ${error2.schema.minimum}`;
+    case ValueErrorType.IntegerMultipleOf:
+      return `Expected integer to be a multiple of ${error2.schema.multipleOf}`;
+    case ValueErrorType.Integer:
+      return "Expected integer";
+    case ValueErrorType.IntersectUnevaluatedProperties:
+      return "Unexpected property";
+    case ValueErrorType.Intersect:
+      return "Expected all values to match";
+    case ValueErrorType.Iterator:
+      return "Expected Iterator";
+    case ValueErrorType.Literal:
+      return `Expected ${typeof error2.schema.const === "string" ? `'${error2.schema.const}'` : error2.schema.const}`;
+    case ValueErrorType.Never:
+      return "Never";
+    case ValueErrorType.Not:
+      return "Value should not match";
+    case ValueErrorType.Null:
+      return "Expected null";
+    case ValueErrorType.NumberExclusiveMaximum:
+      return `Expected number to be less than ${error2.schema.exclusiveMaximum}`;
+    case ValueErrorType.NumberExclusiveMinimum:
+      return `Expected number to be greater than ${error2.schema.exclusiveMinimum}`;
+    case ValueErrorType.NumberMaximum:
+      return `Expected number to be less or equal to ${error2.schema.maximum}`;
+    case ValueErrorType.NumberMinimum:
+      return `Expected number to be greater or equal to ${error2.schema.minimum}`;
+    case ValueErrorType.NumberMultipleOf:
+      return `Expected number to be a multiple of ${error2.schema.multipleOf}`;
+    case ValueErrorType.Number:
+      return "Expected number";
+    case ValueErrorType.Object:
+      return "Expected object";
+    case ValueErrorType.ObjectAdditionalProperties:
+      return "Unexpected property";
+    case ValueErrorType.ObjectMaxProperties:
+      return `Expected object to have no more than ${error2.schema.maxProperties} properties`;
+    case ValueErrorType.ObjectMinProperties:
+      return `Expected object to have at least ${error2.schema.minProperties} properties`;
+    case ValueErrorType.ObjectRequiredProperty:
+      return "Expected required property";
+    case ValueErrorType.Promise:
+      return "Expected Promise";
+    case ValueErrorType.RegExp:
+      return "Expected string to match regular expression";
+    case ValueErrorType.StringFormatUnknown:
+      return `Unknown format '${error2.schema.format}'`;
+    case ValueErrorType.StringFormat:
+      return `Expected string to match '${error2.schema.format}' format`;
+    case ValueErrorType.StringMaxLength:
+      return `Expected string length less or equal to ${error2.schema.maxLength}`;
+    case ValueErrorType.StringMinLength:
+      return `Expected string length greater or equal to ${error2.schema.minLength}`;
+    case ValueErrorType.StringPattern:
+      return `Expected string to match '${error2.schema.pattern}'`;
+    case ValueErrorType.String:
+      return "Expected string";
+    case ValueErrorType.Symbol:
+      return "Expected symbol";
+    case ValueErrorType.TupleLength:
+      return `Expected tuple to have ${error2.schema.maxItems || 0} elements`;
+    case ValueErrorType.Tuple:
+      return "Expected tuple";
+    case ValueErrorType.Uint8ArrayMaxByteLength:
+      return `Expected byte length less or equal to ${error2.schema.maxByteLength}`;
+    case ValueErrorType.Uint8ArrayMinByteLength:
+      return `Expected byte length greater or equal to ${error2.schema.minByteLength}`;
+    case ValueErrorType.Uint8Array:
+      return "Expected Uint8Array";
+    case ValueErrorType.Undefined:
+      return "Expected undefined";
+    case ValueErrorType.Union:
+      return "Expected union value";
+    case ValueErrorType.Void:
+      return "Expected void";
+    case ValueErrorType.Kind:
+      return `Expected kind '${error2.schema[Kind]}'`;
+    default:
+      return "Unknown error type";
+  }
+}
+function GetErrorFunction() {
+  return errorFunction;
+}
+var errorFunction;
+var init_function3 = __esm(() => {
+  init_symbols2();
+  init_errors();
+  errorFunction = DefaultErrorFunction;
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/deref/deref.mjs
+function Resolve(schema, references) {
+  const target = references.find((target2) => target2.$id === schema.$ref);
+  if (target === undefined)
+    throw new TypeDereferenceError(schema);
+  return Deref(target, references);
+}
+function Pushref(schema, references) {
+  if (!IsString(schema.$id) || references.some((target) => target.$id === schema.$id))
+    return references;
+  references.push(schema);
+  return references;
+}
+function Deref(schema, references) {
+  return schema[Kind] === "This" || schema[Kind] === "Ref" ? Resolve(schema, references) : schema;
+}
+var TypeDereferenceError;
+var init_deref = __esm(() => {
+  init_error2();
+  init_symbols2();
+  TypeDereferenceError = class TypeDereferenceError extends TypeBoxError {
+    constructor(schema) {
+      super(`Unable to dereference schema with $id '${schema.$ref}'`);
+      this.schema = schema;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/deref/index.mjs
+var init_deref2 = __esm(() => {
+  init_deref();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/hash/hash.mjs
+function* NumberToBytes(value) {
+  const byteCount = value === 0 ? 1 : Math.ceil(Math.floor(Math.log2(value) + 1) / 8);
+  for (let i = 0;i < byteCount; i++) {
+    yield value >> 8 * (byteCount - 1 - i) & 255;
+  }
+}
+function ArrayType2(value) {
+  FNV1A64(ByteMarker.Array);
+  for (const item of value) {
+    Visit3(item);
+  }
+}
+function BooleanType(value) {
+  FNV1A64(ByteMarker.Boolean);
+  FNV1A64(value ? 1 : 0);
+}
+function BigIntType(value) {
+  FNV1A64(ByteMarker.BigInt);
+  F64In.setBigInt64(0, value);
+  for (const byte of F64Out) {
+    FNV1A64(byte);
+  }
+}
+function DateType2(value) {
+  FNV1A64(ByteMarker.Date);
+  Visit3(value.getTime());
+}
+function NullType(value) {
+  FNV1A64(ByteMarker.Null);
+}
+function NumberType(value) {
+  FNV1A64(ByteMarker.Number);
+  F64In.setFloat64(0, value);
+  for (const byte of F64Out) {
+    FNV1A64(byte);
+  }
+}
+function ObjectType2(value) {
+  FNV1A64(ByteMarker.Object);
+  for (const key of globalThis.Object.getOwnPropertyNames(value).sort()) {
+    Visit3(key);
+    Visit3(value[key]);
+  }
+}
+function StringType(value) {
+  FNV1A64(ByteMarker.String);
+  for (let i = 0;i < value.length; i++) {
+    for (const byte of NumberToBytes(value.charCodeAt(i))) {
+      FNV1A64(byte);
+    }
+  }
+}
+function SymbolType(value) {
+  FNV1A64(ByteMarker.Symbol);
+  Visit3(value.description);
+}
+function Uint8ArrayType2(value) {
+  FNV1A64(ByteMarker.Uint8Array);
+  for (let i = 0;i < value.length; i++) {
+    FNV1A64(value[i]);
+  }
+}
+function UndefinedType(value) {
+  return FNV1A64(ByteMarker.Undefined);
+}
+function Visit3(value) {
+  if (IsArray(value))
+    return ArrayType2(value);
+  if (IsBoolean(value))
+    return BooleanType(value);
+  if (IsBigInt(value))
+    return BigIntType(value);
+  if (IsDate(value))
+    return DateType2(value);
+  if (IsNull(value))
+    return NullType(value);
+  if (IsNumber(value))
+    return NumberType(value);
+  if (IsObject(value))
+    return ObjectType2(value);
+  if (IsString(value))
+    return StringType(value);
+  if (IsSymbol(value))
+    return SymbolType(value);
+  if (IsUint8Array(value))
+    return Uint8ArrayType2(value);
+  if (IsUndefined(value))
+    return UndefinedType(value);
+  throw new ValueHashError(value);
+}
+function FNV1A64(byte) {
+  Accumulator = Accumulator ^ Bytes[byte];
+  Accumulator = Accumulator * Prime % Size;
+}
+function Hash(value) {
+  Accumulator = BigInt("14695981039346656037");
+  Visit3(value);
+  return Accumulator;
+}
+var ValueHashError, ByteMarker, Accumulator, Prime, Size, Bytes, F64, F64In, F64Out;
+var init_hash = __esm(() => {
+  init_guard();
+  init_error2();
+  ValueHashError = class ValueHashError extends TypeBoxError {
+    constructor(value) {
+      super(`Unable to hash value`);
+      this.value = value;
+    }
+  };
+  (function(ByteMarker2) {
+    ByteMarker2[ByteMarker2["Undefined"] = 0] = "Undefined";
+    ByteMarker2[ByteMarker2["Null"] = 1] = "Null";
+    ByteMarker2[ByteMarker2["Boolean"] = 2] = "Boolean";
+    ByteMarker2[ByteMarker2["Number"] = 3] = "Number";
+    ByteMarker2[ByteMarker2["String"] = 4] = "String";
+    ByteMarker2[ByteMarker2["Object"] = 5] = "Object";
+    ByteMarker2[ByteMarker2["Array"] = 6] = "Array";
+    ByteMarker2[ByteMarker2["Date"] = 7] = "Date";
+    ByteMarker2[ByteMarker2["Uint8Array"] = 8] = "Uint8Array";
+    ByteMarker2[ByteMarker2["Symbol"] = 9] = "Symbol";
+    ByteMarker2[ByteMarker2["BigInt"] = 10] = "BigInt";
+  })(ByteMarker || (ByteMarker = {}));
+  Accumulator = BigInt("14695981039346656037");
+  [Prime, Size] = [BigInt("1099511628211"), BigInt("18446744073709551616")];
+  Bytes = Array.from({ length: 256 }).map((_, i) => BigInt(i));
+  F64 = new Float64Array(1);
+  F64In = new DataView(F64.buffer);
+  F64Out = new Uint8Array(F64.buffer);
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/hash/index.mjs
+var init_hash2 = __esm(() => {
+  init_hash();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/any/any.mjs
+function Any(options) {
+  return CreateType({ [Kind]: "Any" }, options);
+}
+var init_any = __esm(() => {
+  init_create();
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/any/index.mjs
+var init_any2 = __esm(() => {
+  init_any();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unknown/unknown.mjs
+function Unknown(options) {
+  return CreateType({ [Kind]: "Unknown" }, options);
+}
+var init_unknown = __esm(() => {
+  init_type2();
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unknown/index.mjs
+var init_unknown2 = __esm(() => {
+  init_unknown();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/type.mjs
+var exports_type2 = {};
+__export(exports_type2, {
+  TypeGuardUnknownTypeError: () => TypeGuardUnknownTypeError,
+  IsVoid: () => IsVoid2,
+  IsUnsafe: () => IsUnsafe2,
+  IsUnknown: () => IsUnknown2,
+  IsUnionLiteral: () => IsUnionLiteral,
+  IsUnion: () => IsUnion2,
+  IsUndefined: () => IsUndefined4,
+  IsUint8Array: () => IsUint8Array4,
+  IsTuple: () => IsTuple2,
+  IsTransform: () => IsTransform2,
+  IsThis: () => IsThis2,
+  IsTemplateLiteral: () => IsTemplateLiteral2,
+  IsSymbol: () => IsSymbol4,
+  IsString: () => IsString4,
+  IsSchema: () => IsSchema2,
+  IsRegExp: () => IsRegExp3,
+  IsRef: () => IsRef2,
+  IsRecursive: () => IsRecursive,
+  IsRecord: () => IsRecord2,
+  IsReadonly: () => IsReadonly2,
+  IsProperties: () => IsProperties,
+  IsPromise: () => IsPromise3,
+  IsOptional: () => IsOptional2,
+  IsObject: () => IsObject4,
+  IsNumber: () => IsNumber4,
+  IsNull: () => IsNull4,
+  IsNot: () => IsNot2,
+  IsNever: () => IsNever2,
+  IsMappedResult: () => IsMappedResult2,
+  IsMappedKey: () => IsMappedKey2,
+  IsLiteralValue: () => IsLiteralValue2,
+  IsLiteralString: () => IsLiteralString,
+  IsLiteralNumber: () => IsLiteralNumber,
+  IsLiteralBoolean: () => IsLiteralBoolean,
+  IsLiteral: () => IsLiteral2,
+  IsKindOf: () => IsKindOf2,
+  IsKind: () => IsKind2,
+  IsIterator: () => IsIterator4,
+  IsIntersect: () => IsIntersect2,
+  IsInteger: () => IsInteger3,
+  IsImport: () => IsImport,
+  IsFunction: () => IsFunction4,
+  IsDate: () => IsDate4,
+  IsConstructor: () => IsConstructor2,
+  IsComputed: () => IsComputed2,
+  IsBoolean: () => IsBoolean4,
+  IsBigInt: () => IsBigInt4,
+  IsAsyncIterator: () => IsAsyncIterator4,
+  IsArray: () => IsArray4,
+  IsArgument: () => IsArgument2,
+  IsAny: () => IsAny2
+});
+function IsPattern(value) {
+  try {
+    new RegExp(value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function IsControlCharacterFree(value) {
+  if (!IsString2(value))
+    return false;
+  for (let i = 0;i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code >= 7 && code <= 13 || code === 27 || code === 127) {
+      return false;
+    }
+  }
+  return true;
+}
+function IsAdditionalProperties(value) {
+  return IsOptionalBoolean(value) || IsSchema2(value);
+}
+function IsOptionalBigInt(value) {
+  return IsUndefined2(value) || IsBigInt2(value);
+}
+function IsOptionalNumber(value) {
+  return IsUndefined2(value) || IsNumber2(value);
+}
+function IsOptionalBoolean(value) {
+  return IsUndefined2(value) || IsBoolean2(value);
+}
+function IsOptionalString(value) {
+  return IsUndefined2(value) || IsString2(value);
+}
+function IsOptionalPattern(value) {
+  return IsUndefined2(value) || IsString2(value) && IsControlCharacterFree(value) && IsPattern(value);
+}
+function IsOptionalFormat(value) {
+  return IsUndefined2(value) || IsString2(value) && IsControlCharacterFree(value);
+}
+function IsOptionalSchema(value) {
+  return IsUndefined2(value) || IsSchema2(value);
+}
+function IsReadonly2(value) {
+  return IsObject2(value) && value[ReadonlyKind] === "Readonly";
+}
+function IsOptional2(value) {
+  return IsObject2(value) && value[OptionalKind] === "Optional";
+}
+function IsAny2(value) {
+  return IsKindOf2(value, "Any") && IsOptionalString(value.$id);
+}
+function IsArgument2(value) {
+  return IsKindOf2(value, "Argument") && IsNumber2(value.index);
+}
+function IsArray4(value) {
+  return IsKindOf2(value, "Array") && value.type === "array" && IsOptionalString(value.$id) && IsSchema2(value.items) && IsOptionalNumber(value.minItems) && IsOptionalNumber(value.maxItems) && IsOptionalBoolean(value.uniqueItems) && IsOptionalSchema(value.contains) && IsOptionalNumber(value.minContains) && IsOptionalNumber(value.maxContains);
+}
+function IsAsyncIterator4(value) {
+  return IsKindOf2(value, "AsyncIterator") && value.type === "AsyncIterator" && IsOptionalString(value.$id) && IsSchema2(value.items);
+}
+function IsBigInt4(value) {
+  return IsKindOf2(value, "BigInt") && value.type === "bigint" && IsOptionalString(value.$id) && IsOptionalBigInt(value.exclusiveMaximum) && IsOptionalBigInt(value.exclusiveMinimum) && IsOptionalBigInt(value.maximum) && IsOptionalBigInt(value.minimum) && IsOptionalBigInt(value.multipleOf);
+}
+function IsBoolean4(value) {
+  return IsKindOf2(value, "Boolean") && value.type === "boolean" && IsOptionalString(value.$id);
+}
+function IsComputed2(value) {
+  return IsKindOf2(value, "Computed") && IsString2(value.target) && IsArray2(value.parameters) && value.parameters.every((schema) => IsSchema2(schema));
+}
+function IsConstructor2(value) {
+  return IsKindOf2(value, "Constructor") && value.type === "Constructor" && IsOptionalString(value.$id) && IsArray2(value.parameters) && value.parameters.every((schema) => IsSchema2(schema)) && IsSchema2(value.returns);
+}
+function IsDate4(value) {
+  return IsKindOf2(value, "Date") && value.type === "Date" && IsOptionalString(value.$id) && IsOptionalNumber(value.exclusiveMaximumTimestamp) && IsOptionalNumber(value.exclusiveMinimumTimestamp) && IsOptionalNumber(value.maximumTimestamp) && IsOptionalNumber(value.minimumTimestamp) && IsOptionalNumber(value.multipleOfTimestamp);
+}
+function IsFunction4(value) {
+  return IsKindOf2(value, "Function") && value.type === "Function" && IsOptionalString(value.$id) && IsArray2(value.parameters) && value.parameters.every((schema) => IsSchema2(schema)) && IsSchema2(value.returns);
+}
+function IsImport(value) {
+  return IsKindOf2(value, "Import") && HasPropertyKey2(value, "$defs") && IsObject2(value.$defs) && IsProperties(value.$defs) && HasPropertyKey2(value, "$ref") && IsString2(value.$ref) && value.$ref in value.$defs;
+}
+function IsInteger3(value) {
+  return IsKindOf2(value, "Integer") && value.type === "integer" && IsOptionalString(value.$id) && IsOptionalNumber(value.exclusiveMaximum) && IsOptionalNumber(value.exclusiveMinimum) && IsOptionalNumber(value.maximum) && IsOptionalNumber(value.minimum) && IsOptionalNumber(value.multipleOf);
+}
+function IsProperties(value) {
+  return IsObject2(value) && Object.entries(value).every(([key, schema]) => IsControlCharacterFree(key) && IsSchema2(schema));
+}
+function IsIntersect2(value) {
+  return IsKindOf2(value, "Intersect") && (IsString2(value.type) && value.type !== "object" ? false : true) && IsArray2(value.allOf) && value.allOf.every((schema) => IsSchema2(schema) && !IsTransform2(schema)) && IsOptionalString(value.type) && (IsOptionalBoolean(value.unevaluatedProperties) || IsOptionalSchema(value.unevaluatedProperties)) && IsOptionalString(value.$id);
+}
+function IsIterator4(value) {
+  return IsKindOf2(value, "Iterator") && value.type === "Iterator" && IsOptionalString(value.$id) && IsSchema2(value.items);
+}
+function IsKindOf2(value, kind) {
+  return IsObject2(value) && Kind in value && value[Kind] === kind;
+}
+function IsLiteralString(value) {
+  return IsLiteral2(value) && IsString2(value.const);
+}
+function IsLiteralNumber(value) {
+  return IsLiteral2(value) && IsNumber2(value.const);
+}
+function IsLiteralBoolean(value) {
+  return IsLiteral2(value) && IsBoolean2(value.const);
+}
+function IsLiteral2(value) {
+  return IsKindOf2(value, "Literal") && IsOptionalString(value.$id) && IsLiteralValue2(value.const);
+}
+function IsLiteralValue2(value) {
+  return IsBoolean2(value) || IsNumber2(value) || IsString2(value);
+}
+function IsMappedKey2(value) {
+  return IsKindOf2(value, "MappedKey") && IsArray2(value.keys) && value.keys.every((key) => IsNumber2(key) || IsString2(key));
+}
+function IsMappedResult2(value) {
+  return IsKindOf2(value, "MappedResult") && IsProperties(value.properties);
+}
+function IsNever2(value) {
+  return IsKindOf2(value, "Never") && IsObject2(value.not) && Object.getOwnPropertyNames(value.not).length === 0;
+}
+function IsNot2(value) {
+  return IsKindOf2(value, "Not") && IsSchema2(value.not);
+}
+function IsNull4(value) {
+  return IsKindOf2(value, "Null") && value.type === "null" && IsOptionalString(value.$id);
+}
+function IsNumber4(value) {
+  return IsKindOf2(value, "Number") && value.type === "number" && IsOptionalString(value.$id) && IsOptionalNumber(value.exclusiveMaximum) && IsOptionalNumber(value.exclusiveMinimum) && IsOptionalNumber(value.maximum) && IsOptionalNumber(value.minimum) && IsOptionalNumber(value.multipleOf);
+}
+function IsObject4(value) {
+  return IsKindOf2(value, "Object") && value.type === "object" && IsOptionalString(value.$id) && IsProperties(value.properties) && IsAdditionalProperties(value.additionalProperties) && IsOptionalNumber(value.minProperties) && IsOptionalNumber(value.maxProperties);
+}
+function IsPromise3(value) {
+  return IsKindOf2(value, "Promise") && value.type === "Promise" && IsOptionalString(value.$id) && IsSchema2(value.item);
+}
+function IsRecord2(value) {
+  return IsKindOf2(value, "Record") && value.type === "object" && IsOptionalString(value.$id) && IsAdditionalProperties(value.additionalProperties) && IsObject2(value.patternProperties) && ((schema) => {
+    const keys = Object.getOwnPropertyNames(schema.patternProperties);
+    return keys.length === 1 && IsPattern(keys[0]) && IsObject2(schema.patternProperties) && IsSchema2(schema.patternProperties[keys[0]]);
+  })(value);
+}
+function IsRecursive(value) {
+  return IsObject2(value) && Hint in value && value[Hint] === "Recursive";
+}
+function IsRef2(value) {
+  return IsKindOf2(value, "Ref") && IsOptionalString(value.$id) && IsString2(value.$ref);
+}
+function IsRegExp3(value) {
+  return IsKindOf2(value, "RegExp") && IsOptionalString(value.$id) && IsString2(value.source) && IsString2(value.flags) && IsOptionalNumber(value.maxLength) && IsOptionalNumber(value.minLength);
+}
+function IsString4(value) {
+  return IsKindOf2(value, "String") && value.type === "string" && IsOptionalString(value.$id) && IsOptionalNumber(value.minLength) && IsOptionalNumber(value.maxLength) && IsOptionalPattern(value.pattern) && IsOptionalFormat(value.format);
+}
+function IsSymbol4(value) {
+  return IsKindOf2(value, "Symbol") && value.type === "symbol" && IsOptionalString(value.$id);
+}
+function IsTemplateLiteral2(value) {
+  return IsKindOf2(value, "TemplateLiteral") && value.type === "string" && IsString2(value.pattern) && value.pattern[0] === "^" && value.pattern[value.pattern.length - 1] === "$";
+}
+function IsThis2(value) {
+  return IsKindOf2(value, "This") && IsOptionalString(value.$id) && IsString2(value.$ref);
+}
+function IsTransform2(value) {
+  return IsObject2(value) && TransformKind in value;
+}
+function IsTuple2(value) {
+  return IsKindOf2(value, "Tuple") && value.type === "array" && IsOptionalString(value.$id) && IsNumber2(value.minItems) && IsNumber2(value.maxItems) && value.minItems === value.maxItems && (IsUndefined2(value.items) && IsUndefined2(value.additionalItems) && value.minItems === 0 || IsArray2(value.items) && value.items.every((schema) => IsSchema2(schema)));
+}
+function IsUndefined4(value) {
+  return IsKindOf2(value, "Undefined") && value.type === "undefined" && IsOptionalString(value.$id);
+}
+function IsUnionLiteral(value) {
+  return IsUnion2(value) && value.anyOf.every((schema) => IsLiteralString(schema) || IsLiteralNumber(schema));
+}
+function IsUnion2(value) {
+  return IsKindOf2(value, "Union") && IsOptionalString(value.$id) && IsObject2(value) && IsArray2(value.anyOf) && value.anyOf.every((schema) => IsSchema2(schema));
+}
+function IsUint8Array4(value) {
+  return IsKindOf2(value, "Uint8Array") && value.type === "Uint8Array" && IsOptionalString(value.$id) && IsOptionalNumber(value.minByteLength) && IsOptionalNumber(value.maxByteLength);
+}
+function IsUnknown2(value) {
+  return IsKindOf2(value, "Unknown") && IsOptionalString(value.$id);
+}
+function IsUnsafe2(value) {
+  return IsKindOf2(value, "Unsafe");
+}
+function IsVoid2(value) {
+  return IsKindOf2(value, "Void") && value.type === "void" && IsOptionalString(value.$id);
+}
+function IsKind2(value) {
+  return IsObject2(value) && Kind in value && IsString2(value[Kind]) && !KnownTypes.includes(value[Kind]);
+}
+function IsSchema2(value) {
+  return IsObject2(value) && (IsAny2(value) || IsArgument2(value) || IsArray4(value) || IsBoolean4(value) || IsBigInt4(value) || IsAsyncIterator4(value) || IsComputed2(value) || IsConstructor2(value) || IsDate4(value) || IsFunction4(value) || IsInteger3(value) || IsIntersect2(value) || IsIterator4(value) || IsLiteral2(value) || IsMappedKey2(value) || IsMappedResult2(value) || IsNever2(value) || IsNot2(value) || IsNull4(value) || IsNumber4(value) || IsObject4(value) || IsPromise3(value) || IsRecord2(value) || IsRef2(value) || IsRegExp3(value) || IsString4(value) || IsSymbol4(value) || IsTemplateLiteral2(value) || IsThis2(value) || IsTuple2(value) || IsUndefined4(value) || IsUnion2(value) || IsUint8Array4(value) || IsUnknown2(value) || IsUnsafe2(value) || IsVoid2(value) || IsKind2(value));
+}
+var TypeGuardUnknownTypeError, KnownTypes;
+var init_type3 = __esm(() => {
+  init_symbols2();
+  init_error2();
+  TypeGuardUnknownTypeError = class TypeGuardUnknownTypeError extends TypeBoxError {
+  };
+  KnownTypes = [
+    "Argument",
+    "Any",
+    "Array",
+    "AsyncIterator",
+    "BigInt",
+    "Boolean",
+    "Computed",
+    "Constructor",
+    "Date",
+    "Enum",
+    "Function",
+    "Integer",
+    "Intersect",
+    "Iterator",
+    "Literal",
+    "MappedKey",
+    "MappedResult",
+    "Not",
+    "Null",
+    "Number",
+    "Object",
+    "Promise",
+    "Record",
+    "Ref",
+    "RegExp",
+    "String",
+    "Symbol",
+    "TemplateLiteral",
+    "This",
+    "Tuple",
+    "Undefined",
+    "Union",
+    "Uint8Array",
+    "Unknown",
+    "Void"
+  ];
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/guard/index.mjs
+var init_guard2 = __esm(() => {
+  init_kind();
+  init_type3();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-check.mjs
+function IntoBooleanResult(result) {
+  return result === ExtendsResult.False ? result : ExtendsResult.True;
+}
+function Throw(message2) {
+  throw new ExtendsResolverError(message2);
+}
+function IsStructuralRight(right) {
+  return exports_type2.IsNever(right) || exports_type2.IsIntersect(right) || exports_type2.IsUnion(right) || exports_type2.IsUnknown(right) || exports_type2.IsAny(right);
+}
+function StructuralRight(left, right) {
+  return exports_type2.IsNever(right) ? FromNeverRight(left, right) : exports_type2.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type2.IsUnion(right) ? FromUnionRight(left, right) : exports_type2.IsUnknown(right) ? FromUnknownRight(left, right) : exports_type2.IsAny(right) ? FromAnyRight(left, right) : Throw("StructuralRight");
+}
+function FromAnyRight(left, right) {
+  return ExtendsResult.True;
+}
+function FromAny(left, right) {
+  return exports_type2.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type2.IsUnion(right) && right.anyOf.some((schema) => exports_type2.IsAny(schema) || exports_type2.IsUnknown(schema)) ? ExtendsResult.True : exports_type2.IsUnion(right) ? ExtendsResult.Union : exports_type2.IsUnknown(right) ? ExtendsResult.True : exports_type2.IsAny(right) ? ExtendsResult.True : ExtendsResult.Union;
+}
+function FromArrayRight(left, right) {
+  return exports_type2.IsUnknown(left) ? ExtendsResult.False : exports_type2.IsAny(left) ? ExtendsResult.Union : exports_type2.IsNever(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromArray3(left, right) {
+  return exports_type2.IsObject(right) && IsObjectArrayLike(right) ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type2.IsArray(right) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.items, right.items));
+}
+function FromAsyncIterator(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type2.IsAsyncIterator(right) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.items, right.items));
+}
+function FromBigInt(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsBigInt(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromBooleanRight(left, right) {
+  return exports_type2.IsLiteralBoolean(left) ? ExtendsResult.True : exports_type2.IsBoolean(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromBoolean(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsBoolean(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromConstructor(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : !exports_type2.IsConstructor(right) ? ExtendsResult.False : left.parameters.length > right.parameters.length ? ExtendsResult.False : !left.parameters.every((schema, index) => IntoBooleanResult(Visit4(right.parameters[index], schema)) === ExtendsResult.True) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.returns, right.returns));
+}
+function FromDate(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsDate(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromFunction(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : !exports_type2.IsFunction(right) ? ExtendsResult.False : left.parameters.length > right.parameters.length ? ExtendsResult.False : !left.parameters.every((schema, index) => IntoBooleanResult(Visit4(right.parameters[index], schema)) === ExtendsResult.True) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.returns, right.returns));
+}
+function FromIntegerRight(left, right) {
+  return exports_type2.IsLiteral(left) && exports_value.IsNumber(left.const) ? ExtendsResult.True : exports_type2.IsNumber(left) || exports_type2.IsInteger(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromInteger(left, right) {
+  return exports_type2.IsInteger(right) || exports_type2.IsNumber(right) ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : ExtendsResult.False;
+}
+function FromIntersectRight(left, right) {
+  return right.allOf.every((schema) => Visit4(left, schema) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromIntersect3(left, right) {
+  return left.allOf.some((schema) => Visit4(schema, right) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromIterator(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type2.IsIterator(right) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.items, right.items));
+}
+function FromLiteral2(left, right) {
+  return exports_type2.IsLiteral(right) && right.const === left.const ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsString(right) ? FromStringRight(left, right) : exports_type2.IsNumber(right) ? FromNumberRight(left, right) : exports_type2.IsInteger(right) ? FromIntegerRight(left, right) : exports_type2.IsBoolean(right) ? FromBooleanRight(left, right) : ExtendsResult.False;
+}
+function FromNeverRight(left, right) {
+  return ExtendsResult.False;
+}
+function FromNever(left, right) {
+  return ExtendsResult.True;
+}
+function UnwrapTNot(schema) {
+  let [current, depth] = [schema, 0];
+  while (true) {
+    if (!exports_type2.IsNot(current))
+      break;
+    current = current.not;
+    depth += 1;
+  }
+  return depth % 2 === 0 ? current : Unknown();
+}
+function FromNot(left, right) {
+  return exports_type2.IsNot(left) ? Visit4(UnwrapTNot(left), right) : exports_type2.IsNot(right) ? Visit4(left, UnwrapTNot(right)) : Throw("Invalid fallthrough for Not");
+}
+function FromNull(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsNull(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromNumberRight(left, right) {
+  return exports_type2.IsLiteralNumber(left) ? ExtendsResult.True : exports_type2.IsNumber(left) || exports_type2.IsInteger(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromNumber(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsInteger(right) || exports_type2.IsNumber(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function IsObjectPropertyCount(schema, count) {
+  return Object.getOwnPropertyNames(schema.properties).length === count;
+}
+function IsObjectStringLike(schema) {
+  return IsObjectArrayLike(schema);
+}
+function IsObjectSymbolLike(schema) {
+  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "description" in schema.properties && exports_type2.IsUnion(schema.properties.description) && schema.properties.description.anyOf.length === 2 && (exports_type2.IsString(schema.properties.description.anyOf[0]) && exports_type2.IsUndefined(schema.properties.description.anyOf[1]) || exports_type2.IsString(schema.properties.description.anyOf[1]) && exports_type2.IsUndefined(schema.properties.description.anyOf[0]));
+}
+function IsObjectNumberLike(schema) {
+  return IsObjectPropertyCount(schema, 0);
+}
+function IsObjectBooleanLike(schema) {
+  return IsObjectPropertyCount(schema, 0);
+}
+function IsObjectBigIntLike(schema) {
+  return IsObjectPropertyCount(schema, 0);
+}
+function IsObjectDateLike(schema) {
+  return IsObjectPropertyCount(schema, 0);
+}
+function IsObjectUint8ArrayLike(schema) {
+  return IsObjectArrayLike(schema);
+}
+function IsObjectFunctionLike(schema) {
+  const length = Number2();
+  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "length" in schema.properties && IntoBooleanResult(Visit4(schema.properties["length"], length)) === ExtendsResult.True;
+}
+function IsObjectConstructorLike(schema) {
+  return IsObjectPropertyCount(schema, 0);
+}
+function IsObjectArrayLike(schema) {
+  const length = Number2();
+  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "length" in schema.properties && IntoBooleanResult(Visit4(schema.properties["length"], length)) === ExtendsResult.True;
+}
+function IsObjectPromiseLike(schema) {
+  const then = Function2([Any()], Any());
+  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "then" in schema.properties && IntoBooleanResult(Visit4(schema.properties["then"], then)) === ExtendsResult.True;
+}
+function Property(left, right) {
+  return Visit4(left, right) === ExtendsResult.False ? ExtendsResult.False : exports_type2.IsOptional(left) && !exports_type2.IsOptional(right) ? ExtendsResult.False : ExtendsResult.True;
+}
+function FromObjectRight(left, right) {
+  return exports_type2.IsUnknown(left) ? ExtendsResult.False : exports_type2.IsAny(left) ? ExtendsResult.Union : exports_type2.IsNever(left) || exports_type2.IsLiteralString(left) && IsObjectStringLike(right) || exports_type2.IsLiteralNumber(left) && IsObjectNumberLike(right) || exports_type2.IsLiteralBoolean(left) && IsObjectBooleanLike(right) || exports_type2.IsSymbol(left) && IsObjectSymbolLike(right) || exports_type2.IsBigInt(left) && IsObjectBigIntLike(right) || exports_type2.IsString(left) && IsObjectStringLike(right) || exports_type2.IsSymbol(left) && IsObjectSymbolLike(right) || exports_type2.IsNumber(left) && IsObjectNumberLike(right) || exports_type2.IsInteger(left) && IsObjectNumberLike(right) || exports_type2.IsBoolean(left) && IsObjectBooleanLike(right) || exports_type2.IsUint8Array(left) && IsObjectUint8ArrayLike(right) || exports_type2.IsDate(left) && IsObjectDateLike(right) || exports_type2.IsConstructor(left) && IsObjectConstructorLike(right) || exports_type2.IsFunction(left) && IsObjectFunctionLike(right) ? ExtendsResult.True : exports_type2.IsRecord(left) && exports_type2.IsString(RecordKey(left)) ? (() => {
+    return right[Hint] === "Record" ? ExtendsResult.True : ExtendsResult.False;
+  })() : exports_type2.IsRecord(left) && exports_type2.IsNumber(RecordKey(left)) ? (() => {
+    return IsObjectPropertyCount(right, 0) ? ExtendsResult.True : ExtendsResult.False;
+  })() : ExtendsResult.False;
+}
+function FromObject(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : !exports_type2.IsObject(right) ? ExtendsResult.False : (() => {
+    for (const key of Object.getOwnPropertyNames(right.properties)) {
+      if (!(key in left.properties) && !exports_type2.IsOptional(right.properties[key])) {
+        return ExtendsResult.False;
+      }
+      if (exports_type2.IsOptional(right.properties[key])) {
+        return ExtendsResult.True;
+      }
+      if (Property(left.properties[key], right.properties[key]) === ExtendsResult.False) {
+        return ExtendsResult.False;
+      }
+    }
+    return ExtendsResult.True;
+  })();
+}
+function FromPromise(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) && IsObjectPromiseLike(right) ? ExtendsResult.True : !exports_type2.IsPromise(right) ? ExtendsResult.False : IntoBooleanResult(Visit4(left.item, right.item));
+}
+function RecordKey(schema) {
+  return PatternNumberExact in schema.patternProperties ? Number2() : (PatternStringExact in schema.patternProperties) ? String2() : Throw("Unknown record key pattern");
+}
+function RecordValue(schema) {
+  return PatternNumberExact in schema.patternProperties ? schema.patternProperties[PatternNumberExact] : (PatternStringExact in schema.patternProperties) ? schema.patternProperties[PatternStringExact] : Throw("Unable to get record value schema");
+}
+function FromRecordRight(left, right) {
+  const [Key, Value] = [RecordKey(right), RecordValue(right)];
+  return exports_type2.IsLiteralString(left) && exports_type2.IsNumber(Key) && IntoBooleanResult(Visit4(left, Value)) === ExtendsResult.True ? ExtendsResult.True : exports_type2.IsUint8Array(left) && exports_type2.IsNumber(Key) ? Visit4(left, Value) : exports_type2.IsString(left) && exports_type2.IsNumber(Key) ? Visit4(left, Value) : exports_type2.IsArray(left) && exports_type2.IsNumber(Key) ? Visit4(left, Value) : exports_type2.IsObject(left) ? (() => {
+    for (const key of Object.getOwnPropertyNames(left.properties)) {
+      if (Property(Value, left.properties[key]) === ExtendsResult.False) {
+        return ExtendsResult.False;
+      }
+    }
+    return ExtendsResult.True;
+  })() : ExtendsResult.False;
+}
+function FromRecord(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : !exports_type2.IsRecord(right) ? ExtendsResult.False : Visit4(RecordValue(left), RecordValue(right));
+}
+function FromRegExp(left, right) {
+  const L = exports_type2.IsRegExp(left) ? String2() : left;
+  const R = exports_type2.IsRegExp(right) ? String2() : right;
+  return Visit4(L, R);
+}
+function FromStringRight(left, right) {
+  return exports_type2.IsLiteral(left) && exports_value.IsString(left.const) ? ExtendsResult.True : exports_type2.IsString(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromString(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsString(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromSymbol(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsSymbol(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromTemplateLiteral2(left, right) {
+  return exports_type2.IsTemplateLiteral(left) ? Visit4(TemplateLiteralToUnion(left), right) : exports_type2.IsTemplateLiteral(right) ? Visit4(left, TemplateLiteralToUnion(right)) : Throw("Invalid fallthrough for TemplateLiteral");
+}
+function IsArrayOfTuple(left, right) {
+  return exports_type2.IsArray(right) && left.items !== undefined && left.items.every((schema) => Visit4(schema, right.items) === ExtendsResult.True);
+}
+function FromTupleRight(left, right) {
+  return exports_type2.IsNever(left) ? ExtendsResult.True : exports_type2.IsUnknown(left) ? ExtendsResult.False : exports_type2.IsAny(left) ? ExtendsResult.Union : ExtendsResult.False;
+}
+function FromTuple3(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) && IsObjectArrayLike(right) ? ExtendsResult.True : exports_type2.IsArray(right) && IsArrayOfTuple(left, right) ? ExtendsResult.True : !exports_type2.IsTuple(right) ? ExtendsResult.False : exports_value.IsUndefined(left.items) && !exports_value.IsUndefined(right.items) || !exports_value.IsUndefined(left.items) && exports_value.IsUndefined(right.items) ? ExtendsResult.False : exports_value.IsUndefined(left.items) && !exports_value.IsUndefined(right.items) ? ExtendsResult.True : left.items.every((schema, index) => Visit4(schema, right.items[index]) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromUint8Array(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsUint8Array(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromUndefined(left, right) {
+  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsRecord(right) ? FromRecordRight(left, right) : exports_type2.IsVoid(right) ? FromVoidRight(left, right) : exports_type2.IsUndefined(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromUnionRight(left, right) {
+  return right.anyOf.some((schema) => Visit4(left, schema) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromUnion5(left, right) {
+  return left.anyOf.every((schema) => Visit4(schema, right) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromUnknownRight(left, right) {
+  return ExtendsResult.True;
+}
+function FromUnknown(left, right) {
+  return exports_type2.IsNever(right) ? FromNeverRight(left, right) : exports_type2.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type2.IsUnion(right) ? FromUnionRight(left, right) : exports_type2.IsAny(right) ? FromAnyRight(left, right) : exports_type2.IsString(right) ? FromStringRight(left, right) : exports_type2.IsNumber(right) ? FromNumberRight(left, right) : exports_type2.IsInteger(right) ? FromIntegerRight(left, right) : exports_type2.IsBoolean(right) ? FromBooleanRight(left, right) : exports_type2.IsArray(right) ? FromArrayRight(left, right) : exports_type2.IsTuple(right) ? FromTupleRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsUnknown(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromVoidRight(left, right) {
+  return exports_type2.IsUndefined(left) ? ExtendsResult.True : exports_type2.IsUndefined(left) ? ExtendsResult.True : ExtendsResult.False;
+}
+function FromVoid(left, right) {
+  return exports_type2.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type2.IsUnion(right) ? FromUnionRight(left, right) : exports_type2.IsUnknown(right) ? FromUnknownRight(left, right) : exports_type2.IsAny(right) ? FromAnyRight(left, right) : exports_type2.IsObject(right) ? FromObjectRight(left, right) : exports_type2.IsVoid(right) ? ExtendsResult.True : ExtendsResult.False;
+}
+function Visit4(left, right) {
+  return exports_type2.IsTemplateLiteral(left) || exports_type2.IsTemplateLiteral(right) ? FromTemplateLiteral2(left, right) : exports_type2.IsRegExp(left) || exports_type2.IsRegExp(right) ? FromRegExp(left, right) : exports_type2.IsNot(left) || exports_type2.IsNot(right) ? FromNot(left, right) : exports_type2.IsAny(left) ? FromAny(left, right) : exports_type2.IsArray(left) ? FromArray3(left, right) : exports_type2.IsBigInt(left) ? FromBigInt(left, right) : exports_type2.IsBoolean(left) ? FromBoolean(left, right) : exports_type2.IsAsyncIterator(left) ? FromAsyncIterator(left, right) : exports_type2.IsConstructor(left) ? FromConstructor(left, right) : exports_type2.IsDate(left) ? FromDate(left, right) : exports_type2.IsFunction(left) ? FromFunction(left, right) : exports_type2.IsInteger(left) ? FromInteger(left, right) : exports_type2.IsIntersect(left) ? FromIntersect3(left, right) : exports_type2.IsIterator(left) ? FromIterator(left, right) : exports_type2.IsLiteral(left) ? FromLiteral2(left, right) : exports_type2.IsNever(left) ? FromNever(left, right) : exports_type2.IsNull(left) ? FromNull(left, right) : exports_type2.IsNumber(left) ? FromNumber(left, right) : exports_type2.IsObject(left) ? FromObject(left, right) : exports_type2.IsRecord(left) ? FromRecord(left, right) : exports_type2.IsString(left) ? FromString(left, right) : exports_type2.IsSymbol(left) ? FromSymbol(left, right) : exports_type2.IsTuple(left) ? FromTuple3(left, right) : exports_type2.IsPromise(left) ? FromPromise(left, right) : exports_type2.IsUint8Array(left) ? FromUint8Array(left, right) : exports_type2.IsUndefined(left) ? FromUndefined(left, right) : exports_type2.IsUnion(left) ? FromUnion5(left, right) : exports_type2.IsUnknown(left) ? FromUnknown(left, right) : exports_type2.IsVoid(left) ? FromVoid(left, right) : Throw(`Unknown left type operand '${left[Kind]}'`);
+}
+function ExtendsCheck(left, right) {
+  return Visit4(left, right);
+}
+var ExtendsResolverError, ExtendsResult;
+var init_extends_check = __esm(() => {
+  init_any2();
+  init_function2();
+  init_number2();
+  init_string2();
+  init_unknown2();
+  init_template_literal2();
+  init_patterns2();
+  init_symbols2();
+  init_error2();
+  init_guard2();
+  ExtendsResolverError = class ExtendsResolverError extends TypeBoxError {
+  };
+  (function(ExtendsResult2) {
+    ExtendsResult2[ExtendsResult2["Union"] = 0] = "Union";
+    ExtendsResult2[ExtendsResult2["True"] = 1] = "True";
+    ExtendsResult2[ExtendsResult2["False"] = 2] = "False";
+  })(ExtendsResult || (ExtendsResult = {}));
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-from-mapped-result.mjs
+function FromProperties7(P, Right, True, False, options) {
+  const Acc = {};
+  for (const K2 of globalThis.Object.getOwnPropertyNames(P))
+    Acc[K2] = Extends(P[K2], Right, True, False, Clone(options));
+  return Acc;
+}
+function FromMappedResult6(Left, Right, True, False, options) {
+  return FromProperties7(Left.properties, Right, True, False, options);
+}
+function ExtendsFromMappedResult(Left, Right, True, False, options) {
+  const P = FromMappedResult6(Left, Right, True, False, options);
+  return MappedResult(P);
+}
+var init_extends_from_mapped_result = __esm(() => {
+  init_mapped2();
+  init_extends();
+  init_value();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends.mjs
+function ExtendsResolve(left, right, trueType, falseType) {
+  const R = ExtendsCheck(left, right);
+  return R === ExtendsResult.Union ? Union([trueType, falseType]) : R === ExtendsResult.True ? trueType : falseType;
+}
+function Extends(L, R, T, F, options) {
+  return IsMappedResult(L) ? ExtendsFromMappedResult(L, R, T, F, options) : IsMappedKey(L) ? CreateType(ExtendsFromMappedKey(L, R, T, F, options)) : CreateType(ExtendsResolve(L, R, T, F), options);
+}
+var init_extends = __esm(() => {
+  init_type2();
+  init_union2();
+  init_extends_check();
+  init_extends_from_mapped_key();
+  init_extends_from_mapped_result();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-from-mapped-key.mjs
+function FromPropertyKey(K, U, L, R, options) {
+  return {
+    [K]: Extends(Literal(K), U, L, R, Clone(options))
+  };
+}
+function FromPropertyKeys(K, U, L, R, options) {
+  return K.reduce((Acc, LK) => {
+    return { ...Acc, ...FromPropertyKey(LK, U, L, R, options) };
+  }, {});
+}
+function FromMappedKey2(K, U, L, R, options) {
+  return FromPropertyKeys(K.keys, U, L, R, options);
+}
+function ExtendsFromMappedKey(T, U, L, R, options) {
+  const P = FromMappedKey2(T, U, L, R, options);
+  return MappedResult(P);
+}
+var init_extends_from_mapped_key = __esm(() => {
+  init_mapped2();
+  init_literal2();
+  init_extends();
+  init_value();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/index.mjs
+var init_extends2 = __esm(() => {
+  init_extends_check();
+  init_extends_from_mapped_key();
+  init_extends_from_mapped_result();
+  init_extends_undefined();
+  init_extends();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/check/check.mjs
+function IsAnyOrUnknown(schema) {
+  return schema[Kind] === "Any" || schema[Kind] === "Unknown";
+}
+function IsDefined(value) {
+  return value !== undefined;
+}
+function FromAny2(schema, references, value) {
+  return true;
+}
+function FromArgument(schema, references, value) {
+  return true;
+}
+function FromArray4(schema, references, value) {
+  if (!IsArray(value))
+    return false;
+  if (IsDefined(schema.minItems) && !(value.length >= schema.minItems)) {
+    return false;
+  }
+  if (IsDefined(schema.maxItems) && !(value.length <= schema.maxItems)) {
+    return false;
+  }
+  for (const element of value) {
+    if (!Visit5(schema.items, references, element))
+      return false;
+  }
+  if (schema.uniqueItems === true && !function() {
+    const set2 = new Set;
+    for (const element of value) {
+      const hashed = Hash(element);
+      if (set2.has(hashed)) {
+        return false;
+      } else {
+        set2.add(hashed);
+      }
+    }
+    return true;
+  }()) {
+    return false;
+  }
+  if (!(IsDefined(schema.contains) || IsNumber(schema.minContains) || IsNumber(schema.maxContains))) {
+    return true;
+  }
+  const containsSchema = IsDefined(schema.contains) ? schema.contains : Never();
+  const containsCount = value.reduce((acc, value2) => Visit5(containsSchema, references, value2) ? acc + 1 : acc, 0);
+  if (containsCount === 0) {
+    return false;
+  }
+  if (IsNumber(schema.minContains) && containsCount < schema.minContains) {
+    return false;
+  }
+  if (IsNumber(schema.maxContains) && containsCount > schema.maxContains) {
+    return false;
+  }
+  return true;
+}
+function FromAsyncIterator2(schema, references, value) {
+  return IsAsyncIterator(value);
+}
+function FromBigInt2(schema, references, value) {
+  if (!IsBigInt(value))
+    return false;
+  if (IsDefined(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    return false;
+  }
+  if (IsDefined(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    return false;
+  }
+  if (IsDefined(schema.maximum) && !(value <= schema.maximum)) {
+    return false;
+  }
+  if (IsDefined(schema.minimum) && !(value >= schema.minimum)) {
+    return false;
+  }
+  if (IsDefined(schema.multipleOf) && !(value % schema.multipleOf === BigInt(0))) {
+    return false;
+  }
+  return true;
+}
+function FromBoolean2(schema, references, value) {
+  return IsBoolean(value);
+}
+function FromConstructor2(schema, references, value) {
+  return Visit5(schema.returns, references, value.prototype);
+}
+function FromDate2(schema, references, value) {
+  if (!IsDate(value))
+    return false;
+  if (IsDefined(schema.exclusiveMaximumTimestamp) && !(value.getTime() < schema.exclusiveMaximumTimestamp)) {
+    return false;
+  }
+  if (IsDefined(schema.exclusiveMinimumTimestamp) && !(value.getTime() > schema.exclusiveMinimumTimestamp)) {
+    return false;
+  }
+  if (IsDefined(schema.maximumTimestamp) && !(value.getTime() <= schema.maximumTimestamp)) {
+    return false;
+  }
+  if (IsDefined(schema.minimumTimestamp) && !(value.getTime() >= schema.minimumTimestamp)) {
+    return false;
+  }
+  if (IsDefined(schema.multipleOfTimestamp) && !(value.getTime() % schema.multipleOfTimestamp === 0)) {
+    return false;
+  }
+  return true;
+}
+function FromFunction2(schema, references, value) {
+  return IsFunction(value);
+}
+function FromImport(schema, references, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit5(target, [...references, ...definitions], value);
+}
+function FromInteger2(schema, references, value) {
+  if (!IsInteger(value)) {
+    return false;
+  }
+  if (IsDefined(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    return false;
+  }
+  if (IsDefined(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    return false;
+  }
+  if (IsDefined(schema.maximum) && !(value <= schema.maximum)) {
+    return false;
+  }
+  if (IsDefined(schema.minimum) && !(value >= schema.minimum)) {
+    return false;
+  }
+  if (IsDefined(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
+    return false;
+  }
+  return true;
+}
+function FromIntersect4(schema, references, value) {
+  const check1 = schema.allOf.every((schema2) => Visit5(schema2, references, value));
+  if (schema.unevaluatedProperties === false) {
+    const keyPattern = new RegExp(KeyOfPattern(schema));
+    const check2 = Object.getOwnPropertyNames(value).every((key) => keyPattern.test(key));
+    return check1 && check2;
+  } else if (IsSchema(schema.unevaluatedProperties)) {
+    const keyCheck = new RegExp(KeyOfPattern(schema));
+    const check2 = Object.getOwnPropertyNames(value).every((key) => keyCheck.test(key) || Visit5(schema.unevaluatedProperties, references, value[key]));
+    return check1 && check2;
+  } else {
+    return check1;
+  }
+}
+function FromIterator2(schema, references, value) {
+  return IsIterator(value);
+}
+function FromLiteral3(schema, references, value) {
+  return value === schema.const;
+}
+function FromNever2(schema, references, value) {
+  return false;
+}
+function FromNot2(schema, references, value) {
+  return !Visit5(schema.not, references, value);
+}
+function FromNull2(schema, references, value) {
+  return IsNull(value);
+}
+function FromNumber2(schema, references, value) {
+  if (!TypeSystemPolicy.IsNumberLike(value))
+    return false;
+  if (IsDefined(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    return false;
+  }
+  if (IsDefined(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    return false;
+  }
+  if (IsDefined(schema.minimum) && !(value >= schema.minimum)) {
+    return false;
+  }
+  if (IsDefined(schema.maximum) && !(value <= schema.maximum)) {
+    return false;
+  }
+  if (IsDefined(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
+    return false;
+  }
+  return true;
+}
+function FromObject2(schema, references, value) {
+  if (!TypeSystemPolicy.IsObjectLike(value))
+    return false;
+  if (IsDefined(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
+    return false;
+  }
+  if (IsDefined(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
+    return false;
+  }
+  const knownKeys = Object.getOwnPropertyNames(schema.properties);
+  for (const knownKey of knownKeys) {
+    const property = schema.properties[knownKey];
+    if (schema.required && schema.required.includes(knownKey)) {
+      if (!Visit5(property, references, value[knownKey])) {
+        return false;
+      }
+      if ((ExtendsUndefinedCheck(property) || IsAnyOrUnknown(property)) && !(knownKey in value)) {
+        return false;
+      }
+    } else {
+      if (TypeSystemPolicy.IsExactOptionalProperty(value, knownKey) && !Visit5(property, references, value[knownKey])) {
+        return false;
+      }
+    }
+  }
+  if (schema.additionalProperties === false) {
+    const valueKeys = Object.getOwnPropertyNames(value);
+    if (schema.required && schema.required.length === knownKeys.length && valueKeys.length === knownKeys.length) {
+      return true;
+    } else {
+      return valueKeys.every((valueKey) => knownKeys.includes(valueKey));
+    }
+  } else if (typeof schema.additionalProperties === "object") {
+    const valueKeys = Object.getOwnPropertyNames(value);
+    return valueKeys.every((key) => knownKeys.includes(key) || Visit5(schema.additionalProperties, references, value[key]));
+  } else {
+    return true;
+  }
+}
+function FromPromise2(schema, references, value) {
+  return IsPromise(value);
+}
+function FromRecord2(schema, references, value) {
+  if (!TypeSystemPolicy.IsRecordLike(value)) {
+    return false;
+  }
+  if (IsDefined(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
+    return false;
+  }
+  if (IsDefined(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
+    return false;
+  }
+  const [patternKey, patternSchema] = Object.entries(schema.patternProperties)[0];
+  const regex = new RegExp(patternKey);
+  const check1 = Object.entries(value).every(([key, value2]) => {
+    return regex.test(key) ? Visit5(patternSchema, references, value2) : true;
+  });
+  const check2 = typeof schema.additionalProperties === "object" ? Object.entries(value).every(([key, value2]) => {
+    return !regex.test(key) ? Visit5(schema.additionalProperties, references, value2) : true;
+  }) : true;
+  const check3 = schema.additionalProperties === false ? Object.getOwnPropertyNames(value).every((key) => {
+    return regex.test(key);
+  }) : true;
+  return check1 && check2 && check3;
+}
+function FromRef2(schema, references, value) {
+  return Visit5(Deref(schema, references), references, value);
+}
+function FromRegExp2(schema, references, value) {
+  const regex = new RegExp(schema.source, schema.flags);
+  if (IsDefined(schema.minLength)) {
+    if (!(value.length >= schema.minLength))
+      return false;
+  }
+  if (IsDefined(schema.maxLength)) {
+    if (!(value.length <= schema.maxLength))
+      return false;
+  }
+  return regex.test(value);
+}
+function FromString2(schema, references, value) {
+  if (!IsString(value)) {
+    return false;
+  }
+  if (IsDefined(schema.minLength)) {
+    if (!(value.length >= schema.minLength))
+      return false;
+  }
+  if (IsDefined(schema.maxLength)) {
+    if (!(value.length <= schema.maxLength))
+      return false;
+  }
+  if (IsDefined(schema.pattern)) {
+    const regex = new RegExp(schema.pattern);
+    if (!regex.test(value))
+      return false;
+  }
+  if (IsDefined(schema.format)) {
+    if (!exports_format.Has(schema.format))
+      return false;
+    const func = exports_format.Get(schema.format);
+    return func(value);
+  }
+  return true;
+}
+function FromSymbol2(schema, references, value) {
+  return IsSymbol(value);
+}
+function FromTemplateLiteral3(schema, references, value) {
+  return IsString(value) && new RegExp(schema.pattern).test(value);
+}
+function FromThis(schema, references, value) {
+  return Visit5(Deref(schema, references), references, value);
+}
+function FromTuple4(schema, references, value) {
+  if (!IsArray(value)) {
+    return false;
+  }
+  if (schema.items === undefined && !(value.length === 0)) {
+    return false;
+  }
+  if (!(value.length === schema.maxItems)) {
+    return false;
+  }
+  if (!schema.items) {
+    return true;
+  }
+  for (let i = 0;i < schema.items.length; i++) {
+    if (!Visit5(schema.items[i], references, value[i]))
+      return false;
+  }
+  return true;
+}
+function FromUndefined2(schema, references, value) {
+  return IsUndefined(value);
+}
+function FromUnion6(schema, references, value) {
+  return schema.anyOf.some((inner) => Visit5(inner, references, value));
+}
+function FromUint8Array2(schema, references, value) {
+  if (!IsUint8Array(value)) {
+    return false;
+  }
+  if (IsDefined(schema.maxByteLength) && !(value.length <= schema.maxByteLength)) {
+    return false;
+  }
+  if (IsDefined(schema.minByteLength) && !(value.length >= schema.minByteLength)) {
+    return false;
+  }
+  return true;
+}
+function FromUnknown2(schema, references, value) {
+  return true;
+}
+function FromVoid2(schema, references, value) {
+  return TypeSystemPolicy.IsVoidLike(value);
+}
+function FromKind(schema, references, value) {
+  if (!exports_type.Has(schema[Kind]))
+    return false;
+  const func = exports_type.Get(schema[Kind]);
+  return func(schema, value);
+}
+function Visit5(schema, references, value) {
+  const references_ = IsDefined(schema.$id) ? Pushref(schema, references) : references;
+  const schema_ = schema;
+  switch (schema_[Kind]) {
+    case "Any":
+      return FromAny2(schema_, references_, value);
+    case "Argument":
+      return FromArgument(schema_, references_, value);
+    case "Array":
+      return FromArray4(schema_, references_, value);
+    case "AsyncIterator":
+      return FromAsyncIterator2(schema_, references_, value);
+    case "BigInt":
+      return FromBigInt2(schema_, references_, value);
+    case "Boolean":
+      return FromBoolean2(schema_, references_, value);
+    case "Constructor":
+      return FromConstructor2(schema_, references_, value);
+    case "Date":
+      return FromDate2(schema_, references_, value);
+    case "Function":
+      return FromFunction2(schema_, references_, value);
+    case "Import":
+      return FromImport(schema_, references_, value);
+    case "Integer":
+      return FromInteger2(schema_, references_, value);
+    case "Intersect":
+      return FromIntersect4(schema_, references_, value);
+    case "Iterator":
+      return FromIterator2(schema_, references_, value);
+    case "Literal":
+      return FromLiteral3(schema_, references_, value);
+    case "Never":
+      return FromNever2(schema_, references_, value);
+    case "Not":
+      return FromNot2(schema_, references_, value);
+    case "Null":
+      return FromNull2(schema_, references_, value);
+    case "Number":
+      return FromNumber2(schema_, references_, value);
+    case "Object":
+      return FromObject2(schema_, references_, value);
+    case "Promise":
+      return FromPromise2(schema_, references_, value);
+    case "Record":
+      return FromRecord2(schema_, references_, value);
+    case "Ref":
+      return FromRef2(schema_, references_, value);
+    case "RegExp":
+      return FromRegExp2(schema_, references_, value);
+    case "String":
+      return FromString2(schema_, references_, value);
+    case "Symbol":
+      return FromSymbol2(schema_, references_, value);
+    case "TemplateLiteral":
+      return FromTemplateLiteral3(schema_, references_, value);
+    case "This":
+      return FromThis(schema_, references_, value);
+    case "Tuple":
+      return FromTuple4(schema_, references_, value);
+    case "Undefined":
+      return FromUndefined2(schema_, references_, value);
+    case "Union":
+      return FromUnion6(schema_, references_, value);
+    case "Uint8Array":
+      return FromUint8Array2(schema_, references_, value);
+    case "Unknown":
+      return FromUnknown2(schema_, references_, value);
+    case "Void":
+      return FromVoid2(schema_, references_, value);
+    default:
+      if (!exports_type.Has(schema_[Kind]))
+        throw new ValueCheckUnknownTypeError(schema_);
+      return FromKind(schema_, references_, value);
+  }
+}
+function Check(...args2) {
+  return args2.length === 3 ? Visit5(args2[0], args2[1], args2[2]) : Visit5(args2[0], [], args2[1]);
+}
+var ValueCheckUnknownTypeError;
+var init_check = __esm(() => {
+  init_system2();
+  init_deref2();
+  init_hash2();
+  init_symbols2();
+  init_keyof2();
+  init_extends2();
+  init_registry();
+  init_error2();
+  init_never2();
+  init_guard();
+  init_kind();
+  ValueCheckUnknownTypeError = class ValueCheckUnknownTypeError extends TypeBoxError {
+    constructor(schema) {
+      super(`Unknown type`);
+      this.schema = schema;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/check/index.mjs
+var init_check2 = __esm(() => {
+  init_check();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/errors.mjs
+function EscapeKey(key) {
+  return key.replace(/~/g, "~0").replace(/\//g, "~1");
+}
+function IsDefined2(value) {
+  return value !== undefined;
+}
+function Create(errorType, schema, path, value, errors = []) {
+  return {
+    type: errorType,
+    schema,
+    path,
+    value,
+    message: GetErrorFunction()({ errorType, path, schema, value, errors }),
+    errors
+  };
+}
+function* FromAny3(schema, references, path, value) {}
+function* FromArgument2(schema, references, path, value) {}
+function* FromArray5(schema, references, path, value) {
+  if (!IsArray(value)) {
+    return yield Create(ValueErrorType.Array, schema, path, value);
+  }
+  if (IsDefined2(schema.minItems) && !(value.length >= schema.minItems)) {
+    yield Create(ValueErrorType.ArrayMinItems, schema, path, value);
+  }
+  if (IsDefined2(schema.maxItems) && !(value.length <= schema.maxItems)) {
+    yield Create(ValueErrorType.ArrayMaxItems, schema, path, value);
+  }
+  for (let i = 0;i < value.length; i++) {
+    yield* Visit6(schema.items, references, `${path}/${i}`, value[i]);
+  }
+  if (schema.uniqueItems === true && !function() {
+    const set2 = new Set;
+    for (const element of value) {
+      const hashed = Hash(element);
+      if (set2.has(hashed)) {
+        return false;
+      } else {
+        set2.add(hashed);
+      }
+    }
+    return true;
+  }()) {
+    yield Create(ValueErrorType.ArrayUniqueItems, schema, path, value);
+  }
+  if (!(IsDefined2(schema.contains) || IsDefined2(schema.minContains) || IsDefined2(schema.maxContains))) {
+    return;
+  }
+  const containsSchema = IsDefined2(schema.contains) ? schema.contains : Never();
+  const containsCount = value.reduce((acc, value2, index) => Visit6(containsSchema, references, `${path}${index}`, value2).next().done === true ? acc + 1 : acc, 0);
+  if (containsCount === 0) {
+    yield Create(ValueErrorType.ArrayContains, schema, path, value);
+  }
+  if (IsNumber(schema.minContains) && containsCount < schema.minContains) {
+    yield Create(ValueErrorType.ArrayMinContains, schema, path, value);
+  }
+  if (IsNumber(schema.maxContains) && containsCount > schema.maxContains) {
+    yield Create(ValueErrorType.ArrayMaxContains, schema, path, value);
+  }
+}
+function* FromAsyncIterator3(schema, references, path, value) {
+  if (!IsAsyncIterator(value))
+    yield Create(ValueErrorType.AsyncIterator, schema, path, value);
+}
+function* FromBigInt3(schema, references, path, value) {
+  if (!IsBigInt(value))
+    return yield Create(ValueErrorType.BigInt, schema, path, value);
+  if (IsDefined2(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield Create(ValueErrorType.BigIntExclusiveMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield Create(ValueErrorType.BigIntExclusiveMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.maximum) && !(value <= schema.maximum)) {
+    yield Create(ValueErrorType.BigIntMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.minimum) && !(value >= schema.minimum)) {
+    yield Create(ValueErrorType.BigIntMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.multipleOf) && !(value % schema.multipleOf === BigInt(0))) {
+    yield Create(ValueErrorType.BigIntMultipleOf, schema, path, value);
+  }
+}
+function* FromBoolean3(schema, references, path, value) {
+  if (!IsBoolean(value))
+    yield Create(ValueErrorType.Boolean, schema, path, value);
+}
+function* FromConstructor3(schema, references, path, value) {
+  yield* Visit6(schema.returns, references, path, value.prototype);
+}
+function* FromDate3(schema, references, path, value) {
+  if (!IsDate(value))
+    return yield Create(ValueErrorType.Date, schema, path, value);
+  if (IsDefined2(schema.exclusiveMaximumTimestamp) && !(value.getTime() < schema.exclusiveMaximumTimestamp)) {
+    yield Create(ValueErrorType.DateExclusiveMaximumTimestamp, schema, path, value);
+  }
+  if (IsDefined2(schema.exclusiveMinimumTimestamp) && !(value.getTime() > schema.exclusiveMinimumTimestamp)) {
+    yield Create(ValueErrorType.DateExclusiveMinimumTimestamp, schema, path, value);
+  }
+  if (IsDefined2(schema.maximumTimestamp) && !(value.getTime() <= schema.maximumTimestamp)) {
+    yield Create(ValueErrorType.DateMaximumTimestamp, schema, path, value);
+  }
+  if (IsDefined2(schema.minimumTimestamp) && !(value.getTime() >= schema.minimumTimestamp)) {
+    yield Create(ValueErrorType.DateMinimumTimestamp, schema, path, value);
+  }
+  if (IsDefined2(schema.multipleOfTimestamp) && !(value.getTime() % schema.multipleOfTimestamp === 0)) {
+    yield Create(ValueErrorType.DateMultipleOfTimestamp, schema, path, value);
+  }
+}
+function* FromFunction3(schema, references, path, value) {
+  if (!IsFunction(value))
+    yield Create(ValueErrorType.Function, schema, path, value);
+}
+function* FromImport2(schema, references, path, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  yield* Visit6(target, [...references, ...definitions], path, value);
+}
+function* FromInteger3(schema, references, path, value) {
+  if (!IsInteger(value))
+    return yield Create(ValueErrorType.Integer, schema, path, value);
+  if (IsDefined2(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield Create(ValueErrorType.IntegerExclusiveMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield Create(ValueErrorType.IntegerExclusiveMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.maximum) && !(value <= schema.maximum)) {
+    yield Create(ValueErrorType.IntegerMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.minimum) && !(value >= schema.minimum)) {
+    yield Create(ValueErrorType.IntegerMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
+    yield Create(ValueErrorType.IntegerMultipleOf, schema, path, value);
+  }
+}
+function* FromIntersect5(schema, references, path, value) {
+  let hasError = false;
+  for (const inner of schema.allOf) {
+    for (const error2 of Visit6(inner, references, path, value)) {
+      hasError = true;
+      yield error2;
+    }
+  }
+  if (hasError) {
+    return yield Create(ValueErrorType.Intersect, schema, path, value);
+  }
+  if (schema.unevaluatedProperties === false) {
+    const keyCheck = new RegExp(KeyOfPattern(schema));
+    for (const valueKey of Object.getOwnPropertyNames(value)) {
+      if (!keyCheck.test(valueKey)) {
+        yield Create(ValueErrorType.IntersectUnevaluatedProperties, schema, `${path}/${valueKey}`, value);
+      }
+    }
+  }
+  if (typeof schema.unevaluatedProperties === "object") {
+    const keyCheck = new RegExp(KeyOfPattern(schema));
+    for (const valueKey of Object.getOwnPropertyNames(value)) {
+      if (!keyCheck.test(valueKey)) {
+        const next = Visit6(schema.unevaluatedProperties, references, `${path}/${valueKey}`, value[valueKey]).next();
+        if (!next.done)
+          yield next.value;
+      }
+    }
+  }
+}
+function* FromIterator3(schema, references, path, value) {
+  if (!IsIterator(value))
+    yield Create(ValueErrorType.Iterator, schema, path, value);
+}
+function* FromLiteral4(schema, references, path, value) {
+  if (!(value === schema.const))
+    yield Create(ValueErrorType.Literal, schema, path, value);
+}
+function* FromNever3(schema, references, path, value) {
+  yield Create(ValueErrorType.Never, schema, path, value);
+}
+function* FromNot3(schema, references, path, value) {
+  if (Visit6(schema.not, references, path, value).next().done === true)
+    yield Create(ValueErrorType.Not, schema, path, value);
+}
+function* FromNull3(schema, references, path, value) {
+  if (!IsNull(value))
+    yield Create(ValueErrorType.Null, schema, path, value);
+}
+function* FromNumber3(schema, references, path, value) {
+  if (!TypeSystemPolicy.IsNumberLike(value))
+    return yield Create(ValueErrorType.Number, schema, path, value);
+  if (IsDefined2(schema.exclusiveMaximum) && !(value < schema.exclusiveMaximum)) {
+    yield Create(ValueErrorType.NumberExclusiveMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.exclusiveMinimum) && !(value > schema.exclusiveMinimum)) {
+    yield Create(ValueErrorType.NumberExclusiveMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.maximum) && !(value <= schema.maximum)) {
+    yield Create(ValueErrorType.NumberMaximum, schema, path, value);
+  }
+  if (IsDefined2(schema.minimum) && !(value >= schema.minimum)) {
+    yield Create(ValueErrorType.NumberMinimum, schema, path, value);
+  }
+  if (IsDefined2(schema.multipleOf) && !(value % schema.multipleOf === 0)) {
+    yield Create(ValueErrorType.NumberMultipleOf, schema, path, value);
+  }
+}
+function* FromObject3(schema, references, path, value) {
+  if (!TypeSystemPolicy.IsObjectLike(value))
+    return yield Create(ValueErrorType.Object, schema, path, value);
+  if (IsDefined2(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
+    yield Create(ValueErrorType.ObjectMinProperties, schema, path, value);
+  }
+  if (IsDefined2(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
+    yield Create(ValueErrorType.ObjectMaxProperties, schema, path, value);
+  }
+  const requiredKeys = Array.isArray(schema.required) ? schema.required : [];
+  const knownKeys = Object.getOwnPropertyNames(schema.properties);
+  const unknownKeys = Object.getOwnPropertyNames(value);
+  for (const requiredKey of requiredKeys) {
+    if (unknownKeys.includes(requiredKey))
+      continue;
+    yield Create(ValueErrorType.ObjectRequiredProperty, schema.properties[requiredKey], `${path}/${EscapeKey(requiredKey)}`, undefined);
+  }
+  if (schema.additionalProperties === false) {
+    for (const valueKey of unknownKeys) {
+      if (!knownKeys.includes(valueKey)) {
+        yield Create(ValueErrorType.ObjectAdditionalProperties, schema, `${path}/${EscapeKey(valueKey)}`, value[valueKey]);
+      }
+    }
+  }
+  if (typeof schema.additionalProperties === "object") {
+    for (const valueKey of unknownKeys) {
+      if (knownKeys.includes(valueKey))
+        continue;
+      yield* Visit6(schema.additionalProperties, references, `${path}/${EscapeKey(valueKey)}`, value[valueKey]);
+    }
+  }
+  for (const knownKey of knownKeys) {
+    const property = schema.properties[knownKey];
+    if (schema.required && schema.required.includes(knownKey)) {
+      yield* Visit6(property, references, `${path}/${EscapeKey(knownKey)}`, value[knownKey]);
+      if (ExtendsUndefinedCheck(schema) && !(knownKey in value)) {
+        yield Create(ValueErrorType.ObjectRequiredProperty, property, `${path}/${EscapeKey(knownKey)}`, undefined);
+      }
+    } else {
+      if (TypeSystemPolicy.IsExactOptionalProperty(value, knownKey)) {
+        yield* Visit6(property, references, `${path}/${EscapeKey(knownKey)}`, value[knownKey]);
+      }
+    }
+  }
+}
+function* FromPromise3(schema, references, path, value) {
+  if (!IsPromise(value))
+    yield Create(ValueErrorType.Promise, schema, path, value);
+}
+function* FromRecord3(schema, references, path, value) {
+  if (!TypeSystemPolicy.IsRecordLike(value))
+    return yield Create(ValueErrorType.Object, schema, path, value);
+  if (IsDefined2(schema.minProperties) && !(Object.getOwnPropertyNames(value).length >= schema.minProperties)) {
+    yield Create(ValueErrorType.ObjectMinProperties, schema, path, value);
+  }
+  if (IsDefined2(schema.maxProperties) && !(Object.getOwnPropertyNames(value).length <= schema.maxProperties)) {
+    yield Create(ValueErrorType.ObjectMaxProperties, schema, path, value);
+  }
+  const [patternKey, patternSchema] = Object.entries(schema.patternProperties)[0];
+  const regex = new RegExp(patternKey);
+  for (const [propertyKey, propertyValue] of Object.entries(value)) {
+    if (regex.test(propertyKey))
+      yield* Visit6(patternSchema, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
+  }
+  if (typeof schema.additionalProperties === "object") {
+    for (const [propertyKey, propertyValue] of Object.entries(value)) {
+      if (!regex.test(propertyKey))
+        yield* Visit6(schema.additionalProperties, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
+    }
+  }
+  if (schema.additionalProperties === false) {
+    for (const [propertyKey, propertyValue] of Object.entries(value)) {
+      if (regex.test(propertyKey))
+        continue;
+      return yield Create(ValueErrorType.ObjectAdditionalProperties, schema, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
+    }
+  }
+}
+function* FromRef3(schema, references, path, value) {
+  yield* Visit6(Deref(schema, references), references, path, value);
+}
+function* FromRegExp3(schema, references, path, value) {
+  if (!IsString(value))
+    return yield Create(ValueErrorType.String, schema, path, value);
+  if (IsDefined2(schema.minLength) && !(value.length >= schema.minLength)) {
+    yield Create(ValueErrorType.StringMinLength, schema, path, value);
+  }
+  if (IsDefined2(schema.maxLength) && !(value.length <= schema.maxLength)) {
+    yield Create(ValueErrorType.StringMaxLength, schema, path, value);
+  }
+  const regex = new RegExp(schema.source, schema.flags);
+  if (!regex.test(value)) {
+    return yield Create(ValueErrorType.RegExp, schema, path, value);
+  }
+}
+function* FromString3(schema, references, path, value) {
+  if (!IsString(value))
+    return yield Create(ValueErrorType.String, schema, path, value);
+  if (IsDefined2(schema.minLength) && !(value.length >= schema.minLength)) {
+    yield Create(ValueErrorType.StringMinLength, schema, path, value);
+  }
+  if (IsDefined2(schema.maxLength) && !(value.length <= schema.maxLength)) {
+    yield Create(ValueErrorType.StringMaxLength, schema, path, value);
+  }
+  if (IsString(schema.pattern)) {
+    const regex = new RegExp(schema.pattern);
+    if (!regex.test(value)) {
+      yield Create(ValueErrorType.StringPattern, schema, path, value);
+    }
+  }
+  if (IsString(schema.format)) {
+    if (!exports_format.Has(schema.format)) {
+      yield Create(ValueErrorType.StringFormatUnknown, schema, path, value);
+    } else {
+      const format = exports_format.Get(schema.format);
+      if (!format(value)) {
+        yield Create(ValueErrorType.StringFormat, schema, path, value);
+      }
+    }
+  }
+}
+function* FromSymbol3(schema, references, path, value) {
+  if (!IsSymbol(value))
+    yield Create(ValueErrorType.Symbol, schema, path, value);
+}
+function* FromTemplateLiteral4(schema, references, path, value) {
+  if (!IsString(value))
+    return yield Create(ValueErrorType.String, schema, path, value);
+  const regex = new RegExp(schema.pattern);
+  if (!regex.test(value)) {
+    yield Create(ValueErrorType.StringPattern, schema, path, value);
+  }
+}
+function* FromThis2(schema, references, path, value) {
+  yield* Visit6(Deref(schema, references), references, path, value);
+}
+function* FromTuple5(schema, references, path, value) {
+  if (!IsArray(value))
+    return yield Create(ValueErrorType.Tuple, schema, path, value);
+  if (schema.items === undefined && !(value.length === 0)) {
+    return yield Create(ValueErrorType.TupleLength, schema, path, value);
+  }
+  if (!(value.length === schema.maxItems)) {
+    return yield Create(ValueErrorType.TupleLength, schema, path, value);
+  }
+  if (!schema.items) {
+    return;
+  }
+  for (let i = 0;i < schema.items.length; i++) {
+    yield* Visit6(schema.items[i], references, `${path}/${i}`, value[i]);
+  }
+}
+function* FromUndefined3(schema, references, path, value) {
+  if (!IsUndefined(value))
+    yield Create(ValueErrorType.Undefined, schema, path, value);
+}
+function* FromUnion7(schema, references, path, value) {
+  if (Check(schema, references, value))
+    return;
+  const errors = schema.anyOf.map((variant) => new ValueErrorIterator(Visit6(variant, references, path, value)));
+  yield Create(ValueErrorType.Union, schema, path, value, errors);
+}
+function* FromUint8Array3(schema, references, path, value) {
+  if (!IsUint8Array(value))
+    return yield Create(ValueErrorType.Uint8Array, schema, path, value);
+  if (IsDefined2(schema.maxByteLength) && !(value.length <= schema.maxByteLength)) {
+    yield Create(ValueErrorType.Uint8ArrayMaxByteLength, schema, path, value);
+  }
+  if (IsDefined2(schema.minByteLength) && !(value.length >= schema.minByteLength)) {
+    yield Create(ValueErrorType.Uint8ArrayMinByteLength, schema, path, value);
+  }
+}
+function* FromUnknown3(schema, references, path, value) {}
+function* FromVoid3(schema, references, path, value) {
+  if (!TypeSystemPolicy.IsVoidLike(value))
+    yield Create(ValueErrorType.Void, schema, path, value);
+}
+function* FromKind2(schema, references, path, value) {
+  const check2 = exports_type.Get(schema[Kind]);
+  if (!check2(schema, value))
+    yield Create(ValueErrorType.Kind, schema, path, value);
+}
+function* Visit6(schema, references, path, value) {
+  const references_ = IsDefined2(schema.$id) ? [...references, schema] : references;
+  const schema_ = schema;
+  switch (schema_[Kind]) {
+    case "Any":
+      return yield* FromAny3(schema_, references_, path, value);
+    case "Argument":
+      return yield* FromArgument2(schema_, references_, path, value);
+    case "Array":
+      return yield* FromArray5(schema_, references_, path, value);
+    case "AsyncIterator":
+      return yield* FromAsyncIterator3(schema_, references_, path, value);
+    case "BigInt":
+      return yield* FromBigInt3(schema_, references_, path, value);
+    case "Boolean":
+      return yield* FromBoolean3(schema_, references_, path, value);
+    case "Constructor":
+      return yield* FromConstructor3(schema_, references_, path, value);
+    case "Date":
+      return yield* FromDate3(schema_, references_, path, value);
+    case "Function":
+      return yield* FromFunction3(schema_, references_, path, value);
+    case "Import":
+      return yield* FromImport2(schema_, references_, path, value);
+    case "Integer":
+      return yield* FromInteger3(schema_, references_, path, value);
+    case "Intersect":
+      return yield* FromIntersect5(schema_, references_, path, value);
+    case "Iterator":
+      return yield* FromIterator3(schema_, references_, path, value);
+    case "Literal":
+      return yield* FromLiteral4(schema_, references_, path, value);
+    case "Never":
+      return yield* FromNever3(schema_, references_, path, value);
+    case "Not":
+      return yield* FromNot3(schema_, references_, path, value);
+    case "Null":
+      return yield* FromNull3(schema_, references_, path, value);
+    case "Number":
+      return yield* FromNumber3(schema_, references_, path, value);
+    case "Object":
+      return yield* FromObject3(schema_, references_, path, value);
+    case "Promise":
+      return yield* FromPromise3(schema_, references_, path, value);
+    case "Record":
+      return yield* FromRecord3(schema_, references_, path, value);
+    case "Ref":
+      return yield* FromRef3(schema_, references_, path, value);
+    case "RegExp":
+      return yield* FromRegExp3(schema_, references_, path, value);
+    case "String":
+      return yield* FromString3(schema_, references_, path, value);
+    case "Symbol":
+      return yield* FromSymbol3(schema_, references_, path, value);
+    case "TemplateLiteral":
+      return yield* FromTemplateLiteral4(schema_, references_, path, value);
+    case "This":
+      return yield* FromThis2(schema_, references_, path, value);
+    case "Tuple":
+      return yield* FromTuple5(schema_, references_, path, value);
+    case "Undefined":
+      return yield* FromUndefined3(schema_, references_, path, value);
+    case "Union":
+      return yield* FromUnion7(schema_, references_, path, value);
+    case "Uint8Array":
+      return yield* FromUint8Array3(schema_, references_, path, value);
+    case "Unknown":
+      return yield* FromUnknown3(schema_, references_, path, value);
+    case "Void":
+      return yield* FromVoid3(schema_, references_, path, value);
+    default:
+      if (!exports_type.Has(schema_[Kind]))
+        throw new ValueErrorsUnknownTypeError(schema);
+      return yield* FromKind2(schema_, references_, path, value);
+  }
+}
+function Errors(...args2) {
+  const iterator2 = args2.length === 3 ? Visit6(args2[0], args2[1], "", args2[2]) : Visit6(args2[0], [], "", args2[1]);
+  return new ValueErrorIterator(iterator2);
+}
+var ValueErrorType, ValueErrorsUnknownTypeError, ValueErrorIterator;
+var init_errors = __esm(() => {
+  init_system2();
+  init_keyof2();
+  init_registry();
+  init_extends_undefined();
+  init_function3();
+  init_error2();
+  init_deref2();
+  init_hash2();
+  init_check2();
+  init_symbols2();
+  init_never2();
+  init_guard();
+  (function(ValueErrorType2) {
+    ValueErrorType2[ValueErrorType2["ArrayContains"] = 0] = "ArrayContains";
+    ValueErrorType2[ValueErrorType2["ArrayMaxContains"] = 1] = "ArrayMaxContains";
+    ValueErrorType2[ValueErrorType2["ArrayMaxItems"] = 2] = "ArrayMaxItems";
+    ValueErrorType2[ValueErrorType2["ArrayMinContains"] = 3] = "ArrayMinContains";
+    ValueErrorType2[ValueErrorType2["ArrayMinItems"] = 4] = "ArrayMinItems";
+    ValueErrorType2[ValueErrorType2["ArrayUniqueItems"] = 5] = "ArrayUniqueItems";
+    ValueErrorType2[ValueErrorType2["Array"] = 6] = "Array";
+    ValueErrorType2[ValueErrorType2["AsyncIterator"] = 7] = "AsyncIterator";
+    ValueErrorType2[ValueErrorType2["BigIntExclusiveMaximum"] = 8] = "BigIntExclusiveMaximum";
+    ValueErrorType2[ValueErrorType2["BigIntExclusiveMinimum"] = 9] = "BigIntExclusiveMinimum";
+    ValueErrorType2[ValueErrorType2["BigIntMaximum"] = 10] = "BigIntMaximum";
+    ValueErrorType2[ValueErrorType2["BigIntMinimum"] = 11] = "BigIntMinimum";
+    ValueErrorType2[ValueErrorType2["BigIntMultipleOf"] = 12] = "BigIntMultipleOf";
+    ValueErrorType2[ValueErrorType2["BigInt"] = 13] = "BigInt";
+    ValueErrorType2[ValueErrorType2["Boolean"] = 14] = "Boolean";
+    ValueErrorType2[ValueErrorType2["DateExclusiveMaximumTimestamp"] = 15] = "DateExclusiveMaximumTimestamp";
+    ValueErrorType2[ValueErrorType2["DateExclusiveMinimumTimestamp"] = 16] = "DateExclusiveMinimumTimestamp";
+    ValueErrorType2[ValueErrorType2["DateMaximumTimestamp"] = 17] = "DateMaximumTimestamp";
+    ValueErrorType2[ValueErrorType2["DateMinimumTimestamp"] = 18] = "DateMinimumTimestamp";
+    ValueErrorType2[ValueErrorType2["DateMultipleOfTimestamp"] = 19] = "DateMultipleOfTimestamp";
+    ValueErrorType2[ValueErrorType2["Date"] = 20] = "Date";
+    ValueErrorType2[ValueErrorType2["Function"] = 21] = "Function";
+    ValueErrorType2[ValueErrorType2["IntegerExclusiveMaximum"] = 22] = "IntegerExclusiveMaximum";
+    ValueErrorType2[ValueErrorType2["IntegerExclusiveMinimum"] = 23] = "IntegerExclusiveMinimum";
+    ValueErrorType2[ValueErrorType2["IntegerMaximum"] = 24] = "IntegerMaximum";
+    ValueErrorType2[ValueErrorType2["IntegerMinimum"] = 25] = "IntegerMinimum";
+    ValueErrorType2[ValueErrorType2["IntegerMultipleOf"] = 26] = "IntegerMultipleOf";
+    ValueErrorType2[ValueErrorType2["Integer"] = 27] = "Integer";
+    ValueErrorType2[ValueErrorType2["IntersectUnevaluatedProperties"] = 28] = "IntersectUnevaluatedProperties";
+    ValueErrorType2[ValueErrorType2["Intersect"] = 29] = "Intersect";
+    ValueErrorType2[ValueErrorType2["Iterator"] = 30] = "Iterator";
+    ValueErrorType2[ValueErrorType2["Kind"] = 31] = "Kind";
+    ValueErrorType2[ValueErrorType2["Literal"] = 32] = "Literal";
+    ValueErrorType2[ValueErrorType2["Never"] = 33] = "Never";
+    ValueErrorType2[ValueErrorType2["Not"] = 34] = "Not";
+    ValueErrorType2[ValueErrorType2["Null"] = 35] = "Null";
+    ValueErrorType2[ValueErrorType2["NumberExclusiveMaximum"] = 36] = "NumberExclusiveMaximum";
+    ValueErrorType2[ValueErrorType2["NumberExclusiveMinimum"] = 37] = "NumberExclusiveMinimum";
+    ValueErrorType2[ValueErrorType2["NumberMaximum"] = 38] = "NumberMaximum";
+    ValueErrorType2[ValueErrorType2["NumberMinimum"] = 39] = "NumberMinimum";
+    ValueErrorType2[ValueErrorType2["NumberMultipleOf"] = 40] = "NumberMultipleOf";
+    ValueErrorType2[ValueErrorType2["Number"] = 41] = "Number";
+    ValueErrorType2[ValueErrorType2["ObjectAdditionalProperties"] = 42] = "ObjectAdditionalProperties";
+    ValueErrorType2[ValueErrorType2["ObjectMaxProperties"] = 43] = "ObjectMaxProperties";
+    ValueErrorType2[ValueErrorType2["ObjectMinProperties"] = 44] = "ObjectMinProperties";
+    ValueErrorType2[ValueErrorType2["ObjectRequiredProperty"] = 45] = "ObjectRequiredProperty";
+    ValueErrorType2[ValueErrorType2["Object"] = 46] = "Object";
+    ValueErrorType2[ValueErrorType2["Promise"] = 47] = "Promise";
+    ValueErrorType2[ValueErrorType2["RegExp"] = 48] = "RegExp";
+    ValueErrorType2[ValueErrorType2["StringFormatUnknown"] = 49] = "StringFormatUnknown";
+    ValueErrorType2[ValueErrorType2["StringFormat"] = 50] = "StringFormat";
+    ValueErrorType2[ValueErrorType2["StringMaxLength"] = 51] = "StringMaxLength";
+    ValueErrorType2[ValueErrorType2["StringMinLength"] = 52] = "StringMinLength";
+    ValueErrorType2[ValueErrorType2["StringPattern"] = 53] = "StringPattern";
+    ValueErrorType2[ValueErrorType2["String"] = 54] = "String";
+    ValueErrorType2[ValueErrorType2["Symbol"] = 55] = "Symbol";
+    ValueErrorType2[ValueErrorType2["TupleLength"] = 56] = "TupleLength";
+    ValueErrorType2[ValueErrorType2["Tuple"] = 57] = "Tuple";
+    ValueErrorType2[ValueErrorType2["Uint8ArrayMaxByteLength"] = 58] = "Uint8ArrayMaxByteLength";
+    ValueErrorType2[ValueErrorType2["Uint8ArrayMinByteLength"] = 59] = "Uint8ArrayMinByteLength";
+    ValueErrorType2[ValueErrorType2["Uint8Array"] = 60] = "Uint8Array";
+    ValueErrorType2[ValueErrorType2["Undefined"] = 61] = "Undefined";
+    ValueErrorType2[ValueErrorType2["Union"] = 62] = "Union";
+    ValueErrorType2[ValueErrorType2["Void"] = 63] = "Void";
+  })(ValueErrorType || (ValueErrorType = {}));
+  ValueErrorsUnknownTypeError = class ValueErrorsUnknownTypeError extends TypeBoxError {
+    constructor(schema) {
+      super("Unknown type");
+      this.schema = schema;
+    }
+  };
+  ValueErrorIterator = class ValueErrorIterator {
+    constructor(iterator2) {
+      this.iterator = iterator2;
+    }
+    [Symbol.iterator]() {
+      return this.iterator;
+    }
+    First() {
+      const next = this.iterator.next();
+      return next.done ? undefined : next.value;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/index.mjs
+var init_errors2 = __esm(() => {
+  init_errors();
+  init_function3();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/assert/assert.mjs
+function AssertValue(schema, references, value) {
+  if (Check(schema, references, value))
+    return;
+  throw new AssertError(Errors(schema, references, value));
+}
+function Assert(...args2) {
+  return args2.length === 3 ? AssertValue(args2[0], args2[1], args2[2]) : AssertValue(args2[0], [], args2[1]);
+}
+var __classPrivateFieldSet = function(receiver, state, value, kind, f) {
+  if (kind === "m")
+    throw new TypeError("Private method is not writable");
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a setter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot write private member to an object whose class did not declare it");
+  return kind === "a" ? f.call(receiver, value) : f ? f.value = value : state.set(receiver, value), value;
+}, __classPrivateFieldGet = function(receiver, state, kind, f) {
+  if (kind === "a" && !f)
+    throw new TypeError("Private accessor was defined without a getter");
+  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
+    throw new TypeError("Cannot read private member from an object whose class did not declare it");
+  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
+}, _AssertError_instances, _AssertError_iterator, _AssertError_Iterator, AssertError;
+var init_assert = __esm(() => {
+  init_errors2();
+  init_error();
+  init_check();
+  AssertError = class AssertError extends TypeBoxError {
+    constructor(iterator2) {
+      const error2 = iterator2.First();
+      super(error2 === undefined ? "Invalid Value" : error2.message);
+      _AssertError_instances.add(this);
+      _AssertError_iterator.set(this, undefined);
+      __classPrivateFieldSet(this, _AssertError_iterator, iterator2, "f");
+      this.error = error2;
+    }
+    Errors() {
+      return new ValueErrorIterator(__classPrivateFieldGet(this, _AssertError_instances, "m", _AssertError_Iterator).call(this));
+    }
+  };
+  _AssertError_iterator = new WeakMap, _AssertError_instances = new WeakSet, _AssertError_Iterator = function* _AssertError_Iterator2() {
+    if (this.error)
+      yield this.error;
+    yield* __classPrivateFieldGet(this, _AssertError_iterator, "f");
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/assert/index.mjs
+var init_assert2 = __esm(() => {
+  init_assert();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clone/clone.mjs
+function FromObject4(value) {
+  const Acc = {};
+  for (const key of Object.getOwnPropertyNames(value)) {
+    Acc[key] = Clone2(value[key]);
+  }
+  for (const key of Object.getOwnPropertySymbols(value)) {
+    Acc[key] = Clone2(value[key]);
+  }
+  return Acc;
+}
+function FromArray6(value) {
+  return value.map((element) => Clone2(element));
+}
+function FromTypedArray(value) {
+  return value.slice();
+}
+function FromMap(value) {
+  return new Map(Clone2([...value.entries()]));
+}
+function FromSet(value) {
+  return new Set(Clone2([...value.entries()]));
+}
+function FromDate4(value) {
+  return new Date(value.toISOString());
+}
+function FromValue(value) {
+  return value;
+}
+function Clone2(value) {
+  if (IsArray(value))
+    return FromArray6(value);
+  if (IsDate(value))
+    return FromDate4(value);
+  if (IsTypedArray(value))
+    return FromTypedArray(value);
+  if (IsMap(value))
+    return FromMap(value);
+  if (IsSet(value))
+    return FromSet(value);
+  if (IsObject(value))
+    return FromObject4(value);
+  if (IsValueType(value))
+    return FromValue(value);
+  throw new Error("ValueClone: Unable to clone value");
+}
+var init_clone = __esm(() => {
+  init_guard();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clone/index.mjs
+var init_clone2 = __esm(() => {
+  init_clone();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/create/create.mjs
+function FromDefault(value) {
+  return IsFunction(value) ? value() : Clone2(value);
+}
+function FromAny4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return {};
+  }
+}
+function FromArgument3(schema, references) {
+  return {};
+}
+function FromArray7(schema, references) {
+  if (schema.uniqueItems === true && !HasPropertyKey(schema, "default")) {
+    throw new ValueCreateError(schema, "Array with the uniqueItems constraint requires a default value");
+  } else if ("contains" in schema && !HasPropertyKey(schema, "default")) {
+    throw new ValueCreateError(schema, "Array with the contains constraint requires a default value");
+  } else if ("default" in schema) {
+    return FromDefault(schema.default);
+  } else if (schema.minItems !== undefined) {
+    return Array.from({ length: schema.minItems }).map((item) => {
+      return Visit7(schema.items, references);
+    });
+  } else {
+    return [];
+  }
+}
+function FromAsyncIterator4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return async function* () {}();
+  }
+}
+function FromBigInt4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return BigInt(0);
+  }
+}
+function FromBoolean4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return false;
+  }
+}
+function FromConstructor4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    const value = Visit7(schema.returns, references);
+    if (typeof value === "object" && !Array.isArray(value)) {
+      return class {
+        constructor() {
+          for (const [key, val] of Object.entries(value)) {
+            const self = this;
+            self[key] = val;
+          }
+        }
+      };
+    } else {
+      return class {
+      };
+    }
+  }
+}
+function FromDate5(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if (schema.minimumTimestamp !== undefined) {
+    return new Date(schema.minimumTimestamp);
+  } else {
+    return new Date;
+  }
+}
+function FromFunction4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return () => Visit7(schema.returns, references);
+  }
+}
+function FromImport3(schema, references) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit7(target, [...references, ...definitions]);
+}
+function FromInteger4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if (schema.minimum !== undefined) {
+    return schema.minimum;
+  } else {
+    return 0;
+  }
+}
+function FromIntersect6(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    const value = schema.allOf.reduce((acc, schema2) => {
+      const next = Visit7(schema2, references);
+      return typeof next === "object" ? { ...acc, ...next } : next;
+    }, {});
+    if (!Check(schema, references, value))
+      throw new ValueCreateError(schema, "Intersect produced invalid value. Consider using a default value.");
+    return value;
+  }
+}
+function FromIterator4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return function* () {}();
+  }
+}
+function FromLiteral5(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return schema.const;
+  }
+}
+function FromNever4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    throw new ValueCreateError(schema, "Never types cannot be created. Consider using a default value.");
+  }
+}
+function FromNot4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    throw new ValueCreateError(schema, "Not types must have a default value");
+  }
+}
+function FromNull4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return null;
+  }
+}
+function FromNumber4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if (schema.minimum !== undefined) {
+    return schema.minimum;
+  } else {
+    return 0;
+  }
+}
+function FromObject5(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    const required = new Set(schema.required);
+    const Acc = {};
+    for (const [key, subschema] of Object.entries(schema.properties)) {
+      if (!required.has(key))
+        continue;
+      Acc[key] = Visit7(subschema, references);
+    }
+    return Acc;
+  }
+}
+function FromPromise4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return Promise.resolve(Visit7(schema.item, references));
+  }
+}
+function FromRecord4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return {};
+  }
+}
+function FromRef4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return Visit7(Deref(schema, references), references);
+  }
+}
+function FromRegExp4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    throw new ValueCreateError(schema, "RegExp types cannot be created. Consider using a default value.");
+  }
+}
+function FromString4(schema, references) {
+  if (schema.pattern !== undefined) {
+    if (!HasPropertyKey(schema, "default")) {
+      throw new ValueCreateError(schema, "String types with patterns must specify a default value");
+    } else {
+      return FromDefault(schema.default);
+    }
+  } else if (schema.format !== undefined) {
+    if (!HasPropertyKey(schema, "default")) {
+      throw new ValueCreateError(schema, "String types with formats must specify a default value");
+    } else {
+      return FromDefault(schema.default);
+    }
+  } else {
+    if (HasPropertyKey(schema, "default")) {
+      return FromDefault(schema.default);
+    } else if (schema.minLength !== undefined) {
+      return Array.from({ length: schema.minLength }).map(() => " ").join("");
+    } else {
+      return "";
+    }
+  }
+}
+function FromSymbol4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if ("value" in schema) {
+    return Symbol.for(schema.value);
+  } else {
+    return Symbol();
+  }
+}
+function FromTemplateLiteral5(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  }
+  if (!IsTemplateLiteralFinite(schema))
+    throw new ValueCreateError(schema, "Can only create template literals that produce a finite variants. Consider using a default value.");
+  const generated = TemplateLiteralGenerate(schema);
+  return generated[0];
+}
+function FromThis3(schema, references) {
+  if (recursiveDepth++ > recursiveMaxDepth)
+    throw new ValueCreateError(schema, "Cannot create recursive type as it appears possibly infinite. Consider using a default.");
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return Visit7(Deref(schema, references), references);
+  }
+}
+function FromTuple6(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  }
+  if (schema.items === undefined) {
+    return [];
+  } else {
+    return Array.from({ length: schema.minItems }).map((_, index) => Visit7(schema.items[index], references));
+  }
+}
+function FromUndefined4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return;
+  }
+}
+function FromUnion8(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if (schema.anyOf.length === 0) {
+    throw new Error("ValueCreate.Union: Cannot create Union with zero variants");
+  } else {
+    return Visit7(schema.anyOf[0], references);
+  }
+}
+function FromUint8Array4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else if (schema.minByteLength !== undefined) {
+    return new Uint8Array(schema.minByteLength);
+  } else {
+    return new Uint8Array(0);
+  }
+}
+function FromUnknown4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return {};
+  }
+}
+function FromVoid4(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    return;
+  }
+}
+function FromKind3(schema, references) {
+  if (HasPropertyKey(schema, "default")) {
+    return FromDefault(schema.default);
+  } else {
+    throw new Error("User defined types must specify a default value");
+  }
+}
+function Visit7(schema, references) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  switch (schema_[Kind]) {
+    case "Any":
+      return FromAny4(schema_, references_);
+    case "Argument":
+      return FromArgument3(schema_, references_);
+    case "Array":
+      return FromArray7(schema_, references_);
+    case "AsyncIterator":
+      return FromAsyncIterator4(schema_, references_);
+    case "BigInt":
+      return FromBigInt4(schema_, references_);
+    case "Boolean":
+      return FromBoolean4(schema_, references_);
+    case "Constructor":
+      return FromConstructor4(schema_, references_);
+    case "Date":
+      return FromDate5(schema_, references_);
+    case "Function":
+      return FromFunction4(schema_, references_);
+    case "Import":
+      return FromImport3(schema_, references_);
+    case "Integer":
+      return FromInteger4(schema_, references_);
+    case "Intersect":
+      return FromIntersect6(schema_, references_);
+    case "Iterator":
+      return FromIterator4(schema_, references_);
+    case "Literal":
+      return FromLiteral5(schema_, references_);
+    case "Never":
+      return FromNever4(schema_, references_);
+    case "Not":
+      return FromNot4(schema_, references_);
+    case "Null":
+      return FromNull4(schema_, references_);
+    case "Number":
+      return FromNumber4(schema_, references_);
+    case "Object":
+      return FromObject5(schema_, references_);
+    case "Promise":
+      return FromPromise4(schema_, references_);
+    case "Record":
+      return FromRecord4(schema_, references_);
+    case "Ref":
+      return FromRef4(schema_, references_);
+    case "RegExp":
+      return FromRegExp4(schema_, references_);
+    case "String":
+      return FromString4(schema_, references_);
+    case "Symbol":
+      return FromSymbol4(schema_, references_);
+    case "TemplateLiteral":
+      return FromTemplateLiteral5(schema_, references_);
+    case "This":
+      return FromThis3(schema_, references_);
+    case "Tuple":
+      return FromTuple6(schema_, references_);
+    case "Undefined":
+      return FromUndefined4(schema_, references_);
+    case "Union":
+      return FromUnion8(schema_, references_);
+    case "Uint8Array":
+      return FromUint8Array4(schema_, references_);
+    case "Unknown":
+      return FromUnknown4(schema_, references_);
+    case "Void":
+      return FromVoid4(schema_, references_);
+    default:
+      if (!exports_type.Has(schema_[Kind]))
+        throw new ValueCreateError(schema_, "Unknown type");
+      return FromKind3(schema_, references_);
+  }
+}
+function Create2(...args2) {
+  recursiveDepth = 0;
+  return args2.length === 2 ? Visit7(args2[0], args2[1]) : Visit7(args2[0], []);
+}
+var ValueCreateError, recursiveMaxDepth = 512, recursiveDepth = 0;
+var init_create2 = __esm(() => {
+  init_guard();
+  init_check2();
+  init_clone2();
+  init_deref2();
+  init_template_literal2();
+  init_registry();
+  init_symbols2();
+  init_error2();
+  ValueCreateError = class ValueCreateError extends TypeBoxError {
+    constructor(schema, message2) {
+      super(message2);
+      this.schema = schema;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/create/index.mjs
+var init_create3 = __esm(() => {
+  init_create2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/cast/cast.mjs
+function ScoreUnion(schema, references, value) {
+  if (schema[Kind] === "Object" && typeof value === "object" && !IsNull(value)) {
+    const object2 = schema;
+    const keys = Object.getOwnPropertyNames(value);
+    const entries = Object.entries(object2.properties);
+    return entries.reduce((acc, [key, schema2]) => {
+      const literal2 = schema2[Kind] === "Literal" && schema2.const === value[key] ? 100 : 0;
+      const checks = Check(schema2, references, value[key]) ? 10 : 0;
+      const exists = keys.includes(key) ? 1 : 0;
+      return acc + (literal2 + checks + exists);
+    }, 0);
+  } else if (schema[Kind] === "Union") {
+    const schemas = schema.anyOf.map((schema2) => Deref(schema2, references));
+    const scores = schemas.map((schema2) => ScoreUnion(schema2, references, value));
+    return Math.max(...scores);
+  } else {
+    return Check(schema, references, value) ? 1 : 0;
+  }
+}
+function SelectUnion(union3, references, value) {
+  const schemas = union3.anyOf.map((schema) => Deref(schema, references));
+  let [select, best] = [schemas[0], 0];
+  for (const schema of schemas) {
+    const score = ScoreUnion(schema, references, value);
+    if (score > best) {
+      select = schema;
+      best = score;
+    }
+  }
+  return select;
+}
+function CastUnion(union3, references, value) {
+  if ("default" in union3) {
+    return typeof value === "function" ? union3.default : Clone2(union3.default);
+  } else {
+    const schema = SelectUnion(union3, references, value);
+    return Cast(schema, references, value);
+  }
+}
+function DefaultClone(schema, references, value) {
+  return Check(schema, references, value) ? Clone2(value) : Create2(schema, references);
+}
+function Default(schema, references, value) {
+  return Check(schema, references, value) ? value : Create2(schema, references);
+}
+function FromArray8(schema, references, value) {
+  if (Check(schema, references, value))
+    return Clone2(value);
+  const created = IsArray(value) ? Clone2(value) : Create2(schema, references);
+  const minimum = IsNumber(schema.minItems) && created.length < schema.minItems ? [...created, ...Array.from({ length: schema.minItems - created.length }, () => null)] : created;
+  const maximum = IsNumber(schema.maxItems) && minimum.length > schema.maxItems ? minimum.slice(0, schema.maxItems) : minimum;
+  const casted = maximum.map((value2) => Visit8(schema.items, references, value2));
+  if (schema.uniqueItems !== true)
+    return casted;
+  const unique = [...new Set(casted)];
+  if (!Check(schema, references, unique))
+    throw new ValueCastError(schema, "Array cast produced invalid data due to uniqueItems constraint");
+  return unique;
+}
+function FromConstructor5(schema, references, value) {
+  if (Check(schema, references, value))
+    return Create2(schema, references);
+  const required = new Set(schema.returns.required || []);
+  const result = function() {};
+  for (const [key, property] of Object.entries(schema.returns.properties)) {
+    if (!required.has(key) && value.prototype[key] === undefined)
+      continue;
+    result.prototype[key] = Visit8(property, references, value.prototype[key]);
+  }
+  return result;
+}
+function FromImport4(schema, references, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit8(target, [...references, ...definitions], value);
+}
+function IntersectAssign(correct, value) {
+  if (IsObject(correct) && !IsObject(value) || !IsObject(correct) && IsObject(value))
+    return correct;
+  if (!IsObject(correct) || !IsObject(value))
+    return value;
+  return globalThis.Object.getOwnPropertyNames(correct).reduce((result, key) => {
+    const property = key in value ? IntersectAssign(correct[key], value[key]) : correct[key];
+    return { ...result, [key]: property };
+  }, {});
+}
+function FromIntersect7(schema, references, value) {
+  if (Check(schema, references, value))
+    return value;
+  const correct = Create2(schema, references);
+  const assigned = IntersectAssign(correct, value);
+  return Check(schema, references, assigned) ? assigned : correct;
+}
+function FromNever5(schema, references, value) {
+  throw new ValueCastError(schema, "Never types cannot be cast");
+}
+function FromObject6(schema, references, value) {
+  if (Check(schema, references, value))
+    return value;
+  if (value === null || typeof value !== "object")
+    return Create2(schema, references);
+  const required = new Set(schema.required || []);
+  const result = {};
+  for (const [key, property] of Object.entries(schema.properties)) {
+    if (!required.has(key) && value[key] === undefined)
+      continue;
+    result[key] = Visit8(property, references, value[key]);
+  }
+  if (typeof schema.additionalProperties === "object") {
+    const propertyNames = Object.getOwnPropertyNames(schema.properties);
+    for (const propertyName of Object.getOwnPropertyNames(value)) {
+      if (propertyNames.includes(propertyName))
+        continue;
+      result[propertyName] = Visit8(schema.additionalProperties, references, value[propertyName]);
+    }
+  }
+  return result;
+}
+function FromRecord5(schema, references, value) {
+  if (Check(schema, references, value))
+    return Clone2(value);
+  if (value === null || typeof value !== "object" || Array.isArray(value) || value instanceof Date)
+    return Create2(schema, references);
+  const subschemaPropertyName = Object.getOwnPropertyNames(schema.patternProperties)[0];
+  const subschema = schema.patternProperties[subschemaPropertyName];
+  const result = {};
+  for (const [propKey, propValue] of Object.entries(value)) {
+    result[propKey] = Visit8(subschema, references, propValue);
+  }
+  return result;
+}
+function FromRef5(schema, references, value) {
+  return Visit8(Deref(schema, references), references, value);
+}
+function FromThis4(schema, references, value) {
+  return Visit8(Deref(schema, references), references, value);
+}
+function FromTuple7(schema, references, value) {
+  if (Check(schema, references, value))
+    return Clone2(value);
+  if (!IsArray(value))
+    return Create2(schema, references);
+  if (schema.items === undefined)
+    return [];
+  return schema.items.map((schema2, index) => Visit8(schema2, references, value[index]));
+}
+function FromUnion9(schema, references, value) {
+  return Check(schema, references, value) ? Clone2(value) : CastUnion(schema, references, value);
+}
+function Visit8(schema, references, value) {
+  const references_ = IsString(schema.$id) ? Pushref(schema, references) : references;
+  const schema_ = schema;
+  switch (schema[Kind]) {
+    case "Array":
+      return FromArray8(schema_, references_, value);
+    case "Constructor":
+      return FromConstructor5(schema_, references_, value);
+    case "Import":
+      return FromImport4(schema_, references_, value);
+    case "Intersect":
+      return FromIntersect7(schema_, references_, value);
+    case "Never":
+      return FromNever5(schema_, references_, value);
+    case "Object":
+      return FromObject6(schema_, references_, value);
+    case "Record":
+      return FromRecord5(schema_, references_, value);
+    case "Ref":
+      return FromRef5(schema_, references_, value);
+    case "This":
+      return FromThis4(schema_, references_, value);
+    case "Tuple":
+      return FromTuple7(schema_, references_, value);
+    case "Union":
+      return FromUnion9(schema_, references_, value);
+    case "Date":
+    case "Symbol":
+    case "Uint8Array":
+      return DefaultClone(schema, references, value);
+    default:
+      return Default(schema_, references_, value);
+  }
+}
+function Cast(...args2) {
+  return args2.length === 3 ? Visit8(args2[0], args2[1], args2[2]) : Visit8(args2[0], [], args2[1]);
+}
+var ValueCastError;
+var init_cast = __esm(() => {
+  init_guard();
+  init_error2();
+  init_symbols2();
+  init_create3();
+  init_check2();
+  init_clone2();
+  init_deref2();
+  ValueCastError = class ValueCastError extends TypeBoxError {
+    constructor(schema, message2) {
+      super(message2);
+      this.schema = schema;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/cast/index.mjs
+var init_cast2 = __esm(() => {
+  init_cast();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clean/clean.mjs
+function IsCheckable(schema) {
+  return IsKind(schema) && schema[Kind] !== "Unsafe";
+}
+function FromArray9(schema, references, value) {
+  if (!IsArray(value))
+    return value;
+  return value.map((value2) => Visit9(schema.items, references, value2));
+}
+function FromImport5(schema, references, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit9(target, [...references, ...definitions], value);
+}
+function FromIntersect8(schema, references, value) {
+  const unevaluatedProperties = schema.unevaluatedProperties;
+  const intersections = schema.allOf.map((schema2) => Visit9(schema2, references, Clone2(value)));
+  const composite = intersections.reduce((acc, value2) => IsObject(value2) ? { ...acc, ...value2 } : value2, {});
+  if (!IsObject(value) || !IsObject(composite) || !IsKind(unevaluatedProperties))
+    return composite;
+  const knownkeys = KeyOfPropertyKeys(schema);
+  for (const key of Object.getOwnPropertyNames(value)) {
+    if (knownkeys.includes(key))
+      continue;
+    if (Check(unevaluatedProperties, references, value[key])) {
+      composite[key] = Visit9(unevaluatedProperties, references, value[key]);
+    }
+  }
+  return composite;
+}
+function FromObject7(schema, references, value) {
+  if (!IsObject(value) || IsArray(value))
+    return value;
+  const additionalProperties = schema.additionalProperties;
+  for (const key of Object.getOwnPropertyNames(value)) {
+    if (HasPropertyKey(schema.properties, key)) {
+      value[key] = Visit9(schema.properties[key], references, value[key]);
+      continue;
+    }
+    if (IsKind(additionalProperties) && Check(additionalProperties, references, value[key])) {
+      value[key] = Visit9(additionalProperties, references, value[key]);
+      continue;
+    }
+    delete value[key];
+  }
+  return value;
+}
+function FromRecord6(schema, references, value) {
+  if (!IsObject(value))
+    return value;
+  const additionalProperties = schema.additionalProperties;
+  const propertyKeys = Object.getOwnPropertyNames(value);
+  const [propertyKey, propertySchema] = Object.entries(schema.patternProperties)[0];
+  const propertyKeyTest = new RegExp(propertyKey);
+  for (const key of propertyKeys) {
+    if (propertyKeyTest.test(key)) {
+      value[key] = Visit9(propertySchema, references, value[key]);
+      continue;
+    }
+    if (IsKind(additionalProperties) && Check(additionalProperties, references, value[key])) {
+      value[key] = Visit9(additionalProperties, references, value[key]);
+      continue;
+    }
+    delete value[key];
+  }
+  return value;
+}
+function FromRef6(schema, references, value) {
+  return Visit9(Deref(schema, references), references, value);
+}
+function FromThis5(schema, references, value) {
+  return Visit9(Deref(schema, references), references, value);
+}
+function FromTuple8(schema, references, value) {
+  if (!IsArray(value))
+    return value;
+  if (IsUndefined(schema.items))
+    return [];
+  const length = Math.min(value.length, schema.items.length);
+  for (let i = 0;i < length; i++) {
+    value[i] = Visit9(schema.items[i], references, value[i]);
+  }
+  return value.length > length ? value.slice(0, length) : value;
+}
+function FromUnion10(schema, references, value) {
+  for (const inner of schema.anyOf) {
+    if (IsCheckable(inner) && Check(inner, references, value)) {
+      return Visit9(inner, references, value);
+    }
+  }
+  return value;
+}
+function Visit9(schema, references, value) {
+  const references_ = IsString(schema.$id) ? Pushref(schema, references) : references;
+  const schema_ = schema;
+  switch (schema_[Kind]) {
+    case "Array":
+      return FromArray9(schema_, references_, value);
+    case "Import":
+      return FromImport5(schema_, references_, value);
+    case "Intersect":
+      return FromIntersect8(schema_, references_, value);
+    case "Object":
+      return FromObject7(schema_, references_, value);
+    case "Record":
+      return FromRecord6(schema_, references_, value);
+    case "Ref":
+      return FromRef6(schema_, references_, value);
+    case "This":
+      return FromThis5(schema_, references_, value);
+    case "Tuple":
+      return FromTuple8(schema_, references_, value);
+    case "Union":
+      return FromUnion10(schema_, references_, value);
+    default:
+      return value;
+  }
+}
+function Clean(...args2) {
+  return args2.length === 3 ? Visit9(args2[0], args2[1], args2[2]) : Visit9(args2[0], [], args2[1]);
+}
+var init_clean = __esm(() => {
+  init_keyof2();
+  init_check2();
+  init_clone2();
+  init_deref2();
+  init_symbols2();
+  init_guard();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clean/index.mjs
+var init_clean2 = __esm(() => {
+  init_clean();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/convert/convert.mjs
+function IsStringNumeric(value) {
+  return IsString(value) && !isNaN(value) && !isNaN(parseFloat(value));
+}
+function IsValueToString(value) {
+  return IsBigInt(value) || IsBoolean(value) || IsNumber(value);
+}
+function IsValueTrue(value) {
+  return value === true || IsNumber(value) && value === 1 || IsBigInt(value) && value === BigInt("1") || IsString(value) && (value.toLowerCase() === "true" || value === "1");
+}
+function IsValueFalse(value) {
+  return value === false || IsNumber(value) && (value === 0 || Object.is(value, -0)) || IsBigInt(value) && value === BigInt("0") || IsString(value) && (value.toLowerCase() === "false" || value === "0" || value === "-0");
+}
+function IsTimeStringWithTimeZone(value) {
+  return IsString(value) && /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i.test(value);
+}
+function IsTimeStringWithoutTimeZone(value) {
+  return IsString(value) && /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)?$/i.test(value);
+}
+function IsDateTimeStringWithTimeZone(value) {
+  return IsString(value) && /^\d\d\d\d-[0-1]\d-[0-3]\dt(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i.test(value);
+}
+function IsDateTimeStringWithoutTimeZone(value) {
+  return IsString(value) && /^\d\d\d\d-[0-1]\d-[0-3]\dt(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)?$/i.test(value);
+}
+function IsDateString(value) {
+  return IsString(value) && /^\d\d\d\d-[0-1]\d-[0-3]\d$/i.test(value);
+}
+function TryConvertLiteralString(value, target) {
+  const conversion = TryConvertString(value);
+  return conversion === target ? conversion : value;
+}
+function TryConvertLiteralNumber(value, target) {
+  const conversion = TryConvertNumber(value);
+  return conversion === target ? conversion : value;
+}
+function TryConvertLiteralBoolean(value, target) {
+  const conversion = TryConvertBoolean(value);
+  return conversion === target ? conversion : value;
+}
+function TryConvertLiteral(schema, value) {
+  return IsString(schema.const) ? TryConvertLiteralString(value, schema.const) : IsNumber(schema.const) ? TryConvertLiteralNumber(value, schema.const) : IsBoolean(schema.const) ? TryConvertLiteralBoolean(value, schema.const) : value;
+}
+function TryConvertBoolean(value) {
+  return IsValueTrue(value) ? true : IsValueFalse(value) ? false : value;
+}
+function TryConvertBigInt(value) {
+  const truncateInteger = (value2) => value2.split(".")[0];
+  return IsStringNumeric(value) ? BigInt(truncateInteger(value)) : IsNumber(value) ? BigInt(Math.trunc(value)) : IsValueFalse(value) ? BigInt(0) : IsValueTrue(value) ? BigInt(1) : value;
+}
+function TryConvertString(value) {
+  return IsSymbol(value) && value.description !== undefined ? value.description.toString() : IsValueToString(value) ? value.toString() : value;
+}
+function TryConvertNumber(value) {
+  return IsStringNumeric(value) ? parseFloat(value) : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value;
+}
+function TryConvertInteger(value) {
+  return IsStringNumeric(value) ? parseInt(value) : IsNumber(value) ? Math.trunc(value) : IsValueTrue(value) ? 1 : IsValueFalse(value) ? 0 : value;
+}
+function TryConvertNull(value) {
+  return IsString(value) && value.toLowerCase() === "null" ? null : value;
+}
+function TryConvertUndefined(value) {
+  return IsString(value) && value === "undefined" ? undefined : value;
+}
+function TryConvertDate(value) {
+  return IsDate(value) ? value : IsNumber(value) ? new Date(value) : IsValueTrue(value) ? new Date(1) : IsValueFalse(value) ? new Date(0) : IsStringNumeric(value) ? new Date(parseInt(value)) : IsTimeStringWithoutTimeZone(value) ? new Date(`1970-01-01T${value}.000Z`) : IsTimeStringWithTimeZone(value) ? new Date(`1970-01-01T${value}`) : IsDateTimeStringWithoutTimeZone(value) ? new Date(`${value}.000Z`) : IsDateTimeStringWithTimeZone(value) ? new Date(value) : IsDateString(value) ? new Date(`${value}T00:00:00.000Z`) : value;
+}
+function Default2(value) {
+  return value;
+}
+function FromArray10(schema, references, value) {
+  const elements = IsArray(value) ? value : [value];
+  return elements.map((element) => Visit10(schema.items, references, element));
+}
+function FromBigInt5(schema, references, value) {
+  return TryConvertBigInt(value);
+}
+function FromBoolean5(schema, references, value) {
+  return TryConvertBoolean(value);
+}
+function FromDate6(schema, references, value) {
+  return TryConvertDate(value);
+}
+function FromImport6(schema, references, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit10(target, [...references, ...definitions], value);
+}
+function FromInteger5(schema, references, value) {
+  return TryConvertInteger(value);
+}
+function FromIntersect9(schema, references, value) {
+  return schema.allOf.reduce((value2, schema2) => Visit10(schema2, references, value2), value);
+}
+function FromLiteral6(schema, references, value) {
+  return TryConvertLiteral(schema, value);
+}
+function FromNull5(schema, references, value) {
+  return TryConvertNull(value);
+}
+function FromNumber5(schema, references, value) {
+  return TryConvertNumber(value);
+}
+function FromObject8(schema, references, value) {
+  if (!IsObject(value) || IsArray(value))
+    return value;
+  for (const propertyKey of Object.getOwnPropertyNames(schema.properties)) {
+    if (!HasPropertyKey(value, propertyKey))
+      continue;
+    value[propertyKey] = Visit10(schema.properties[propertyKey], references, value[propertyKey]);
+  }
+  return value;
+}
+function FromRecord7(schema, references, value) {
+  const isConvertable = IsObject(value) && !IsArray(value);
+  if (!isConvertable)
+    return value;
+  const propertyKey = Object.getOwnPropertyNames(schema.patternProperties)[0];
+  const property = schema.patternProperties[propertyKey];
+  for (const [propKey, propValue] of Object.entries(value)) {
+    value[propKey] = Visit10(property, references, propValue);
+  }
+  return value;
+}
+function FromRef7(schema, references, value) {
+  return Visit10(Deref(schema, references), references, value);
+}
+function FromString5(schema, references, value) {
+  return TryConvertString(value);
+}
+function FromSymbol5(schema, references, value) {
+  return IsString(value) || IsNumber(value) ? Symbol(value) : value;
+}
+function FromThis6(schema, references, value) {
+  return Visit10(Deref(schema, references), references, value);
+}
+function FromTuple9(schema, references, value) {
+  const isConvertable = IsArray(value) && !IsUndefined(schema.items);
+  if (!isConvertable)
+    return value;
+  return value.map((value2, index) => {
+    return index < schema.items.length ? Visit10(schema.items[index], references, value2) : value2;
+  });
+}
+function FromUndefined5(schema, references, value) {
+  return TryConvertUndefined(value);
+}
+function FromUnion11(schema, references, value) {
+  for (const subschema of schema.anyOf) {
+    if (Check(subschema, references, value)) {
+      return value;
+    }
+  }
+  for (const subschema of schema.anyOf) {
+    const converted = Visit10(subschema, references, Clone2(value));
+    if (!Check(subschema, references, converted))
+      continue;
+    return converted;
+  }
+  return value;
+}
+function Visit10(schema, references, value) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  switch (schema[Kind]) {
+    case "Array":
+      return FromArray10(schema_, references_, value);
+    case "BigInt":
+      return FromBigInt5(schema_, references_, value);
+    case "Boolean":
+      return FromBoolean5(schema_, references_, value);
+    case "Date":
+      return FromDate6(schema_, references_, value);
+    case "Import":
+      return FromImport6(schema_, references_, value);
+    case "Integer":
+      return FromInteger5(schema_, references_, value);
+    case "Intersect":
+      return FromIntersect9(schema_, references_, value);
+    case "Literal":
+      return FromLiteral6(schema_, references_, value);
+    case "Null":
+      return FromNull5(schema_, references_, value);
+    case "Number":
+      return FromNumber5(schema_, references_, value);
+    case "Object":
+      return FromObject8(schema_, references_, value);
+    case "Record":
+      return FromRecord7(schema_, references_, value);
+    case "Ref":
+      return FromRef7(schema_, references_, value);
+    case "String":
+      return FromString5(schema_, references_, value);
+    case "Symbol":
+      return FromSymbol5(schema_, references_, value);
+    case "This":
+      return FromThis6(schema_, references_, value);
+    case "Tuple":
+      return FromTuple9(schema_, references_, value);
+    case "Undefined":
+      return FromUndefined5(schema_, references_, value);
+    case "Union":
+      return FromUnion11(schema_, references_, value);
+    default:
+      return Default2(value);
+  }
+}
+function Convert(...args2) {
+  return args2.length === 3 ? Visit10(args2[0], args2[1], args2[2]) : Visit10(args2[0], [], args2[1]);
+}
+var init_convert = __esm(() => {
+  init_clone2();
+  init_check2();
+  init_deref2();
+  init_symbols2();
+  init_guard();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/convert/index.mjs
+var init_convert2 = __esm(() => {
+  init_convert();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/decode.mjs
+function Default3(schema, path, value) {
+  try {
+    return IsTransform(schema) ? schema[TransformKind].Decode(value) : value;
+  } catch (error2) {
+    throw new TransformDecodeError(schema, path, value, error2);
+  }
+}
+function FromArray11(schema, references, path, value) {
+  return IsArray(value) ? Default3(schema, path, value.map((value2, index) => Visit11(schema.items, references, `${path}/${index}`, value2))) : Default3(schema, path, value);
+}
+function FromIntersect10(schema, references, path, value) {
+  if (!IsObject(value) || IsValueType(value))
+    return Default3(schema, path, value);
+  const knownEntries = KeyOfPropertyEntries(schema);
+  const knownKeys = knownEntries.map((entry) => entry[0]);
+  const knownProperties = { ...value };
+  for (const [knownKey, knownSchema] of knownEntries)
+    if (knownKey in knownProperties) {
+      knownProperties[knownKey] = Visit11(knownSchema, references, `${path}/${knownKey}`, knownProperties[knownKey]);
+    }
+  if (!IsTransform(schema.unevaluatedProperties)) {
+    return Default3(schema, path, knownProperties);
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const unevaluatedProperties = schema.unevaluatedProperties;
+  const unknownProperties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.includes(key)) {
+      unknownProperties[key] = Default3(unevaluatedProperties, `${path}/${key}`, unknownProperties[key]);
+    }
+  return Default3(schema, path, unknownProperties);
+}
+function FromImport7(schema, references, path, value) {
+  const additional = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  const result = Visit11(target, [...references, ...additional], path, value);
+  return Default3(schema, path, result);
+}
+function FromNot5(schema, references, path, value) {
+  return Default3(schema, path, Visit11(schema.not, references, path, value));
+}
+function FromObject9(schema, references, path, value) {
+  if (!IsObject(value))
+    return Default3(schema, path, value);
+  const knownKeys = KeyOfPropertyKeys(schema);
+  const knownProperties = { ...value };
+  for (const key of knownKeys) {
+    if (!HasPropertyKey(knownProperties, key))
+      continue;
+    if (IsUndefined(knownProperties[key]) && (!IsUndefined3(schema.properties[key]) || TypeSystemPolicy.IsExactOptionalProperty(knownProperties, key)))
+      continue;
+    knownProperties[key] = Visit11(schema.properties[key], references, `${path}/${key}`, knownProperties[key]);
+  }
+  if (!IsSchema(schema.additionalProperties)) {
+    return Default3(schema, path, knownProperties);
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const additionalProperties = schema.additionalProperties;
+  const unknownProperties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.includes(key)) {
+      unknownProperties[key] = Default3(additionalProperties, `${path}/${key}`, unknownProperties[key]);
+    }
+  return Default3(schema, path, unknownProperties);
+}
+function FromRecord8(schema, references, path, value) {
+  if (!IsObject(value))
+    return Default3(schema, path, value);
+  const pattern2 = Object.getOwnPropertyNames(schema.patternProperties)[0];
+  const knownKeys = new RegExp(pattern2);
+  const knownProperties = { ...value };
+  for (const key of Object.getOwnPropertyNames(value))
+    if (knownKeys.test(key)) {
+      knownProperties[key] = Visit11(schema.patternProperties[pattern2], references, `${path}/${key}`, knownProperties[key]);
+    }
+  if (!IsSchema(schema.additionalProperties)) {
+    return Default3(schema, path, knownProperties);
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const additionalProperties = schema.additionalProperties;
+  const unknownProperties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.test(key)) {
+      unknownProperties[key] = Default3(additionalProperties, `${path}/${key}`, unknownProperties[key]);
+    }
+  return Default3(schema, path, unknownProperties);
+}
+function FromRef8(schema, references, path, value) {
+  const target = Deref(schema, references);
+  return Default3(schema, path, Visit11(target, references, path, value));
+}
+function FromThis7(schema, references, path, value) {
+  const target = Deref(schema, references);
+  return Default3(schema, path, Visit11(target, references, path, value));
+}
+function FromTuple10(schema, references, path, value) {
+  return IsArray(value) && IsArray(schema.items) ? Default3(schema, path, schema.items.map((schema2, index) => Visit11(schema2, references, `${path}/${index}`, value[index]))) : Default3(schema, path, value);
+}
+function FromUnion12(schema, references, path, value) {
+  for (const subschema of schema.anyOf) {
+    if (!Check(subschema, references, value))
+      continue;
+    const decoded = Visit11(subschema, references, path, value);
+    return Default3(schema, path, decoded);
+  }
+  return Default3(schema, path, value);
+}
+function Visit11(schema, references, path, value) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  switch (schema[Kind]) {
+    case "Array":
+      return FromArray11(schema_, references_, path, value);
+    case "Import":
+      return FromImport7(schema_, references_, path, value);
+    case "Intersect":
+      return FromIntersect10(schema_, references_, path, value);
+    case "Not":
+      return FromNot5(schema_, references_, path, value);
+    case "Object":
+      return FromObject9(schema_, references_, path, value);
+    case "Record":
+      return FromRecord8(schema_, references_, path, value);
+    case "Ref":
+      return FromRef8(schema_, references_, path, value);
+    case "Symbol":
+      return Default3(schema_, path, value);
+    case "This":
+      return FromThis7(schema_, references_, path, value);
+    case "Tuple":
+      return FromTuple10(schema_, references_, path, value);
+    case "Union":
+      return FromUnion12(schema_, references_, path, value);
+    default:
+      return Default3(schema_, path, value);
+  }
+}
+function TransformDecode(schema, references, value) {
+  return Visit11(schema, references, "", value);
+}
+var TransformDecodeCheckError, TransformDecodeError;
+var init_decode = __esm(() => {
+  init_policy();
+  init_symbols2();
+  init_error2();
+  init_keyof2();
+  init_deref2();
+  init_check2();
+  init_guard();
+  init_kind();
+  TransformDecodeCheckError = class TransformDecodeCheckError extends TypeBoxError {
+    constructor(schema, value, error2) {
+      super(`Unable to decode value as it does not match the expected schema`);
+      this.schema = schema;
+      this.value = value;
+      this.error = error2;
+    }
+  };
+  TransformDecodeError = class TransformDecodeError extends TypeBoxError {
+    constructor(schema, path, value, error2) {
+      super(error2 instanceof Error ? error2.message : "Unknown error");
+      this.schema = schema;
+      this.path = path;
+      this.value = value;
+      this.error = error2;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/encode.mjs
+function Default4(schema, path, value) {
+  try {
+    return IsTransform(schema) ? schema[TransformKind].Encode(value) : value;
+  } catch (error2) {
+    throw new TransformEncodeError(schema, path, value, error2);
+  }
+}
+function FromArray12(schema, references, path, value) {
+  const defaulted = Default4(schema, path, value);
+  return IsArray(defaulted) ? defaulted.map((value2, index) => Visit12(schema.items, references, `${path}/${index}`, value2)) : defaulted;
+}
+function FromImport8(schema, references, path, value) {
+  const additional = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  const result = Default4(schema, path, value);
+  return Visit12(target, [...references, ...additional], path, result);
+}
+function FromIntersect11(schema, references, path, value) {
+  const defaulted = Default4(schema, path, value);
+  if (!IsObject(value) || IsValueType(value))
+    return defaulted;
+  const knownEntries = KeyOfPropertyEntries(schema);
+  const knownKeys = knownEntries.map((entry) => entry[0]);
+  const knownProperties = { ...defaulted };
+  for (const [knownKey, knownSchema] of knownEntries)
+    if (knownKey in knownProperties) {
+      knownProperties[knownKey] = Visit12(knownSchema, references, `${path}/${knownKey}`, knownProperties[knownKey]);
+    }
+  if (!IsTransform(schema.unevaluatedProperties)) {
+    return knownProperties;
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const unevaluatedProperties = schema.unevaluatedProperties;
+  const properties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.includes(key)) {
+      properties[key] = Default4(unevaluatedProperties, `${path}/${key}`, properties[key]);
+    }
+  return properties;
+}
+function FromNot6(schema, references, path, value) {
+  return Default4(schema.not, path, Default4(schema, path, value));
+}
+function FromObject10(schema, references, path, value) {
+  const defaulted = Default4(schema, path, value);
+  if (!IsObject(defaulted))
+    return defaulted;
+  const knownKeys = KeyOfPropertyKeys(schema);
+  const knownProperties = { ...defaulted };
+  for (const key of knownKeys) {
+    if (!HasPropertyKey(knownProperties, key))
+      continue;
+    if (IsUndefined(knownProperties[key]) && (!IsUndefined3(schema.properties[key]) || TypeSystemPolicy.IsExactOptionalProperty(knownProperties, key)))
+      continue;
+    knownProperties[key] = Visit12(schema.properties[key], references, `${path}/${key}`, knownProperties[key]);
+  }
+  if (!IsSchema(schema.additionalProperties)) {
+    return knownProperties;
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const additionalProperties = schema.additionalProperties;
+  const properties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.includes(key)) {
+      properties[key] = Default4(additionalProperties, `${path}/${key}`, properties[key]);
+    }
+  return properties;
+}
+function FromRecord9(schema, references, path, value) {
+  const defaulted = Default4(schema, path, value);
+  if (!IsObject(value))
+    return defaulted;
+  const pattern2 = Object.getOwnPropertyNames(schema.patternProperties)[0];
+  const knownKeys = new RegExp(pattern2);
+  const knownProperties = { ...defaulted };
+  for (const key of Object.getOwnPropertyNames(value))
+    if (knownKeys.test(key)) {
+      knownProperties[key] = Visit12(schema.patternProperties[pattern2], references, `${path}/${key}`, knownProperties[key]);
+    }
+  if (!IsSchema(schema.additionalProperties)) {
+    return knownProperties;
+  }
+  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
+  const additionalProperties = schema.additionalProperties;
+  const properties = { ...knownProperties };
+  for (const key of unknownKeys)
+    if (!knownKeys.test(key)) {
+      properties[key] = Default4(additionalProperties, `${path}/${key}`, properties[key]);
+    }
+  return properties;
+}
+function FromRef9(schema, references, path, value) {
+  const target = Deref(schema, references);
+  const resolved = Visit12(target, references, path, value);
+  return Default4(schema, path, resolved);
+}
+function FromThis8(schema, references, path, value) {
+  const target = Deref(schema, references);
+  const resolved = Visit12(target, references, path, value);
+  return Default4(schema, path, resolved);
+}
+function FromTuple11(schema, references, path, value) {
+  const value1 = Default4(schema, path, value);
+  return IsArray(schema.items) ? schema.items.map((schema2, index) => Visit12(schema2, references, `${path}/${index}`, value1[index])) : [];
+}
+function FromUnion13(schema, references, path, value) {
+  for (const subschema of schema.anyOf) {
+    if (!Check(subschema, references, value))
+      continue;
+    const value1 = Visit12(subschema, references, path, value);
+    return Default4(schema, path, value1);
+  }
+  for (const subschema of schema.anyOf) {
+    const value1 = Visit12(subschema, references, path, value);
+    if (!Check(schema, references, value1))
+      continue;
+    return Default4(schema, path, value1);
+  }
+  return Default4(schema, path, value);
+}
+function Visit12(schema, references, path, value) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  switch (schema[Kind]) {
+    case "Array":
+      return FromArray12(schema_, references_, path, value);
+    case "Import":
+      return FromImport8(schema_, references_, path, value);
+    case "Intersect":
+      return FromIntersect11(schema_, references_, path, value);
+    case "Not":
+      return FromNot6(schema_, references_, path, value);
+    case "Object":
+      return FromObject10(schema_, references_, path, value);
+    case "Record":
+      return FromRecord9(schema_, references_, path, value);
+    case "Ref":
+      return FromRef9(schema_, references_, path, value);
+    case "This":
+      return FromThis8(schema_, references_, path, value);
+    case "Tuple":
+      return FromTuple11(schema_, references_, path, value);
+    case "Union":
+      return FromUnion13(schema_, references_, path, value);
+    default:
+      return Default4(schema_, path, value);
+  }
+}
+function TransformEncode(schema, references, value) {
+  return Visit12(schema, references, "", value);
+}
+var TransformEncodeCheckError, TransformEncodeError;
+var init_encode = __esm(() => {
+  init_policy();
+  init_symbols2();
+  init_error2();
+  init_keyof2();
+  init_deref2();
+  init_check2();
+  init_guard();
+  init_kind();
+  TransformEncodeCheckError = class TransformEncodeCheckError extends TypeBoxError {
+    constructor(schema, value, error2) {
+      super(`The encoded value does not match the expected schema`);
+      this.schema = schema;
+      this.value = value;
+      this.error = error2;
+    }
+  };
+  TransformEncodeError = class TransformEncodeError extends TypeBoxError {
+    constructor(schema, path, value, error2) {
+      super(`${error2 instanceof Error ? error2.message : "Unknown error"}`);
+      this.schema = schema;
+      this.path = path;
+      this.value = value;
+      this.error = error2;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/has.mjs
+function FromArray13(schema, references) {
+  return IsTransform(schema) || Visit13(schema.items, references);
+}
+function FromAsyncIterator5(schema, references) {
+  return IsTransform(schema) || Visit13(schema.items, references);
+}
+function FromConstructor6(schema, references) {
+  return IsTransform(schema) || Visit13(schema.returns, references) || schema.parameters.some((schema2) => Visit13(schema2, references));
+}
+function FromFunction5(schema, references) {
+  return IsTransform(schema) || Visit13(schema.returns, references) || schema.parameters.some((schema2) => Visit13(schema2, references));
+}
+function FromIntersect12(schema, references) {
+  return IsTransform(schema) || IsTransform(schema.unevaluatedProperties) || schema.allOf.some((schema2) => Visit13(schema2, references));
+}
+function FromImport9(schema, references) {
+  const additional = globalThis.Object.getOwnPropertyNames(schema.$defs).reduce((result, key) => [...result, schema.$defs[key]], []);
+  const target = schema.$defs[schema.$ref];
+  return IsTransform(schema) || Visit13(target, [...additional, ...references]);
+}
+function FromIterator5(schema, references) {
+  return IsTransform(schema) || Visit13(schema.items, references);
+}
+function FromNot7(schema, references) {
+  return IsTransform(schema) || Visit13(schema.not, references);
+}
+function FromObject11(schema, references) {
+  return IsTransform(schema) || Object.values(schema.properties).some((schema2) => Visit13(schema2, references)) || IsSchema(schema.additionalProperties) && Visit13(schema.additionalProperties, references);
+}
+function FromPromise5(schema, references) {
+  return IsTransform(schema) || Visit13(schema.item, references);
+}
+function FromRecord10(schema, references) {
+  const pattern2 = Object.getOwnPropertyNames(schema.patternProperties)[0];
+  const property = schema.patternProperties[pattern2];
+  return IsTransform(schema) || Visit13(property, references) || IsSchema(schema.additionalProperties) && IsTransform(schema.additionalProperties);
+}
+function FromRef10(schema, references) {
+  if (IsTransform(schema))
+    return true;
+  return Visit13(Deref(schema, references), references);
+}
+function FromThis9(schema, references) {
+  if (IsTransform(schema))
+    return true;
+  return Visit13(Deref(schema, references), references);
+}
+function FromTuple12(schema, references) {
+  return IsTransform(schema) || !IsUndefined(schema.items) && schema.items.some((schema2) => Visit13(schema2, references));
+}
+function FromUnion14(schema, references) {
+  return IsTransform(schema) || schema.anyOf.some((schema2) => Visit13(schema2, references));
+}
+function Visit13(schema, references) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  if (schema.$id && visited.has(schema.$id))
+    return false;
+  if (schema.$id)
+    visited.add(schema.$id);
+  switch (schema[Kind]) {
+    case "Array":
+      return FromArray13(schema_, references_);
+    case "AsyncIterator":
+      return FromAsyncIterator5(schema_, references_);
+    case "Constructor":
+      return FromConstructor6(schema_, references_);
+    case "Function":
+      return FromFunction5(schema_, references_);
+    case "Import":
+      return FromImport9(schema_, references_);
+    case "Intersect":
+      return FromIntersect12(schema_, references_);
+    case "Iterator":
+      return FromIterator5(schema_, references_);
+    case "Not":
+      return FromNot7(schema_, references_);
+    case "Object":
+      return FromObject11(schema_, references_);
+    case "Promise":
+      return FromPromise5(schema_, references_);
+    case "Record":
+      return FromRecord10(schema_, references_);
+    case "Ref":
+      return FromRef10(schema_, references_);
+    case "This":
+      return FromThis9(schema_, references_);
+    case "Tuple":
+      return FromTuple12(schema_, references_);
+    case "Union":
+      return FromUnion14(schema_, references_);
+    default:
+      return IsTransform(schema);
+  }
+}
+function HasTransform(schema, references) {
+  visited.clear();
+  return Visit13(schema, references);
+}
+var visited;
+var init_has = __esm(() => {
+  init_deref2();
+  init_symbols2();
+  init_kind();
+  init_guard();
+  visited = new Set;
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/index.mjs
+var init_transform = __esm(() => {
+  init_decode();
+  init_encode();
+  init_has();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/decode/decode.mjs
+function Decode(...args2) {
+  const [schema, references, value] = args2.length === 3 ? [args2[0], args2[1], args2[2]] : [args2[0], [], args2[1]];
+  if (!Check(schema, references, value))
+    throw new TransformDecodeCheckError(schema, value, Errors(schema, references, value).First());
+  return HasTransform(schema, references) ? TransformDecode(schema, references, value) : value;
+}
+var init_decode2 = __esm(() => {
+  init_transform();
+  init_check2();
+  init_errors2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/decode/index.mjs
+var init_decode3 = __esm(() => {
+  init_decode2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/default/default.mjs
+function ValueOrDefault(schema, value) {
+  const defaultValue = HasPropertyKey(schema, "default") ? schema.default : undefined;
+  const clone2 = IsFunction(defaultValue) ? defaultValue() : Clone2(defaultValue);
+  return IsUndefined(value) ? clone2 : IsObject(value) && IsObject(clone2) ? Object.assign(clone2, value) : value;
+}
+function HasDefaultProperty(schema) {
+  return IsKind(schema) && "default" in schema;
+}
+function FromArray14(schema, references, value) {
+  if (IsArray(value)) {
+    for (let i = 0;i < value.length; i++) {
+      value[i] = Visit14(schema.items, references, value[i]);
+    }
+    return value;
+  }
+  const defaulted = ValueOrDefault(schema, value);
+  if (!IsArray(defaulted))
+    return defaulted;
+  for (let i = 0;i < defaulted.length; i++) {
+    defaulted[i] = Visit14(schema.items, references, defaulted[i]);
+  }
+  return defaulted;
+}
+function FromDate7(schema, references, value) {
+  return IsDate(value) ? value : ValueOrDefault(schema, value);
+}
+function FromImport10(schema, references, value) {
+  const definitions = globalThis.Object.values(schema.$defs);
+  const target = schema.$defs[schema.$ref];
+  return Visit14(target, [...references, ...definitions], value);
+}
+function FromIntersect13(schema, references, value) {
+  const defaulted = ValueOrDefault(schema, value);
+  return schema.allOf.reduce((acc, schema2) => {
+    const next = Visit14(schema2, references, defaulted);
+    return IsObject(next) ? { ...acc, ...next } : next;
+  }, {});
+}
+function FromObject12(schema, references, value) {
+  const defaulted = ValueOrDefault(schema, value);
+  if (!IsObject(defaulted))
+    return defaulted;
+  const knownPropertyKeys = Object.getOwnPropertyNames(schema.properties);
+  for (const key of knownPropertyKeys) {
+    const propertyValue = Visit14(schema.properties[key], references, defaulted[key]);
+    if (IsUndefined(propertyValue))
+      continue;
+    defaulted[key] = Visit14(schema.properties[key], references, defaulted[key]);
+  }
+  if (!HasDefaultProperty(schema.additionalProperties))
+    return defaulted;
+  for (const key of Object.getOwnPropertyNames(defaulted)) {
+    if (knownPropertyKeys.includes(key))
+      continue;
+    defaulted[key] = Visit14(schema.additionalProperties, references, defaulted[key]);
+  }
+  return defaulted;
+}
+function FromRecord11(schema, references, value) {
+  const defaulted = ValueOrDefault(schema, value);
+  if (!IsObject(defaulted))
+    return defaulted;
+  const additionalPropertiesSchema = schema.additionalProperties;
+  const [propertyKeyPattern, propertySchema] = Object.entries(schema.patternProperties)[0];
+  const knownPropertyKey = new RegExp(propertyKeyPattern);
+  for (const key of Object.getOwnPropertyNames(defaulted)) {
+    if (!(knownPropertyKey.test(key) && HasDefaultProperty(propertySchema)))
+      continue;
+    defaulted[key] = Visit14(propertySchema, references, defaulted[key]);
+  }
+  if (!HasDefaultProperty(additionalPropertiesSchema))
+    return defaulted;
+  for (const key of Object.getOwnPropertyNames(defaulted)) {
+    if (knownPropertyKey.test(key))
+      continue;
+    defaulted[key] = Visit14(additionalPropertiesSchema, references, defaulted[key]);
+  }
+  return defaulted;
+}
+function FromRef11(schema, references, value) {
+  return Visit14(Deref(schema, references), references, ValueOrDefault(schema, value));
+}
+function FromThis10(schema, references, value) {
+  return Visit14(Deref(schema, references), references, value);
+}
+function FromTuple13(schema, references, value) {
+  const defaulted = ValueOrDefault(schema, value);
+  if (!IsArray(defaulted) || IsUndefined(schema.items))
+    return defaulted;
+  const [items, max] = [schema.items, Math.max(schema.items.length, defaulted.length)];
+  for (let i = 0;i < max; i++) {
+    if (i < items.length)
+      defaulted[i] = Visit14(items[i], references, defaulted[i]);
+  }
+  return defaulted;
+}
+function FromUnion15(schema, references, value) {
+  const defaulted = ValueOrDefault(schema, value);
+  for (const inner of schema.anyOf) {
+    const result = Visit14(inner, references, Clone2(defaulted));
+    if (Check(inner, references, result)) {
+      return result;
+    }
+  }
+  return defaulted;
+}
+function Visit14(schema, references, value) {
+  const references_ = Pushref(schema, references);
+  const schema_ = schema;
+  switch (schema_[Kind]) {
+    case "Array":
+      return FromArray14(schema_, references_, value);
+    case "Date":
+      return FromDate7(schema_, references_, value);
+    case "Import":
+      return FromImport10(schema_, references_, value);
+    case "Intersect":
+      return FromIntersect13(schema_, references_, value);
+    case "Object":
+      return FromObject12(schema_, references_, value);
+    case "Record":
+      return FromRecord11(schema_, references_, value);
+    case "Ref":
+      return FromRef11(schema_, references_, value);
+    case "This":
+      return FromThis10(schema_, references_, value);
+    case "Tuple":
+      return FromTuple13(schema_, references_, value);
+    case "Union":
+      return FromUnion15(schema_, references_, value);
+    default:
+      return ValueOrDefault(schema_, value);
+  }
+}
+function Default5(...args2) {
+  return args2.length === 3 ? Visit14(args2[0], args2[1], args2[2]) : Visit14(args2[0], [], args2[1]);
+}
+var init_default = __esm(() => {
+  init_check2();
+  init_clone2();
+  init_deref2();
+  init_symbols2();
+  init_guard();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/default/index.mjs
+var init_default2 = __esm(() => {
+  init_default();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/pointer/pointer.mjs
+var exports_pointer = {};
+__export(exports_pointer, {
+  ValuePointerRootSetError: () => ValuePointerRootSetError,
+  ValuePointerRootDeleteError: () => ValuePointerRootDeleteError,
+  Set: () => Set4,
+  Has: () => Has3,
+  Get: () => Get3,
+  Format: () => Format,
+  Delete: () => Delete3
+});
+function Escape2(component) {
+  return component.indexOf("~") === -1 ? component : component.replace(/~1/g, "/").replace(/~0/g, "~");
+}
+function* Format(pointer) {
+  if (pointer === "")
+    return;
+  let [start, end] = [0, 0];
+  for (let i = 0;i < pointer.length; i++) {
+    const char = pointer.charAt(i);
+    if (char === "/") {
+      if (i === 0) {
+        start = i + 1;
+      } else {
+        end = i;
+        yield Escape2(pointer.slice(start, end));
+        start = i + 1;
+      }
+    } else {
+      end = i;
+    }
+  }
+  yield Escape2(pointer.slice(start));
+}
+function Set4(value, pointer, update) {
+  if (pointer === "")
+    throw new ValuePointerRootSetError(value, pointer, update);
+  let [owner, next, key] = [null, value, ""];
+  for (const component of Format(pointer)) {
+    if (next[component] === undefined)
+      next[component] = {};
+    owner = next;
+    next = next[component];
+    key = component;
+  }
+  owner[key] = update;
+}
+function Delete3(value, pointer) {
+  if (pointer === "")
+    throw new ValuePointerRootDeleteError(value, pointer);
+  let [owner, next, key] = [null, value, ""];
+  for (const component of Format(pointer)) {
+    if (next[component] === undefined || next[component] === null)
+      return;
+    owner = next;
+    next = next[component];
+    key = component;
+  }
+  if (Array.isArray(owner)) {
+    const index = parseInt(key);
+    owner.splice(index, 1);
+  } else {
+    delete owner[key];
+  }
+}
+function Has3(value, pointer) {
+  if (pointer === "")
+    return true;
+  let [owner, next, key] = [null, value, ""];
+  for (const component of Format(pointer)) {
+    if (next[component] === undefined)
+      return false;
+    owner = next;
+    next = next[component];
+    key = component;
+  }
+  return Object.getOwnPropertyNames(owner).includes(key);
+}
+function Get3(value, pointer) {
+  if (pointer === "")
+    return value;
+  let current = value;
+  for (const component of Format(pointer)) {
+    if (current[component] === undefined)
+      return;
+    current = current[component];
+  }
+  return current;
+}
+var ValuePointerRootSetError, ValuePointerRootDeleteError;
+var init_pointer = __esm(() => {
+  init_error2();
+  ValuePointerRootSetError = class ValuePointerRootSetError extends TypeBoxError {
+    constructor(value, path, update) {
+      super("Cannot set root value");
+      this.value = value;
+      this.path = path;
+      this.update = update;
+    }
+  };
+  ValuePointerRootDeleteError = class ValuePointerRootDeleteError extends TypeBoxError {
+    constructor(value, path) {
+      super("Cannot delete root value");
+      this.value = value;
+      this.path = path;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/pointer/index.mjs
+var init_pointer2 = __esm(() => {
+  init_pointer();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/equal/equal.mjs
+function ObjectType3(left, right) {
+  if (!IsObject(right))
+    return false;
+  const leftKeys = [...Object.keys(left), ...Object.getOwnPropertySymbols(left)];
+  const rightKeys = [...Object.keys(right), ...Object.getOwnPropertySymbols(right)];
+  if (leftKeys.length !== rightKeys.length)
+    return false;
+  return leftKeys.every((key) => Equal(left[key], right[key]));
+}
+function DateType3(left, right) {
+  return IsDate(right) && left.getTime() === right.getTime();
+}
+function ArrayType3(left, right) {
+  if (!IsArray(right) || left.length !== right.length)
+    return false;
+  return left.every((value, index) => Equal(value, right[index]));
+}
+function TypedArrayType(left, right) {
+  if (!IsTypedArray(right) || left.length !== right.length || Object.getPrototypeOf(left).constructor.name !== Object.getPrototypeOf(right).constructor.name)
+    return false;
+  return left.every((value, index) => Equal(value, right[index]));
+}
+function ValueType(left, right) {
+  return left === right;
+}
+function Equal(left, right) {
+  if (IsDate(left))
+    return DateType3(left, right);
+  if (IsTypedArray(left))
+    return TypedArrayType(left, right);
+  if (IsArray(left))
+    return ArrayType3(left, right);
+  if (IsObject(left))
+    return ObjectType3(left, right);
+  if (IsValueType(left))
+    return ValueType(left, right);
+  throw new Error("ValueEquals: Unable to compare value");
+}
+var init_equal = __esm(() => {
+  init_guard();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/delta/delta.mjs
+function CreateUpdate(path, value) {
+  return { type: "update", path, value };
+}
+function CreateInsert(path, value) {
+  return { type: "insert", path, value };
+}
+function CreateDelete(path) {
+  return { type: "delete", path };
+}
+function AssertDiffable(value) {
+  if (globalThis.Object.getOwnPropertySymbols(value).length > 0)
+    throw new ValueDiffError(value, "Cannot diff objects with symbols");
+}
+function* ObjectType4(path, current, next) {
+  AssertDiffable(current);
+  AssertDiffable(next);
+  if (!IsStandardObject(next))
+    return yield CreateUpdate(path, next);
+  const currentKeys = globalThis.Object.getOwnPropertyNames(current);
+  const nextKeys = globalThis.Object.getOwnPropertyNames(next);
+  for (const key of nextKeys) {
+    if (HasPropertyKey(current, key))
+      continue;
+    yield CreateInsert(`${path}/${key}`, next[key]);
+  }
+  for (const key of currentKeys) {
+    if (!HasPropertyKey(next, key))
+      continue;
+    if (Equal(current, next))
+      continue;
+    yield* Visit15(`${path}/${key}`, current[key], next[key]);
+  }
+  for (const key of currentKeys) {
+    if (HasPropertyKey(next, key))
+      continue;
+    yield CreateDelete(`${path}/${key}`);
+  }
+}
+function* ArrayType4(path, current, next) {
+  if (!IsArray(next))
+    return yield CreateUpdate(path, next);
+  for (let i = 0;i < Math.min(current.length, next.length); i++) {
+    yield* Visit15(`${path}/${i}`, current[i], next[i]);
+  }
+  for (let i = 0;i < next.length; i++) {
+    if (i < current.length)
+      continue;
+    yield CreateInsert(`${path}/${i}`, next[i]);
+  }
+  for (let i = current.length - 1;i >= 0; i--) {
+    if (i < next.length)
+      continue;
+    yield CreateDelete(`${path}/${i}`);
+  }
+}
+function* TypedArrayType2(path, current, next) {
+  if (!IsTypedArray(next) || current.length !== next.length || globalThis.Object.getPrototypeOf(current).constructor.name !== globalThis.Object.getPrototypeOf(next).constructor.name)
+    return yield CreateUpdate(path, next);
+  for (let i = 0;i < Math.min(current.length, next.length); i++) {
+    yield* Visit15(`${path}/${i}`, current[i], next[i]);
+  }
+}
+function* ValueType2(path, current, next) {
+  if (current === next)
+    return;
+  yield CreateUpdate(path, next);
+}
+function* Visit15(path, current, next) {
+  if (IsStandardObject(current))
+    return yield* ObjectType4(path, current, next);
+  if (IsArray(current))
+    return yield* ArrayType4(path, current, next);
+  if (IsTypedArray(current))
+    return yield* TypedArrayType2(path, current, next);
+  if (IsValueType(current))
+    return yield* ValueType2(path, current, next);
+  throw new ValueDiffError(current, "Unable to diff value");
+}
+function Diff(current, next) {
+  return [...Visit15("", current, next)];
+}
+function IsRootUpdate(edits) {
+  return edits.length > 0 && edits[0].path === "" && edits[0].type === "update";
+}
+function IsIdentity(edits) {
+  return edits.length === 0;
+}
+function Patch(current, edits) {
+  if (IsRootUpdate(edits)) {
+    return Clone2(edits[0].value);
+  }
+  if (IsIdentity(edits)) {
+    return Clone2(current);
+  }
+  const clone2 = Clone2(current);
+  for (const edit of edits) {
+    switch (edit.type) {
+      case "insert": {
+        exports_pointer.Set(clone2, edit.path, edit.value);
+        break;
+      }
+      case "update": {
+        exports_pointer.Set(clone2, edit.path, edit.value);
+        break;
+      }
+      case "delete": {
+        exports_pointer.Delete(clone2, edit.path);
+        break;
+      }
+    }
+  }
+  return clone2;
+}
+var Insert, Update, Delete4, Edit, ValueDiffError;
+var init_delta = __esm(() => {
+  init_guard();
+  init_pointer2();
+  init_clone2();
+  init_equal();
+  init_error2();
+  init_literal2();
+  init_object2();
+  init_string2();
+  init_unknown2();
+  init_union2();
+  Insert = Object2({
+    type: Literal("insert"),
+    path: String2(),
+    value: Unknown()
+  });
+  Update = Object2({
+    type: Literal("update"),
+    path: String2(),
+    value: Unknown()
+  });
+  Delete4 = Object2({
+    type: Literal("delete"),
+    path: String2()
+  });
+  Edit = Union([Insert, Update, Delete4]);
+  ValueDiffError = class ValueDiffError extends TypeBoxError {
+    constructor(value, message2) {
+      super(message2);
+      this.value = value;
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/delta/index.mjs
+var init_delta2 = __esm(() => {
+  init_delta();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/encode/encode.mjs
+function Encode(...args2) {
+  const [schema, references, value] = args2.length === 3 ? [args2[0], args2[1], args2[2]] : [args2[0], [], args2[1]];
+  const encoded = HasTransform(schema, references) ? TransformEncode(schema, references, value) : value;
+  if (!Check(schema, references, encoded))
+    throw new TransformEncodeCheckError(schema, encoded, Errors(schema, references, encoded).First());
+  return encoded;
+}
+var init_encode2 = __esm(() => {
+  init_transform();
+  init_check2();
+  init_errors2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/encode/index.mjs
+var init_encode3 = __esm(() => {
+  init_encode2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/equal/index.mjs
+var init_equal2 = __esm(() => {
+  init_equal();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/mutate/mutate.mjs
+function IsStandardObject2(value) {
+  return IsObject(value) && !IsArray(value);
+}
+function ObjectType5(root, path, current, next) {
+  if (!IsStandardObject2(current)) {
+    exports_pointer.Set(root, path, Clone2(next));
+  } else {
+    const currentKeys = Object.getOwnPropertyNames(current);
+    const nextKeys = Object.getOwnPropertyNames(next);
+    for (const currentKey of currentKeys) {
+      if (!nextKeys.includes(currentKey)) {
+        delete current[currentKey];
+      }
+    }
+    for (const nextKey of nextKeys) {
+      if (!currentKeys.includes(nextKey)) {
+        current[nextKey] = null;
+      }
+    }
+    for (const nextKey of nextKeys) {
+      Visit16(root, `${path}/${nextKey}`, current[nextKey], next[nextKey]);
+    }
+  }
+}
+function ArrayType5(root, path, current, next) {
+  if (!IsArray(current)) {
+    exports_pointer.Set(root, path, Clone2(next));
+  } else {
+    for (let index = 0;index < next.length; index++) {
+      Visit16(root, `${path}/${index}`, current[index], next[index]);
+    }
+    current.splice(next.length);
+  }
+}
+function TypedArrayType3(root, path, current, next) {
+  if (IsTypedArray(current) && current.length === next.length) {
+    for (let i = 0;i < current.length; i++) {
+      current[i] = next[i];
+    }
+  } else {
+    exports_pointer.Set(root, path, Clone2(next));
+  }
+}
+function ValueType3(root, path, current, next) {
+  if (current === next)
+    return;
+  exports_pointer.Set(root, path, next);
+}
+function Visit16(root, path, current, next) {
+  if (IsArray(next))
+    return ArrayType5(root, path, current, next);
+  if (IsTypedArray(next))
+    return TypedArrayType3(root, path, current, next);
+  if (IsStandardObject2(next))
+    return ObjectType5(root, path, current, next);
+  if (IsValueType(next))
+    return ValueType3(root, path, current, next);
+}
+function IsNonMutableValue(value) {
+  return IsTypedArray(value) || IsValueType(value);
+}
+function IsMismatchedValue(current, next) {
+  return IsStandardObject2(current) && IsArray(next) || IsArray(current) && IsStandardObject2(next);
+}
+function Mutate(current, next) {
+  if (IsNonMutableValue(current) || IsNonMutableValue(next))
+    throw new ValueMutateError("Only object and array types can be mutated at the root level");
+  if (IsMismatchedValue(current, next))
+    throw new ValueMutateError("Cannot assign due type mismatch of assignable values");
+  Visit16(current, "", current, next);
+}
+var ValueMutateError;
+var init_mutate = __esm(() => {
+  init_guard();
+  init_pointer2();
+  init_clone2();
+  init_error2();
+  ValueMutateError = class ValueMutateError extends TypeBoxError {
+    constructor(message2) {
+      super(message2);
+    }
+  };
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/mutate/index.mjs
+var init_mutate2 = __esm(() => {
+  init_mutate();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/parse/parse.mjs
+function ParseValue(operations, type2, references, value) {
+  return operations.reduce((value2, operationKey) => {
+    const operation = ParseRegistry.Get(operationKey);
+    if (IsUndefined(operation))
+      throw new ParseError(`Unable to find Parse operation '${operationKey}'`);
+    return operation(type2, references, value2);
+  }, value);
+}
+function Parse(...args2) {
+  const [operations, schema, references, value] = args2.length === 4 ? [args2[0], args2[1], args2[2], args2[3]] : args2.length === 3 ? IsArray(args2[0]) ? [args2[0], args2[1], [], args2[2]] : [ParseDefault, args2[0], args2[1], args2[2]] : args2.length === 2 ? [ParseDefault, args2[0], [], args2[1]] : (() => {
+    throw new ParseError("Invalid Arguments");
+  })();
+  return ParseValue(operations, schema, references, value);
+}
+var ParseError, ParseRegistry, ParseDefault;
+var init_parse2 = __esm(() => {
+  init_error2();
+  init_transform();
+  init_assert2();
+  init_cast2();
+  init_clean2();
+  init_clone2();
+  init_convert2();
+  init_default2();
+  init_guard();
+  ParseError = class ParseError extends TypeBoxError {
+    constructor(message2) {
+      super(message2);
+    }
+  };
+  (function(ParseRegistry2) {
+    const registry = new Map([
+      ["Assert", (type2, references, value) => {
+        Assert(type2, references, value);
+        return value;
+      }],
+      ["Cast", (type2, references, value) => Cast(type2, references, value)],
+      ["Clean", (type2, references, value) => Clean(type2, references, value)],
+      ["Clone", (_type, _references, value) => Clone2(value)],
+      ["Convert", (type2, references, value) => Convert(type2, references, value)],
+      ["Decode", (type2, references, value) => HasTransform(type2, references) ? TransformDecode(type2, references, value) : value],
+      ["Default", (type2, references, value) => Default5(type2, references, value)],
+      ["Encode", (type2, references, value) => HasTransform(type2, references) ? TransformEncode(type2, references, value) : value]
+    ]);
+    function Delete5(key) {
+      registry.delete(key);
+    }
+    ParseRegistry2.Delete = Delete5;
+    function Set5(key, callback) {
+      registry.set(key, callback);
+    }
+    ParseRegistry2.Set = Set5;
+    function Get4(key) {
+      return registry.get(key);
+    }
+    ParseRegistry2.Get = Get4;
+  })(ParseRegistry || (ParseRegistry = {}));
+  ParseDefault = [
+    "Clone",
+    "Clean",
+    "Default",
+    "Convert",
+    "Assert",
+    "Decode"
+  ];
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/parse/index.mjs
+var init_parse3 = __esm(() => {
+  init_parse2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/value/value.mjs
+var exports_value2 = {};
+__export(exports_value2, {
+  ValueErrorIterator: () => ValueErrorIterator,
+  Patch: () => Patch,
+  Parse: () => Parse,
+  Mutate: () => Mutate,
+  Hash: () => Hash,
+  Errors: () => Errors,
+  Equal: () => Equal,
+  Encode: () => Encode,
+  Edit: () => Edit,
+  Diff: () => Diff,
+  Default: () => Default5,
+  Decode: () => Decode,
+  Create: () => Create2,
+  Convert: () => Convert,
+  Clone: () => Clone2,
+  Clean: () => Clean,
+  Check: () => Check,
+  Cast: () => Cast,
+  Assert: () => Assert
+});
+var init_value2 = __esm(() => {
+  init_errors2();
+  init_assert2();
+  init_cast2();
+  init_check2();
+  init_clean2();
+  init_clone2();
+  init_convert2();
+  init_create3();
+  init_decode3();
+  init_default2();
+  init_delta2();
+  init_encode3();
+  init_equal2();
+  init_hash2();
+  init_mutate2();
+  init_parse3();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/value/index.mjs
+var init_value3 = __esm(() => {
+  init_value2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/index.mjs
+var init_value4 = __esm(() => {
+  init_value3();
+  init_guard();
+  init_assert2();
+  init_cast2();
+  init_check2();
+  init_clean2();
+  init_clone2();
+  init_convert2();
+  init_create3();
+  init_decode3();
+  init_default2();
+  init_delta2();
+  init_encode3();
+  init_equal2();
+  init_hash2();
+  init_mutate2();
+  init_parse3();
+  init_pointer2();
+  init_transform();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/type.mjs
+function CloneType(schema, options) {
+  return options === undefined ? Clone(schema) : Clone({ ...options, ...schema });
+}
+var init_type4 = __esm(() => {
+  init_value();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/clone/index.mjs
+var init_clone3 = __esm(() => {
+  init_type4();
+  init_value();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/helpers/index.mjs
+var init_helpers = () => {};
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/argument/argument.mjs
+function Argument(index) {
+  return CreateType({ [Kind]: "Argument", index });
+}
+var init_argument = __esm(() => {
+  init_type2();
+  init_symbols2();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/argument/index.mjs
+var init_argument2 = __esm(() => {
+  init_argument();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/awaited/awaited.mjs
+function FromComputed2(target, parameters) {
+  return Computed("Awaited", [Computed(target, parameters)]);
+}
+function FromRef12($ref) {
+  return Computed("Awaited", [Ref($ref)]);
+}
+function FromIntersect14(types) {
+  return Intersect(FromRest4(types));
+}
+function FromUnion16(types) {
+  return Union(FromRest4(types));
+}
+function FromPromise6(type3) {
+  return Awaited(type3);
+}
+function FromRest4(types) {
+  return types.map((type3) => Awaited(type3));
+}
+function Awaited(type3, options) {
+  return CreateType(IsComputed(type3) ? FromComputed2(type3.target, type3.parameters) : IsIntersect(type3) ? FromIntersect14(type3.allOf) : IsUnion(type3) ? FromUnion16(type3.anyOf) : IsPromise2(type3) ? FromPromise6(type3.item) : IsRef(type3) ? FromRef12(type3.$ref) : type3, options);
+}
+var init_awaited = __esm(() => {
+  init_type2();
+  init_computed2();
+  init_intersect2();
+  init_union2();
+  init_ref2();
+  init_kind();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/awaited/index.mjs
+var init_awaited2 = __esm(() => {
+  init_awaited();
+});
+
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/composite/composite.mjs
 function CompositeKeys(T) {
   const Acc = [];
   for (const L of T)
@@ -17993,12 +22032,12 @@ var init_composite = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/composite/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/composite/index.mjs
 var init_composite2 = __esm(() => {
   init_composite();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/date/date.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/date/date.mjs
 function Date2(options) {
   return CreateType({ [Kind]: "Date", type: "Date" }, options);
 }
@@ -18007,12 +22046,12 @@ var init_date = __esm(() => {
   init_type2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/date/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/date/index.mjs
 var init_date2 = __esm(() => {
   init_date();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/null/null.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/null/null.mjs
 function Null(options) {
   return CreateType({ [Kind]: "Null", type: "null" }, options);
 }
@@ -18021,12 +22060,12 @@ var init_null = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/null/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/null/index.mjs
 var init_null2 = __esm(() => {
   init_null();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbol/symbol.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbol/symbol.mjs
 function Symbol2(options) {
   return CreateType({ [Kind]: "Symbol", type: "symbol" }, options);
 }
@@ -18035,12 +22074,12 @@ var init_symbol = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbol/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/symbol/index.mjs
 var init_symbol2 = __esm(() => {
   init_symbol();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/undefined/undefined.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/undefined/undefined.mjs
 function Undefined(options) {
   return CreateType({ [Kind]: "Undefined", type: "undefined" }, options);
 }
@@ -18049,12 +22088,12 @@ var init_undefined = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/undefined/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/undefined/index.mjs
 var init_undefined2 = __esm(() => {
   init_undefined();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/uint8array/uint8array.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/uint8array/uint8array.mjs
 function Uint8Array2(options) {
   return CreateType({ [Kind]: "Uint8Array", type: "Uint8Array" }, options);
 }
@@ -18063,43 +22102,29 @@ var init_uint8array = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/uint8array/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/uint8array/index.mjs
 var init_uint8array2 = __esm(() => {
   init_uint8array();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unknown/unknown.mjs
-function Unknown(options) {
-  return CreateType({ [Kind]: "Unknown" }, options);
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/const/const.mjs
+function FromArray15(T) {
+  return T.map((L) => FromValue2(L, false));
 }
-var init_unknown = __esm(() => {
-  init_type2();
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unknown/index.mjs
-var init_unknown2 = __esm(() => {
-  init_unknown();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/const/const.mjs
-function FromArray3(T) {
-  return T.map((L) => FromValue(L, false));
-}
-function FromProperties7(value2) {
+function FromProperties8(value2) {
   const Acc = {};
   for (const K of globalThis.Object.getOwnPropertyNames(value2))
-    Acc[K] = Readonly(FromValue(value2[K], false));
+    Acc[K] = Readonly(FromValue2(value2[K], false));
   return Acc;
 }
 function ConditionalReadonly(T, root) {
   return root === true ? T : Readonly(T);
 }
-function FromValue(value2, root) {
-  return IsAsyncIterator(value2) ? ConditionalReadonly(Any(), root) : IsIterator(value2) ? ConditionalReadonly(Any(), root) : IsArray(value2) ? Readonly(Tuple(FromArray3(value2))) : IsUint8Array(value2) ? Uint8Array2() : IsDate(value2) ? Date2() : IsObject(value2) ? ConditionalReadonly(Object2(FromProperties7(value2)), root) : IsFunction(value2) ? ConditionalReadonly(Function2([], Unknown()), root) : IsUndefined(value2) ? Undefined() : IsNull(value2) ? Null() : IsSymbol(value2) ? Symbol2() : IsBigInt(value2) ? BigInt2() : IsNumber(value2) ? Literal(value2) : IsBoolean(value2) ? Literal(value2) : IsString(value2) ? Literal(value2) : Object2({});
+function FromValue2(value2, root) {
+  return IsAsyncIterator2(value2) ? ConditionalReadonly(Any(), root) : IsIterator2(value2) ? ConditionalReadonly(Any(), root) : IsArray2(value2) ? Readonly(Tuple(FromArray15(value2))) : IsUint8Array2(value2) ? Uint8Array2() : IsDate2(value2) ? Date2() : IsObject2(value2) ? ConditionalReadonly(Object2(FromProperties8(value2)), root) : IsFunction2(value2) ? ConditionalReadonly(Function2([], Unknown()), root) : IsUndefined2(value2) ? Undefined() : IsNull2(value2) ? Null() : IsSymbol2(value2) ? Symbol2() : IsBigInt2(value2) ? BigInt2() : IsNumber2(value2) ? Literal(value2) : IsBoolean2(value2) ? Literal(value2) : IsString2(value2) ? Literal(value2) : Object2({});
 }
 function Const(T, options) {
-  return CreateType(FromValue(T, true), options);
+  return CreateType(FromValue2(T, true), options);
 }
 var init_const = __esm(() => {
   init_any2();
@@ -18118,12 +22143,12 @@ var init_const = __esm(() => {
   init_create();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/const/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/const/index.mjs
 var init_const2 = __esm(() => {
   init_const();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor-parameters/constructor-parameters.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor-parameters/constructor-parameters.mjs
 function ConstructorParameters(schema, options) {
   return IsConstructor(schema) ? Tuple(schema.parameters, options) : Never(options);
 }
@@ -18133,14 +22158,14 @@ var init_constructor_parameters = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor-parameters/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/constructor-parameters/index.mjs
 var init_constructor_parameters2 = __esm(() => {
   init_constructor_parameters();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/enum/enum.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/enum/enum.mjs
 function Enum(item, options) {
-  if (IsUndefined(item))
+  if (IsUndefined2(item))
     throw new Error("Enum undefined or empty");
   const values1 = globalThis.Object.getOwnPropertyNames(item).filter((key) => isNaN(key)).map((key) => item[key]);
   const values2 = [...new Set(values1)];
@@ -18153,357 +22178,12 @@ var init_enum = __esm(() => {
   init_union2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/enum/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/enum/index.mjs
 var init_enum2 = __esm(() => {
   init_enum();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-check.mjs
-function IntoBooleanResult(result) {
-  return result === ExtendsResult.False ? result : ExtendsResult.True;
-}
-function Throw(message2) {
-  throw new ExtendsResolverError(message2);
-}
-function IsStructuralRight(right) {
-  return exports_type.IsNever(right) || exports_type.IsIntersect(right) || exports_type.IsUnion(right) || exports_type.IsUnknown(right) || exports_type.IsAny(right);
-}
-function StructuralRight(left, right) {
-  return exports_type.IsNever(right) ? FromNeverRight(left, right) : exports_type.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type.IsUnion(right) ? FromUnionRight(left, right) : exports_type.IsUnknown(right) ? FromUnknownRight(left, right) : exports_type.IsAny(right) ? FromAnyRight(left, right) : Throw("StructuralRight");
-}
-function FromAnyRight(left, right) {
-  return ExtendsResult.True;
-}
-function FromAny(left, right) {
-  return exports_type.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type.IsUnion(right) && right.anyOf.some((schema) => exports_type.IsAny(schema) || exports_type.IsUnknown(schema)) ? ExtendsResult.True : exports_type.IsUnion(right) ? ExtendsResult.Union : exports_type.IsUnknown(right) ? ExtendsResult.True : exports_type.IsAny(right) ? ExtendsResult.True : ExtendsResult.Union;
-}
-function FromArrayRight(left, right) {
-  return exports_type.IsUnknown(left) ? ExtendsResult.False : exports_type.IsAny(left) ? ExtendsResult.Union : exports_type.IsNever(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromArray4(left, right) {
-  return exports_type.IsObject(right) && IsObjectArrayLike(right) ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type.IsArray(right) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.items, right.items));
-}
-function FromAsyncIterator(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type.IsAsyncIterator(right) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.items, right.items));
-}
-function FromBigInt(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsBigInt(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromBooleanRight(left, right) {
-  return exports_type.IsLiteralBoolean(left) ? ExtendsResult.True : exports_type.IsBoolean(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromBoolean(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsBoolean(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromConstructor(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : !exports_type.IsConstructor(right) ? ExtendsResult.False : left.parameters.length > right.parameters.length ? ExtendsResult.False : !left.parameters.every((schema, index) => IntoBooleanResult(Visit3(right.parameters[index], schema)) === ExtendsResult.True) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.returns, right.returns));
-}
-function FromDate(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsDate(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromFunction(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : !exports_type.IsFunction(right) ? ExtendsResult.False : left.parameters.length > right.parameters.length ? ExtendsResult.False : !left.parameters.every((schema, index) => IntoBooleanResult(Visit3(right.parameters[index], schema)) === ExtendsResult.True) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.returns, right.returns));
-}
-function FromIntegerRight(left, right) {
-  return exports_type.IsLiteral(left) && exports_value.IsNumber(left.const) ? ExtendsResult.True : exports_type.IsNumber(left) || exports_type.IsInteger(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromInteger(left, right) {
-  return exports_type.IsInteger(right) || exports_type.IsNumber(right) ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : ExtendsResult.False;
-}
-function FromIntersectRight(left, right) {
-  return right.allOf.every((schema) => Visit3(left, schema) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromIntersect4(left, right) {
-  return left.allOf.some((schema) => Visit3(schema, right) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromIterator(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : !exports_type.IsIterator(right) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.items, right.items));
-}
-function FromLiteral2(left, right) {
-  return exports_type.IsLiteral(right) && right.const === left.const ? ExtendsResult.True : IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsString(right) ? FromStringRight(left, right) : exports_type.IsNumber(right) ? FromNumberRight(left, right) : exports_type.IsInteger(right) ? FromIntegerRight(left, right) : exports_type.IsBoolean(right) ? FromBooleanRight(left, right) : ExtendsResult.False;
-}
-function FromNeverRight(left, right) {
-  return ExtendsResult.False;
-}
-function FromNever(left, right) {
-  return ExtendsResult.True;
-}
-function UnwrapTNot(schema) {
-  let [current, depth] = [schema, 0];
-  while (true) {
-    if (!exports_type.IsNot(current))
-      break;
-    current = current.not;
-    depth += 1;
-  }
-  return depth % 2 === 0 ? current : Unknown();
-}
-function FromNot(left, right) {
-  return exports_type.IsNot(left) ? Visit3(UnwrapTNot(left), right) : exports_type.IsNot(right) ? Visit3(left, UnwrapTNot(right)) : Throw("Invalid fallthrough for Not");
-}
-function FromNull(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsNull(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromNumberRight(left, right) {
-  return exports_type.IsLiteralNumber(left) ? ExtendsResult.True : exports_type.IsNumber(left) || exports_type.IsInteger(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromNumber(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsInteger(right) || exports_type.IsNumber(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function IsObjectPropertyCount(schema, count) {
-  return Object.getOwnPropertyNames(schema.properties).length === count;
-}
-function IsObjectStringLike(schema) {
-  return IsObjectArrayLike(schema);
-}
-function IsObjectSymbolLike(schema) {
-  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "description" in schema.properties && exports_type.IsUnion(schema.properties.description) && schema.properties.description.anyOf.length === 2 && (exports_type.IsString(schema.properties.description.anyOf[0]) && exports_type.IsUndefined(schema.properties.description.anyOf[1]) || exports_type.IsString(schema.properties.description.anyOf[1]) && exports_type.IsUndefined(schema.properties.description.anyOf[0]));
-}
-function IsObjectNumberLike(schema) {
-  return IsObjectPropertyCount(schema, 0);
-}
-function IsObjectBooleanLike(schema) {
-  return IsObjectPropertyCount(schema, 0);
-}
-function IsObjectBigIntLike(schema) {
-  return IsObjectPropertyCount(schema, 0);
-}
-function IsObjectDateLike(schema) {
-  return IsObjectPropertyCount(schema, 0);
-}
-function IsObjectUint8ArrayLike(schema) {
-  return IsObjectArrayLike(schema);
-}
-function IsObjectFunctionLike(schema) {
-  const length = Number2();
-  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "length" in schema.properties && IntoBooleanResult(Visit3(schema.properties["length"], length)) === ExtendsResult.True;
-}
-function IsObjectConstructorLike(schema) {
-  return IsObjectPropertyCount(schema, 0);
-}
-function IsObjectArrayLike(schema) {
-  const length = Number2();
-  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "length" in schema.properties && IntoBooleanResult(Visit3(schema.properties["length"], length)) === ExtendsResult.True;
-}
-function IsObjectPromiseLike(schema) {
-  const then = Function2([Any()], Any());
-  return IsObjectPropertyCount(schema, 0) || IsObjectPropertyCount(schema, 1) && "then" in schema.properties && IntoBooleanResult(Visit3(schema.properties["then"], then)) === ExtendsResult.True;
-}
-function Property(left, right) {
-  return Visit3(left, right) === ExtendsResult.False ? ExtendsResult.False : exports_type.IsOptional(left) && !exports_type.IsOptional(right) ? ExtendsResult.False : ExtendsResult.True;
-}
-function FromObjectRight(left, right) {
-  return exports_type.IsUnknown(left) ? ExtendsResult.False : exports_type.IsAny(left) ? ExtendsResult.Union : exports_type.IsNever(left) || exports_type.IsLiteralString(left) && IsObjectStringLike(right) || exports_type.IsLiteralNumber(left) && IsObjectNumberLike(right) || exports_type.IsLiteralBoolean(left) && IsObjectBooleanLike(right) || exports_type.IsSymbol(left) && IsObjectSymbolLike(right) || exports_type.IsBigInt(left) && IsObjectBigIntLike(right) || exports_type.IsString(left) && IsObjectStringLike(right) || exports_type.IsSymbol(left) && IsObjectSymbolLike(right) || exports_type.IsNumber(left) && IsObjectNumberLike(right) || exports_type.IsInteger(left) && IsObjectNumberLike(right) || exports_type.IsBoolean(left) && IsObjectBooleanLike(right) || exports_type.IsUint8Array(left) && IsObjectUint8ArrayLike(right) || exports_type.IsDate(left) && IsObjectDateLike(right) || exports_type.IsConstructor(left) && IsObjectConstructorLike(right) || exports_type.IsFunction(left) && IsObjectFunctionLike(right) ? ExtendsResult.True : exports_type.IsRecord(left) && exports_type.IsString(RecordKey(left)) ? (() => {
-    return right[Hint] === "Record" ? ExtendsResult.True : ExtendsResult.False;
-  })() : exports_type.IsRecord(left) && exports_type.IsNumber(RecordKey(left)) ? (() => {
-    return IsObjectPropertyCount(right, 0) ? ExtendsResult.True : ExtendsResult.False;
-  })() : ExtendsResult.False;
-}
-function FromObject(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : !exports_type.IsObject(right) ? ExtendsResult.False : (() => {
-    for (const key of Object.getOwnPropertyNames(right.properties)) {
-      if (!(key in left.properties) && !exports_type.IsOptional(right.properties[key])) {
-        return ExtendsResult.False;
-      }
-      if (exports_type.IsOptional(right.properties[key])) {
-        return ExtendsResult.True;
-      }
-      if (Property(left.properties[key], right.properties[key]) === ExtendsResult.False) {
-        return ExtendsResult.False;
-      }
-    }
-    return ExtendsResult.True;
-  })();
-}
-function FromPromise2(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) && IsObjectPromiseLike(right) ? ExtendsResult.True : !exports_type.IsPromise(right) ? ExtendsResult.False : IntoBooleanResult(Visit3(left.item, right.item));
-}
-function RecordKey(schema) {
-  return PatternNumberExact in schema.patternProperties ? Number2() : (PatternStringExact in schema.patternProperties) ? String2() : Throw("Unknown record key pattern");
-}
-function RecordValue(schema) {
-  return PatternNumberExact in schema.patternProperties ? schema.patternProperties[PatternNumberExact] : (PatternStringExact in schema.patternProperties) ? schema.patternProperties[PatternStringExact] : Throw("Unable to get record value schema");
-}
-function FromRecordRight(left, right) {
-  const [Key, Value] = [RecordKey(right), RecordValue(right)];
-  return exports_type.IsLiteralString(left) && exports_type.IsNumber(Key) && IntoBooleanResult(Visit3(left, Value)) === ExtendsResult.True ? ExtendsResult.True : exports_type.IsUint8Array(left) && exports_type.IsNumber(Key) ? Visit3(left, Value) : exports_type.IsString(left) && exports_type.IsNumber(Key) ? Visit3(left, Value) : exports_type.IsArray(left) && exports_type.IsNumber(Key) ? Visit3(left, Value) : exports_type.IsObject(left) ? (() => {
-    for (const key of Object.getOwnPropertyNames(left.properties)) {
-      if (Property(Value, left.properties[key]) === ExtendsResult.False) {
-        return ExtendsResult.False;
-      }
-    }
-    return ExtendsResult.True;
-  })() : ExtendsResult.False;
-}
-function FromRecord(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : !exports_type.IsRecord(right) ? ExtendsResult.False : Visit3(RecordValue(left), RecordValue(right));
-}
-function FromRegExp(left, right) {
-  const L = exports_type.IsRegExp(left) ? String2() : left;
-  const R = exports_type.IsRegExp(right) ? String2() : right;
-  return Visit3(L, R);
-}
-function FromStringRight(left, right) {
-  return exports_type.IsLiteral(left) && exports_value.IsString(left.const) ? ExtendsResult.True : exports_type.IsString(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromString(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsString(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromSymbol(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsSymbol(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromTemplateLiteral2(left, right) {
-  return exports_type.IsTemplateLiteral(left) ? Visit3(TemplateLiteralToUnion(left), right) : exports_type.IsTemplateLiteral(right) ? Visit3(left, TemplateLiteralToUnion(right)) : Throw("Invalid fallthrough for TemplateLiteral");
-}
-function IsArrayOfTuple(left, right) {
-  return exports_type.IsArray(right) && left.items !== undefined && left.items.every((schema) => Visit3(schema, right.items) === ExtendsResult.True);
-}
-function FromTupleRight(left, right) {
-  return exports_type.IsNever(left) ? ExtendsResult.True : exports_type.IsUnknown(left) ? ExtendsResult.False : exports_type.IsAny(left) ? ExtendsResult.Union : ExtendsResult.False;
-}
-function FromTuple3(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) && IsObjectArrayLike(right) ? ExtendsResult.True : exports_type.IsArray(right) && IsArrayOfTuple(left, right) ? ExtendsResult.True : !exports_type.IsTuple(right) ? ExtendsResult.False : exports_value.IsUndefined(left.items) && !exports_value.IsUndefined(right.items) || !exports_value.IsUndefined(left.items) && exports_value.IsUndefined(right.items) ? ExtendsResult.False : exports_value.IsUndefined(left.items) && !exports_value.IsUndefined(right.items) ? ExtendsResult.True : left.items.every((schema, index) => Visit3(schema, right.items[index]) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromUint8Array(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsUint8Array(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromUndefined(left, right) {
-  return IsStructuralRight(right) ? StructuralRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsRecord(right) ? FromRecordRight(left, right) : exports_type.IsVoid(right) ? FromVoidRight(left, right) : exports_type.IsUndefined(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromUnionRight(left, right) {
-  return right.anyOf.some((schema) => Visit3(left, schema) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromUnion6(left, right) {
-  return left.anyOf.every((schema) => Visit3(schema, right) === ExtendsResult.True) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromUnknownRight(left, right) {
-  return ExtendsResult.True;
-}
-function FromUnknown(left, right) {
-  return exports_type.IsNever(right) ? FromNeverRight(left, right) : exports_type.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type.IsUnion(right) ? FromUnionRight(left, right) : exports_type.IsAny(right) ? FromAnyRight(left, right) : exports_type.IsString(right) ? FromStringRight(left, right) : exports_type.IsNumber(right) ? FromNumberRight(left, right) : exports_type.IsInteger(right) ? FromIntegerRight(left, right) : exports_type.IsBoolean(right) ? FromBooleanRight(left, right) : exports_type.IsArray(right) ? FromArrayRight(left, right) : exports_type.IsTuple(right) ? FromTupleRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsUnknown(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromVoidRight(left, right) {
-  return exports_type.IsUndefined(left) ? ExtendsResult.True : exports_type.IsUndefined(left) ? ExtendsResult.True : ExtendsResult.False;
-}
-function FromVoid(left, right) {
-  return exports_type.IsIntersect(right) ? FromIntersectRight(left, right) : exports_type.IsUnion(right) ? FromUnionRight(left, right) : exports_type.IsUnknown(right) ? FromUnknownRight(left, right) : exports_type.IsAny(right) ? FromAnyRight(left, right) : exports_type.IsObject(right) ? FromObjectRight(left, right) : exports_type.IsVoid(right) ? ExtendsResult.True : ExtendsResult.False;
-}
-function Visit3(left, right) {
-  return exports_type.IsTemplateLiteral(left) || exports_type.IsTemplateLiteral(right) ? FromTemplateLiteral2(left, right) : exports_type.IsRegExp(left) || exports_type.IsRegExp(right) ? FromRegExp(left, right) : exports_type.IsNot(left) || exports_type.IsNot(right) ? FromNot(left, right) : exports_type.IsAny(left) ? FromAny(left, right) : exports_type.IsArray(left) ? FromArray4(left, right) : exports_type.IsBigInt(left) ? FromBigInt(left, right) : exports_type.IsBoolean(left) ? FromBoolean(left, right) : exports_type.IsAsyncIterator(left) ? FromAsyncIterator(left, right) : exports_type.IsConstructor(left) ? FromConstructor(left, right) : exports_type.IsDate(left) ? FromDate(left, right) : exports_type.IsFunction(left) ? FromFunction(left, right) : exports_type.IsInteger(left) ? FromInteger(left, right) : exports_type.IsIntersect(left) ? FromIntersect4(left, right) : exports_type.IsIterator(left) ? FromIterator(left, right) : exports_type.IsLiteral(left) ? FromLiteral2(left, right) : exports_type.IsNever(left) ? FromNever(left, right) : exports_type.IsNull(left) ? FromNull(left, right) : exports_type.IsNumber(left) ? FromNumber(left, right) : exports_type.IsObject(left) ? FromObject(left, right) : exports_type.IsRecord(left) ? FromRecord(left, right) : exports_type.IsString(left) ? FromString(left, right) : exports_type.IsSymbol(left) ? FromSymbol(left, right) : exports_type.IsTuple(left) ? FromTuple3(left, right) : exports_type.IsPromise(left) ? FromPromise2(left, right) : exports_type.IsUint8Array(left) ? FromUint8Array(left, right) : exports_type.IsUndefined(left) ? FromUndefined(left, right) : exports_type.IsUnion(left) ? FromUnion6(left, right) : exports_type.IsUnknown(left) ? FromUnknown(left, right) : exports_type.IsVoid(left) ? FromVoid(left, right) : Throw(`Unknown left type operand '${left[Kind]}'`);
-}
-function ExtendsCheck(left, right) {
-  return Visit3(left, right);
-}
-var ExtendsResolverError, ExtendsResult;
-var init_extends_check = __esm(() => {
-  init_any2();
-  init_function2();
-  init_number2();
-  init_string2();
-  init_unknown2();
-  init_template_literal2();
-  init_patterns2();
-  init_symbols2();
-  init_error2();
-  init_guard2();
-  ExtendsResolverError = class ExtendsResolverError extends TypeBoxError {
-  };
-  (function(ExtendsResult2) {
-    ExtendsResult2[ExtendsResult2["Union"] = 0] = "Union";
-    ExtendsResult2[ExtendsResult2["True"] = 1] = "True";
-    ExtendsResult2[ExtendsResult2["False"] = 2] = "False";
-  })(ExtendsResult || (ExtendsResult = {}));
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-from-mapped-result.mjs
-function FromProperties8(P, Right, True, False, options) {
-  const Acc = {};
-  for (const K2 of globalThis.Object.getOwnPropertyNames(P))
-    Acc[K2] = Extends(P[K2], Right, True, False, Clone(options));
-  return Acc;
-}
-function FromMappedResult6(Left, Right, True, False, options) {
-  return FromProperties8(Left.properties, Right, True, False, options);
-}
-function ExtendsFromMappedResult(Left, Right, True, False, options) {
-  const P = FromMappedResult6(Left, Right, True, False, options);
-  return MappedResult(P);
-}
-var init_extends_from_mapped_result = __esm(() => {
-  init_mapped2();
-  init_extends();
-  init_value();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends.mjs
-function ExtendsResolve(left, right, trueType, falseType) {
-  const R = ExtendsCheck(left, right);
-  return R === ExtendsResult.Union ? Union([trueType, falseType]) : R === ExtendsResult.True ? trueType : falseType;
-}
-function Extends(L, R, T, F, options) {
-  return IsMappedResult(L) ? ExtendsFromMappedResult(L, R, T, F, options) : IsMappedKey(L) ? CreateType(ExtendsFromMappedKey(L, R, T, F, options)) : CreateType(ExtendsResolve(L, R, T, F), options);
-}
-var init_extends = __esm(() => {
-  init_type2();
-  init_union2();
-  init_extends_check();
-  init_extends_from_mapped_key();
-  init_extends_from_mapped_result();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-from-mapped-key.mjs
-function FromPropertyKey(K, U, L, R, options) {
-  return {
-    [K]: Extends(Literal(K), U, L, R, Clone(options))
-  };
-}
-function FromPropertyKeys(K, U, L, R, options) {
-  return K.reduce((Acc, LK) => {
-    return { ...Acc, ...FromPropertyKey(LK, U, L, R, options) };
-  }, {});
-}
-function FromMappedKey2(K, U, L, R, options) {
-  return FromPropertyKeys(K.keys, U, L, R, options);
-}
-function ExtendsFromMappedKey(T, U, L, R, options) {
-  const P = FromMappedKey2(T, U, L, R, options);
-  return MappedResult(P);
-}
-var init_extends_from_mapped_key = __esm(() => {
-  init_mapped2();
-  init_literal2();
-  init_extends();
-  init_value();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/extends-undefined.mjs
-function Intersect2(schema) {
-  return schema.allOf.every((schema2) => ExtendsUndefinedCheck(schema2));
-}
-function Union2(schema) {
-  return schema.anyOf.some((schema2) => ExtendsUndefinedCheck(schema2));
-}
-function Not(schema) {
-  return !ExtendsUndefinedCheck(schema.not);
-}
-function ExtendsUndefinedCheck(schema) {
-  return schema[Kind] === "Intersect" ? Intersect2(schema) : schema[Kind] === "Union" ? Union2(schema) : schema[Kind] === "Not" ? Not(schema) : schema[Kind] === "Undefined" ? true : false;
-}
-var init_extends_undefined = __esm(() => {
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extends/index.mjs
-var init_extends2 = __esm(() => {
-  init_extends_check();
-  init_extends_from_mapped_key();
-  init_extends_from_mapped_result();
-  init_extends_undefined();
-  init_extends();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-template-literal.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-template-literal.mjs
 function ExcludeFromTemplateLiteral(L, R) {
   return Exclude(TemplateLiteralToUnion(L), R);
 }
@@ -18512,7 +22192,7 @@ var init_exclude_from_template_literal = __esm(() => {
   init_template_literal2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude.mjs
 function ExcludeRest(L, R) {
   const excluded = L.filter((inner) => ExtendsCheck(inner, R) === ExtendsResult.False);
   return excluded.length === 1 ? excluded[0] : Union(excluded);
@@ -18534,7 +22214,7 @@ var init_exclude = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-mapped-result.mjs
 function FromProperties9(P, U) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(P))
@@ -18553,14 +22233,14 @@ var init_exclude_from_mapped_result = __esm(() => {
   init_exclude();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/exclude/index.mjs
 var init_exclude2 = __esm(() => {
   init_exclude_from_mapped_result();
   init_exclude_from_template_literal();
   init_exclude();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-template-literal.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-template-literal.mjs
 function ExtractFromTemplateLiteral(L, R) {
   return Extract(TemplateLiteralToUnion(L), R);
 }
@@ -18569,7 +22249,7 @@ var init_extract_from_template_literal = __esm(() => {
   init_template_literal2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract.mjs
 function ExtractRest(L, R) {
   const extracted = L.filter((inner) => ExtendsCheck(inner, R) !== ExtendsResult.False);
   return extracted.length === 1 ? extracted[0] : Union(extracted);
@@ -18591,7 +22271,7 @@ var init_extract = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-mapped-result.mjs
 function FromProperties10(P, T) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(P))
@@ -18610,14 +22290,14 @@ var init_extract_from_mapped_result = __esm(() => {
   init_extract();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/extract/index.mjs
 var init_extract2 = __esm(() => {
   init_extract_from_mapped_result();
   init_extract_from_template_literal();
   init_extract();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instance-type/instance-type.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instance-type/instance-type.mjs
 function InstanceType(schema, options) {
   return IsConstructor(schema) ? CreateType(schema.returns, options) : Never(options);
 }
@@ -18627,12 +22307,12 @@ var init_instance_type = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instance-type/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instance-type/index.mjs
 var init_instance_type2 = __esm(() => {
   init_instance_type();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly-optional/readonly-optional.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly-optional/readonly-optional.mjs
 function ReadonlyOptional(schema) {
   return Readonly(Optional(schema));
 }
@@ -18641,12 +22321,12 @@ var init_readonly_optional = __esm(() => {
   init_optional2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly-optional/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/readonly-optional/index.mjs
 var init_readonly_optional2 = __esm(() => {
   init_readonly_optional();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/record/record.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/record/record.mjs
 function RecordCreateFromPattern(pattern2, T, options) {
   return CreateType({ [Kind]: "Record", type: "object", patternProperties: { [pattern2]: T } }, options);
 }
@@ -18669,7 +22349,7 @@ function FromRegExpKey(key, type3, options) {
   return RecordCreateFromPattern(key.source, type3, options);
 }
 function FromStringKey(key, type3, options) {
-  const pattern2 = IsUndefined(key.pattern) ? PatternStringExact : key.pattern;
+  const pattern2 = IsUndefined2(key.pattern) ? PatternStringExact : key.pattern;
   return RecordCreateFromPattern(pattern2, type3, options);
 }
 function FromAnyKey(_, type3, options) {
@@ -18714,63 +22394,63 @@ var init_record = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/record/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/record/index.mjs
 var init_record2 = __esm(() => {
   init_record();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instantiate/instantiate.mjs
-function FromConstructor2(args2, type3) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instantiate/instantiate.mjs
+function FromConstructor7(args2, type3) {
   type3.parameters = FromTypes(args2, type3.parameters);
   type3.returns = FromType(args2, type3.returns);
   return type3;
 }
-function FromFunction2(args2, type3) {
+function FromFunction6(args2, type3) {
   type3.parameters = FromTypes(args2, type3.parameters);
   type3.returns = FromType(args2, type3.returns);
   return type3;
 }
-function FromIntersect5(args2, type3) {
+function FromIntersect15(args2, type3) {
   type3.allOf = FromTypes(args2, type3.allOf);
   return type3;
 }
-function FromUnion7(args2, type3) {
+function FromUnion17(args2, type3) {
   type3.anyOf = FromTypes(args2, type3.anyOf);
   return type3;
 }
-function FromTuple4(args2, type3) {
-  if (IsUndefined(type3.items))
+function FromTuple14(args2, type3) {
+  if (IsUndefined2(type3.items))
     return type3;
   type3.items = FromTypes(args2, type3.items);
   return type3;
 }
-function FromArray5(args2, type3) {
+function FromArray16(args2, type3) {
   type3.items = FromType(args2, type3.items);
   return type3;
 }
-function FromAsyncIterator2(args2, type3) {
+function FromAsyncIterator6(args2, type3) {
   type3.items = FromType(args2, type3.items);
   return type3;
 }
-function FromIterator2(args2, type3) {
+function FromIterator6(args2, type3) {
   type3.items = FromType(args2, type3.items);
   return type3;
 }
-function FromPromise3(args2, type3) {
+function FromPromise7(args2, type3) {
   type3.item = FromType(args2, type3.item);
   return type3;
 }
-function FromObject2(args2, type3) {
+function FromObject13(args2, type3) {
   const mappedProperties = FromProperties11(args2, type3.properties);
   return { ...type3, ...Object2(mappedProperties) };
 }
-function FromRecord2(args2, type3) {
+function FromRecord12(args2, type3) {
   const mappedKey = FromType(args2, RecordKey2(type3));
   const mappedValue = FromType(args2, RecordValue2(type3));
   const result = Record(mappedKey, mappedValue);
   return { ...type3, ...result };
 }
-function FromArgument(args2, argument2) {
+function FromArgument4(args2, argument2) {
   return argument2.index in args2 ? args2[argument2.index] : Unknown();
 }
 function FromProperty2(args2, type3) {
@@ -18788,13 +22468,13 @@ function FromTypes(args2, types) {
   return types.map((type3) => FromType(args2, type3));
 }
 function FromType(args2, type3) {
-  return IsConstructor(type3) ? FromConstructor2(args2, type3) : IsFunction3(type3) ? FromFunction2(args2, type3) : IsIntersect(type3) ? FromIntersect5(args2, type3) : IsUnion(type3) ? FromUnion7(args2, type3) : IsTuple(type3) ? FromTuple4(args2, type3) : IsArray3(type3) ? FromArray5(args2, type3) : IsAsyncIterator3(type3) ? FromAsyncIterator2(args2, type3) : IsIterator3(type3) ? FromIterator2(args2, type3) : IsPromise2(type3) ? FromPromise3(args2, type3) : IsObject3(type3) ? FromObject2(args2, type3) : IsRecord(type3) ? FromRecord2(args2, type3) : IsArgument(type3) ? FromArgument(args2, type3) : type3;
+  return IsConstructor(type3) ? FromConstructor7(args2, type3) : IsFunction3(type3) ? FromFunction6(args2, type3) : IsIntersect(type3) ? FromIntersect15(args2, type3) : IsUnion(type3) ? FromUnion17(args2, type3) : IsTuple(type3) ? FromTuple14(args2, type3) : IsArray3(type3) ? FromArray16(args2, type3) : IsAsyncIterator3(type3) ? FromAsyncIterator6(args2, type3) : IsIterator3(type3) ? FromIterator6(args2, type3) : IsPromise2(type3) ? FromPromise7(args2, type3) : IsObject3(type3) ? FromObject13(args2, type3) : IsRecord(type3) ? FromRecord12(args2, type3) : IsArgument(type3) ? FromArgument4(args2, type3) : type3;
 }
 function Instantiate(type3, args2) {
   return FromType(args2, CloneType(type3));
 }
 var init_instantiate = __esm(() => {
-  init_type();
+  init_type4();
   init_unknown2();
   init_readonly_optional2();
   init_readonly2();
@@ -18804,12 +22484,12 @@ var init_instantiate = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instantiate/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/instantiate/index.mjs
 var init_instantiate2 = __esm(() => {
   init_instantiate();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/integer/integer.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/integer/integer.mjs
 function Integer(options) {
   return CreateType({ [Kind]: "Integer", type: "integer" }, options);
 }
@@ -18818,12 +22498,12 @@ var init_integer = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/integer/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/integer/index.mjs
 var init_integer2 = __esm(() => {
   init_integer();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/intrinsic-from-mapped-key.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/intrinsic-from-mapped-key.mjs
 function MappedIntrinsicPropertyKey(K, M, options) {
   return {
     [K]: Intrinsic(Literal(K), M, Clone(options))
@@ -18849,7 +22529,7 @@ var init_intrinsic_from_mapped_key = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/intrinsic.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/intrinsic.mjs
 function ApplyUncapitalize(value2) {
   const [first, rest] = [value2.slice(0, 1), value2.slice(1)];
   return [first.toLowerCase(), rest].join("");
@@ -18864,7 +22544,7 @@ function ApplyUppercase(value2) {
 function ApplyLowercase(value2) {
   return value2.toLowerCase();
 }
-function FromTemplateLiteral3(schema, mode, options) {
+function FromTemplateLiteral6(schema, mode, options) {
   const expression = TemplateLiteralParseExact(schema.pattern);
   const finite2 = IsTemplateLiteralExpressionFinite(expression);
   if (!finite2)
@@ -18882,7 +22562,7 @@ function FromRest5(T, M) {
   return T.map((L) => Intrinsic(L, M));
 }
 function Intrinsic(schema, mode, options = {}) {
-  return IsMappedKey(schema) ? IntrinsicFromMappedKey(schema, mode, options) : IsTemplateLiteral(schema) ? FromTemplateLiteral3(schema, mode, options) : IsUnion(schema) ? Union(FromRest5(schema.anyOf, mode), options) : IsLiteral(schema) ? Literal(FromLiteralValue(schema.const, mode), options) : CreateType(schema, options);
+  return IsMappedKey(schema) ? IntrinsicFromMappedKey(schema, mode, options) : IsTemplateLiteral(schema) ? FromTemplateLiteral6(schema, mode, options) : IsUnion(schema) ? Union(FromRest5(schema.anyOf, mode), options) : IsLiteral(schema) ? Literal(FromLiteralValue(schema.const, mode), options) : CreateType(schema, options);
 }
 var init_intrinsic = __esm(() => {
   init_type2();
@@ -18893,7 +22573,7 @@ var init_intrinsic = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/capitalize.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/capitalize.mjs
 function Capitalize(T, options = {}) {
   return Intrinsic(T, "Capitalize", options);
 }
@@ -18901,7 +22581,7 @@ var init_capitalize = __esm(() => {
   init_intrinsic();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/lowercase.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/lowercase.mjs
 function Lowercase(T, options = {}) {
   return Intrinsic(T, "Lowercase", options);
 }
@@ -18909,7 +22589,7 @@ var init_lowercase = __esm(() => {
   init_intrinsic();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/uncapitalize.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/uncapitalize.mjs
 function Uncapitalize(T, options = {}) {
   return Intrinsic(T, "Uncapitalize", options);
 }
@@ -18917,7 +22597,7 @@ var init_uncapitalize = __esm(() => {
   init_intrinsic();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/uppercase.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/uppercase.mjs
 function Uppercase(T, options = {}) {
   return Intrinsic(T, "Uppercase", options);
 }
@@ -18925,7 +22605,7 @@ var init_uppercase = __esm(() => {
   init_intrinsic();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/intrinsic/index.mjs
 var init_intrinsic2 = __esm(() => {
   init_capitalize();
   init_intrinsic_from_mapped_key();
@@ -18935,7 +22615,7 @@ var init_intrinsic2 = __esm(() => {
   init_uppercase();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit-from-mapped-result.mjs
 function FromProperties12(properties, propertyKeys, options) {
   const result = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(properties))
@@ -18955,11 +22635,11 @@ var init_omit_from_mapped_result = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit.mjs
-function FromIntersect6(types, propertyKeys) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit.mjs
+function FromIntersect16(types, propertyKeys) {
   return types.map((type3) => OmitResolve(type3, propertyKeys));
 }
-function FromUnion8(types, propertyKeys) {
+function FromUnion18(types, propertyKeys) {
   return types.map((type3) => OmitResolve(type3, propertyKeys));
 }
 function FromProperty3(properties, key) {
@@ -18969,7 +22649,7 @@ function FromProperty3(properties, key) {
 function FromProperties13(properties, propertyKeys) {
   return propertyKeys.reduce((T, K2) => FromProperty3(T, K2), properties);
 }
-function FromObject3(type3, propertyKeys, properties) {
+function FromObject14(type3, propertyKeys, properties) {
   const options = Discard(type3, [TransformKind, "$id", "required", "properties"]);
   const mappedProperties = FromProperties13(properties, propertyKeys);
   return Object2(mappedProperties, options);
@@ -18979,10 +22659,10 @@ function UnionFromPropertyKeys(propertyKeys) {
   return Union(result);
 }
 function OmitResolve(type3, propertyKeys) {
-  return IsIntersect(type3) ? Intersect(FromIntersect6(type3.allOf, propertyKeys)) : IsUnion(type3) ? Union(FromUnion8(type3.anyOf, propertyKeys)) : IsObject3(type3) ? FromObject3(type3, propertyKeys, type3.properties) : Object2({});
+  return IsIntersect(type3) ? Intersect(FromIntersect16(type3.allOf, propertyKeys)) : IsUnion(type3) ? Union(FromUnion18(type3.anyOf, propertyKeys)) : IsObject3(type3) ? FromObject14(type3, propertyKeys, type3.properties) : Object2({});
 }
 function Omit(type3, key, options) {
-  const typeKey = IsArray(key) ? UnionFromPropertyKeys(key) : key;
+  const typeKey = IsArray2(key) ? UnionFromPropertyKeys(key) : key;
   const propertyKeys = IsSchema(key) ? IndexPropertyKeys(key) : key;
   const isTypeRef = IsRef(type3);
   const isKeyRef = IsRef(key);
@@ -19002,7 +22682,7 @@ var init_omit = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit-from-mapped-key.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/omit-from-mapped-key.mjs
 function FromPropertyKey2(type3, key, options) {
   return { [key]: Omit(type3, [key], Clone(options)) };
 }
@@ -19024,14 +22704,14 @@ var init_omit_from_mapped_key = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/omit/index.mjs
 var init_omit2 = __esm(() => {
   init_omit_from_mapped_key();
   init_omit_from_mapped_result();
   init_omit();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick-from-mapped-result.mjs
 function FromProperties14(properties, propertyKeys, options) {
   const result = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(properties))
@@ -19051,11 +22731,11 @@ var init_pick_from_mapped_result = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick.mjs
-function FromIntersect7(types, propertyKeys) {
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick.mjs
+function FromIntersect17(types, propertyKeys) {
   return types.map((type3) => PickResolve(type3, propertyKeys));
 }
-function FromUnion9(types, propertyKeys) {
+function FromUnion19(types, propertyKeys) {
   return types.map((type3) => PickResolve(type3, propertyKeys));
 }
 function FromProperties15(properties, propertyKeys) {
@@ -19065,7 +22745,7 @@ function FromProperties15(properties, propertyKeys) {
       result[K2] = properties[K2];
   return result;
 }
-function FromObject4(Type, keys, properties) {
+function FromObject15(Type, keys, properties) {
   const options = Discard(Type, [TransformKind, "$id", "required", "properties"]);
   const mappedProperties = FromProperties15(properties, keys);
   return Object2(mappedProperties, options);
@@ -19075,10 +22755,10 @@ function UnionFromPropertyKeys2(propertyKeys) {
   return Union(result);
 }
 function PickResolve(type3, propertyKeys) {
-  return IsIntersect(type3) ? Intersect(FromIntersect7(type3.allOf, propertyKeys)) : IsUnion(type3) ? Union(FromUnion9(type3.anyOf, propertyKeys)) : IsObject3(type3) ? FromObject4(type3, propertyKeys, type3.properties) : Object2({});
+  return IsIntersect(type3) ? Intersect(FromIntersect17(type3.allOf, propertyKeys)) : IsUnion(type3) ? Union(FromUnion19(type3.anyOf, propertyKeys)) : IsObject3(type3) ? FromObject15(type3, propertyKeys, type3.properties) : Object2({});
 }
 function Pick(type3, key, options) {
-  const typeKey = IsArray(key) ? UnionFromPropertyKeys2(key) : key;
+  const typeKey = IsArray2(key) ? UnionFromPropertyKeys2(key) : key;
   const propertyKeys = IsSchema(key) ? IndexPropertyKeys(key) : key;
   const isTypeRef = IsRef(type3);
   const isKeyRef = IsRef(key);
@@ -19098,7 +22778,7 @@ var init_pick = __esm(() => {
   init_pick_from_mapped_result();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick-from-mapped-key.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/pick-from-mapped-key.mjs
 function FromPropertyKey3(type3, key, options) {
   return {
     [key]: Pick(type3, [key], Clone(options))
@@ -19122,18 +22802,18 @@ var init_pick_from_mapped_key = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/pick/index.mjs
 var init_pick2 = __esm(() => {
   init_pick_from_mapped_key();
   init_pick_from_mapped_result();
   init_pick();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/partial.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/partial.mjs
 function FromComputed3(target, parameters) {
   return Computed("Partial", [Computed(target, parameters)]);
 }
-function FromRef3($ref) {
+function FromRef13($ref) {
   return Computed("Partial", [Ref($ref)]);
 }
 function FromProperties16(properties) {
@@ -19142,7 +22822,7 @@ function FromProperties16(properties) {
     partialProperties[K] = Optional(properties[K]);
   return partialProperties;
 }
-function FromObject5(type3, properties) {
+function FromObject16(type3, properties) {
   const options = Discard(type3, [TransformKind, "$id", "required", "properties"]);
   const mappedProperties = FromProperties16(properties);
   return Object2(mappedProperties, options);
@@ -19151,7 +22831,7 @@ function FromRest6(types) {
   return types.map((type3) => PartialResolve(type3));
 }
 function PartialResolve(type3) {
-  return IsComputed(type3) ? FromComputed3(type3.target, type3.parameters) : IsRef(type3) ? FromRef3(type3.$ref) : IsIntersect(type3) ? Intersect(FromRest6(type3.allOf)) : IsUnion(type3) ? Union(FromRest6(type3.anyOf)) : IsObject3(type3) ? FromObject5(type3, type3.properties) : IsBigInt3(type3) ? type3 : IsBoolean3(type3) ? type3 : IsInteger2(type3) ? type3 : IsLiteral(type3) ? type3 : IsNull3(type3) ? type3 : IsNumber3(type3) ? type3 : IsString3(type3) ? type3 : IsSymbol3(type3) ? type3 : IsUndefined3(type3) ? type3 : Object2({});
+  return IsComputed(type3) ? FromComputed3(type3.target, type3.parameters) : IsRef(type3) ? FromRef13(type3.$ref) : IsIntersect(type3) ? Intersect(FromRest6(type3.allOf)) : IsUnion(type3) ? Union(FromRest6(type3.anyOf)) : IsObject3(type3) ? FromObject16(type3, type3.properties) : IsBigInt3(type3) ? type3 : IsBoolean3(type3) ? type3 : IsInteger2(type3) ? type3 : IsLiteral(type3) ? type3 : IsNull3(type3) ? type3 : IsNumber3(type3) ? type3 : IsString3(type3) ? type3 : IsSymbol3(type3) ? type3 : IsUndefined3(type3) ? type3 : Object2({});
 }
 function Partial(type3, options) {
   if (IsMappedResult(type3)) {
@@ -19174,7 +22854,7 @@ var init_partial = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/partial-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/partial-from-mapped-result.mjs
 function FromProperties17(K, options) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(K))
@@ -19194,17 +22874,17 @@ var init_partial_from_mapped_result = __esm(() => {
   init_value();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/partial/index.mjs
 var init_partial2 = __esm(() => {
   init_partial_from_mapped_result();
   init_partial();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/required.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/required.mjs
 function FromComputed4(target, parameters) {
   return Computed("Required", [Computed(target, parameters)]);
 }
-function FromRef4($ref) {
+function FromRef14($ref) {
   return Computed("Required", [Ref($ref)]);
 }
 function FromProperties18(properties) {
@@ -19213,7 +22893,7 @@ function FromProperties18(properties) {
     requiredProperties[K] = Discard(properties[K], [OptionalKind]);
   return requiredProperties;
 }
-function FromObject6(type3, properties) {
+function FromObject17(type3, properties) {
   const options = Discard(type3, [TransformKind, "$id", "required", "properties"]);
   const mappedProperties = FromProperties18(properties);
   return Object2(mappedProperties, options);
@@ -19222,7 +22902,7 @@ function FromRest7(types) {
   return types.map((type3) => RequiredResolve(type3));
 }
 function RequiredResolve(type3) {
-  return IsComputed(type3) ? FromComputed4(type3.target, type3.parameters) : IsRef(type3) ? FromRef4(type3.$ref) : IsIntersect(type3) ? Intersect(FromRest7(type3.allOf)) : IsUnion(type3) ? Union(FromRest7(type3.anyOf)) : IsObject3(type3) ? FromObject6(type3, type3.properties) : IsBigInt3(type3) ? type3 : IsBoolean3(type3) ? type3 : IsInteger2(type3) ? type3 : IsLiteral(type3) ? type3 : IsNull3(type3) ? type3 : IsNumber3(type3) ? type3 : IsString3(type3) ? type3 : IsSymbol3(type3) ? type3 : IsUndefined3(type3) ? type3 : Object2({});
+  return IsComputed(type3) ? FromComputed4(type3.target, type3.parameters) : IsRef(type3) ? FromRef14(type3.$ref) : IsIntersect(type3) ? Intersect(FromRest7(type3.allOf)) : IsUnion(type3) ? Union(FromRest7(type3.anyOf)) : IsObject3(type3) ? FromObject17(type3, type3.properties) : IsBigInt3(type3) ? type3 : IsBoolean3(type3) ? type3 : IsInteger2(type3) ? type3 : IsLiteral(type3) ? type3 : IsNull3(type3) ? type3 : IsNumber3(type3) ? type3 : IsString3(type3) ? type3 : IsSymbol3(type3) ? type3 : IsUndefined3(type3) ? type3 : Object2({});
 }
 function Required(type3, options) {
   if (IsMappedResult(type3)) {
@@ -19244,7 +22924,7 @@ var init_required = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/required-from-mapped-result.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/required-from-mapped-result.mjs
 function FromProperties19(P, options) {
   const Acc = {};
   for (const K2 of globalThis.Object.getOwnPropertyNames(P))
@@ -19263,13 +22943,13 @@ var init_required_from_mapped_result = __esm(() => {
   init_required();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/required/index.mjs
 var init_required2 = __esm(() => {
   init_required_from_mapped_result();
   init_required();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/compute.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/compute.mjs
 function DereferenceParameters(moduleProperties, types) {
   return types.map((type3) => {
     return IsRef(type3) ? Dereference(moduleProperties, type3.$ref) : FromType2(moduleProperties, type3);
@@ -19303,49 +22983,49 @@ function FromComputed5(moduleProperties, target, parameters) {
   const dereferenced = DereferenceParameters(moduleProperties, parameters);
   return target === "Awaited" ? FromAwaited(dereferenced) : target === "Index" ? FromIndex(dereferenced) : target === "KeyOf" ? FromKeyOf(dereferenced) : target === "Partial" ? FromPartial(dereferenced) : target === "Omit" ? FromOmit(dereferenced) : target === "Pick" ? FromPick(dereferenced) : target === "Required" ? FromRequired(dereferenced) : Never();
 }
-function FromArray6(moduleProperties, type3) {
+function FromArray17(moduleProperties, type3) {
   return Array2(FromType2(moduleProperties, type3));
 }
-function FromAsyncIterator3(moduleProperties, type3) {
+function FromAsyncIterator7(moduleProperties, type3) {
   return AsyncIterator(FromType2(moduleProperties, type3));
 }
-function FromConstructor3(moduleProperties, parameters, instanceType) {
+function FromConstructor8(moduleProperties, parameters, instanceType) {
   return Constructor(FromTypes2(moduleProperties, parameters), FromType2(moduleProperties, instanceType));
 }
-function FromFunction3(moduleProperties, parameters, returnType) {
+function FromFunction7(moduleProperties, parameters, returnType) {
   return Function2(FromTypes2(moduleProperties, parameters), FromType2(moduleProperties, returnType));
 }
-function FromIntersect8(moduleProperties, types) {
+function FromIntersect18(moduleProperties, types) {
   return Intersect(FromTypes2(moduleProperties, types));
 }
-function FromIterator3(moduleProperties, type3) {
+function FromIterator7(moduleProperties, type3) {
   return Iterator(FromType2(moduleProperties, type3));
 }
-function FromObject7(moduleProperties, properties) {
+function FromObject18(moduleProperties, properties) {
   return Object2(globalThis.Object.keys(properties).reduce((result, key) => {
     return { ...result, [key]: FromType2(moduleProperties, properties[key]) };
   }, {}));
 }
-function FromRecord3(moduleProperties, type3) {
+function FromRecord13(moduleProperties, type3) {
   const [value2, pattern2] = [FromType2(moduleProperties, RecordValue2(type3)), RecordPattern(type3)];
   const result = CloneType(type3);
   result.patternProperties[pattern2] = value2;
   return result;
 }
-function FromTransform(moduleProperties, transform) {
-  return IsRef(transform) ? { ...Dereference(moduleProperties, transform.$ref), [TransformKind]: transform[TransformKind] } : transform;
+function FromTransform(moduleProperties, transform2) {
+  return IsRef(transform2) ? { ...Dereference(moduleProperties, transform2.$ref), [TransformKind]: transform2[TransformKind] } : transform2;
 }
-function FromTuple5(moduleProperties, types) {
+function FromTuple15(moduleProperties, types) {
   return Tuple(FromTypes2(moduleProperties, types));
 }
-function FromUnion10(moduleProperties, types) {
+function FromUnion20(moduleProperties, types) {
   return Union(FromTypes2(moduleProperties, types));
 }
 function FromTypes2(moduleProperties, types) {
   return types.map((type3) => FromType2(moduleProperties, type3));
 }
 function FromType2(moduleProperties, type3) {
-  return IsOptional(type3) ? CreateType(FromType2(moduleProperties, Discard(type3, [OptionalKind])), type3) : IsReadonly(type3) ? CreateType(FromType2(moduleProperties, Discard(type3, [ReadonlyKind])), type3) : IsTransform(type3) ? CreateType(FromTransform(moduleProperties, type3), type3) : IsArray3(type3) ? CreateType(FromArray6(moduleProperties, type3.items), type3) : IsAsyncIterator3(type3) ? CreateType(FromAsyncIterator3(moduleProperties, type3.items), type3) : IsComputed(type3) ? CreateType(FromComputed5(moduleProperties, type3.target, type3.parameters)) : IsConstructor(type3) ? CreateType(FromConstructor3(moduleProperties, type3.parameters, type3.returns), type3) : IsFunction3(type3) ? CreateType(FromFunction3(moduleProperties, type3.parameters, type3.returns), type3) : IsIntersect(type3) ? CreateType(FromIntersect8(moduleProperties, type3.allOf), type3) : IsIterator3(type3) ? CreateType(FromIterator3(moduleProperties, type3.items), type3) : IsObject3(type3) ? CreateType(FromObject7(moduleProperties, type3.properties), type3) : IsRecord(type3) ? CreateType(FromRecord3(moduleProperties, type3)) : IsTuple(type3) ? CreateType(FromTuple5(moduleProperties, type3.items || []), type3) : IsUnion(type3) ? CreateType(FromUnion10(moduleProperties, type3.anyOf), type3) : type3;
+  return IsOptional(type3) ? CreateType(FromType2(moduleProperties, Discard(type3, [OptionalKind])), type3) : IsReadonly(type3) ? CreateType(FromType2(moduleProperties, Discard(type3, [ReadonlyKind])), type3) : IsTransform(type3) ? CreateType(FromTransform(moduleProperties, type3), type3) : IsArray3(type3) ? CreateType(FromArray17(moduleProperties, type3.items), type3) : IsAsyncIterator3(type3) ? CreateType(FromAsyncIterator7(moduleProperties, type3.items), type3) : IsComputed(type3) ? CreateType(FromComputed5(moduleProperties, type3.target, type3.parameters)) : IsConstructor(type3) ? CreateType(FromConstructor8(moduleProperties, type3.parameters, type3.returns), type3) : IsFunction3(type3) ? CreateType(FromFunction7(moduleProperties, type3.parameters, type3.returns), type3) : IsIntersect(type3) ? CreateType(FromIntersect18(moduleProperties, type3.allOf), type3) : IsIterator3(type3) ? CreateType(FromIterator7(moduleProperties, type3.items), type3) : IsObject3(type3) ? CreateType(FromObject18(moduleProperties, type3.properties), type3) : IsRecord(type3) ? CreateType(FromRecord13(moduleProperties, type3)) : IsTuple(type3) ? CreateType(FromTuple15(moduleProperties, type3.items || []), type3) : IsUnion(type3) ? CreateType(FromUnion20(moduleProperties, type3.anyOf), type3) : type3;
 }
 function ComputeType(moduleProperties, key) {
   return key in moduleProperties ? FromType2(moduleProperties, moduleProperties[key]) : Never();
@@ -19357,7 +23037,7 @@ function ComputeModuleProperties(moduleProperties) {
 }
 var init_compute = __esm(() => {
   init_create();
-  init_clone();
+  init_clone3();
   init_discard();
   init_array2();
   init_awaited2();
@@ -19381,7 +23061,7 @@ var init_compute = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/module.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/module.mjs
 class TModule {
   constructor($defs) {
     const computed2 = ComputeModuleProperties($defs);
@@ -19407,12 +23087,12 @@ var init_module = __esm(() => {
   init_compute();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/module/index.mjs
 var init_module2 = __esm(() => {
   init_module();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/not/not.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/not/not.mjs
 function Not2(type3, options) {
   return CreateType({ [Kind]: "Not", not: type3 }, options);
 }
@@ -19421,12 +23101,12 @@ var init_not = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/not/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/not/index.mjs
 var init_not2 = __esm(() => {
   init_not();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/parameters/parameters.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/parameters/parameters.mjs
 function Parameters(schema, options) {
   return IsFunction3(schema) ? Tuple(schema.parameters, options) : Never();
 }
@@ -19436,14 +23116,14 @@ var init_parameters = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/parameters/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/parameters/index.mjs
 var init_parameters2 = __esm(() => {
   init_parameters();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/recursive/recursive.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/recursive/recursive.mjs
 function Recursive(callback, options = {}) {
-  if (IsUndefined(options.$id))
+  if (IsUndefined2(options.$id))
     options.$id = `T${Ordinal++}`;
   const thisType = CloneType(callback({ [Kind]: "This", $ref: `${options.$id}` }));
   thisType.$id = options.$id;
@@ -19451,19 +23131,19 @@ function Recursive(callback, options = {}) {
 }
 var Ordinal = 0;
 var init_recursive = __esm(() => {
-  init_type();
+  init_type4();
   init_type2();
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/recursive/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/recursive/index.mjs
 var init_recursive2 = __esm(() => {
   init_recursive();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/regexp/regexp.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/regexp/regexp.mjs
 function RegExp2(unresolved, options) {
-  const expr = IsString(unresolved) ? new globalThis.RegExp(unresolved) : unresolved;
+  const expr = IsString2(unresolved) ? new globalThis.RegExp(unresolved) : unresolved;
   return CreateType({ [Kind]: "RegExp", type: "RegExp", source: expr.source, flags: expr.flags }, options);
 }
 var init_regexp = __esm(() => {
@@ -19471,12 +23151,12 @@ var init_regexp = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/regexp/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/regexp/index.mjs
 var init_regexp2 = __esm(() => {
   init_regexp();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/rest/rest.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/rest/rest.mjs
 function RestResolve(T) {
   return IsIntersect(T) ? T.allOf : IsUnion(T) ? T.anyOf : IsTuple(T) ? T.items ?? [] : [];
 }
@@ -19487,12 +23167,12 @@ var init_rest = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/rest/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/rest/index.mjs
 var init_rest2 = __esm(() => {
   init_rest();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/return-type/return-type.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/return-type/return-type.mjs
 function ReturnType(schema, options) {
   return IsFunction3(schema) ? CreateType(schema.returns, options) : Never(options);
 }
@@ -19502,88 +23182,74 @@ var init_return_type = __esm(() => {
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/return-type/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/return-type/index.mjs
 var init_return_type2 = __esm(() => {
   init_return_type();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/anyschema.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/anyschema.mjs
 var init_anyschema = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/schema.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/schema.mjs
 var init_schema = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/schema/index.mjs
 var init_schema2 = __esm(() => {
   init_anyschema();
   init_schema();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/static/static.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/static/static.mjs
 var init_static = () => {};
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/static/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/static/index.mjs
 var init_static2 = __esm(() => {
   init_static();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/transform/transform.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/transform/transform.mjs
 class TransformDecodeBuilder {
   constructor(schema2) {
     this.schema = schema2;
   }
-  Decode(decode) {
-    return new TransformEncodeBuilder(this.schema, decode);
+  Decode(decode4) {
+    return new TransformEncodeBuilder(this.schema, decode4);
   }
 }
 
 class TransformEncodeBuilder {
-  constructor(schema2, decode) {
+  constructor(schema2, decode4) {
     this.schema = schema2;
-    this.decode = decode;
+    this.decode = decode4;
   }
-  EncodeTransform(encode, schema2) {
-    const Encode = (value2) => schema2[TransformKind].Encode(encode(value2));
-    const Decode = (value2) => this.decode(schema2[TransformKind].Decode(value2));
-    const Codec = { Encode, Decode };
+  EncodeTransform(encode4, schema2) {
+    const Encode2 = (value2) => schema2[TransformKind].Encode(encode4(value2));
+    const Decode2 = (value2) => this.decode(schema2[TransformKind].Decode(value2));
+    const Codec = { Encode: Encode2, Decode: Decode2 };
     return { ...schema2, [TransformKind]: Codec };
   }
-  EncodeSchema(encode, schema2) {
-    const Codec = { Decode: this.decode, Encode: encode };
+  EncodeSchema(encode4, schema2) {
+    const Codec = { Decode: this.decode, Encode: encode4 };
     return { ...schema2, [TransformKind]: Codec };
   }
-  Encode(encode) {
-    return IsTransform(this.schema) ? this.EncodeTransform(encode, this.schema) : this.EncodeSchema(encode, this.schema);
+  Encode(encode4) {
+    return IsTransform(this.schema) ? this.EncodeTransform(encode4, this.schema) : this.EncodeSchema(encode4, this.schema);
   }
 }
 function Transform(schema2) {
   return new TransformDecodeBuilder(schema2);
 }
-var init_transform = __esm(() => {
+var init_transform2 = __esm(() => {
   init_symbols2();
   init_kind();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/transform/index.mjs
-var init_transform2 = __esm(() => {
-  init_transform();
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/transform/index.mjs
+var init_transform3 = __esm(() => {
+  init_transform2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unsafe/unsafe.mjs
-function Unsafe(options = {}) {
-  return CreateType({ [Kind]: options[Kind] ?? "Unsafe" }, options);
-}
-var init_unsafe = __esm(() => {
-  init_type2();
-  init_symbols2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/unsafe/index.mjs
-var init_unsafe2 = __esm(() => {
-  init_unsafe();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/void/void.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/void/void.mjs
 function Void(options) {
   return CreateType({ [Kind]: "Void", type: "void" }, options);
 }
@@ -19592,12 +23258,12 @@ var init_void = __esm(() => {
   init_symbols2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/void/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/void/index.mjs
 var init_void2 = __esm(() => {
   init_void();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/type/type.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/type/type.mjs
 var exports_type3 = {};
 __export(exports_type3, {
   Void: () => Void,
@@ -19715,7 +23381,7 @@ var init_type5 = __esm(() => {
   init_string2();
   init_symbol2();
   init_template_literal2();
-  init_transform2();
+  init_transform3();
   init_tuple2();
   init_uint8array2();
   init_undefined2();
@@ -19725,16 +23391,16 @@ var init_type5 = __esm(() => {
   init_void2();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/type/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/type/type/index.mjs
 var Type;
 var init_type6 = __esm(() => {
   init_type5();
   Type = exports_type3;
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/index.mjs
+// node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/index.mjs
 var init_esm = __esm(() => {
-  init_clone();
+  init_clone3();
   init_create();
   init_error2();
   init_guard2();
@@ -19796,7 +23462,7 @@ var init_esm = __esm(() => {
   init_string2();
   init_symbol2();
   init_template_literal2();
-  init_transform2();
+  init_transform3();
   init_tuple2();
   init_uint8array2();
   init_undefined2();
@@ -19807,3677 +23473,397 @@ var init_esm = __esm(() => {
   init_type6();
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/system.mjs
-var TypeSystemDuplicateTypeKind, TypeSystemDuplicateFormat, TypeSystem;
-var init_system = __esm(() => {
-  init_registry();
-  init_unsafe2();
-  init_symbols2();
-  init_error2();
-  TypeSystemDuplicateTypeKind = class TypeSystemDuplicateTypeKind extends TypeBoxError {
-    constructor(kind) {
-      super(`Duplicate type kind '${kind}' detected`);
-    }
-  };
-  TypeSystemDuplicateFormat = class TypeSystemDuplicateFormat extends TypeBoxError {
-    constructor(kind) {
-      super(`Duplicate string format '${kind}' detected`);
-    }
-  };
-  (function(TypeSystem2) {
-    function Type2(kind, check) {
-      if (exports_type2.Has(kind))
-        throw new TypeSystemDuplicateTypeKind(kind);
-      exports_type2.Set(kind, check);
-      return (options = {}) => Unsafe({ ...options, [Kind]: kind });
-    }
-    TypeSystem2.Type = Type2;
-    function Format(format, check) {
-      if (exports_format.Has(format))
-        throw new TypeSystemDuplicateFormat(format);
-      exports_format.Set(format, check);
-      return format;
-    }
-    TypeSystem2.Format = Format;
-  })(TypeSystem || (TypeSystem = {}));
-});
+// packages/wire/src/wire-property.ts
+class WireProperty {
+}
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/system/index.mjs
-var init_system2 = __esm(() => {
-  init_policy();
-  init_system();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/function.mjs
-function DefaultErrorFunction(error3) {
-  switch (error3.errorType) {
-    case ValueErrorType.ArrayContains:
-      return "Expected array to contain at least one matching value";
-    case ValueErrorType.ArrayMaxContains:
-      return `Expected array to contain no more than ${error3.schema.maxContains} matching values`;
-    case ValueErrorType.ArrayMinContains:
-      return `Expected array to contain at least ${error3.schema.minContains} matching values`;
-    case ValueErrorType.ArrayMaxItems:
-      return `Expected array length to be less or equal to ${error3.schema.maxItems}`;
-    case ValueErrorType.ArrayMinItems:
-      return `Expected array length to be greater or equal to ${error3.schema.minItems}`;
-    case ValueErrorType.ArrayUniqueItems:
-      return "Expected array elements to be unique";
-    case ValueErrorType.Array:
-      return "Expected array";
-    case ValueErrorType.AsyncIterator:
-      return "Expected AsyncIterator";
-    case ValueErrorType.BigIntExclusiveMaximum:
-      return `Expected bigint to be less than ${error3.schema.exclusiveMaximum}`;
-    case ValueErrorType.BigIntExclusiveMinimum:
-      return `Expected bigint to be greater than ${error3.schema.exclusiveMinimum}`;
-    case ValueErrorType.BigIntMaximum:
-      return `Expected bigint to be less or equal to ${error3.schema.maximum}`;
-    case ValueErrorType.BigIntMinimum:
-      return `Expected bigint to be greater or equal to ${error3.schema.minimum}`;
-    case ValueErrorType.BigIntMultipleOf:
-      return `Expected bigint to be a multiple of ${error3.schema.multipleOf}`;
-    case ValueErrorType.BigInt:
-      return "Expected bigint";
-    case ValueErrorType.Boolean:
-      return "Expected boolean";
-    case ValueErrorType.DateExclusiveMinimumTimestamp:
-      return `Expected Date timestamp to be greater than ${error3.schema.exclusiveMinimumTimestamp}`;
-    case ValueErrorType.DateExclusiveMaximumTimestamp:
-      return `Expected Date timestamp to be less than ${error3.schema.exclusiveMaximumTimestamp}`;
-    case ValueErrorType.DateMinimumTimestamp:
-      return `Expected Date timestamp to be greater or equal to ${error3.schema.minimumTimestamp}`;
-    case ValueErrorType.DateMaximumTimestamp:
-      return `Expected Date timestamp to be less or equal to ${error3.schema.maximumTimestamp}`;
-    case ValueErrorType.DateMultipleOfTimestamp:
-      return `Expected Date timestamp to be a multiple of ${error3.schema.multipleOfTimestamp}`;
-    case ValueErrorType.Date:
-      return "Expected Date";
-    case ValueErrorType.Function:
-      return "Expected function";
-    case ValueErrorType.IntegerExclusiveMaximum:
-      return `Expected integer to be less than ${error3.schema.exclusiveMaximum}`;
-    case ValueErrorType.IntegerExclusiveMinimum:
-      return `Expected integer to be greater than ${error3.schema.exclusiveMinimum}`;
-    case ValueErrorType.IntegerMaximum:
-      return `Expected integer to be less or equal to ${error3.schema.maximum}`;
-    case ValueErrorType.IntegerMinimum:
-      return `Expected integer to be greater or equal to ${error3.schema.minimum}`;
-    case ValueErrorType.IntegerMultipleOf:
-      return `Expected integer to be a multiple of ${error3.schema.multipleOf}`;
-    case ValueErrorType.Integer:
-      return "Expected integer";
-    case ValueErrorType.IntersectUnevaluatedProperties:
-      return "Unexpected property";
-    case ValueErrorType.Intersect:
-      return "Expected all values to match";
-    case ValueErrorType.Iterator:
-      return "Expected Iterator";
-    case ValueErrorType.Literal:
-      return `Expected ${typeof error3.schema.const === "string" ? `'${error3.schema.const}'` : error3.schema.const}`;
-    case ValueErrorType.Never:
-      return "Never";
-    case ValueErrorType.Not:
-      return "Value should not match";
-    case ValueErrorType.Null:
-      return "Expected null";
-    case ValueErrorType.NumberExclusiveMaximum:
-      return `Expected number to be less than ${error3.schema.exclusiveMaximum}`;
-    case ValueErrorType.NumberExclusiveMinimum:
-      return `Expected number to be greater than ${error3.schema.exclusiveMinimum}`;
-    case ValueErrorType.NumberMaximum:
-      return `Expected number to be less or equal to ${error3.schema.maximum}`;
-    case ValueErrorType.NumberMinimum:
-      return `Expected number to be greater or equal to ${error3.schema.minimum}`;
-    case ValueErrorType.NumberMultipleOf:
-      return `Expected number to be a multiple of ${error3.schema.multipleOf}`;
-    case ValueErrorType.Number:
-      return "Expected number";
-    case ValueErrorType.Object:
-      return "Expected object";
-    case ValueErrorType.ObjectAdditionalProperties:
-      return "Unexpected property";
-    case ValueErrorType.ObjectMaxProperties:
-      return `Expected object to have no more than ${error3.schema.maxProperties} properties`;
-    case ValueErrorType.ObjectMinProperties:
-      return `Expected object to have at least ${error3.schema.minProperties} properties`;
-    case ValueErrorType.ObjectRequiredProperty:
-      return "Expected required property";
-    case ValueErrorType.Promise:
-      return "Expected Promise";
-    case ValueErrorType.RegExp:
-      return "Expected string to match regular expression";
-    case ValueErrorType.StringFormatUnknown:
-      return `Unknown format '${error3.schema.format}'`;
-    case ValueErrorType.StringFormat:
-      return `Expected string to match '${error3.schema.format}' format`;
-    case ValueErrorType.StringMaxLength:
-      return `Expected string length less or equal to ${error3.schema.maxLength}`;
-    case ValueErrorType.StringMinLength:
-      return `Expected string length greater or equal to ${error3.schema.minLength}`;
-    case ValueErrorType.StringPattern:
-      return `Expected string to match '${error3.schema.pattern}'`;
-    case ValueErrorType.String:
-      return "Expected string";
-    case ValueErrorType.Symbol:
-      return "Expected symbol";
-    case ValueErrorType.TupleLength:
-      return `Expected tuple to have ${error3.schema.maxItems || 0} elements`;
-    case ValueErrorType.Tuple:
-      return "Expected tuple";
-    case ValueErrorType.Uint8ArrayMaxByteLength:
-      return `Expected byte length less or equal to ${error3.schema.maxByteLength}`;
-    case ValueErrorType.Uint8ArrayMinByteLength:
-      return `Expected byte length greater or equal to ${error3.schema.minByteLength}`;
-    case ValueErrorType.Uint8Array:
-      return "Expected Uint8Array";
-    case ValueErrorType.Undefined:
-      return "Expected undefined";
-    case ValueErrorType.Union:
-      return "Expected union value";
-    case ValueErrorType.Void:
-      return "Expected void";
-    case ValueErrorType.Kind:
-      return `Expected kind '${error3.schema[Kind]}'`;
-    default:
-      return "Unknown error type";
-  }
-}
-function GetErrorFunction() {
-  return errorFunction;
-}
-var errorFunction;
-var init_function3 = __esm(() => {
-  init_symbols2();
-  init_errors();
-  errorFunction = DefaultErrorFunction;
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/deref/deref.mjs
-function Resolve(schema3, references) {
-  const target = references.find((target2) => target2.$id === schema3.$ref);
-  if (target === undefined)
-    throw new TypeDereferenceError(schema3);
-  return Deref(target, references);
-}
-function Pushref(schema3, references) {
-  if (!IsString2(schema3.$id) || references.some((target) => target.$id === schema3.$id))
-    return references;
-  references.push(schema3);
-  return references;
-}
-function Deref(schema3, references) {
-  return schema3[Kind] === "This" || schema3[Kind] === "Ref" ? Resolve(schema3, references) : schema3;
-}
-var TypeDereferenceError;
-var init_deref = __esm(() => {
-  init_error2();
-  init_symbols2();
-  TypeDereferenceError = class TypeDereferenceError extends TypeBoxError {
-    constructor(schema3) {
-      super(`Unable to dereference schema with $id '${schema3.$ref}'`);
-      this.schema = schema3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/deref/index.mjs
-var init_deref2 = __esm(() => {
-  init_deref();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/hash/hash.mjs
-function* NumberToBytes(value2) {
-  const byteCount = value2 === 0 ? 1 : Math.ceil(Math.floor(Math.log2(value2) + 1) / 8);
-  for (let i = 0;i < byteCount; i++) {
-    yield value2 >> 8 * (byteCount - 1 - i) & 255;
-  }
-}
-function ArrayType2(value2) {
-  FNV1A64(ByteMarker.Array);
-  for (const item of value2) {
-    Visit4(item);
-  }
-}
-function BooleanType(value2) {
-  FNV1A64(ByteMarker.Boolean);
-  FNV1A64(value2 ? 1 : 0);
-}
-function BigIntType(value2) {
-  FNV1A64(ByteMarker.BigInt);
-  F64In.setBigInt64(0, value2);
-  for (const byte of F64Out) {
-    FNV1A64(byte);
-  }
-}
-function DateType2(value2) {
-  FNV1A64(ByteMarker.Date);
-  Visit4(value2.getTime());
-}
-function NullType(value2) {
-  FNV1A64(ByteMarker.Null);
-}
-function NumberType(value2) {
-  FNV1A64(ByteMarker.Number);
-  F64In.setFloat64(0, value2);
-  for (const byte of F64Out) {
-    FNV1A64(byte);
-  }
-}
-function ObjectType2(value2) {
-  FNV1A64(ByteMarker.Object);
-  for (const key of globalThis.Object.getOwnPropertyNames(value2).sort()) {
-    Visit4(key);
-    Visit4(value2[key]);
-  }
-}
-function StringType(value2) {
-  FNV1A64(ByteMarker.String);
-  for (let i = 0;i < value2.length; i++) {
-    for (const byte of NumberToBytes(value2.charCodeAt(i))) {
-      FNV1A64(byte);
-    }
-  }
-}
-function SymbolType(value2) {
-  FNV1A64(ByteMarker.Symbol);
-  Visit4(value2.description);
-}
-function Uint8ArrayType2(value2) {
-  FNV1A64(ByteMarker.Uint8Array);
-  for (let i = 0;i < value2.length; i++) {
-    FNV1A64(value2[i]);
-  }
-}
-function UndefinedType(value2) {
-  return FNV1A64(ByteMarker.Undefined);
-}
-function Visit4(value2) {
-  if (IsArray2(value2))
-    return ArrayType2(value2);
-  if (IsBoolean2(value2))
-    return BooleanType(value2);
-  if (IsBigInt2(value2))
-    return BigIntType(value2);
-  if (IsDate2(value2))
-    return DateType2(value2);
-  if (IsNull2(value2))
-    return NullType(value2);
-  if (IsNumber2(value2))
-    return NumberType(value2);
-  if (IsObject2(value2))
-    return ObjectType2(value2);
-  if (IsString2(value2))
-    return StringType(value2);
-  if (IsSymbol2(value2))
-    return SymbolType(value2);
-  if (IsUint8Array2(value2))
-    return Uint8ArrayType2(value2);
-  if (IsUndefined2(value2))
-    return UndefinedType(value2);
-  throw new ValueHashError(value2);
-}
-function FNV1A64(byte) {
-  Accumulator = Accumulator ^ Bytes[byte];
-  Accumulator = Accumulator * Prime % Size;
-}
-function Hash(value2) {
-  Accumulator = BigInt("14695981039346656037");
-  Visit4(value2);
-  return Accumulator;
-}
-var ValueHashError, ByteMarker, Accumulator, Prime, Size, Bytes, F64, F64In, F64Out;
-var init_hash = __esm(() => {
-  init_guard();
-  init_error2();
-  ValueHashError = class ValueHashError extends TypeBoxError {
-    constructor(value2) {
-      super(`Unable to hash value`);
-      this.value = value2;
-    }
-  };
-  (function(ByteMarker2) {
-    ByteMarker2[ByteMarker2["Undefined"] = 0] = "Undefined";
-    ByteMarker2[ByteMarker2["Null"] = 1] = "Null";
-    ByteMarker2[ByteMarker2["Boolean"] = 2] = "Boolean";
-    ByteMarker2[ByteMarker2["Number"] = 3] = "Number";
-    ByteMarker2[ByteMarker2["String"] = 4] = "String";
-    ByteMarker2[ByteMarker2["Object"] = 5] = "Object";
-    ByteMarker2[ByteMarker2["Array"] = 6] = "Array";
-    ByteMarker2[ByteMarker2["Date"] = 7] = "Date";
-    ByteMarker2[ByteMarker2["Uint8Array"] = 8] = "Uint8Array";
-    ByteMarker2[ByteMarker2["Symbol"] = 9] = "Symbol";
-    ByteMarker2[ByteMarker2["BigInt"] = 10] = "BigInt";
-  })(ByteMarker || (ByteMarker = {}));
-  Accumulator = BigInt("14695981039346656037");
-  [Prime, Size] = [BigInt("1099511628211"), BigInt("18446744073709551616")];
-  Bytes = Array.from({ length: 256 }).map((_, i) => BigInt(i));
-  F64 = new Float64Array(1);
-  F64In = new DataView(F64.buffer);
-  F64Out = new Uint8Array(F64.buffer);
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/hash/index.mjs
-var init_hash2 = __esm(() => {
-  init_hash();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/check/check.mjs
-function IsAnyOrUnknown(schema3) {
-  return schema3[Kind] === "Any" || schema3[Kind] === "Unknown";
-}
-function IsDefined(value2) {
-  return value2 !== undefined;
-}
-function FromAny2(schema3, references, value2) {
-  return true;
-}
-function FromArgument2(schema3, references, value2) {
-  return true;
-}
-function FromArray7(schema3, references, value2) {
-  if (!IsArray2(value2))
-    return false;
-  if (IsDefined(schema3.minItems) && !(value2.length >= schema3.minItems)) {
-    return false;
-  }
-  if (IsDefined(schema3.maxItems) && !(value2.length <= schema3.maxItems)) {
-    return false;
-  }
-  for (const element of value2) {
-    if (!Visit5(schema3.items, references, element))
-      return false;
-  }
-  if (schema3.uniqueItems === true && !function() {
-    const set2 = new Set;
-    for (const element of value2) {
-      const hashed = Hash(element);
-      if (set2.has(hashed)) {
-        return false;
-      } else {
-        set2.add(hashed);
-      }
-    }
-    return true;
-  }()) {
-    return false;
-  }
-  if (!(IsDefined(schema3.contains) || IsNumber2(schema3.minContains) || IsNumber2(schema3.maxContains))) {
-    return true;
-  }
-  const containsSchema = IsDefined(schema3.contains) ? schema3.contains : Never();
-  const containsCount = value2.reduce((acc, value3) => Visit5(containsSchema, references, value3) ? acc + 1 : acc, 0);
-  if (containsCount === 0) {
-    return false;
-  }
-  if (IsNumber2(schema3.minContains) && containsCount < schema3.minContains) {
-    return false;
-  }
-  if (IsNumber2(schema3.maxContains) && containsCount > schema3.maxContains) {
-    return false;
-  }
-  return true;
-}
-function FromAsyncIterator4(schema3, references, value2) {
-  return IsAsyncIterator2(value2);
-}
-function FromBigInt2(schema3, references, value2) {
-  if (!IsBigInt2(value2))
-    return false;
-  if (IsDefined(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.multipleOf) && !(value2 % schema3.multipleOf === BigInt(0))) {
-    return false;
-  }
-  return true;
-}
-function FromBoolean2(schema3, references, value2) {
-  return IsBoolean2(value2);
-}
-function FromConstructor4(schema3, references, value2) {
-  return Visit5(schema3.returns, references, value2.prototype);
-}
-function FromDate2(schema3, references, value2) {
-  if (!IsDate2(value2))
-    return false;
-  if (IsDefined(schema3.exclusiveMaximumTimestamp) && !(value2.getTime() < schema3.exclusiveMaximumTimestamp)) {
-    return false;
-  }
-  if (IsDefined(schema3.exclusiveMinimumTimestamp) && !(value2.getTime() > schema3.exclusiveMinimumTimestamp)) {
-    return false;
-  }
-  if (IsDefined(schema3.maximumTimestamp) && !(value2.getTime() <= schema3.maximumTimestamp)) {
-    return false;
-  }
-  if (IsDefined(schema3.minimumTimestamp) && !(value2.getTime() >= schema3.minimumTimestamp)) {
-    return false;
-  }
-  if (IsDefined(schema3.multipleOfTimestamp) && !(value2.getTime() % schema3.multipleOfTimestamp === 0)) {
-    return false;
-  }
-  return true;
-}
-function FromFunction4(schema3, references, value2) {
-  return IsFunction2(value2);
-}
-function FromImport(schema3, references, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit5(target, [...references, ...definitions], value2);
-}
-function FromInteger2(schema3, references, value2) {
-  if (!IsInteger(value2)) {
-    return false;
-  }
-  if (IsDefined(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.multipleOf) && !(value2 % schema3.multipleOf === 0)) {
-    return false;
-  }
-  return true;
-}
-function FromIntersect9(schema3, references, value2) {
-  const check1 = schema3.allOf.every((schema4) => Visit5(schema4, references, value2));
-  if (schema3.unevaluatedProperties === false) {
-    const keyPattern = new RegExp(KeyOfPattern(schema3));
-    const check2 = Object.getOwnPropertyNames(value2).every((key) => keyPattern.test(key));
-    return check1 && check2;
-  } else if (IsSchema(schema3.unevaluatedProperties)) {
-    const keyCheck = new RegExp(KeyOfPattern(schema3));
-    const check2 = Object.getOwnPropertyNames(value2).every((key) => keyCheck.test(key) || Visit5(schema3.unevaluatedProperties, references, value2[key]));
-    return check1 && check2;
-  } else {
-    return check1;
-  }
-}
-function FromIterator4(schema3, references, value2) {
-  return IsIterator2(value2);
-}
-function FromLiteral3(schema3, references, value2) {
-  return value2 === schema3.const;
-}
-function FromNever2(schema3, references, value2) {
-  return false;
-}
-function FromNot2(schema3, references, value2) {
-  return !Visit5(schema3.not, references, value2);
-}
-function FromNull2(schema3, references, value2) {
-  return IsNull2(value2);
-}
-function FromNumber2(schema3, references, value2) {
-  if (!TypeSystemPolicy.IsNumberLike(value2))
-    return false;
-  if (IsDefined(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    return false;
-  }
-  if (IsDefined(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    return false;
-  }
-  if (IsDefined(schema3.multipleOf) && !(value2 % schema3.multipleOf === 0)) {
-    return false;
-  }
-  return true;
-}
-function FromObject8(schema3, references, value2) {
-  if (!TypeSystemPolicy.IsObjectLike(value2))
-    return false;
-  if (IsDefined(schema3.minProperties) && !(Object.getOwnPropertyNames(value2).length >= schema3.minProperties)) {
-    return false;
-  }
-  if (IsDefined(schema3.maxProperties) && !(Object.getOwnPropertyNames(value2).length <= schema3.maxProperties)) {
-    return false;
-  }
-  const knownKeys = Object.getOwnPropertyNames(schema3.properties);
-  for (const knownKey of knownKeys) {
-    const property = schema3.properties[knownKey];
-    if (schema3.required && schema3.required.includes(knownKey)) {
-      if (!Visit5(property, references, value2[knownKey])) {
-        return false;
-      }
-      if ((ExtendsUndefinedCheck(property) || IsAnyOrUnknown(property)) && !(knownKey in value2)) {
-        return false;
-      }
-    } else {
-      if (TypeSystemPolicy.IsExactOptionalProperty(value2, knownKey) && !Visit5(property, references, value2[knownKey])) {
-        return false;
-      }
-    }
-  }
-  if (schema3.additionalProperties === false) {
-    const valueKeys = Object.getOwnPropertyNames(value2);
-    if (schema3.required && schema3.required.length === knownKeys.length && valueKeys.length === knownKeys.length) {
-      return true;
-    } else {
-      return valueKeys.every((valueKey) => knownKeys.includes(valueKey));
-    }
-  } else if (typeof schema3.additionalProperties === "object") {
-    const valueKeys = Object.getOwnPropertyNames(value2);
-    return valueKeys.every((key) => knownKeys.includes(key) || Visit5(schema3.additionalProperties, references, value2[key]));
-  } else {
-    return true;
-  }
-}
-function FromPromise4(schema3, references, value2) {
-  return IsPromise(value2);
-}
-function FromRecord4(schema3, references, value2) {
-  if (!TypeSystemPolicy.IsRecordLike(value2)) {
-    return false;
-  }
-  if (IsDefined(schema3.minProperties) && !(Object.getOwnPropertyNames(value2).length >= schema3.minProperties)) {
-    return false;
-  }
-  if (IsDefined(schema3.maxProperties) && !(Object.getOwnPropertyNames(value2).length <= schema3.maxProperties)) {
-    return false;
-  }
-  const [patternKey, patternSchema] = Object.entries(schema3.patternProperties)[0];
-  const regex = new RegExp(patternKey);
-  const check1 = Object.entries(value2).every(([key, value3]) => {
-    return regex.test(key) ? Visit5(patternSchema, references, value3) : true;
-  });
-  const check2 = typeof schema3.additionalProperties === "object" ? Object.entries(value2).every(([key, value3]) => {
-    return !regex.test(key) ? Visit5(schema3.additionalProperties, references, value3) : true;
-  }) : true;
-  const check3 = schema3.additionalProperties === false ? Object.getOwnPropertyNames(value2).every((key) => {
-    return regex.test(key);
-  }) : true;
-  return check1 && check2 && check3;
-}
-function FromRef5(schema3, references, value2) {
-  return Visit5(Deref(schema3, references), references, value2);
-}
-function FromRegExp2(schema3, references, value2) {
-  const regex = new RegExp(schema3.source, schema3.flags);
-  if (IsDefined(schema3.minLength)) {
-    if (!(value2.length >= schema3.minLength))
-      return false;
-  }
-  if (IsDefined(schema3.maxLength)) {
-    if (!(value2.length <= schema3.maxLength))
-      return false;
-  }
-  return regex.test(value2);
-}
-function FromString2(schema3, references, value2) {
-  if (!IsString2(value2)) {
-    return false;
-  }
-  if (IsDefined(schema3.minLength)) {
-    if (!(value2.length >= schema3.minLength))
-      return false;
-  }
-  if (IsDefined(schema3.maxLength)) {
-    if (!(value2.length <= schema3.maxLength))
-      return false;
-  }
-  if (IsDefined(schema3.pattern)) {
-    const regex = new RegExp(schema3.pattern);
-    if (!regex.test(value2))
-      return false;
-  }
-  if (IsDefined(schema3.format)) {
-    if (!exports_format.Has(schema3.format))
-      return false;
-    const func = exports_format.Get(schema3.format);
-    return func(value2);
-  }
-  return true;
-}
-function FromSymbol2(schema3, references, value2) {
-  return IsSymbol2(value2);
-}
-function FromTemplateLiteral4(schema3, references, value2) {
-  return IsString2(value2) && new RegExp(schema3.pattern).test(value2);
-}
-function FromThis(schema3, references, value2) {
-  return Visit5(Deref(schema3, references), references, value2);
-}
-function FromTuple6(schema3, references, value2) {
-  if (!IsArray2(value2)) {
-    return false;
-  }
-  if (schema3.items === undefined && !(value2.length === 0)) {
-    return false;
-  }
-  if (!(value2.length === schema3.maxItems)) {
-    return false;
-  }
-  if (!schema3.items) {
-    return true;
-  }
-  for (let i = 0;i < schema3.items.length; i++) {
-    if (!Visit5(schema3.items[i], references, value2[i]))
-      return false;
-  }
-  return true;
-}
-function FromUndefined2(schema3, references, value2) {
-  return IsUndefined2(value2);
-}
-function FromUnion11(schema3, references, value2) {
-  return schema3.anyOf.some((inner) => Visit5(inner, references, value2));
-}
-function FromUint8Array2(schema3, references, value2) {
-  if (!IsUint8Array2(value2)) {
-    return false;
-  }
-  if (IsDefined(schema3.maxByteLength) && !(value2.length <= schema3.maxByteLength)) {
-    return false;
-  }
-  if (IsDefined(schema3.minByteLength) && !(value2.length >= schema3.minByteLength)) {
-    return false;
-  }
-  return true;
-}
-function FromUnknown2(schema3, references, value2) {
-  return true;
-}
-function FromVoid2(schema3, references, value2) {
-  return TypeSystemPolicy.IsVoidLike(value2);
-}
-function FromKind(schema3, references, value2) {
-  if (!exports_type2.Has(schema3[Kind]))
-    return false;
-  const func = exports_type2.Get(schema3[Kind]);
-  return func(schema3, value2);
-}
-function Visit5(schema3, references, value2) {
-  const references_ = IsDefined(schema3.$id) ? Pushref(schema3, references) : references;
-  const schema_ = schema3;
-  switch (schema_[Kind]) {
-    case "Any":
-      return FromAny2(schema_, references_, value2);
-    case "Argument":
-      return FromArgument2(schema_, references_, value2);
-    case "Array":
-      return FromArray7(schema_, references_, value2);
-    case "AsyncIterator":
-      return FromAsyncIterator4(schema_, references_, value2);
-    case "BigInt":
-      return FromBigInt2(schema_, references_, value2);
-    case "Boolean":
-      return FromBoolean2(schema_, references_, value2);
-    case "Constructor":
-      return FromConstructor4(schema_, references_, value2);
-    case "Date":
-      return FromDate2(schema_, references_, value2);
-    case "Function":
-      return FromFunction4(schema_, references_, value2);
-    case "Import":
-      return FromImport(schema_, references_, value2);
-    case "Integer":
-      return FromInteger2(schema_, references_, value2);
-    case "Intersect":
-      return FromIntersect9(schema_, references_, value2);
-    case "Iterator":
-      return FromIterator4(schema_, references_, value2);
-    case "Literal":
-      return FromLiteral3(schema_, references_, value2);
-    case "Never":
-      return FromNever2(schema_, references_, value2);
-    case "Not":
-      return FromNot2(schema_, references_, value2);
-    case "Null":
-      return FromNull2(schema_, references_, value2);
-    case "Number":
-      return FromNumber2(schema_, references_, value2);
-    case "Object":
-      return FromObject8(schema_, references_, value2);
-    case "Promise":
-      return FromPromise4(schema_, references_, value2);
-    case "Record":
-      return FromRecord4(schema_, references_, value2);
-    case "Ref":
-      return FromRef5(schema_, references_, value2);
-    case "RegExp":
-      return FromRegExp2(schema_, references_, value2);
-    case "String":
-      return FromString2(schema_, references_, value2);
-    case "Symbol":
-      return FromSymbol2(schema_, references_, value2);
-    case "TemplateLiteral":
-      return FromTemplateLiteral4(schema_, references_, value2);
-    case "This":
-      return FromThis(schema_, references_, value2);
-    case "Tuple":
-      return FromTuple6(schema_, references_, value2);
-    case "Undefined":
-      return FromUndefined2(schema_, references_, value2);
-    case "Union":
-      return FromUnion11(schema_, references_, value2);
-    case "Uint8Array":
-      return FromUint8Array2(schema_, references_, value2);
-    case "Unknown":
-      return FromUnknown2(schema_, references_, value2);
-    case "Void":
-      return FromVoid2(schema_, references_, value2);
-    default:
-      if (!exports_type2.Has(schema_[Kind]))
-        throw new ValueCheckUnknownTypeError(schema_);
-      return FromKind(schema_, references_, value2);
-  }
-}
-function Check(...args2) {
-  return args2.length === 3 ? Visit5(args2[0], args2[1], args2[2]) : Visit5(args2[0], [], args2[1]);
-}
-var ValueCheckUnknownTypeError;
-var init_check = __esm(() => {
-  init_system2();
-  init_deref2();
-  init_hash2();
-  init_symbols2();
-  init_keyof2();
-  init_extends2();
-  init_registry();
-  init_error2();
-  init_never2();
-  init_guard();
-  init_kind();
-  ValueCheckUnknownTypeError = class ValueCheckUnknownTypeError extends TypeBoxError {
-    constructor(schema3) {
-      super(`Unknown type`);
-      this.schema = schema3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/check/index.mjs
-var init_check2 = __esm(() => {
-  init_check();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/errors.mjs
-function EscapeKey(key) {
-  return key.replace(/~/g, "~0").replace(/\//g, "~1");
-}
-function IsDefined2(value2) {
-  return value2 !== undefined;
-}
-function Create(errorType, schema3, path, value2, errors = []) {
-  return {
-    type: errorType,
-    schema: schema3,
-    path,
-    value: value2,
-    message: GetErrorFunction()({ errorType, path, schema: schema3, value: value2, errors }),
-    errors
-  };
-}
-function* FromAny3(schema3, references, path, value2) {}
-function* FromArgument3(schema3, references, path, value2) {}
-function* FromArray8(schema3, references, path, value2) {
-  if (!IsArray2(value2)) {
-    return yield Create(ValueErrorType.Array, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minItems) && !(value2.length >= schema3.minItems)) {
-    yield Create(ValueErrorType.ArrayMinItems, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maxItems) && !(value2.length <= schema3.maxItems)) {
-    yield Create(ValueErrorType.ArrayMaxItems, schema3, path, value2);
-  }
-  for (let i = 0;i < value2.length; i++) {
-    yield* Visit6(schema3.items, references, `${path}/${i}`, value2[i]);
-  }
-  if (schema3.uniqueItems === true && !function() {
-    const set2 = new Set;
-    for (const element of value2) {
-      const hashed = Hash(element);
-      if (set2.has(hashed)) {
-        return false;
-      } else {
-        set2.add(hashed);
-      }
-    }
-    return true;
-  }()) {
-    yield Create(ValueErrorType.ArrayUniqueItems, schema3, path, value2);
-  }
-  if (!(IsDefined2(schema3.contains) || IsDefined2(schema3.minContains) || IsDefined2(schema3.maxContains))) {
-    return;
-  }
-  const containsSchema = IsDefined2(schema3.contains) ? schema3.contains : Never();
-  const containsCount = value2.reduce((acc, value3, index) => Visit6(containsSchema, references, `${path}${index}`, value3).next().done === true ? acc + 1 : acc, 0);
-  if (containsCount === 0) {
-    yield Create(ValueErrorType.ArrayContains, schema3, path, value2);
-  }
-  if (IsNumber2(schema3.minContains) && containsCount < schema3.minContains) {
-    yield Create(ValueErrorType.ArrayMinContains, schema3, path, value2);
-  }
-  if (IsNumber2(schema3.maxContains) && containsCount > schema3.maxContains) {
-    yield Create(ValueErrorType.ArrayMaxContains, schema3, path, value2);
-  }
-}
-function* FromAsyncIterator5(schema3, references, path, value2) {
-  if (!IsAsyncIterator2(value2))
-    yield Create(ValueErrorType.AsyncIterator, schema3, path, value2);
-}
-function* FromBigInt3(schema3, references, path, value2) {
-  if (!IsBigInt2(value2))
-    return yield Create(ValueErrorType.BigInt, schema3, path, value2);
-  if (IsDefined2(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    yield Create(ValueErrorType.BigIntExclusiveMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    yield Create(ValueErrorType.BigIntExclusiveMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    yield Create(ValueErrorType.BigIntMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    yield Create(ValueErrorType.BigIntMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.multipleOf) && !(value2 % schema3.multipleOf === BigInt(0))) {
-    yield Create(ValueErrorType.BigIntMultipleOf, schema3, path, value2);
-  }
-}
-function* FromBoolean3(schema3, references, path, value2) {
-  if (!IsBoolean2(value2))
-    yield Create(ValueErrorType.Boolean, schema3, path, value2);
-}
-function* FromConstructor5(schema3, references, path, value2) {
-  yield* Visit6(schema3.returns, references, path, value2.prototype);
-}
-function* FromDate3(schema3, references, path, value2) {
-  if (!IsDate2(value2))
-    return yield Create(ValueErrorType.Date, schema3, path, value2);
-  if (IsDefined2(schema3.exclusiveMaximumTimestamp) && !(value2.getTime() < schema3.exclusiveMaximumTimestamp)) {
-    yield Create(ValueErrorType.DateExclusiveMaximumTimestamp, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.exclusiveMinimumTimestamp) && !(value2.getTime() > schema3.exclusiveMinimumTimestamp)) {
-    yield Create(ValueErrorType.DateExclusiveMinimumTimestamp, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maximumTimestamp) && !(value2.getTime() <= schema3.maximumTimestamp)) {
-    yield Create(ValueErrorType.DateMaximumTimestamp, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minimumTimestamp) && !(value2.getTime() >= schema3.minimumTimestamp)) {
-    yield Create(ValueErrorType.DateMinimumTimestamp, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.multipleOfTimestamp) && !(value2.getTime() % schema3.multipleOfTimestamp === 0)) {
-    yield Create(ValueErrorType.DateMultipleOfTimestamp, schema3, path, value2);
-  }
-}
-function* FromFunction5(schema3, references, path, value2) {
-  if (!IsFunction2(value2))
-    yield Create(ValueErrorType.Function, schema3, path, value2);
-}
-function* FromImport2(schema3, references, path, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  yield* Visit6(target, [...references, ...definitions], path, value2);
-}
-function* FromInteger3(schema3, references, path, value2) {
-  if (!IsInteger(value2))
-    return yield Create(ValueErrorType.Integer, schema3, path, value2);
-  if (IsDefined2(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    yield Create(ValueErrorType.IntegerExclusiveMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    yield Create(ValueErrorType.IntegerExclusiveMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    yield Create(ValueErrorType.IntegerMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    yield Create(ValueErrorType.IntegerMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.multipleOf) && !(value2 % schema3.multipleOf === 0)) {
-    yield Create(ValueErrorType.IntegerMultipleOf, schema3, path, value2);
-  }
-}
-function* FromIntersect10(schema3, references, path, value2) {
-  let hasError = false;
-  for (const inner of schema3.allOf) {
-    for (const error3 of Visit6(inner, references, path, value2)) {
-      hasError = true;
-      yield error3;
-    }
-  }
-  if (hasError) {
-    return yield Create(ValueErrorType.Intersect, schema3, path, value2);
-  }
-  if (schema3.unevaluatedProperties === false) {
-    const keyCheck = new RegExp(KeyOfPattern(schema3));
-    for (const valueKey of Object.getOwnPropertyNames(value2)) {
-      if (!keyCheck.test(valueKey)) {
-        yield Create(ValueErrorType.IntersectUnevaluatedProperties, schema3, `${path}/${valueKey}`, value2);
-      }
-    }
-  }
-  if (typeof schema3.unevaluatedProperties === "object") {
-    const keyCheck = new RegExp(KeyOfPattern(schema3));
-    for (const valueKey of Object.getOwnPropertyNames(value2)) {
-      if (!keyCheck.test(valueKey)) {
-        const next = Visit6(schema3.unevaluatedProperties, references, `${path}/${valueKey}`, value2[valueKey]).next();
-        if (!next.done)
-          yield next.value;
-      }
-    }
-  }
-}
-function* FromIterator5(schema3, references, path, value2) {
-  if (!IsIterator2(value2))
-    yield Create(ValueErrorType.Iterator, schema3, path, value2);
-}
-function* FromLiteral4(schema3, references, path, value2) {
-  if (!(value2 === schema3.const))
-    yield Create(ValueErrorType.Literal, schema3, path, value2);
-}
-function* FromNever3(schema3, references, path, value2) {
-  yield Create(ValueErrorType.Never, schema3, path, value2);
-}
-function* FromNot3(schema3, references, path, value2) {
-  if (Visit6(schema3.not, references, path, value2).next().done === true)
-    yield Create(ValueErrorType.Not, schema3, path, value2);
-}
-function* FromNull3(schema3, references, path, value2) {
-  if (!IsNull2(value2))
-    yield Create(ValueErrorType.Null, schema3, path, value2);
-}
-function* FromNumber3(schema3, references, path, value2) {
-  if (!TypeSystemPolicy.IsNumberLike(value2))
-    return yield Create(ValueErrorType.Number, schema3, path, value2);
-  if (IsDefined2(schema3.exclusiveMaximum) && !(value2 < schema3.exclusiveMaximum)) {
-    yield Create(ValueErrorType.NumberExclusiveMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.exclusiveMinimum) && !(value2 > schema3.exclusiveMinimum)) {
-    yield Create(ValueErrorType.NumberExclusiveMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maximum) && !(value2 <= schema3.maximum)) {
-    yield Create(ValueErrorType.NumberMaximum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minimum) && !(value2 >= schema3.minimum)) {
-    yield Create(ValueErrorType.NumberMinimum, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.multipleOf) && !(value2 % schema3.multipleOf === 0)) {
-    yield Create(ValueErrorType.NumberMultipleOf, schema3, path, value2);
-  }
-}
-function* FromObject9(schema3, references, path, value2) {
-  if (!TypeSystemPolicy.IsObjectLike(value2))
-    return yield Create(ValueErrorType.Object, schema3, path, value2);
-  if (IsDefined2(schema3.minProperties) && !(Object.getOwnPropertyNames(value2).length >= schema3.minProperties)) {
-    yield Create(ValueErrorType.ObjectMinProperties, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maxProperties) && !(Object.getOwnPropertyNames(value2).length <= schema3.maxProperties)) {
-    yield Create(ValueErrorType.ObjectMaxProperties, schema3, path, value2);
-  }
-  const requiredKeys = Array.isArray(schema3.required) ? schema3.required : [];
-  const knownKeys = Object.getOwnPropertyNames(schema3.properties);
-  const unknownKeys = Object.getOwnPropertyNames(value2);
-  for (const requiredKey of requiredKeys) {
-    if (unknownKeys.includes(requiredKey))
-      continue;
-    yield Create(ValueErrorType.ObjectRequiredProperty, schema3.properties[requiredKey], `${path}/${EscapeKey(requiredKey)}`, undefined);
-  }
-  if (schema3.additionalProperties === false) {
-    for (const valueKey of unknownKeys) {
-      if (!knownKeys.includes(valueKey)) {
-        yield Create(ValueErrorType.ObjectAdditionalProperties, schema3, `${path}/${EscapeKey(valueKey)}`, value2[valueKey]);
-      }
-    }
-  }
-  if (typeof schema3.additionalProperties === "object") {
-    for (const valueKey of unknownKeys) {
-      if (knownKeys.includes(valueKey))
-        continue;
-      yield* Visit6(schema3.additionalProperties, references, `${path}/${EscapeKey(valueKey)}`, value2[valueKey]);
-    }
-  }
-  for (const knownKey of knownKeys) {
-    const property = schema3.properties[knownKey];
-    if (schema3.required && schema3.required.includes(knownKey)) {
-      yield* Visit6(property, references, `${path}/${EscapeKey(knownKey)}`, value2[knownKey]);
-      if (ExtendsUndefinedCheck(schema3) && !(knownKey in value2)) {
-        yield Create(ValueErrorType.ObjectRequiredProperty, property, `${path}/${EscapeKey(knownKey)}`, undefined);
-      }
-    } else {
-      if (TypeSystemPolicy.IsExactOptionalProperty(value2, knownKey)) {
-        yield* Visit6(property, references, `${path}/${EscapeKey(knownKey)}`, value2[knownKey]);
-      }
-    }
-  }
-}
-function* FromPromise5(schema3, references, path, value2) {
-  if (!IsPromise(value2))
-    yield Create(ValueErrorType.Promise, schema3, path, value2);
-}
-function* FromRecord5(schema3, references, path, value2) {
-  if (!TypeSystemPolicy.IsRecordLike(value2))
-    return yield Create(ValueErrorType.Object, schema3, path, value2);
-  if (IsDefined2(schema3.minProperties) && !(Object.getOwnPropertyNames(value2).length >= schema3.minProperties)) {
-    yield Create(ValueErrorType.ObjectMinProperties, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maxProperties) && !(Object.getOwnPropertyNames(value2).length <= schema3.maxProperties)) {
-    yield Create(ValueErrorType.ObjectMaxProperties, schema3, path, value2);
-  }
-  const [patternKey, patternSchema] = Object.entries(schema3.patternProperties)[0];
-  const regex = new RegExp(patternKey);
-  for (const [propertyKey, propertyValue] of Object.entries(value2)) {
-    if (regex.test(propertyKey))
-      yield* Visit6(patternSchema, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
-  }
-  if (typeof schema3.additionalProperties === "object") {
-    for (const [propertyKey, propertyValue] of Object.entries(value2)) {
-      if (!regex.test(propertyKey))
-        yield* Visit6(schema3.additionalProperties, references, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
-    }
-  }
-  if (schema3.additionalProperties === false) {
-    for (const [propertyKey, propertyValue] of Object.entries(value2)) {
-      if (regex.test(propertyKey))
-        continue;
-      return yield Create(ValueErrorType.ObjectAdditionalProperties, schema3, `${path}/${EscapeKey(propertyKey)}`, propertyValue);
-    }
-  }
-}
-function* FromRef6(schema3, references, path, value2) {
-  yield* Visit6(Deref(schema3, references), references, path, value2);
-}
-function* FromRegExp3(schema3, references, path, value2) {
-  if (!IsString2(value2))
-    return yield Create(ValueErrorType.String, schema3, path, value2);
-  if (IsDefined2(schema3.minLength) && !(value2.length >= schema3.minLength)) {
-    yield Create(ValueErrorType.StringMinLength, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maxLength) && !(value2.length <= schema3.maxLength)) {
-    yield Create(ValueErrorType.StringMaxLength, schema3, path, value2);
-  }
-  const regex = new RegExp(schema3.source, schema3.flags);
-  if (!regex.test(value2)) {
-    return yield Create(ValueErrorType.RegExp, schema3, path, value2);
-  }
-}
-function* FromString3(schema3, references, path, value2) {
-  if (!IsString2(value2))
-    return yield Create(ValueErrorType.String, schema3, path, value2);
-  if (IsDefined2(schema3.minLength) && !(value2.length >= schema3.minLength)) {
-    yield Create(ValueErrorType.StringMinLength, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.maxLength) && !(value2.length <= schema3.maxLength)) {
-    yield Create(ValueErrorType.StringMaxLength, schema3, path, value2);
-  }
-  if (IsString2(schema3.pattern)) {
-    const regex = new RegExp(schema3.pattern);
-    if (!regex.test(value2)) {
-      yield Create(ValueErrorType.StringPattern, schema3, path, value2);
-    }
-  }
-  if (IsString2(schema3.format)) {
-    if (!exports_format.Has(schema3.format)) {
-      yield Create(ValueErrorType.StringFormatUnknown, schema3, path, value2);
-    } else {
-      const format = exports_format.Get(schema3.format);
-      if (!format(value2)) {
-        yield Create(ValueErrorType.StringFormat, schema3, path, value2);
-      }
-    }
-  }
-}
-function* FromSymbol3(schema3, references, path, value2) {
-  if (!IsSymbol2(value2))
-    yield Create(ValueErrorType.Symbol, schema3, path, value2);
-}
-function* FromTemplateLiteral5(schema3, references, path, value2) {
-  if (!IsString2(value2))
-    return yield Create(ValueErrorType.String, schema3, path, value2);
-  const regex = new RegExp(schema3.pattern);
-  if (!regex.test(value2)) {
-    yield Create(ValueErrorType.StringPattern, schema3, path, value2);
-  }
-}
-function* FromThis2(schema3, references, path, value2) {
-  yield* Visit6(Deref(schema3, references), references, path, value2);
-}
-function* FromTuple7(schema3, references, path, value2) {
-  if (!IsArray2(value2))
-    return yield Create(ValueErrorType.Tuple, schema3, path, value2);
-  if (schema3.items === undefined && !(value2.length === 0)) {
-    return yield Create(ValueErrorType.TupleLength, schema3, path, value2);
-  }
-  if (!(value2.length === schema3.maxItems)) {
-    return yield Create(ValueErrorType.TupleLength, schema3, path, value2);
-  }
-  if (!schema3.items) {
-    return;
-  }
-  for (let i = 0;i < schema3.items.length; i++) {
-    yield* Visit6(schema3.items[i], references, `${path}/${i}`, value2[i]);
-  }
-}
-function* FromUndefined3(schema3, references, path, value2) {
-  if (!IsUndefined2(value2))
-    yield Create(ValueErrorType.Undefined, schema3, path, value2);
-}
-function* FromUnion12(schema3, references, path, value2) {
-  if (Check(schema3, references, value2))
-    return;
-  const errors = schema3.anyOf.map((variant) => new ValueErrorIterator(Visit6(variant, references, path, value2)));
-  yield Create(ValueErrorType.Union, schema3, path, value2, errors);
-}
-function* FromUint8Array3(schema3, references, path, value2) {
-  if (!IsUint8Array2(value2))
-    return yield Create(ValueErrorType.Uint8Array, schema3, path, value2);
-  if (IsDefined2(schema3.maxByteLength) && !(value2.length <= schema3.maxByteLength)) {
-    yield Create(ValueErrorType.Uint8ArrayMaxByteLength, schema3, path, value2);
-  }
-  if (IsDefined2(schema3.minByteLength) && !(value2.length >= schema3.minByteLength)) {
-    yield Create(ValueErrorType.Uint8ArrayMinByteLength, schema3, path, value2);
-  }
-}
-function* FromUnknown3(schema3, references, path, value2) {}
-function* FromVoid3(schema3, references, path, value2) {
-  if (!TypeSystemPolicy.IsVoidLike(value2))
-    yield Create(ValueErrorType.Void, schema3, path, value2);
-}
-function* FromKind2(schema3, references, path, value2) {
-  const check2 = exports_type2.Get(schema3[Kind]);
-  if (!check2(schema3, value2))
-    yield Create(ValueErrorType.Kind, schema3, path, value2);
-}
-function* Visit6(schema3, references, path, value2) {
-  const references_ = IsDefined2(schema3.$id) ? [...references, schema3] : references;
-  const schema_ = schema3;
-  switch (schema_[Kind]) {
-    case "Any":
-      return yield* FromAny3(schema_, references_, path, value2);
-    case "Argument":
-      return yield* FromArgument3(schema_, references_, path, value2);
-    case "Array":
-      return yield* FromArray8(schema_, references_, path, value2);
-    case "AsyncIterator":
-      return yield* FromAsyncIterator5(schema_, references_, path, value2);
-    case "BigInt":
-      return yield* FromBigInt3(schema_, references_, path, value2);
-    case "Boolean":
-      return yield* FromBoolean3(schema_, references_, path, value2);
-    case "Constructor":
-      return yield* FromConstructor5(schema_, references_, path, value2);
-    case "Date":
-      return yield* FromDate3(schema_, references_, path, value2);
-    case "Function":
-      return yield* FromFunction5(schema_, references_, path, value2);
-    case "Import":
-      return yield* FromImport2(schema_, references_, path, value2);
-    case "Integer":
-      return yield* FromInteger3(schema_, references_, path, value2);
-    case "Intersect":
-      return yield* FromIntersect10(schema_, references_, path, value2);
-    case "Iterator":
-      return yield* FromIterator5(schema_, references_, path, value2);
-    case "Literal":
-      return yield* FromLiteral4(schema_, references_, path, value2);
-    case "Never":
-      return yield* FromNever3(schema_, references_, path, value2);
-    case "Not":
-      return yield* FromNot3(schema_, references_, path, value2);
-    case "Null":
-      return yield* FromNull3(schema_, references_, path, value2);
-    case "Number":
-      return yield* FromNumber3(schema_, references_, path, value2);
-    case "Object":
-      return yield* FromObject9(schema_, references_, path, value2);
-    case "Promise":
-      return yield* FromPromise5(schema_, references_, path, value2);
-    case "Record":
-      return yield* FromRecord5(schema_, references_, path, value2);
-    case "Ref":
-      return yield* FromRef6(schema_, references_, path, value2);
-    case "RegExp":
-      return yield* FromRegExp3(schema_, references_, path, value2);
-    case "String":
-      return yield* FromString3(schema_, references_, path, value2);
-    case "Symbol":
-      return yield* FromSymbol3(schema_, references_, path, value2);
-    case "TemplateLiteral":
-      return yield* FromTemplateLiteral5(schema_, references_, path, value2);
-    case "This":
-      return yield* FromThis2(schema_, references_, path, value2);
-    case "Tuple":
-      return yield* FromTuple7(schema_, references_, path, value2);
-    case "Undefined":
-      return yield* FromUndefined3(schema_, references_, path, value2);
-    case "Union":
-      return yield* FromUnion12(schema_, references_, path, value2);
-    case "Uint8Array":
-      return yield* FromUint8Array3(schema_, references_, path, value2);
-    case "Unknown":
-      return yield* FromUnknown3(schema_, references_, path, value2);
-    case "Void":
-      return yield* FromVoid3(schema_, references_, path, value2);
-    default:
-      if (!exports_type2.Has(schema_[Kind]))
-        throw new ValueErrorsUnknownTypeError(schema3);
-      return yield* FromKind2(schema_, references_, path, value2);
-  }
-}
-function Errors(...args2) {
-  const iterator3 = args2.length === 3 ? Visit6(args2[0], args2[1], "", args2[2]) : Visit6(args2[0], [], "", args2[1]);
-  return new ValueErrorIterator(iterator3);
-}
-var ValueErrorType, ValueErrorsUnknownTypeError, ValueErrorIterator;
-var init_errors = __esm(() => {
-  init_system2();
-  init_keyof2();
-  init_registry();
-  init_extends_undefined();
-  init_function3();
-  init_error2();
-  init_deref2();
-  init_hash2();
-  init_check2();
-  init_symbols2();
-  init_never2();
-  init_guard();
-  (function(ValueErrorType2) {
-    ValueErrorType2[ValueErrorType2["ArrayContains"] = 0] = "ArrayContains";
-    ValueErrorType2[ValueErrorType2["ArrayMaxContains"] = 1] = "ArrayMaxContains";
-    ValueErrorType2[ValueErrorType2["ArrayMaxItems"] = 2] = "ArrayMaxItems";
-    ValueErrorType2[ValueErrorType2["ArrayMinContains"] = 3] = "ArrayMinContains";
-    ValueErrorType2[ValueErrorType2["ArrayMinItems"] = 4] = "ArrayMinItems";
-    ValueErrorType2[ValueErrorType2["ArrayUniqueItems"] = 5] = "ArrayUniqueItems";
-    ValueErrorType2[ValueErrorType2["Array"] = 6] = "Array";
-    ValueErrorType2[ValueErrorType2["AsyncIterator"] = 7] = "AsyncIterator";
-    ValueErrorType2[ValueErrorType2["BigIntExclusiveMaximum"] = 8] = "BigIntExclusiveMaximum";
-    ValueErrorType2[ValueErrorType2["BigIntExclusiveMinimum"] = 9] = "BigIntExclusiveMinimum";
-    ValueErrorType2[ValueErrorType2["BigIntMaximum"] = 10] = "BigIntMaximum";
-    ValueErrorType2[ValueErrorType2["BigIntMinimum"] = 11] = "BigIntMinimum";
-    ValueErrorType2[ValueErrorType2["BigIntMultipleOf"] = 12] = "BigIntMultipleOf";
-    ValueErrorType2[ValueErrorType2["BigInt"] = 13] = "BigInt";
-    ValueErrorType2[ValueErrorType2["Boolean"] = 14] = "Boolean";
-    ValueErrorType2[ValueErrorType2["DateExclusiveMaximumTimestamp"] = 15] = "DateExclusiveMaximumTimestamp";
-    ValueErrorType2[ValueErrorType2["DateExclusiveMinimumTimestamp"] = 16] = "DateExclusiveMinimumTimestamp";
-    ValueErrorType2[ValueErrorType2["DateMaximumTimestamp"] = 17] = "DateMaximumTimestamp";
-    ValueErrorType2[ValueErrorType2["DateMinimumTimestamp"] = 18] = "DateMinimumTimestamp";
-    ValueErrorType2[ValueErrorType2["DateMultipleOfTimestamp"] = 19] = "DateMultipleOfTimestamp";
-    ValueErrorType2[ValueErrorType2["Date"] = 20] = "Date";
-    ValueErrorType2[ValueErrorType2["Function"] = 21] = "Function";
-    ValueErrorType2[ValueErrorType2["IntegerExclusiveMaximum"] = 22] = "IntegerExclusiveMaximum";
-    ValueErrorType2[ValueErrorType2["IntegerExclusiveMinimum"] = 23] = "IntegerExclusiveMinimum";
-    ValueErrorType2[ValueErrorType2["IntegerMaximum"] = 24] = "IntegerMaximum";
-    ValueErrorType2[ValueErrorType2["IntegerMinimum"] = 25] = "IntegerMinimum";
-    ValueErrorType2[ValueErrorType2["IntegerMultipleOf"] = 26] = "IntegerMultipleOf";
-    ValueErrorType2[ValueErrorType2["Integer"] = 27] = "Integer";
-    ValueErrorType2[ValueErrorType2["IntersectUnevaluatedProperties"] = 28] = "IntersectUnevaluatedProperties";
-    ValueErrorType2[ValueErrorType2["Intersect"] = 29] = "Intersect";
-    ValueErrorType2[ValueErrorType2["Iterator"] = 30] = "Iterator";
-    ValueErrorType2[ValueErrorType2["Kind"] = 31] = "Kind";
-    ValueErrorType2[ValueErrorType2["Literal"] = 32] = "Literal";
-    ValueErrorType2[ValueErrorType2["Never"] = 33] = "Never";
-    ValueErrorType2[ValueErrorType2["Not"] = 34] = "Not";
-    ValueErrorType2[ValueErrorType2["Null"] = 35] = "Null";
-    ValueErrorType2[ValueErrorType2["NumberExclusiveMaximum"] = 36] = "NumberExclusiveMaximum";
-    ValueErrorType2[ValueErrorType2["NumberExclusiveMinimum"] = 37] = "NumberExclusiveMinimum";
-    ValueErrorType2[ValueErrorType2["NumberMaximum"] = 38] = "NumberMaximum";
-    ValueErrorType2[ValueErrorType2["NumberMinimum"] = 39] = "NumberMinimum";
-    ValueErrorType2[ValueErrorType2["NumberMultipleOf"] = 40] = "NumberMultipleOf";
-    ValueErrorType2[ValueErrorType2["Number"] = 41] = "Number";
-    ValueErrorType2[ValueErrorType2["ObjectAdditionalProperties"] = 42] = "ObjectAdditionalProperties";
-    ValueErrorType2[ValueErrorType2["ObjectMaxProperties"] = 43] = "ObjectMaxProperties";
-    ValueErrorType2[ValueErrorType2["ObjectMinProperties"] = 44] = "ObjectMinProperties";
-    ValueErrorType2[ValueErrorType2["ObjectRequiredProperty"] = 45] = "ObjectRequiredProperty";
-    ValueErrorType2[ValueErrorType2["Object"] = 46] = "Object";
-    ValueErrorType2[ValueErrorType2["Promise"] = 47] = "Promise";
-    ValueErrorType2[ValueErrorType2["RegExp"] = 48] = "RegExp";
-    ValueErrorType2[ValueErrorType2["StringFormatUnknown"] = 49] = "StringFormatUnknown";
-    ValueErrorType2[ValueErrorType2["StringFormat"] = 50] = "StringFormat";
-    ValueErrorType2[ValueErrorType2["StringMaxLength"] = 51] = "StringMaxLength";
-    ValueErrorType2[ValueErrorType2["StringMinLength"] = 52] = "StringMinLength";
-    ValueErrorType2[ValueErrorType2["StringPattern"] = 53] = "StringPattern";
-    ValueErrorType2[ValueErrorType2["String"] = 54] = "String";
-    ValueErrorType2[ValueErrorType2["Symbol"] = 55] = "Symbol";
-    ValueErrorType2[ValueErrorType2["TupleLength"] = 56] = "TupleLength";
-    ValueErrorType2[ValueErrorType2["Tuple"] = 57] = "Tuple";
-    ValueErrorType2[ValueErrorType2["Uint8ArrayMaxByteLength"] = 58] = "Uint8ArrayMaxByteLength";
-    ValueErrorType2[ValueErrorType2["Uint8ArrayMinByteLength"] = 59] = "Uint8ArrayMinByteLength";
-    ValueErrorType2[ValueErrorType2["Uint8Array"] = 60] = "Uint8Array";
-    ValueErrorType2[ValueErrorType2["Undefined"] = 61] = "Undefined";
-    ValueErrorType2[ValueErrorType2["Union"] = 62] = "Union";
-    ValueErrorType2[ValueErrorType2["Void"] = 63] = "Void";
-  })(ValueErrorType || (ValueErrorType = {}));
-  ValueErrorsUnknownTypeError = class ValueErrorsUnknownTypeError extends TypeBoxError {
-    constructor(schema3) {
-      super("Unknown type");
-      this.schema = schema3;
-    }
-  };
-  ValueErrorIterator = class ValueErrorIterator {
-    constructor(iterator3) {
-      this.iterator = iterator3;
-    }
-    [Symbol.iterator]() {
-      return this.iterator;
-    }
-    First() {
-      const next = this.iterator.next();
-      return next.done ? undefined : next.value;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/errors/index.mjs
-var init_errors2 = __esm(() => {
-  init_errors();
-  init_function3();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/assert/assert.mjs
-function AssertValue(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return;
-  throw new AssertError(Errors(schema3, references, value2));
-}
-function Assert(...args2) {
-  return args2.length === 3 ? AssertValue(args2[0], args2[1], args2[2]) : AssertValue(args2[0], [], args2[1]);
-}
-var __classPrivateFieldSet = function(receiver, state, value2, kind, f) {
-  if (kind === "m")
-    throw new TypeError("Private method is not writable");
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a setter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot write private member to an object whose class did not declare it");
-  return kind === "a" ? f.call(receiver, value2) : f ? f.value = value2 : state.set(receiver, value2), value2;
-}, __classPrivateFieldGet = function(receiver, state, kind, f) {
-  if (kind === "a" && !f)
-    throw new TypeError("Private accessor was defined without a getter");
-  if (typeof state === "function" ? receiver !== state || !f : !state.has(receiver))
-    throw new TypeError("Cannot read private member from an object whose class did not declare it");
-  return kind === "m" ? f : kind === "a" ? f.call(receiver) : f ? f.value : state.get(receiver);
-}, _AssertError_instances, _AssertError_iterator, _AssertError_Iterator, AssertError;
-var init_assert = __esm(() => {
-  init_errors2();
-  init_error();
-  init_check();
-  AssertError = class AssertError extends TypeBoxError {
-    constructor(iterator3) {
-      const error3 = iterator3.First();
-      super(error3 === undefined ? "Invalid Value" : error3.message);
-      _AssertError_instances.add(this);
-      _AssertError_iterator.set(this, undefined);
-      __classPrivateFieldSet(this, _AssertError_iterator, iterator3, "f");
-      this.error = error3;
-    }
-    Errors() {
-      return new ValueErrorIterator(__classPrivateFieldGet(this, _AssertError_instances, "m", _AssertError_Iterator).call(this));
-    }
-  };
-  _AssertError_iterator = new WeakMap, _AssertError_instances = new WeakSet, _AssertError_Iterator = function* _AssertError_Iterator2() {
-    if (this.error)
-      yield this.error;
-    yield* __classPrivateFieldGet(this, _AssertError_iterator, "f");
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/assert/index.mjs
-var init_assert2 = __esm(() => {
-  init_assert();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clone/clone.mjs
-function FromObject10(value2) {
-  const Acc = {};
-  for (const key of Object.getOwnPropertyNames(value2)) {
-    Acc[key] = Clone2(value2[key]);
-  }
-  for (const key of Object.getOwnPropertySymbols(value2)) {
-    Acc[key] = Clone2(value2[key]);
-  }
-  return Acc;
-}
-function FromArray9(value2) {
-  return value2.map((element) => Clone2(element));
-}
-function FromTypedArray(value2) {
-  return value2.slice();
-}
-function FromMap(value2) {
-  return new Map(Clone2([...value2.entries()]));
-}
-function FromSet(value2) {
-  return new Set(Clone2([...value2.entries()]));
-}
-function FromDate4(value2) {
-  return new Date(value2.toISOString());
-}
-function FromValue2(value2) {
-  return value2;
-}
-function Clone2(value2) {
-  if (IsArray2(value2))
-    return FromArray9(value2);
-  if (IsDate2(value2))
-    return FromDate4(value2);
-  if (IsTypedArray(value2))
-    return FromTypedArray(value2);
-  if (IsMap(value2))
-    return FromMap(value2);
-  if (IsSet(value2))
-    return FromSet(value2);
-  if (IsObject2(value2))
-    return FromObject10(value2);
-  if (IsValueType(value2))
-    return FromValue2(value2);
-  throw new Error("ValueClone: Unable to clone value");
-}
-var init_clone2 = __esm(() => {
-  init_guard();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clone/index.mjs
-var init_clone3 = __esm(() => {
-  init_clone2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/create/create.mjs
-function FromDefault(value2) {
-  return IsFunction2(value2) ? value2() : Clone2(value2);
-}
-function FromAny4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return {};
-  }
-}
-function FromArgument4(schema3, references) {
-  return {};
-}
-function FromArray10(schema3, references) {
-  if (schema3.uniqueItems === true && !HasPropertyKey2(schema3, "default")) {
-    throw new ValueCreateError(schema3, "Array with the uniqueItems constraint requires a default value");
-  } else if ("contains" in schema3 && !HasPropertyKey2(schema3, "default")) {
-    throw new ValueCreateError(schema3, "Array with the contains constraint requires a default value");
-  } else if ("default" in schema3) {
-    return FromDefault(schema3.default);
-  } else if (schema3.minItems !== undefined) {
-    return Array.from({ length: schema3.minItems }).map((item) => {
-      return Visit7(schema3.items, references);
-    });
-  } else {
+// packages/wire/src/features/file-upload.ts
+function normalizeFileList(value2) {
+  if (!value2)
     return [];
-  }
-}
-function FromAsyncIterator6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return async function* () {}();
-  }
-}
-function FromBigInt4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return BigInt(0);
-  }
-}
-function FromBoolean4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return false;
-  }
-}
-function FromConstructor6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    const value2 = Visit7(schema3.returns, references);
-    if (typeof value2 === "object" && !Array.isArray(value2)) {
-      return class {
-        constructor() {
-          for (const [key, val] of Object.entries(value2)) {
-            const self = this;
-            self[key] = val;
-          }
-        }
-      };
-    } else {
-      return class {
-      };
-    }
-  }
-}
-function FromDate5(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if (schema3.minimumTimestamp !== undefined) {
-    return new Date(schema3.minimumTimestamp);
-  } else {
-    return new Date;
-  }
-}
-function FromFunction6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return () => Visit7(schema3.returns, references);
-  }
-}
-function FromImport3(schema3, references) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit7(target, [...references, ...definitions]);
-}
-function FromInteger4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if (schema3.minimum !== undefined) {
-    return schema3.minimum;
-  } else {
-    return 0;
-  }
-}
-function FromIntersect11(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    const value2 = schema3.allOf.reduce((acc, schema4) => {
-      const next = Visit7(schema4, references);
-      return typeof next === "object" ? { ...acc, ...next } : next;
-    }, {});
-    if (!Check(schema3, references, value2))
-      throw new ValueCreateError(schema3, "Intersect produced invalid value. Consider using a default value.");
-    return value2;
-  }
-}
-function FromIterator6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return function* () {}();
-  }
-}
-function FromLiteral5(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return schema3.const;
-  }
-}
-function FromNever4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    throw new ValueCreateError(schema3, "Never types cannot be created. Consider using a default value.");
-  }
-}
-function FromNot4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    throw new ValueCreateError(schema3, "Not types must have a default value");
-  }
-}
-function FromNull4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return null;
-  }
-}
-function FromNumber4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if (schema3.minimum !== undefined) {
-    return schema3.minimum;
-  } else {
-    return 0;
-  }
-}
-function FromObject11(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    const required3 = new Set(schema3.required);
-    const Acc = {};
-    for (const [key, subschema] of Object.entries(schema3.properties)) {
-      if (!required3.has(key))
-        continue;
-      Acc[key] = Visit7(subschema, references);
-    }
-    return Acc;
-  }
-}
-function FromPromise6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return Promise.resolve(Visit7(schema3.item, references));
-  }
-}
-function FromRecord6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return {};
-  }
-}
-function FromRef7(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return Visit7(Deref(schema3, references), references);
-  }
-}
-function FromRegExp4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    throw new ValueCreateError(schema3, "RegExp types cannot be created. Consider using a default value.");
-  }
-}
-function FromString4(schema3, references) {
-  if (schema3.pattern !== undefined) {
-    if (!HasPropertyKey2(schema3, "default")) {
-      throw new ValueCreateError(schema3, "String types with patterns must specify a default value");
-    } else {
-      return FromDefault(schema3.default);
-    }
-  } else if (schema3.format !== undefined) {
-    if (!HasPropertyKey2(schema3, "default")) {
-      throw new ValueCreateError(schema3, "String types with formats must specify a default value");
-    } else {
-      return FromDefault(schema3.default);
-    }
-  } else {
-    if (HasPropertyKey2(schema3, "default")) {
-      return FromDefault(schema3.default);
-    } else if (schema3.minLength !== undefined) {
-      return Array.from({ length: schema3.minLength }).map(() => " ").join("");
-    } else {
-      return "";
-    }
-  }
-}
-function FromSymbol4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if ("value" in schema3) {
-    return Symbol.for(schema3.value);
-  } else {
-    return Symbol();
-  }
-}
-function FromTemplateLiteral6(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  }
-  if (!IsTemplateLiteralFinite(schema3))
-    throw new ValueCreateError(schema3, "Can only create template literals that produce a finite variants. Consider using a default value.");
-  const generated = TemplateLiteralGenerate(schema3);
-  return generated[0];
-}
-function FromThis3(schema3, references) {
-  if (recursiveDepth++ > recursiveMaxDepth)
-    throw new ValueCreateError(schema3, "Cannot create recursive type as it appears possibly infinite. Consider using a default.");
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return Visit7(Deref(schema3, references), references);
-  }
-}
-function FromTuple8(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  }
-  if (schema3.items === undefined) {
-    return [];
-  } else {
-    return Array.from({ length: schema3.minItems }).map((_, index) => Visit7(schema3.items[index], references));
-  }
-}
-function FromUndefined4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return;
-  }
-}
-function FromUnion13(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if (schema3.anyOf.length === 0) {
-    throw new Error("ValueCreate.Union: Cannot create Union with zero variants");
-  } else {
-    return Visit7(schema3.anyOf[0], references);
-  }
-}
-function FromUint8Array4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else if (schema3.minByteLength !== undefined) {
-    return new Uint8Array(schema3.minByteLength);
-  } else {
-    return new Uint8Array(0);
-  }
-}
-function FromUnknown4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return {};
-  }
-}
-function FromVoid4(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    return;
-  }
-}
-function FromKind3(schema3, references) {
-  if (HasPropertyKey2(schema3, "default")) {
-    return FromDefault(schema3.default);
-  } else {
-    throw new Error("User defined types must specify a default value");
-  }
-}
-function Visit7(schema3, references) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  switch (schema_[Kind]) {
-    case "Any":
-      return FromAny4(schema_, references_);
-    case "Argument":
-      return FromArgument4(schema_, references_);
-    case "Array":
-      return FromArray10(schema_, references_);
-    case "AsyncIterator":
-      return FromAsyncIterator6(schema_, references_);
-    case "BigInt":
-      return FromBigInt4(schema_, references_);
-    case "Boolean":
-      return FromBoolean4(schema_, references_);
-    case "Constructor":
-      return FromConstructor6(schema_, references_);
-    case "Date":
-      return FromDate5(schema_, references_);
-    case "Function":
-      return FromFunction6(schema_, references_);
-    case "Import":
-      return FromImport3(schema_, references_);
-    case "Integer":
-      return FromInteger4(schema_, references_);
-    case "Intersect":
-      return FromIntersect11(schema_, references_);
-    case "Iterator":
-      return FromIterator6(schema_, references_);
-    case "Literal":
-      return FromLiteral5(schema_, references_);
-    case "Never":
-      return FromNever4(schema_, references_);
-    case "Not":
-      return FromNot4(schema_, references_);
-    case "Null":
-      return FromNull4(schema_, references_);
-    case "Number":
-      return FromNumber4(schema_, references_);
-    case "Object":
-      return FromObject11(schema_, references_);
-    case "Promise":
-      return FromPromise6(schema_, references_);
-    case "Record":
-      return FromRecord6(schema_, references_);
-    case "Ref":
-      return FromRef7(schema_, references_);
-    case "RegExp":
-      return FromRegExp4(schema_, references_);
-    case "String":
-      return FromString4(schema_, references_);
-    case "Symbol":
-      return FromSymbol4(schema_, references_);
-    case "TemplateLiteral":
-      return FromTemplateLiteral6(schema_, references_);
-    case "This":
-      return FromThis3(schema_, references_);
-    case "Tuple":
-      return FromTuple8(schema_, references_);
-    case "Undefined":
-      return FromUndefined4(schema_, references_);
-    case "Union":
-      return FromUnion13(schema_, references_);
-    case "Uint8Array":
-      return FromUint8Array4(schema_, references_);
-    case "Unknown":
-      return FromUnknown4(schema_, references_);
-    case "Void":
-      return FromVoid4(schema_, references_);
-    default:
-      if (!exports_type2.Has(schema_[Kind]))
-        throw new ValueCreateError(schema_, "Unknown type");
-      return FromKind3(schema_, references_);
-  }
-}
-function Create2(...args2) {
-  recursiveDepth = 0;
-  return args2.length === 2 ? Visit7(args2[0], args2[1]) : Visit7(args2[0], []);
-}
-var ValueCreateError, recursiveMaxDepth = 512, recursiveDepth = 0;
-var init_create2 = __esm(() => {
-  init_guard();
-  init_check2();
-  init_clone3();
-  init_deref2();
-  init_template_literal2();
-  init_registry();
-  init_symbols2();
-  init_error2();
-  ValueCreateError = class ValueCreateError extends TypeBoxError {
-    constructor(schema3, message2) {
-      super(message2);
-      this.schema = schema3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/create/index.mjs
-var init_create3 = __esm(() => {
-  init_create2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/cast/cast.mjs
-function ScoreUnion(schema3, references, value2) {
-  if (schema3[Kind] === "Object" && typeof value2 === "object" && !IsNull2(value2)) {
-    const object3 = schema3;
-    const keys = Object.getOwnPropertyNames(value2);
-    const entries = Object.entries(object3.properties);
-    return entries.reduce((acc, [key, schema4]) => {
-      const literal3 = schema4[Kind] === "Literal" && schema4.const === value2[key] ? 100 : 0;
-      const checks = Check(schema4, references, value2[key]) ? 10 : 0;
-      const exists = keys.includes(key) ? 1 : 0;
-      return acc + (literal3 + checks + exists);
-    }, 0);
-  } else if (schema3[Kind] === "Union") {
-    const schemas = schema3.anyOf.map((schema4) => Deref(schema4, references));
-    const scores = schemas.map((schema4) => ScoreUnion(schema4, references, value2));
-    return Math.max(...scores);
-  } else {
-    return Check(schema3, references, value2) ? 1 : 0;
-  }
-}
-function SelectUnion(union4, references, value2) {
-  const schemas = union4.anyOf.map((schema3) => Deref(schema3, references));
-  let [select, best] = [schemas[0], 0];
-  for (const schema3 of schemas) {
-    const score = ScoreUnion(schema3, references, value2);
-    if (score > best) {
-      select = schema3;
-      best = score;
-    }
-  }
-  return select;
-}
-function CastUnion(union4, references, value2) {
-  if ("default" in union4) {
-    return typeof value2 === "function" ? union4.default : Clone2(union4.default);
-  } else {
-    const schema3 = SelectUnion(union4, references, value2);
-    return Cast(schema3, references, value2);
-  }
-}
-function DefaultClone(schema3, references, value2) {
-  return Check(schema3, references, value2) ? Clone2(value2) : Create2(schema3, references);
-}
-function Default(schema3, references, value2) {
-  return Check(schema3, references, value2) ? value2 : Create2(schema3, references);
-}
-function FromArray11(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return Clone2(value2);
-  const created = IsArray2(value2) ? Clone2(value2) : Create2(schema3, references);
-  const minimum = IsNumber2(schema3.minItems) && created.length < schema3.minItems ? [...created, ...Array.from({ length: schema3.minItems - created.length }, () => null)] : created;
-  const maximum = IsNumber2(schema3.maxItems) && minimum.length > schema3.maxItems ? minimum.slice(0, schema3.maxItems) : minimum;
-  const casted = maximum.map((value3) => Visit8(schema3.items, references, value3));
-  if (schema3.uniqueItems !== true)
-    return casted;
-  const unique = [...new Set(casted)];
-  if (!Check(schema3, references, unique))
-    throw new ValueCastError(schema3, "Array cast produced invalid data due to uniqueItems constraint");
-  return unique;
-}
-function FromConstructor7(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return Create2(schema3, references);
-  const required3 = new Set(schema3.returns.required || []);
-  const result = function() {};
-  for (const [key, property] of Object.entries(schema3.returns.properties)) {
-    if (!required3.has(key) && value2.prototype[key] === undefined)
-      continue;
-    result.prototype[key] = Visit8(property, references, value2.prototype[key]);
-  }
-  return result;
-}
-function FromImport4(schema3, references, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit8(target, [...references, ...definitions], value2);
-}
-function IntersectAssign(correct, value2) {
-  if (IsObject2(correct) && !IsObject2(value2) || !IsObject2(correct) && IsObject2(value2))
-    return correct;
-  if (!IsObject2(correct) || !IsObject2(value2))
-    return value2;
-  return globalThis.Object.getOwnPropertyNames(correct).reduce((result, key) => {
-    const property = key in value2 ? IntersectAssign(correct[key], value2[key]) : correct[key];
-    return { ...result, [key]: property };
-  }, {});
-}
-function FromIntersect12(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return value2;
-  const correct = Create2(schema3, references);
-  const assigned = IntersectAssign(correct, value2);
-  return Check(schema3, references, assigned) ? assigned : correct;
-}
-function FromNever5(schema3, references, value2) {
-  throw new ValueCastError(schema3, "Never types cannot be cast");
-}
-function FromObject12(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return value2;
-  if (value2 === null || typeof value2 !== "object")
-    return Create2(schema3, references);
-  const required3 = new Set(schema3.required || []);
-  const result = {};
-  for (const [key, property] of Object.entries(schema3.properties)) {
-    if (!required3.has(key) && value2[key] === undefined)
-      continue;
-    result[key] = Visit8(property, references, value2[key]);
-  }
-  if (typeof schema3.additionalProperties === "object") {
-    const propertyNames = Object.getOwnPropertyNames(schema3.properties);
-    for (const propertyName of Object.getOwnPropertyNames(value2)) {
-      if (propertyNames.includes(propertyName))
-        continue;
-      result[propertyName] = Visit8(schema3.additionalProperties, references, value2[propertyName]);
-    }
-  }
-  return result;
-}
-function FromRecord7(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return Clone2(value2);
-  if (value2 === null || typeof value2 !== "object" || Array.isArray(value2) || value2 instanceof Date)
-    return Create2(schema3, references);
-  const subschemaPropertyName = Object.getOwnPropertyNames(schema3.patternProperties)[0];
-  const subschema = schema3.patternProperties[subschemaPropertyName];
-  const result = {};
-  for (const [propKey, propValue] of Object.entries(value2)) {
-    result[propKey] = Visit8(subschema, references, propValue);
-  }
-  return result;
-}
-function FromRef8(schema3, references, value2) {
-  return Visit8(Deref(schema3, references), references, value2);
-}
-function FromThis4(schema3, references, value2) {
-  return Visit8(Deref(schema3, references), references, value2);
-}
-function FromTuple9(schema3, references, value2) {
-  if (Check(schema3, references, value2))
-    return Clone2(value2);
-  if (!IsArray2(value2))
-    return Create2(schema3, references);
-  if (schema3.items === undefined)
-    return [];
-  return schema3.items.map((schema4, index) => Visit8(schema4, references, value2[index]));
-}
-function FromUnion14(schema3, references, value2) {
-  return Check(schema3, references, value2) ? Clone2(value2) : CastUnion(schema3, references, value2);
-}
-function Visit8(schema3, references, value2) {
-  const references_ = IsString2(schema3.$id) ? Pushref(schema3, references) : references;
-  const schema_ = schema3;
-  switch (schema3[Kind]) {
-    case "Array":
-      return FromArray11(schema_, references_, value2);
-    case "Constructor":
-      return FromConstructor7(schema_, references_, value2);
-    case "Import":
-      return FromImport4(schema_, references_, value2);
-    case "Intersect":
-      return FromIntersect12(schema_, references_, value2);
-    case "Never":
-      return FromNever5(schema_, references_, value2);
-    case "Object":
-      return FromObject12(schema_, references_, value2);
-    case "Record":
-      return FromRecord7(schema_, references_, value2);
-    case "Ref":
-      return FromRef8(schema_, references_, value2);
-    case "This":
-      return FromThis4(schema_, references_, value2);
-    case "Tuple":
-      return FromTuple9(schema_, references_, value2);
-    case "Union":
-      return FromUnion14(schema_, references_, value2);
-    case "Date":
-    case "Symbol":
-    case "Uint8Array":
-      return DefaultClone(schema3, references, value2);
-    default:
-      return Default(schema_, references_, value2);
-  }
-}
-function Cast(...args2) {
-  return args2.length === 3 ? Visit8(args2[0], args2[1], args2[2]) : Visit8(args2[0], [], args2[1]);
-}
-var ValueCastError;
-var init_cast = __esm(() => {
-  init_guard();
-  init_error2();
-  init_symbols2();
-  init_create3();
-  init_check2();
-  init_clone3();
-  init_deref2();
-  ValueCastError = class ValueCastError extends TypeBoxError {
-    constructor(schema3, message2) {
-      super(message2);
-      this.schema = schema3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/cast/index.mjs
-var init_cast2 = __esm(() => {
-  init_cast();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clean/clean.mjs
-function IsCheckable(schema3) {
-  return IsKind(schema3) && schema3[Kind] !== "Unsafe";
-}
-function FromArray12(schema3, references, value2) {
-  if (!IsArray2(value2))
-    return value2;
-  return value2.map((value3) => Visit9(schema3.items, references, value3));
-}
-function FromImport5(schema3, references, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit9(target, [...references, ...definitions], value2);
-}
-function FromIntersect13(schema3, references, value2) {
-  const unevaluatedProperties = schema3.unevaluatedProperties;
-  const intersections = schema3.allOf.map((schema4) => Visit9(schema4, references, Clone2(value2)));
-  const composite3 = intersections.reduce((acc, value3) => IsObject2(value3) ? { ...acc, ...value3 } : value3, {});
-  if (!IsObject2(value2) || !IsObject2(composite3) || !IsKind(unevaluatedProperties))
-    return composite3;
-  const knownkeys = KeyOfPropertyKeys(schema3);
-  for (const key of Object.getOwnPropertyNames(value2)) {
-    if (knownkeys.includes(key))
-      continue;
-    if (Check(unevaluatedProperties, references, value2[key])) {
-      composite3[key] = Visit9(unevaluatedProperties, references, value2[key]);
-    }
-  }
-  return composite3;
-}
-function FromObject13(schema3, references, value2) {
-  if (!IsObject2(value2) || IsArray2(value2))
-    return value2;
-  const additionalProperties = schema3.additionalProperties;
-  for (const key of Object.getOwnPropertyNames(value2)) {
-    if (HasPropertyKey2(schema3.properties, key)) {
-      value2[key] = Visit9(schema3.properties[key], references, value2[key]);
-      continue;
-    }
-    if (IsKind(additionalProperties) && Check(additionalProperties, references, value2[key])) {
-      value2[key] = Visit9(additionalProperties, references, value2[key]);
-      continue;
-    }
-    delete value2[key];
-  }
-  return value2;
-}
-function FromRecord8(schema3, references, value2) {
-  if (!IsObject2(value2))
-    return value2;
-  const additionalProperties = schema3.additionalProperties;
-  const propertyKeys = Object.getOwnPropertyNames(value2);
-  const [propertyKey, propertySchema] = Object.entries(schema3.patternProperties)[0];
-  const propertyKeyTest = new RegExp(propertyKey);
-  for (const key of propertyKeys) {
-    if (propertyKeyTest.test(key)) {
-      value2[key] = Visit9(propertySchema, references, value2[key]);
-      continue;
-    }
-    if (IsKind(additionalProperties) && Check(additionalProperties, references, value2[key])) {
-      value2[key] = Visit9(additionalProperties, references, value2[key]);
-      continue;
-    }
-    delete value2[key];
-  }
-  return value2;
-}
-function FromRef9(schema3, references, value2) {
-  return Visit9(Deref(schema3, references), references, value2);
-}
-function FromThis5(schema3, references, value2) {
-  return Visit9(Deref(schema3, references), references, value2);
-}
-function FromTuple10(schema3, references, value2) {
-  if (!IsArray2(value2))
-    return value2;
-  if (IsUndefined2(schema3.items))
-    return [];
-  const length = Math.min(value2.length, schema3.items.length);
-  for (let i = 0;i < length; i++) {
-    value2[i] = Visit9(schema3.items[i], references, value2[i]);
-  }
-  return value2.length > length ? value2.slice(0, length) : value2;
-}
-function FromUnion15(schema3, references, value2) {
-  for (const inner of schema3.anyOf) {
-    if (IsCheckable(inner) && Check(inner, references, value2)) {
-      return Visit9(inner, references, value2);
-    }
-  }
-  return value2;
-}
-function Visit9(schema3, references, value2) {
-  const references_ = IsString2(schema3.$id) ? Pushref(schema3, references) : references;
-  const schema_ = schema3;
-  switch (schema_[Kind]) {
-    case "Array":
-      return FromArray12(schema_, references_, value2);
-    case "Import":
-      return FromImport5(schema_, references_, value2);
-    case "Intersect":
-      return FromIntersect13(schema_, references_, value2);
-    case "Object":
-      return FromObject13(schema_, references_, value2);
-    case "Record":
-      return FromRecord8(schema_, references_, value2);
-    case "Ref":
-      return FromRef9(schema_, references_, value2);
-    case "This":
-      return FromThis5(schema_, references_, value2);
-    case "Tuple":
-      return FromTuple10(schema_, references_, value2);
-    case "Union":
-      return FromUnion15(schema_, references_, value2);
-    default:
-      return value2;
-  }
-}
-function Clean(...args2) {
-  return args2.length === 3 ? Visit9(args2[0], args2[1], args2[2]) : Visit9(args2[0], [], args2[1]);
-}
-var init_clean = __esm(() => {
-  init_keyof2();
-  init_check2();
-  init_clone3();
-  init_deref2();
-  init_symbols2();
-  init_guard();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/clean/index.mjs
-var init_clean2 = __esm(() => {
-  init_clean();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/convert/convert.mjs
-function IsStringNumeric(value2) {
-  return IsString2(value2) && !isNaN(value2) && !isNaN(parseFloat(value2));
-}
-function IsValueToString(value2) {
-  return IsBigInt2(value2) || IsBoolean2(value2) || IsNumber2(value2);
-}
-function IsValueTrue(value2) {
-  return value2 === true || IsNumber2(value2) && value2 === 1 || IsBigInt2(value2) && value2 === BigInt("1") || IsString2(value2) && (value2.toLowerCase() === "true" || value2 === "1");
-}
-function IsValueFalse(value2) {
-  return value2 === false || IsNumber2(value2) && (value2 === 0 || Object.is(value2, -0)) || IsBigInt2(value2) && value2 === BigInt("0") || IsString2(value2) && (value2.toLowerCase() === "false" || value2 === "0" || value2 === "-0");
-}
-function IsTimeStringWithTimeZone(value2) {
-  return IsString2(value2) && /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i.test(value2);
-}
-function IsTimeStringWithoutTimeZone(value2) {
-  return IsString2(value2) && /^(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)?$/i.test(value2);
-}
-function IsDateTimeStringWithTimeZone(value2) {
-  return IsString2(value2) && /^\d\d\d\d-[0-1]\d-[0-3]\dt(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)(?:\.\d+)?(?:z|[+-]\d\d(?::?\d\d)?)$/i.test(value2);
-}
-function IsDateTimeStringWithoutTimeZone(value2) {
-  return IsString2(value2) && /^\d\d\d\d-[0-1]\d-[0-3]\dt(?:[0-2]\d:[0-5]\d:[0-5]\d|23:59:60)?$/i.test(value2);
-}
-function IsDateString(value2) {
-  return IsString2(value2) && /^\d\d\d\d-[0-1]\d-[0-3]\d$/i.test(value2);
-}
-function TryConvertLiteralString(value2, target) {
-  const conversion = TryConvertString(value2);
-  return conversion === target ? conversion : value2;
-}
-function TryConvertLiteralNumber(value2, target) {
-  const conversion = TryConvertNumber(value2);
-  return conversion === target ? conversion : value2;
-}
-function TryConvertLiteralBoolean(value2, target) {
-  const conversion = TryConvertBoolean(value2);
-  return conversion === target ? conversion : value2;
-}
-function TryConvertLiteral(schema3, value2) {
-  return IsString2(schema3.const) ? TryConvertLiteralString(value2, schema3.const) : IsNumber2(schema3.const) ? TryConvertLiteralNumber(value2, schema3.const) : IsBoolean2(schema3.const) ? TryConvertLiteralBoolean(value2, schema3.const) : value2;
-}
-function TryConvertBoolean(value2) {
-  return IsValueTrue(value2) ? true : IsValueFalse(value2) ? false : value2;
-}
-function TryConvertBigInt(value2) {
-  const truncateInteger = (value3) => value3.split(".")[0];
-  return IsStringNumeric(value2) ? BigInt(truncateInteger(value2)) : IsNumber2(value2) ? BigInt(Math.trunc(value2)) : IsValueFalse(value2) ? BigInt(0) : IsValueTrue(value2) ? BigInt(1) : value2;
-}
-function TryConvertString(value2) {
-  return IsSymbol2(value2) && value2.description !== undefined ? value2.description.toString() : IsValueToString(value2) ? value2.toString() : value2;
-}
-function TryConvertNumber(value2) {
-  return IsStringNumeric(value2) ? parseFloat(value2) : IsValueTrue(value2) ? 1 : IsValueFalse(value2) ? 0 : value2;
-}
-function TryConvertInteger(value2) {
-  return IsStringNumeric(value2) ? parseInt(value2) : IsNumber2(value2) ? Math.trunc(value2) : IsValueTrue(value2) ? 1 : IsValueFalse(value2) ? 0 : value2;
-}
-function TryConvertNull(value2) {
-  return IsString2(value2) && value2.toLowerCase() === "null" ? null : value2;
-}
-function TryConvertUndefined(value2) {
-  return IsString2(value2) && value2 === "undefined" ? undefined : value2;
-}
-function TryConvertDate(value2) {
-  return IsDate2(value2) ? value2 : IsNumber2(value2) ? new Date(value2) : IsValueTrue(value2) ? new Date(1) : IsValueFalse(value2) ? new Date(0) : IsStringNumeric(value2) ? new Date(parseInt(value2)) : IsTimeStringWithoutTimeZone(value2) ? new Date(`1970-01-01T${value2}.000Z`) : IsTimeStringWithTimeZone(value2) ? new Date(`1970-01-01T${value2}`) : IsDateTimeStringWithoutTimeZone(value2) ? new Date(`${value2}.000Z`) : IsDateTimeStringWithTimeZone(value2) ? new Date(value2) : IsDateString(value2) ? new Date(`${value2}T00:00:00.000Z`) : value2;
-}
-function Default2(value2) {
-  return value2;
-}
-function FromArray13(schema3, references, value2) {
-  const elements = IsArray2(value2) ? value2 : [value2];
-  return elements.map((element) => Visit10(schema3.items, references, element));
-}
-function FromBigInt5(schema3, references, value2) {
-  return TryConvertBigInt(value2);
-}
-function FromBoolean5(schema3, references, value2) {
-  return TryConvertBoolean(value2);
-}
-function FromDate6(schema3, references, value2) {
-  return TryConvertDate(value2);
-}
-function FromImport6(schema3, references, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit10(target, [...references, ...definitions], value2);
-}
-function FromInteger5(schema3, references, value2) {
-  return TryConvertInteger(value2);
-}
-function FromIntersect14(schema3, references, value2) {
-  return schema3.allOf.reduce((value3, schema4) => Visit10(schema4, references, value3), value2);
-}
-function FromLiteral6(schema3, references, value2) {
-  return TryConvertLiteral(schema3, value2);
-}
-function FromNull5(schema3, references, value2) {
-  return TryConvertNull(value2);
-}
-function FromNumber5(schema3, references, value2) {
-  return TryConvertNumber(value2);
-}
-function FromObject14(schema3, references, value2) {
-  if (!IsObject2(value2) || IsArray2(value2))
-    return value2;
-  for (const propertyKey of Object.getOwnPropertyNames(schema3.properties)) {
-    if (!HasPropertyKey2(value2, propertyKey))
-      continue;
-    value2[propertyKey] = Visit10(schema3.properties[propertyKey], references, value2[propertyKey]);
-  }
-  return value2;
-}
-function FromRecord9(schema3, references, value2) {
-  const isConvertable = IsObject2(value2) && !IsArray2(value2);
-  if (!isConvertable)
-    return value2;
-  const propertyKey = Object.getOwnPropertyNames(schema3.patternProperties)[0];
-  const property = schema3.patternProperties[propertyKey];
-  for (const [propKey, propValue] of Object.entries(value2)) {
-    value2[propKey] = Visit10(property, references, propValue);
-  }
-  return value2;
-}
-function FromRef10(schema3, references, value2) {
-  return Visit10(Deref(schema3, references), references, value2);
-}
-function FromString5(schema3, references, value2) {
-  return TryConvertString(value2);
-}
-function FromSymbol5(schema3, references, value2) {
-  return IsString2(value2) || IsNumber2(value2) ? Symbol(value2) : value2;
-}
-function FromThis6(schema3, references, value2) {
-  return Visit10(Deref(schema3, references), references, value2);
-}
-function FromTuple11(schema3, references, value2) {
-  const isConvertable = IsArray2(value2) && !IsUndefined2(schema3.items);
-  if (!isConvertable)
-    return value2;
-  return value2.map((value3, index) => {
-    return index < schema3.items.length ? Visit10(schema3.items[index], references, value3) : value3;
-  });
-}
-function FromUndefined5(schema3, references, value2) {
-  return TryConvertUndefined(value2);
-}
-function FromUnion16(schema3, references, value2) {
-  for (const subschema of schema3.anyOf) {
-    if (Check(subschema, references, value2)) {
-      return value2;
-    }
-  }
-  for (const subschema of schema3.anyOf) {
-    const converted = Visit10(subschema, references, Clone2(value2));
-    if (!Check(subschema, references, converted))
-      continue;
-    return converted;
-  }
-  return value2;
-}
-function Visit10(schema3, references, value2) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  switch (schema3[Kind]) {
-    case "Array":
-      return FromArray13(schema_, references_, value2);
-    case "BigInt":
-      return FromBigInt5(schema_, references_, value2);
-    case "Boolean":
-      return FromBoolean5(schema_, references_, value2);
-    case "Date":
-      return FromDate6(schema_, references_, value2);
-    case "Import":
-      return FromImport6(schema_, references_, value2);
-    case "Integer":
-      return FromInteger5(schema_, references_, value2);
-    case "Intersect":
-      return FromIntersect14(schema_, references_, value2);
-    case "Literal":
-      return FromLiteral6(schema_, references_, value2);
-    case "Null":
-      return FromNull5(schema_, references_, value2);
-    case "Number":
-      return FromNumber5(schema_, references_, value2);
-    case "Object":
-      return FromObject14(schema_, references_, value2);
-    case "Record":
-      return FromRecord9(schema_, references_, value2);
-    case "Ref":
-      return FromRef10(schema_, references_, value2);
-    case "String":
-      return FromString5(schema_, references_, value2);
-    case "Symbol":
-      return FromSymbol5(schema_, references_, value2);
-    case "This":
-      return FromThis6(schema_, references_, value2);
-    case "Tuple":
-      return FromTuple11(schema_, references_, value2);
-    case "Undefined":
-      return FromUndefined5(schema_, references_, value2);
-    case "Union":
-      return FromUnion16(schema_, references_, value2);
-    default:
-      return Default2(value2);
-  }
-}
-function Convert(...args2) {
-  return args2.length === 3 ? Visit10(args2[0], args2[1], args2[2]) : Visit10(args2[0], [], args2[1]);
-}
-var init_convert = __esm(() => {
-  init_clone3();
-  init_check2();
-  init_deref2();
-  init_symbols2();
-  init_guard();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/convert/index.mjs
-var init_convert2 = __esm(() => {
-  init_convert();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/decode.mjs
-function Default3(schema3, path, value2) {
-  try {
-    return IsTransform(schema3) ? schema3[TransformKind].Decode(value2) : value2;
-  } catch (error3) {
-    throw new TransformDecodeError(schema3, path, value2, error3);
-  }
-}
-function FromArray14(schema3, references, path, value2) {
-  return IsArray2(value2) ? Default3(schema3, path, value2.map((value3, index) => Visit11(schema3.items, references, `${path}/${index}`, value3))) : Default3(schema3, path, value2);
-}
-function FromIntersect15(schema3, references, path, value2) {
-  if (!IsObject2(value2) || IsValueType(value2))
-    return Default3(schema3, path, value2);
-  const knownEntries = KeyOfPropertyEntries(schema3);
-  const knownKeys = knownEntries.map((entry) => entry[0]);
-  const knownProperties = { ...value2 };
-  for (const [knownKey, knownSchema] of knownEntries)
-    if (knownKey in knownProperties) {
-      knownProperties[knownKey] = Visit11(knownSchema, references, `${path}/${knownKey}`, knownProperties[knownKey]);
-    }
-  if (!IsTransform(schema3.unevaluatedProperties)) {
-    return Default3(schema3, path, knownProperties);
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const unevaluatedProperties = schema3.unevaluatedProperties;
-  const unknownProperties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.includes(key)) {
-      unknownProperties[key] = Default3(unevaluatedProperties, `${path}/${key}`, unknownProperties[key]);
-    }
-  return Default3(schema3, path, unknownProperties);
-}
-function FromImport7(schema3, references, path, value2) {
-  const additional = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  const result = Visit11(target, [...references, ...additional], path, value2);
-  return Default3(schema3, path, result);
-}
-function FromNot5(schema3, references, path, value2) {
-  return Default3(schema3, path, Visit11(schema3.not, references, path, value2));
-}
-function FromObject15(schema3, references, path, value2) {
-  if (!IsObject2(value2))
-    return Default3(schema3, path, value2);
-  const knownKeys = KeyOfPropertyKeys(schema3);
-  const knownProperties = { ...value2 };
-  for (const key of knownKeys) {
-    if (!HasPropertyKey2(knownProperties, key))
-      continue;
-    if (IsUndefined2(knownProperties[key]) && (!IsUndefined3(schema3.properties[key]) || TypeSystemPolicy.IsExactOptionalProperty(knownProperties, key)))
-      continue;
-    knownProperties[key] = Visit11(schema3.properties[key], references, `${path}/${key}`, knownProperties[key]);
-  }
-  if (!IsSchema(schema3.additionalProperties)) {
-    return Default3(schema3, path, knownProperties);
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const additionalProperties = schema3.additionalProperties;
-  const unknownProperties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.includes(key)) {
-      unknownProperties[key] = Default3(additionalProperties, `${path}/${key}`, unknownProperties[key]);
-    }
-  return Default3(schema3, path, unknownProperties);
-}
-function FromRecord10(schema3, references, path, value2) {
-  if (!IsObject2(value2))
-    return Default3(schema3, path, value2);
-  const pattern2 = Object.getOwnPropertyNames(schema3.patternProperties)[0];
-  const knownKeys = new RegExp(pattern2);
-  const knownProperties = { ...value2 };
-  for (const key of Object.getOwnPropertyNames(value2))
-    if (knownKeys.test(key)) {
-      knownProperties[key] = Visit11(schema3.patternProperties[pattern2], references, `${path}/${key}`, knownProperties[key]);
-    }
-  if (!IsSchema(schema3.additionalProperties)) {
-    return Default3(schema3, path, knownProperties);
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const additionalProperties = schema3.additionalProperties;
-  const unknownProperties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.test(key)) {
-      unknownProperties[key] = Default3(additionalProperties, `${path}/${key}`, unknownProperties[key]);
-    }
-  return Default3(schema3, path, unknownProperties);
-}
-function FromRef11(schema3, references, path, value2) {
-  const target = Deref(schema3, references);
-  return Default3(schema3, path, Visit11(target, references, path, value2));
-}
-function FromThis7(schema3, references, path, value2) {
-  const target = Deref(schema3, references);
-  return Default3(schema3, path, Visit11(target, references, path, value2));
-}
-function FromTuple12(schema3, references, path, value2) {
-  return IsArray2(value2) && IsArray2(schema3.items) ? Default3(schema3, path, schema3.items.map((schema4, index) => Visit11(schema4, references, `${path}/${index}`, value2[index]))) : Default3(schema3, path, value2);
-}
-function FromUnion17(schema3, references, path, value2) {
-  for (const subschema of schema3.anyOf) {
-    if (!Check(subschema, references, value2))
-      continue;
-    const decoded = Visit11(subschema, references, path, value2);
-    return Default3(schema3, path, decoded);
-  }
-  return Default3(schema3, path, value2);
-}
-function Visit11(schema3, references, path, value2) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  switch (schema3[Kind]) {
-    case "Array":
-      return FromArray14(schema_, references_, path, value2);
-    case "Import":
-      return FromImport7(schema_, references_, path, value2);
-    case "Intersect":
-      return FromIntersect15(schema_, references_, path, value2);
-    case "Not":
-      return FromNot5(schema_, references_, path, value2);
-    case "Object":
-      return FromObject15(schema_, references_, path, value2);
-    case "Record":
-      return FromRecord10(schema_, references_, path, value2);
-    case "Ref":
-      return FromRef11(schema_, references_, path, value2);
-    case "Symbol":
-      return Default3(schema_, path, value2);
-    case "This":
-      return FromThis7(schema_, references_, path, value2);
-    case "Tuple":
-      return FromTuple12(schema_, references_, path, value2);
-    case "Union":
-      return FromUnion17(schema_, references_, path, value2);
-    default:
-      return Default3(schema_, path, value2);
-  }
-}
-function TransformDecode(schema3, references, value2) {
-  return Visit11(schema3, references, "", value2);
-}
-var TransformDecodeCheckError, TransformDecodeError;
-var init_decode = __esm(() => {
-  init_policy();
-  init_symbols2();
-  init_error2();
-  init_keyof2();
-  init_deref2();
-  init_check2();
-  init_guard();
-  init_kind();
-  TransformDecodeCheckError = class TransformDecodeCheckError extends TypeBoxError {
-    constructor(schema3, value2, error3) {
-      super(`Unable to decode value as it does not match the expected schema`);
-      this.schema = schema3;
-      this.value = value2;
-      this.error = error3;
-    }
-  };
-  TransformDecodeError = class TransformDecodeError extends TypeBoxError {
-    constructor(schema3, path, value2, error3) {
-      super(error3 instanceof Error ? error3.message : "Unknown error");
-      this.schema = schema3;
-      this.path = path;
-      this.value = value2;
-      this.error = error3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/encode.mjs
-function Default4(schema3, path, value2) {
-  try {
-    return IsTransform(schema3) ? schema3[TransformKind].Encode(value2) : value2;
-  } catch (error3) {
-    throw new TransformEncodeError(schema3, path, value2, error3);
-  }
-}
-function FromArray15(schema3, references, path, value2) {
-  const defaulted = Default4(schema3, path, value2);
-  return IsArray2(defaulted) ? defaulted.map((value3, index) => Visit12(schema3.items, references, `${path}/${index}`, value3)) : defaulted;
-}
-function FromImport8(schema3, references, path, value2) {
-  const additional = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  const result = Default4(schema3, path, value2);
-  return Visit12(target, [...references, ...additional], path, result);
-}
-function FromIntersect16(schema3, references, path, value2) {
-  const defaulted = Default4(schema3, path, value2);
-  if (!IsObject2(value2) || IsValueType(value2))
-    return defaulted;
-  const knownEntries = KeyOfPropertyEntries(schema3);
-  const knownKeys = knownEntries.map((entry) => entry[0]);
-  const knownProperties = { ...defaulted };
-  for (const [knownKey, knownSchema] of knownEntries)
-    if (knownKey in knownProperties) {
-      knownProperties[knownKey] = Visit12(knownSchema, references, `${path}/${knownKey}`, knownProperties[knownKey]);
-    }
-  if (!IsTransform(schema3.unevaluatedProperties)) {
-    return knownProperties;
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const unevaluatedProperties = schema3.unevaluatedProperties;
-  const properties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.includes(key)) {
-      properties[key] = Default4(unevaluatedProperties, `${path}/${key}`, properties[key]);
-    }
-  return properties;
-}
-function FromNot6(schema3, references, path, value2) {
-  return Default4(schema3.not, path, Default4(schema3, path, value2));
-}
-function FromObject16(schema3, references, path, value2) {
-  const defaulted = Default4(schema3, path, value2);
-  if (!IsObject2(defaulted))
-    return defaulted;
-  const knownKeys = KeyOfPropertyKeys(schema3);
-  const knownProperties = { ...defaulted };
-  for (const key of knownKeys) {
-    if (!HasPropertyKey2(knownProperties, key))
-      continue;
-    if (IsUndefined2(knownProperties[key]) && (!IsUndefined3(schema3.properties[key]) || TypeSystemPolicy.IsExactOptionalProperty(knownProperties, key)))
-      continue;
-    knownProperties[key] = Visit12(schema3.properties[key], references, `${path}/${key}`, knownProperties[key]);
-  }
-  if (!IsSchema(schema3.additionalProperties)) {
-    return knownProperties;
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const additionalProperties = schema3.additionalProperties;
-  const properties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.includes(key)) {
-      properties[key] = Default4(additionalProperties, `${path}/${key}`, properties[key]);
-    }
-  return properties;
-}
-function FromRecord11(schema3, references, path, value2) {
-  const defaulted = Default4(schema3, path, value2);
-  if (!IsObject2(value2))
-    return defaulted;
-  const pattern2 = Object.getOwnPropertyNames(schema3.patternProperties)[0];
-  const knownKeys = new RegExp(pattern2);
-  const knownProperties = { ...defaulted };
-  for (const key of Object.getOwnPropertyNames(value2))
-    if (knownKeys.test(key)) {
-      knownProperties[key] = Visit12(schema3.patternProperties[pattern2], references, `${path}/${key}`, knownProperties[key]);
-    }
-  if (!IsSchema(schema3.additionalProperties)) {
-    return knownProperties;
-  }
-  const unknownKeys = Object.getOwnPropertyNames(knownProperties);
-  const additionalProperties = schema3.additionalProperties;
-  const properties = { ...knownProperties };
-  for (const key of unknownKeys)
-    if (!knownKeys.test(key)) {
-      properties[key] = Default4(additionalProperties, `${path}/${key}`, properties[key]);
-    }
-  return properties;
-}
-function FromRef12(schema3, references, path, value2) {
-  const target = Deref(schema3, references);
-  const resolved = Visit12(target, references, path, value2);
-  return Default4(schema3, path, resolved);
-}
-function FromThis8(schema3, references, path, value2) {
-  const target = Deref(schema3, references);
-  const resolved = Visit12(target, references, path, value2);
-  return Default4(schema3, path, resolved);
-}
-function FromTuple13(schema3, references, path, value2) {
-  const value1 = Default4(schema3, path, value2);
-  return IsArray2(schema3.items) ? schema3.items.map((schema4, index) => Visit12(schema4, references, `${path}/${index}`, value1[index])) : [];
-}
-function FromUnion18(schema3, references, path, value2) {
-  for (const subschema of schema3.anyOf) {
-    if (!Check(subschema, references, value2))
-      continue;
-    const value1 = Visit12(subschema, references, path, value2);
-    return Default4(schema3, path, value1);
-  }
-  for (const subschema of schema3.anyOf) {
-    const value1 = Visit12(subschema, references, path, value2);
-    if (!Check(schema3, references, value1))
-      continue;
-    return Default4(schema3, path, value1);
-  }
-  return Default4(schema3, path, value2);
-}
-function Visit12(schema3, references, path, value2) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  switch (schema3[Kind]) {
-    case "Array":
-      return FromArray15(schema_, references_, path, value2);
-    case "Import":
-      return FromImport8(schema_, references_, path, value2);
-    case "Intersect":
-      return FromIntersect16(schema_, references_, path, value2);
-    case "Not":
-      return FromNot6(schema_, references_, path, value2);
-    case "Object":
-      return FromObject16(schema_, references_, path, value2);
-    case "Record":
-      return FromRecord11(schema_, references_, path, value2);
-    case "Ref":
-      return FromRef12(schema_, references_, path, value2);
-    case "This":
-      return FromThis8(schema_, references_, path, value2);
-    case "Tuple":
-      return FromTuple13(schema_, references_, path, value2);
-    case "Union":
-      return FromUnion18(schema_, references_, path, value2);
-    default:
-      return Default4(schema_, path, value2);
-  }
-}
-function TransformEncode(schema3, references, value2) {
-  return Visit12(schema3, references, "", value2);
-}
-var TransformEncodeCheckError, TransformEncodeError;
-var init_encode = __esm(() => {
-  init_policy();
-  init_symbols2();
-  init_error2();
-  init_keyof2();
-  init_deref2();
-  init_check2();
-  init_guard();
-  init_kind();
-  TransformEncodeCheckError = class TransformEncodeCheckError extends TypeBoxError {
-    constructor(schema3, value2, error3) {
-      super(`The encoded value does not match the expected schema`);
-      this.schema = schema3;
-      this.value = value2;
-      this.error = error3;
-    }
-  };
-  TransformEncodeError = class TransformEncodeError extends TypeBoxError {
-    constructor(schema3, path, value2, error3) {
-      super(`${error3 instanceof Error ? error3.message : "Unknown error"}`);
-      this.schema = schema3;
-      this.path = path;
-      this.value = value2;
-      this.error = error3;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/has.mjs
-function FromArray16(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.items, references);
-}
-function FromAsyncIterator7(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.items, references);
-}
-function FromConstructor8(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.returns, references) || schema3.parameters.some((schema4) => Visit13(schema4, references));
-}
-function FromFunction7(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.returns, references) || schema3.parameters.some((schema4) => Visit13(schema4, references));
-}
-function FromIntersect17(schema3, references) {
-  return IsTransform(schema3) || IsTransform(schema3.unevaluatedProperties) || schema3.allOf.some((schema4) => Visit13(schema4, references));
-}
-function FromImport9(schema3, references) {
-  const additional = globalThis.Object.getOwnPropertyNames(schema3.$defs).reduce((result, key) => [...result, schema3.$defs[key]], []);
-  const target = schema3.$defs[schema3.$ref];
-  return IsTransform(schema3) || Visit13(target, [...additional, ...references]);
-}
-function FromIterator7(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.items, references);
-}
-function FromNot7(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.not, references);
-}
-function FromObject17(schema3, references) {
-  return IsTransform(schema3) || Object.values(schema3.properties).some((schema4) => Visit13(schema4, references)) || IsSchema(schema3.additionalProperties) && Visit13(schema3.additionalProperties, references);
-}
-function FromPromise7(schema3, references) {
-  return IsTransform(schema3) || Visit13(schema3.item, references);
-}
-function FromRecord12(schema3, references) {
-  const pattern2 = Object.getOwnPropertyNames(schema3.patternProperties)[0];
-  const property = schema3.patternProperties[pattern2];
-  return IsTransform(schema3) || Visit13(property, references) || IsSchema(schema3.additionalProperties) && IsTransform(schema3.additionalProperties);
-}
-function FromRef13(schema3, references) {
-  if (IsTransform(schema3))
-    return true;
-  return Visit13(Deref(schema3, references), references);
-}
-function FromThis9(schema3, references) {
-  if (IsTransform(schema3))
-    return true;
-  return Visit13(Deref(schema3, references), references);
-}
-function FromTuple14(schema3, references) {
-  return IsTransform(schema3) || !IsUndefined2(schema3.items) && schema3.items.some((schema4) => Visit13(schema4, references));
-}
-function FromUnion19(schema3, references) {
-  return IsTransform(schema3) || schema3.anyOf.some((schema4) => Visit13(schema4, references));
-}
-function Visit13(schema3, references) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  if (schema3.$id && visited.has(schema3.$id))
-    return false;
-  if (schema3.$id)
-    visited.add(schema3.$id);
-  switch (schema3[Kind]) {
-    case "Array":
-      return FromArray16(schema_, references_);
-    case "AsyncIterator":
-      return FromAsyncIterator7(schema_, references_);
-    case "Constructor":
-      return FromConstructor8(schema_, references_);
-    case "Function":
-      return FromFunction7(schema_, references_);
-    case "Import":
-      return FromImport9(schema_, references_);
-    case "Intersect":
-      return FromIntersect17(schema_, references_);
-    case "Iterator":
-      return FromIterator7(schema_, references_);
-    case "Not":
-      return FromNot7(schema_, references_);
-    case "Object":
-      return FromObject17(schema_, references_);
-    case "Promise":
-      return FromPromise7(schema_, references_);
-    case "Record":
-      return FromRecord12(schema_, references_);
-    case "Ref":
-      return FromRef13(schema_, references_);
-    case "This":
-      return FromThis9(schema_, references_);
-    case "Tuple":
-      return FromTuple14(schema_, references_);
-    case "Union":
-      return FromUnion19(schema_, references_);
-    default:
-      return IsTransform(schema3);
-  }
-}
-function HasTransform(schema3, references) {
-  visited.clear();
-  return Visit13(schema3, references);
-}
-var visited;
-var init_has = __esm(() => {
-  init_deref2();
-  init_symbols2();
-  init_kind();
-  init_guard();
-  visited = new Set;
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/transform/index.mjs
-var init_transform3 = __esm(() => {
-  init_decode();
-  init_encode();
-  init_has();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/decode/decode.mjs
-function Decode(...args2) {
-  const [schema3, references, value2] = args2.length === 3 ? [args2[0], args2[1], args2[2]] : [args2[0], [], args2[1]];
-  if (!Check(schema3, references, value2))
-    throw new TransformDecodeCheckError(schema3, value2, Errors(schema3, references, value2).First());
-  return HasTransform(schema3, references) ? TransformDecode(schema3, references, value2) : value2;
-}
-var init_decode2 = __esm(() => {
-  init_transform3();
-  init_check2();
-  init_errors2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/decode/index.mjs
-var init_decode3 = __esm(() => {
-  init_decode2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/default/default.mjs
-function ValueOrDefault(schema3, value2) {
-  const defaultValue = HasPropertyKey2(schema3, "default") ? schema3.default : undefined;
-  const clone3 = IsFunction2(defaultValue) ? defaultValue() : Clone2(defaultValue);
-  return IsUndefined2(value2) ? clone3 : IsObject2(value2) && IsObject2(clone3) ? Object.assign(clone3, value2) : value2;
-}
-function HasDefaultProperty(schema3) {
-  return IsKind(schema3) && "default" in schema3;
-}
-function FromArray17(schema3, references, value2) {
-  if (IsArray2(value2)) {
+  if (Array.isArray(value2)) {
+    const out = [];
     for (let i = 0;i < value2.length; i++) {
-      value2[i] = Visit14(schema3.items, references, value2[i]);
+      const file = value2[i];
+      if (!file)
+        continue;
+      const entry = {
+        id: String(file.id || ""),
+        name: String(file.name || ""),
+        size: Number(file.size || 0),
+        mime: String(file.mime || file.type || ""),
+        type: String(file.type || file.mime || "")
+      };
+      if (entry.name || entry.id)
+        out.push(entry);
     }
-    return value2;
+    return out;
   }
-  const defaulted = ValueOrDefault(schema3, value2);
-  if (!IsArray2(defaulted))
-    return defaulted;
-  for (let i = 0;i < defaulted.length; i++) {
-    defaulted[i] = Visit14(schema3.items, references, defaulted[i]);
+  if (value2 && typeof value2 === "object" && Array.isArray(value2.files)) {
+    return normalizeFileList(value2.files);
   }
-  return defaulted;
-}
-function FromDate7(schema3, references, value2) {
-  return IsDate2(value2) ? value2 : ValueOrDefault(schema3, value2);
-}
-function FromImport10(schema3, references, value2) {
-  const definitions = globalThis.Object.values(schema3.$defs);
-  const target = schema3.$defs[schema3.$ref];
-  return Visit14(target, [...references, ...definitions], value2);
-}
-function FromIntersect18(schema3, references, value2) {
-  const defaulted = ValueOrDefault(schema3, value2);
-  return schema3.allOf.reduce((acc, schema4) => {
-    const next = Visit14(schema4, references, defaulted);
-    return IsObject2(next) ? { ...acc, ...next } : next;
-  }, {});
-}
-function FromObject18(schema3, references, value2) {
-  const defaulted = ValueOrDefault(schema3, value2);
-  if (!IsObject2(defaulted))
-    return defaulted;
-  const knownPropertyKeys = Object.getOwnPropertyNames(schema3.properties);
-  for (const key of knownPropertyKeys) {
-    const propertyValue = Visit14(schema3.properties[key], references, defaulted[key]);
-    if (IsUndefined2(propertyValue))
-      continue;
-    defaulted[key] = Visit14(schema3.properties[key], references, defaulted[key]);
+  if (value2 && typeof value2 === "object") {
+    const file = value2;
+    const id = String(file.id || "");
+    const name = String(file.name || "");
+    const size = Number(file.size || 0);
+    const mime = String(file.mime || file.type || "");
+    const type4 = String(file.type || file.mime || "");
+    if (!id && !name)
+      return [];
+    return [{ id, name, size, mime, type: type4 }];
   }
-  if (!HasDefaultProperty(schema3.additionalProperties))
-    return defaulted;
-  for (const key of Object.getOwnPropertyNames(defaulted)) {
-    if (knownPropertyKeys.includes(key))
-      continue;
-    defaulted[key] = Visit14(schema3.additionalProperties, references, defaulted[key]);
-  }
-  return defaulted;
+  return [];
 }
-function FromRecord13(schema3, references, value2) {
-  const defaulted = ValueOrDefault(schema3, value2);
-  if (!IsObject2(defaulted))
-    return defaulted;
-  const additionalPropertiesSchema = schema3.additionalProperties;
-  const [propertyKeyPattern, propertySchema] = Object.entries(schema3.patternProperties)[0];
-  const knownPropertyKey = new RegExp(propertyKeyPattern);
-  for (const key of Object.getOwnPropertyNames(defaulted)) {
-    if (!(knownPropertyKey.test(key) && HasDefaultProperty(propertySchema)))
-      continue;
-    defaulted[key] = Visit14(propertySchema, references, defaulted[key]);
-  }
-  if (!HasDefaultProperty(additionalPropertiesSchema))
-    return defaulted;
-  for (const key of Object.getOwnPropertyNames(defaulted)) {
-    if (knownPropertyKey.test(key))
-      continue;
-    defaulted[key] = Visit14(additionalPropertiesSchema, references, defaulted[key]);
-  }
-  return defaulted;
-}
-function FromRef14(schema3, references, value2) {
-  return Visit14(Deref(schema3, references), references, ValueOrDefault(schema3, value2));
-}
-function FromThis10(schema3, references, value2) {
-  return Visit14(Deref(schema3, references), references, value2);
-}
-function FromTuple15(schema3, references, value2) {
-  const defaulted = ValueOrDefault(schema3, value2);
-  if (!IsArray2(defaulted) || IsUndefined2(schema3.items))
-    return defaulted;
-  const [items, max] = [schema3.items, Math.max(schema3.items.length, defaulted.length)];
-  for (let i = 0;i < max; i++) {
-    if (i < items.length)
-      defaulted[i] = Visit14(items[i], references, defaulted[i]);
-  }
-  return defaulted;
-}
-function FromUnion20(schema3, references, value2) {
-  const defaulted = ValueOrDefault(schema3, value2);
-  for (const inner of schema3.anyOf) {
-    const result = Visit14(inner, references, Clone2(defaulted));
-    if (Check(inner, references, result)) {
+var FILE_ENTRY_SCHEMA, WireFile, WireUpload;
+var init_file_upload = __esm(() => {
+  init_esm();
+  FILE_ENTRY_SCHEMA = Type.Object({
+    name: Type.String(),
+    size: Type.Number({ minimum: 0 }),
+    mime: Type.Optional(Type.String()),
+    type: Type.Optional(Type.String()),
+    id: Type.Optional(Type.String())
+  }, { additionalProperties: true });
+  WireFile = class WireFile extends WireProperty {
+    id = "";
+    name = "";
+    size = 0;
+    mime = "";
+    __wire_type = "file";
+    constructor(data) {
+      super();
+      if (data) {
+        this.id = data.id;
+        this.name = data.name;
+        this.size = data.size;
+        this.mime = data.mime;
+      }
+    }
+    hydrate(value2) {
+      if (value2 && typeof value2 === "object") {
+        this.id = String(value2.id || "");
+        this.name = String(value2.name || "");
+        this.size = Number(value2.size || 0);
+        this.mime = String(value2.mime || "");
+      }
+    }
+    dehydrate() {
+      return {
+        id: this.id,
+        name: this.name,
+        size: this.size,
+        mime: this.mime,
+        __wire_type: this.__wire_type
+      };
+    }
+    get file() {
+      return this.id ? this : null;
+    }
+    getPath(store) {
+      return store.get(this.id);
+    }
+  };
+  WireUpload = class WireUpload extends WireProperty {
+    __wire_type = "upload";
+    files = [];
+    uploading = null;
+    constructor(initial) {
+      super();
+      this.hydrate(initial);
+    }
+    hydrate(value2) {
+      const normalized = normalizeFileList(value2);
+      const files = [];
+      for (let i = 0;i < normalized.length; i++) {
+        const item = normalized[i];
+        files.push(new WireFile({
+          id: String(item.id || ""),
+          name: String(item.name || ""),
+          size: Number(item.size || 0),
+          mime: String(item.mime || item.type || "")
+        }));
+      }
+      this.files = files;
+      if (value2 && typeof value2 === "object" && value2.uploading) {
+        this.uploading = { ...value2.uploading };
+      }
+    }
+    dehydrate() {
+      const first = this.file;
+      return {
+        files: this.files.map((file) => file.dehydrate()),
+        id: first?.id || "",
+        name: first?.name || "",
+        size: Number(first?.size || 0),
+        mime: first?.mime || "",
+        type: first?.mime || "",
+        uploading: this.uploading || undefined,
+        __wire_type: this.__wire_type
+      };
+    }
+    clear() {
+      this.files = [];
+      this.uploading = null;
+    }
+    add(file) {
+      this.files.push(new WireFile({
+        id: String(file.id || ""),
+        name: String(file.name || ""),
+        size: Number(file.size || 0),
+        mime: String(file.mime || file.type || "")
+      }));
+    }
+    toArray() {
+      return this.files.map((item) => item.dehydrate());
+    }
+    get file() {
+      return this.files[0] || null;
+    }
+    get id() {
+      return this.file?.id || "";
+    }
+    set id(value2) {
+      if (!this.file) {
+        if (!value2)
+          return;
+        this.files = [new WireFile];
+      }
+      this.files[0].id = String(value2 || "");
+    }
+    get name() {
+      return this.file?.name || "";
+    }
+    set name(value2) {
+      if (!this.file)
+        this.files = [new WireFile];
+      this.files[0].name = String(value2 || "");
+    }
+    get size() {
+      return Number(this.file?.size || 0);
+    }
+    set size(value2) {
+      if (!this.file)
+        this.files = [new WireFile];
+      this.files[0].size = Number(value2 || 0);
+    }
+    get mime() {
+      return this.file?.mime || "";
+    }
+    set mime(value2) {
+      if (!this.file)
+        this.files = [new WireFile];
+      this.files[0].mime = String(value2 || "");
+    }
+  };
+});
+
+// packages/wire/src/features/wire-broadcast.ts
+var WireBroadcast;
+var init_wire_broadcast = __esm(() => {
+  WireBroadcast = class WireBroadcast extends WireProperty {
+    options;
+    static DEFAULT_TTL_MS = 5 * 60 * 1000;
+    static CONNECTION_STALE_FACTOR = 2;
+    static CLEANUP_INTERVAL_MS = 60 * 1000;
+    static rooms = new Map;
+    static cleanupTimer = null;
+    __wire_type = "broadcast";
+    connected = false;
+    connections = 0;
+    channel = "global";
+    chunks = [];
+    state = {};
+    constructor(options = {}) {
+      super();
+      this.options = options;
+      this.options.autodelete ??= true;
+      if (options.name)
+        this.channel = options.name;
+      WireBroadcast.ensureCleanupLoop();
+    }
+    hydrate(value2, room) {
+      if (room)
+        this.channel = String(room || "").trim() || this.channel;
+      if (this.isComponentLike(value2)) {
+        this.serverHydrate(value2, room);
+        return;
+      }
+      if (value2 && typeof value2 === "object") {
+        if (value2.channel)
+          this.channel = value2.channel;
+        if (value2.state)
+          this.state = value2.state;
+        this.connected = !!value2.connected;
+        this.connections = Number(value2.connections || 0);
+      }
+    }
+    dehydrate() {
+      return {
+        channel: this.channel,
+        state: this.state,
+        connected: this.connected,
+        connections: this.connections,
+        __wire_type: this.__wire_type
+      };
+    }
+    serverHydrate(component, room) {
+      if (room)
+        this.channel = String(room || "").trim() || this.channel;
+      const roomState = this.getRoom();
+      this.touchConnection(roomState, component);
+      this.connected = true;
+      this.connections = roomState.connections.size;
+      const snapshot = this.filterState(roomState.state);
+      const keys = Object.keys(snapshot);
+      for (let i = 0;i < keys.length; i++) {
+        const key = keys[i];
+        if (key in component && typeof component[key] !== "function") {
+          component[key] = snapshot[key];
+        }
+      }
+      this.state = snapshot;
+    }
+    update(component, kirewireOrRoom, maybeRoom) {
+      const roomName = typeof kirewireOrRoom === "string" ? kirewireOrRoom : String(maybeRoom || "");
+      if (roomName)
+        this.channel = roomName.trim() || this.channel;
+      const kirewire = typeof kirewireOrRoom === "string" ? component?.$wire_instance : kirewireOrRoom || component?.$wire_instance;
+      const roomState = this.getRoom();
+      this.touchConnection(roomState, component);
+      this.connected = true;
+      this.connections = roomState.connections.size;
+      const current = this.filterState(component);
+      const keys = Object.keys(current);
+      let changed = false;
+      for (let i = 0;i < keys.length; i++) {
+        const key = keys[i];
+        if (JSON.stringify(roomState.state[key]) !== JSON.stringify(current[key])) {
+          roomState.state[key] = current[key];
+          changed = true;
+        }
+      }
+      if (changed && kirewire && typeof kirewire.emit === "function") {
+        this.state = { ...roomState.state };
+        kirewire.emit(`broadcast:${this.channel}`, {
+          channel: this.channel,
+          roomId: this.getRoomId(),
+          state: this.state
+        });
+      }
+    }
+    disconnect(component) {
+      const room = this.findRoom();
+      if (!room) {
+        this.connected = false;
+        this.connections = 0;
+        return;
+      }
+      room.connections.delete(this.makeConnectionId(component));
+      room.lastSeen = Date.now();
+      this.connections = room.connections.size;
+      this.connected = this.connections > 0;
+    }
+    getRoomId(room) {
+      const channel = String(room || this.channel || "").trim() || "global";
+      return this.makeRoomId(channel, this.options.password);
+    }
+    static cleanupNow(now = Date.now()) {
+      for (const [roomId, room] of WireBroadcast.rooms.entries()) {
+        WireBroadcast.pruneConnections(room, now);
+        if (room.connections.size > 0) {
+          room.lastSeen = now;
+        }
+        if (room.autodelete && now - room.lastSeen > room.ttlMs && room.connections.size === 0) {
+          WireBroadcast.rooms.delete(roomId);
+        }
+      }
+    }
+    getRoom() {
+      const roomId = this.makeRoomId(this.channel, this.options.password);
+      let room = WireBroadcast.rooms.get(roomId);
+      if (!room) {
+        room = {
+          state: {},
+          connections: new Map,
+          password: this.options.password,
+          lastSeen: Date.now(),
+          ttlMs: this.getTtlMs(),
+          autodelete: this.options.autodelete !== false
+        };
+        WireBroadcast.rooms.set(roomId, room);
+      } else {
+        WireBroadcast.pruneConnections(room);
+        room.lastSeen = Date.now();
+      }
+      return room;
+    }
+    findRoom() {
+      return WireBroadcast.rooms.get(this.getRoomId()) || null;
+    }
+    isComponentLike(value2) {
+      if (!value2 || typeof value2 !== "object")
+        return false;
+      const candidate = value2;
+      return "$id" in candidate || "$wire_instance" in candidate || typeof candidate.render === "function" || typeof candidate.mount === "function";
+    }
+    filterState(state) {
+      const result = {};
+      const keys = Object.keys(state || {});
+      for (let i = 0;i < keys.length; i++) {
+        const key = keys[i];
+        if (key.charCodeAt(0) === 36 || key.charCodeAt(0) === 95)
+          continue;
+        if (typeof state[key] === "function")
+          continue;
+        if (this.options.excludes?.includes(key))
+          continue;
+        if (this.options.includes && !this.options.includes.includes(key))
+          continue;
+        result[key] = state[key];
+      }
       return result;
     }
-  }
-  return defaulted;
-}
-function Visit14(schema3, references, value2) {
-  const references_ = Pushref(schema3, references);
-  const schema_ = schema3;
-  switch (schema_[Kind]) {
-    case "Array":
-      return FromArray17(schema_, references_, value2);
-    case "Date":
-      return FromDate7(schema_, references_, value2);
-    case "Import":
-      return FromImport10(schema_, references_, value2);
-    case "Intersect":
-      return FromIntersect18(schema_, references_, value2);
-    case "Object":
-      return FromObject18(schema_, references_, value2);
-    case "Record":
-      return FromRecord13(schema_, references_, value2);
-    case "Ref":
-      return FromRef14(schema_, references_, value2);
-    case "This":
-      return FromThis10(schema_, references_, value2);
-    case "Tuple":
-      return FromTuple15(schema_, references_, value2);
-    case "Union":
-      return FromUnion20(schema_, references_, value2);
-    default:
-      return ValueOrDefault(schema_, value2);
-  }
-}
-function Default5(...args2) {
-  return args2.length === 3 ? Visit14(args2[0], args2[1], args2[2]) : Visit14(args2[0], [], args2[1]);
-}
-var init_default = __esm(() => {
-  init_check2();
-  init_clone3();
-  init_deref2();
-  init_symbols2();
-  init_guard();
-  init_kind();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/default/index.mjs
-var init_default2 = __esm(() => {
-  init_default();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/pointer/pointer.mjs
-var exports_pointer = {};
-__export(exports_pointer, {
-  ValuePointerRootSetError: () => ValuePointerRootSetError,
-  ValuePointerRootDeleteError: () => ValuePointerRootDeleteError,
-  Set: () => Set4,
-  Has: () => Has3,
-  Get: () => Get3,
-  Format: () => Format,
-  Delete: () => Delete3
-});
-function Escape2(component) {
-  return component.indexOf("~") === -1 ? component : component.replace(/~1/g, "/").replace(/~0/g, "~");
-}
-function* Format(pointer) {
-  if (pointer === "")
-    return;
-  let [start, end] = [0, 0];
-  for (let i = 0;i < pointer.length; i++) {
-    const char = pointer.charAt(i);
-    if (char === "/") {
-      if (i === 0) {
-        start = i + 1;
-      } else {
-        end = i;
-        yield Escape2(pointer.slice(start, end));
-        start = i + 1;
+    static ensureCleanupLoop() {
+      if (WireBroadcast.cleanupTimer)
+        return;
+      const timer = setInterval(() => {
+        WireBroadcast.cleanupNow(Date.now());
+      }, WireBroadcast.CLEANUP_INTERVAL_MS);
+      if (typeof timer?.unref === "function") {
+        timer.unref();
       }
-    } else {
-      end = i;
+      WireBroadcast.cleanupTimer = timer;
     }
-  }
-  yield Escape2(pointer.slice(start));
-}
-function Set4(value2, pointer, update) {
-  if (pointer === "")
-    throw new ValuePointerRootSetError(value2, pointer, update);
-  let [owner, next, key] = [null, value2, ""];
-  for (const component of Format(pointer)) {
-    if (next[component] === undefined)
-      next[component] = {};
-    owner = next;
-    next = next[component];
-    key = component;
-  }
-  owner[key] = update;
-}
-function Delete3(value2, pointer) {
-  if (pointer === "")
-    throw new ValuePointerRootDeleteError(value2, pointer);
-  let [owner, next, key] = [null, value2, ""];
-  for (const component of Format(pointer)) {
-    if (next[component] === undefined || next[component] === null)
-      return;
-    owner = next;
-    next = next[component];
-    key = component;
-  }
-  if (Array.isArray(owner)) {
-    const index = parseInt(key);
-    owner.splice(index, 1);
-  } else {
-    delete owner[key];
-  }
-}
-function Has3(value2, pointer) {
-  if (pointer === "")
-    return true;
-  let [owner, next, key] = [null, value2, ""];
-  for (const component of Format(pointer)) {
-    if (next[component] === undefined)
-      return false;
-    owner = next;
-    next = next[component];
-    key = component;
-  }
-  return Object.getOwnPropertyNames(owner).includes(key);
-}
-function Get3(value2, pointer) {
-  if (pointer === "")
-    return value2;
-  let current = value2;
-  for (const component of Format(pointer)) {
-    if (current[component] === undefined)
-      return;
-    current = current[component];
-  }
-  return current;
-}
-var ValuePointerRootSetError, ValuePointerRootDeleteError;
-var init_pointer = __esm(() => {
-  init_error2();
-  ValuePointerRootSetError = class ValuePointerRootSetError extends TypeBoxError {
-    constructor(value2, path, update) {
-      super("Cannot set root value");
-      this.value = value2;
-      this.path = path;
-      this.update = update;
+    touchConnection(room, component) {
+      WireBroadcast.pruneConnections(room);
+      const connectionId = this.makeConnectionId(component);
+      room.connections.set(connectionId, Date.now());
+      room.lastSeen = Date.now();
     }
-  };
-  ValuePointerRootDeleteError = class ValuePointerRootDeleteError extends TypeBoxError {
-    constructor(value2, path) {
-      super("Cannot delete root value");
-      this.value = value2;
-      this.path = path;
+    getTtlMs() {
+      return Number(this.options.ttlMs) || WireBroadcast.DEFAULT_TTL_MS;
+    }
+    makeRoomId(channel, password) {
+      const normalizedChannel = String(channel || "").trim() || "global";
+      return `${normalizedChannel}:${password || ""}`;
+    }
+    makeConnectionId(component) {
+      const id = String(component.$id || "anonymous");
+      return `${id}:${this.channel}`;
+    }
+    static pruneConnections(room, now = Date.now()) {
+      const staleAfter = Math.max(WireBroadcast.CLEANUP_INTERVAL_MS, room.ttlMs * WireBroadcast.CONNECTION_STALE_FACTOR);
+      for (const [connectionId, lastSeen] of room.connections.entries()) {
+        if (now - lastSeen > staleAfter) {
+          room.connections.delete(connectionId);
+        }
+      }
     }
   };
 });
 
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/pointer/index.mjs
-var init_pointer2 = __esm(() => {
-  init_pointer();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/equal/equal.mjs
-function ObjectType3(left, right) {
-  if (!IsObject2(right))
-    return false;
-  const leftKeys = [...Object.keys(left), ...Object.getOwnPropertySymbols(left)];
-  const rightKeys = [...Object.keys(right), ...Object.getOwnPropertySymbols(right)];
-  if (leftKeys.length !== rightKeys.length)
-    return false;
-  return leftKeys.every((key) => Equal(left[key], right[key]));
-}
-function DateType3(left, right) {
-  return IsDate2(right) && left.getTime() === right.getTime();
-}
-function ArrayType3(left, right) {
-  if (!IsArray2(right) || left.length !== right.length)
-    return false;
-  return left.every((value2, index) => Equal(value2, right[index]));
-}
-function TypedArrayType(left, right) {
-  if (!IsTypedArray(right) || left.length !== right.length || Object.getPrototypeOf(left).constructor.name !== Object.getPrototypeOf(right).constructor.name)
-    return false;
-  return left.every((value2, index) => Equal(value2, right[index]));
-}
-function ValueType(left, right) {
-  return left === right;
-}
-function Equal(left, right) {
-  if (IsDate2(left))
-    return DateType3(left, right);
-  if (IsTypedArray(left))
-    return TypedArrayType(left, right);
-  if (IsArray2(left))
-    return ArrayType3(left, right);
-  if (IsObject2(left))
-    return ObjectType3(left, right);
-  if (IsValueType(left))
-    return ValueType(left, right);
-  throw new Error("ValueEquals: Unable to compare value");
-}
-var init_equal = __esm(() => {
-  init_guard();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/delta/delta.mjs
-function CreateUpdate(path, value2) {
-  return { type: "update", path, value: value2 };
-}
-function CreateInsert(path, value2) {
-  return { type: "insert", path, value: value2 };
-}
-function CreateDelete(path) {
-  return { type: "delete", path };
-}
-function AssertDiffable(value2) {
-  if (globalThis.Object.getOwnPropertySymbols(value2).length > 0)
-    throw new ValueDiffError(value2, "Cannot diff objects with symbols");
-}
-function* ObjectType4(path, current, next) {
-  AssertDiffable(current);
-  AssertDiffable(next);
-  if (!IsStandardObject(next))
-    return yield CreateUpdate(path, next);
-  const currentKeys = globalThis.Object.getOwnPropertyNames(current);
-  const nextKeys = globalThis.Object.getOwnPropertyNames(next);
-  for (const key of nextKeys) {
-    if (HasPropertyKey2(current, key))
-      continue;
-    yield CreateInsert(`${path}/${key}`, next[key]);
-  }
-  for (const key of currentKeys) {
-    if (!HasPropertyKey2(next, key))
-      continue;
-    if (Equal(current, next))
-      continue;
-    yield* Visit15(`${path}/${key}`, current[key], next[key]);
-  }
-  for (const key of currentKeys) {
-    if (HasPropertyKey2(next, key))
-      continue;
-    yield CreateDelete(`${path}/${key}`);
-  }
-}
-function* ArrayType4(path, current, next) {
-  if (!IsArray2(next))
-    return yield CreateUpdate(path, next);
-  for (let i = 0;i < Math.min(current.length, next.length); i++) {
-    yield* Visit15(`${path}/${i}`, current[i], next[i]);
-  }
-  for (let i = 0;i < next.length; i++) {
-    if (i < current.length)
-      continue;
-    yield CreateInsert(`${path}/${i}`, next[i]);
-  }
-  for (let i = current.length - 1;i >= 0; i--) {
-    if (i < next.length)
-      continue;
-    yield CreateDelete(`${path}/${i}`);
-  }
-}
-function* TypedArrayType2(path, current, next) {
-  if (!IsTypedArray(next) || current.length !== next.length || globalThis.Object.getPrototypeOf(current).constructor.name !== globalThis.Object.getPrototypeOf(next).constructor.name)
-    return yield CreateUpdate(path, next);
-  for (let i = 0;i < Math.min(current.length, next.length); i++) {
-    yield* Visit15(`${path}/${i}`, current[i], next[i]);
-  }
-}
-function* ValueType2(path, current, next) {
-  if (current === next)
-    return;
-  yield CreateUpdate(path, next);
-}
-function* Visit15(path, current, next) {
-  if (IsStandardObject(current))
-    return yield* ObjectType4(path, current, next);
-  if (IsArray2(current))
-    return yield* ArrayType4(path, current, next);
-  if (IsTypedArray(current))
-    return yield* TypedArrayType2(path, current, next);
-  if (IsValueType(current))
-    return yield* ValueType2(path, current, next);
-  throw new ValueDiffError(current, "Unable to diff value");
-}
-function Diff(current, next) {
-  return [...Visit15("", current, next)];
-}
-function IsRootUpdate(edits) {
-  return edits.length > 0 && edits[0].path === "" && edits[0].type === "update";
-}
-function IsIdentity(edits) {
-  return edits.length === 0;
-}
-function Patch(current, edits) {
-  if (IsRootUpdate(edits)) {
-    return Clone2(edits[0].value);
-  }
-  if (IsIdentity(edits)) {
-    return Clone2(current);
-  }
-  const clone3 = Clone2(current);
-  for (const edit of edits) {
-    switch (edit.type) {
-      case "insert": {
-        exports_pointer.Set(clone3, edit.path, edit.value);
-        break;
-      }
-      case "update": {
-        exports_pointer.Set(clone3, edit.path, edit.value);
-        break;
-      }
-      case "delete": {
-        exports_pointer.Delete(clone3, edit.path);
-        break;
-      }
-    }
-  }
-  return clone3;
-}
-var Insert, Update, Delete4, Edit, ValueDiffError;
-var init_delta = __esm(() => {
-  init_guard();
-  init_pointer2();
-  init_clone3();
-  init_equal();
-  init_error2();
-  init_literal2();
-  init_object2();
-  init_string2();
-  init_unknown2();
-  init_union2();
-  Insert = Object2({
-    type: Literal("insert"),
-    path: String2(),
-    value: Unknown()
-  });
-  Update = Object2({
-    type: Literal("update"),
-    path: String2(),
-    value: Unknown()
-  });
-  Delete4 = Object2({
-    type: Literal("delete"),
-    path: String2()
-  });
-  Edit = Union([Insert, Update, Delete4]);
-  ValueDiffError = class ValueDiffError extends TypeBoxError {
-    constructor(value2, message2) {
-      super(message2);
-      this.value = value2;
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/delta/index.mjs
-var init_delta2 = __esm(() => {
-  init_delta();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/encode/encode.mjs
-function Encode(...args2) {
-  const [schema3, references, value2] = args2.length === 3 ? [args2[0], args2[1], args2[2]] : [args2[0], [], args2[1]];
-  const encoded = HasTransform(schema3, references) ? TransformEncode(schema3, references, value2) : value2;
-  if (!Check(schema3, references, encoded))
-    throw new TransformEncodeCheckError(schema3, encoded, Errors(schema3, references, encoded).First());
-  return encoded;
-}
-var init_encode2 = __esm(() => {
-  init_transform3();
-  init_check2();
-  init_errors2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/encode/index.mjs
-var init_encode3 = __esm(() => {
-  init_encode2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/equal/index.mjs
-var init_equal2 = __esm(() => {
-  init_equal();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/mutate/mutate.mjs
-function IsStandardObject2(value2) {
-  return IsObject2(value2) && !IsArray2(value2);
-}
-function ObjectType5(root, path, current, next) {
-  if (!IsStandardObject2(current)) {
-    exports_pointer.Set(root, path, Clone2(next));
-  } else {
-    const currentKeys = Object.getOwnPropertyNames(current);
-    const nextKeys = Object.getOwnPropertyNames(next);
-    for (const currentKey of currentKeys) {
-      if (!nextKeys.includes(currentKey)) {
-        delete current[currentKey];
-      }
-    }
-    for (const nextKey of nextKeys) {
-      if (!currentKeys.includes(nextKey)) {
-        current[nextKey] = null;
-      }
-    }
-    for (const nextKey of nextKeys) {
-      Visit16(root, `${path}/${nextKey}`, current[nextKey], next[nextKey]);
-    }
-  }
-}
-function ArrayType5(root, path, current, next) {
-  if (!IsArray2(current)) {
-    exports_pointer.Set(root, path, Clone2(next));
-  } else {
-    for (let index = 0;index < next.length; index++) {
-      Visit16(root, `${path}/${index}`, current[index], next[index]);
-    }
-    current.splice(next.length);
-  }
-}
-function TypedArrayType3(root, path, current, next) {
-  if (IsTypedArray(current) && current.length === next.length) {
-    for (let i = 0;i < current.length; i++) {
-      current[i] = next[i];
-    }
-  } else {
-    exports_pointer.Set(root, path, Clone2(next));
-  }
-}
-function ValueType3(root, path, current, next) {
-  if (current === next)
-    return;
-  exports_pointer.Set(root, path, next);
-}
-function Visit16(root, path, current, next) {
-  if (IsArray2(next))
-    return ArrayType5(root, path, current, next);
-  if (IsTypedArray(next))
-    return TypedArrayType3(root, path, current, next);
-  if (IsStandardObject2(next))
-    return ObjectType5(root, path, current, next);
-  if (IsValueType(next))
-    return ValueType3(root, path, current, next);
-}
-function IsNonMutableValue(value2) {
-  return IsTypedArray(value2) || IsValueType(value2);
-}
-function IsMismatchedValue(current, next) {
-  return IsStandardObject2(current) && IsArray2(next) || IsArray2(current) && IsStandardObject2(next);
-}
-function Mutate(current, next) {
-  if (IsNonMutableValue(current) || IsNonMutableValue(next))
-    throw new ValueMutateError("Only object and array types can be mutated at the root level");
-  if (IsMismatchedValue(current, next))
-    throw new ValueMutateError("Cannot assign due type mismatch of assignable values");
-  Visit16(current, "", current, next);
-}
-var ValueMutateError;
-var init_mutate = __esm(() => {
-  init_guard();
-  init_pointer2();
-  init_clone3();
-  init_error2();
-  ValueMutateError = class ValueMutateError extends TypeBoxError {
-    constructor(message2) {
-      super(message2);
-    }
-  };
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/mutate/index.mjs
-var init_mutate2 = __esm(() => {
-  init_mutate();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/parse/parse.mjs
-function ParseValue(operations, type4, references, value2) {
-  return operations.reduce((value3, operationKey) => {
-    const operation = ParseRegistry.Get(operationKey);
-    if (IsUndefined2(operation))
-      throw new ParseError(`Unable to find Parse operation '${operationKey}'`);
-    return operation(type4, references, value3);
-  }, value2);
-}
-function Parse(...args2) {
-  const [operations, schema3, references, value2] = args2.length === 4 ? [args2[0], args2[1], args2[2], args2[3]] : args2.length === 3 ? IsArray2(args2[0]) ? [args2[0], args2[1], [], args2[2]] : [ParseDefault, args2[0], args2[1], args2[2]] : args2.length === 2 ? [ParseDefault, args2[0], [], args2[1]] : (() => {
-    throw new ParseError("Invalid Arguments");
-  })();
-  return ParseValue(operations, schema3, references, value2);
-}
-var ParseError, ParseRegistry, ParseDefault;
-var init_parse2 = __esm(() => {
-  init_error2();
-  init_transform3();
-  init_assert2();
-  init_cast2();
-  init_clean2();
-  init_clone3();
-  init_convert2();
-  init_default2();
-  init_guard();
-  ParseError = class ParseError extends TypeBoxError {
-    constructor(message2) {
-      super(message2);
-    }
-  };
-  (function(ParseRegistry2) {
-    const registry2 = new Map([
-      ["Assert", (type4, references, value2) => {
-        Assert(type4, references, value2);
-        return value2;
-      }],
-      ["Cast", (type4, references, value2) => Cast(type4, references, value2)],
-      ["Clean", (type4, references, value2) => Clean(type4, references, value2)],
-      ["Clone", (_type, _references, value2) => Clone2(value2)],
-      ["Convert", (type4, references, value2) => Convert(type4, references, value2)],
-      ["Decode", (type4, references, value2) => HasTransform(type4, references) ? TransformDecode(type4, references, value2) : value2],
-      ["Default", (type4, references, value2) => Default5(type4, references, value2)],
-      ["Encode", (type4, references, value2) => HasTransform(type4, references) ? TransformEncode(type4, references, value2) : value2]
-    ]);
-    function Delete5(key) {
-      registry2.delete(key);
-    }
-    ParseRegistry2.Delete = Delete5;
-    function Set5(key, callback) {
-      registry2.set(key, callback);
-    }
-    ParseRegistry2.Set = Set5;
-    function Get4(key) {
-      return registry2.get(key);
-    }
-    ParseRegistry2.Get = Get4;
-  })(ParseRegistry || (ParseRegistry = {}));
-  ParseDefault = [
-    "Clone",
-    "Clean",
-    "Default",
-    "Convert",
-    "Assert",
-    "Decode"
-  ];
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/parse/index.mjs
-var init_parse3 = __esm(() => {
-  init_parse2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/value/value.mjs
-var exports_value2 = {};
-__export(exports_value2, {
-  ValueErrorIterator: () => ValueErrorIterator,
-  Patch: () => Patch,
-  Parse: () => Parse,
-  Mutate: () => Mutate,
-  Hash: () => Hash,
-  Errors: () => Errors,
-  Equal: () => Equal,
-  Encode: () => Encode,
-  Edit: () => Edit,
-  Diff: () => Diff,
-  Default: () => Default5,
-  Decode: () => Decode,
-  Create: () => Create2,
-  Convert: () => Convert,
-  Clone: () => Clone2,
-  Clean: () => Clean,
-  Check: () => Check,
-  Cast: () => Cast,
-  Assert: () => Assert
-});
-var init_value2 = __esm(() => {
-  init_errors2();
-  init_assert2();
-  init_cast2();
-  init_check2();
-  init_clean2();
-  init_clone3();
-  init_convert2();
-  init_create3();
-  init_decode3();
-  init_default2();
-  init_delta2();
-  init_encode3();
-  init_equal2();
-  init_hash2();
-  init_mutate2();
-  init_parse3();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/value/index.mjs
-var init_value3 = __esm(() => {
-  init_value2();
-});
-
-// ../../node_modules/.bun/@sinclair+typebox@0.34.48/node_modules/@sinclair/typebox/build/esm/value/index.mjs
-var init_value4 = __esm(() => {
-  init_value3();
-  init_guard();
-  init_assert2();
-  init_cast2();
-  init_check2();
-  init_clean2();
-  init_clone3();
-  init_convert2();
-  init_create3();
-  init_decode3();
-  init_default2();
-  init_delta2();
-  init_encode3();
-  init_equal2();
-  init_hash2();
-  init_mutate2();
-  init_parse3();
-  init_pointer2();
-  init_transform3();
-});
-
-// ../../packages/wire/src/validation/rule.ts
+// packages/wire/src/validation/rule.ts
 function escapeRegexLiteral(input) {
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -23785,13 +24171,47 @@ var init_rule = __esm(() => {
   }
 });
 
-// ../../packages/wire/src/component.ts
+// packages/wire/src/metadata.ts
+function getWireComponentDefinition(target) {
+  if (!target || typeof target !== "function")
+    return;
+  return wireDefinitionByClass.get(target);
+}
+function getWireVariables(target) {
+  const out = new Map;
+  if (!target || typeof target !== "function")
+    return out;
+  let current = target;
+  while (current && current !== Function.prototype) {
+    const own = variableDefinitionByClass.get(current);
+    if (own) {
+      for (const [name, definition] of own.entries()) {
+        if (!out.has(name))
+          out.set(name, definition);
+      }
+    }
+    const proto = Object.getPrototypeOf(current.prototype);
+    if (!proto || proto === Object.prototype)
+      break;
+    current = proto.constructor;
+  }
+  return out;
+}
+var wireDefinitionByClass, variableDefinitionByClass;
+var init_metadata = __esm(() => {
+  init_rule();
+  wireDefinitionByClass = new WeakMap;
+  variableDefinitionByClass = new WeakMap;
+});
+
+// packages/wire/src/component.ts
 var exports_component = {};
 __export(exports_component, {
   Component: () => Component
 });
 
 class Component {
+  $live = false;
   $id;
   $kire;
   view(view, data = {}) {
@@ -23813,19 +24233,26 @@ class Component {
       }
       proto = Object.getPrototypeOf(proto);
     }
-    if (!Object.prototype.hasOwnProperty.call(locals, "errors")) {
+    if (!Object.hasOwn(locals, "errors")) {
       locals.errors = this.__errors;
     }
     locals.$wire = this;
     return this.$kire.view(view, locals);
   }
   $set(property, value2) {
-    if (!property.includes(".")) {
-      const current = this[property];
-      this[property] = this.normalizeIncomingValue(current, value2);
+    const normalizedProperty = String(property || "").trim();
+    if (!this.isPropertyWritable(normalizedProperty)) {
+      throw new Error(`Property "${normalizedProperty}" is not writable.`);
+    }
+    if (!normalizedProperty.includes(".")) {
+      const current = this[normalizedProperty];
+      const declaration = this.getVariableDeclaration(normalizedProperty);
+      this[normalizedProperty] = this.normalizeIncomingValue(current, value2, declaration);
       return;
     }
-    const parts = property.split(".");
+    const parts = normalizedProperty.split(".");
+    const root = parts[0];
+    const rootDeclaration = this.getVariableDeclaration(root);
     let obj = this;
     for (let i = 0;i < parts.length - 1; i++) {
       const part = parts[i];
@@ -23836,6 +24263,13 @@ class Component {
     }
     const leaf = parts[parts.length - 1];
     obj[leaf] = this.normalizeIncomingValue(obj[leaf], value2);
+    if (rootDeclaration) {
+      const rootValue = this[root];
+      this[root] = this.normalizeIncomingValue(rootValue, rootValue, rootDeclaration);
+    }
+  }
+  $canSet(property) {
+    return this.isPropertyWritable(property);
   }
   validate(rules) {
     this.clearErrors();
@@ -23876,7 +24310,10 @@ class Component {
   emit(name, ...params) {
     this.$effect("event", { name, params });
     if (this.$wire_instance) {
-      this.$wire_instance.emit(`event:${name}`, { params, sourceId: this.$id });
+      this.$wire_instance.emit(`event:${name}`, {
+        params,
+        sourceId: this.$id
+      });
     }
   }
   $emit(name, ...params) {
@@ -24009,6 +24446,23 @@ class Component {
   fill(state) {
     if (!state)
       return;
+    this.ensureDeclaredWireVariables();
+    const declarations = this.getVariableDeclarations();
+    if (declarations.size > 0) {
+      const keys2 = Object.keys(state);
+      for (let i = 0;i < keys2.length; i++) {
+        const key = keys2[i];
+        const declaration = declarations.get(key);
+        if (!declaration || declaration.isPrivate)
+          continue;
+        if (!(key in this))
+          continue;
+        const current = this[key];
+        const value2 = state[key];
+        this[key] = this.normalizeIncomingValue(current, value2, declaration);
+      }
+      return;
+    }
     const keys = Object.keys(state);
     for (let i = 0;i < keys.length; i++) {
       const key = keys[i];
@@ -24024,6 +24478,27 @@ class Component {
     }
   }
   getPublicState() {
+    this.ensureDeclaredWireVariables();
+    const declarations = this.getVariableDeclarations();
+    if (declarations.size > 0) {
+      const declaredState = Object.create(null);
+      for (const [name, declaration] of declarations.entries()) {
+        if (declaration.isPrivate)
+          continue;
+        const value2 = this[name];
+        if (typeof value2 === "function")
+          continue;
+        if (value2 instanceof WireProperty) {
+          declaredState[name] = value2.dehydrate();
+        } else if (declaration.kind === "files") {
+          const upload = this.normalizeIncomingValue(value2, value2, declaration);
+          declaredState[name] = upload.dehydrate();
+        } else {
+          declaredState[name] = value2;
+        }
+      }
+      return declaredState;
+    }
     const state = Object.create(null);
     const keys = Object.keys(this);
     for (let i = 0;i < keys.length; i++) {
@@ -24041,12 +24516,150 @@ class Component {
     }
     return state;
   }
-  normalizeIncomingValue(current, value2) {
+  normalizeIncomingValue(current, value2, declaration) {
     if (current instanceof WireProperty) {
       current.hydrate(value2);
       return current;
     }
+    if (!declaration)
+      return value2;
+    if (declaration.kind === "broadcast") {
+      const channel = declaration.room || declaration.name;
+      if (current instanceof WireBroadcast) {
+        if (value2 && typeof value2 === "object")
+          current.hydrate(value2);
+        return current;
+      }
+      const next = new WireBroadcast({
+        name: channel
+      });
+      if (value2 && typeof value2 === "object")
+        next.hydrate(value2);
+      return next;
+    }
+    if (declaration.kind === "files") {
+      const upload = current instanceof WireUpload ? current : new WireUpload(current);
+      upload.hydrate(value2);
+      this.validateFilesVariable(declaration, upload);
+      return upload;
+    }
+    if (declaration.schema) {
+      const converted = exports_value2.Convert(declaration.schema, value2);
+      if (!exports_value2.Check(declaration.schema, converted)) {
+        throw new Error(`Invalid value for variable "${declaration.name}" (${declaration.raw || declaration.kind}).`);
+      }
+      this.validateDeclaredShapeRules(declaration, converted);
+      return converted;
+    }
+    this.validateDeclaredShapeRules(declaration, value2);
     return value2;
+  }
+  onlyserver(value2) {
+    return value2;
+  }
+  isPropertyWritable(property) {
+    const normalized = String(property || "").trim();
+    if (!normalized)
+      return false;
+    this.ensureDeclaredWireVariables();
+    const segments = normalized.split(".").map((part) => part.trim()).filter(Boolean);
+    if (segments.length === 0)
+      return false;
+    for (let i = 0;i < segments.length; i++) {
+      if (BLOCKED_SET_PATH_SEGMENTS.has(segments[i]))
+        return false;
+    }
+    const root = segments[0];
+    const first = root.charCodeAt(0);
+    if (first === 36 || first === 95)
+      return false;
+    const declarations = this.getVariableDeclarations();
+    if (declarations.size > 0) {
+      const declaration = declarations.get(root);
+      if (!declaration)
+        return false;
+      if (declaration.isPrivate)
+        return false;
+      if (declaration.kind === "broadcast")
+        return false;
+      const fillable2 = this.$fillable;
+      if (Array.isArray(fillable2) && fillable2.length > 0) {
+        return this.matchesFillablePath(normalized, fillable2);
+      }
+      return true;
+    }
+    const fillable = this.$fillable;
+    if (Array.isArray(fillable) && fillable.length > 0) {
+      return this.matchesFillablePath(normalized, fillable);
+    }
+    const state = this.getPublicState();
+    return Object.hasOwn(state, root);
+  }
+  getVariableDeclarations() {
+    return getWireVariables(this.constructor);
+  }
+  getVariableDeclaration(propertyPath) {
+    const root = String(propertyPath || "").split(".").map((entry) => entry.trim()).filter(Boolean)[0];
+    if (!root)
+      return;
+    return this.getVariableDeclarations().get(root);
+  }
+  ensureDeclaredWireVariables() {
+    const declarations = this.getVariableDeclarations();
+    if (declarations.size === 0)
+      return;
+    for (const [name, declaration] of declarations.entries()) {
+      if (this[name] !== undefined)
+        continue;
+      if (declaration.kind === "files") {
+        this[name] = new WireUpload;
+        continue;
+      }
+      if (declaration.kind === "broadcast") {
+        this[name] = new WireBroadcast({
+          name: declaration.room || name
+        });
+      }
+    }
+  }
+  validateFilesVariable(declaration, upload) {
+    const files = normalizeFileList(upload.dehydrate());
+    if (typeof declaration.minItems === "number" && files.length < declaration.minItems) {
+      throw new Error(`Variable "${declaration.name}" requires at least ${declaration.minItems} file(s).`);
+    }
+    if (typeof declaration.maxItems === "number" && files.length > declaration.maxItems) {
+      throw new Error(`Variable "${declaration.name}" accepts at most ${declaration.maxItems} file(s).`);
+    }
+    if (typeof declaration.maxBytes === "number" && declaration.maxBytes > 0) {
+      for (let i = 0;i < files.length; i++) {
+        const file = files[i];
+        if (Number(file.size || 0) > declaration.maxBytes) {
+          throw new Error(`File "${file.name || "upload"}" exceeds max size for "${declaration.name}".`);
+        }
+      }
+    }
+  }
+  matchesFillablePath(property, fillable) {
+    const normalizedProperty = String(property || "").trim();
+    if (!normalizedProperty)
+      return false;
+    for (let i = 0;i < fillable.length; i++) {
+      const raw = String(fillable[i] || "").trim();
+      if (!raw)
+        continue;
+      if (raw === "*" || raw === normalizedProperty)
+        return true;
+      if (raw.endsWith(".*")) {
+        const base = raw.slice(0, -2);
+        if (normalizedProperty === base || normalizedProperty.startsWith(`${base}.`)) {
+          return true;
+        }
+        continue;
+      }
+      if (normalizedProperty.startsWith(`${raw}.`))
+        return true;
+    }
+    return false;
   }
   unpackEvent(event) {
     const payload = event?.params?.[0] ?? event?.detail?.params?.[0] ?? event?.detail ?? event;
@@ -24136,31 +24749,1474 @@ class Component {
     }
     return current;
   }
+  validateDeclaredShapeRules(declaration, value2) {
+    const shapeRules = declaration.shapeRules;
+    if (!shapeRules || typeof shapeRules !== "object")
+      return;
+    const entries = Object.entries(shapeRules);
+    for (let i = 0;i < entries.length; i++) {
+      const [rawPath, rule] = entries[i];
+      const path = String(rawPath || "").trim();
+      const normalizedRule = String(rule || "").trim();
+      if (!path || !normalizedRule)
+        continue;
+      const candidates = this.collectPathCandidates(value2, path);
+      const hasWildcard = path.includes("*");
+      if (candidates.length === 0 && hasWildcard)
+        continue;
+      const targets = candidates.length > 0 ? candidates : [{ path, value: undefined }];
+      for (let j = 0;j < targets.length; j++) {
+        const candidate = targets[j];
+        const result = validateRuleString(this.normalizeValidationValue(candidate.value), normalizedRule);
+        if (result.success)
+          continue;
+        const suffix = candidate.path ? `.${candidate.path}` : "";
+        throw new Error(`Invalid value for variable "${declaration.name}${suffix}" (${result.error || "Invalid"}).`);
+      }
+    }
+  }
+  collectPathCandidates(source, path) {
+    const segments = String(path || "").split(".").map((part) => part.trim()).filter(Boolean);
+    if (segments.length === 0)
+      return [{ path: "", value: source }];
+    const candidates = [];
+    const hasWildcard = segments.includes("*");
+    const walk = (current, index, resolved) => {
+      if (index >= segments.length) {
+        candidates.push({
+          path: resolved.join("."),
+          value: current
+        });
+        return;
+      }
+      const segment = segments[index];
+      if (segment === "*") {
+        if (!current || typeof current !== "object")
+          return;
+        const keys = Array.isArray(current) ? current.map((_, itemIndex) => String(itemIndex)) : Object.keys(current);
+        for (let i = 0;i < keys.length; i++) {
+          const key = keys[i];
+          walk(current[key], index + 1, [...resolved, key]);
+        }
+        return;
+      }
+      if (!current || typeof current !== "object") {
+        if (index === segments.length - 1) {
+          candidates.push({
+            path: [...resolved, segment].join("."),
+            value: undefined
+          });
+        }
+        return;
+      }
+      walk(current[segment], index + 1, [...resolved, segment]);
+    };
+    walk(source, 0, []);
+    if (candidates.length === 0 && !hasWildcard) {
+      return [{ path, value: undefined }];
+    }
+    return candidates;
+  }
   mount() {}
   unmount() {}
+  render() {
+    if (this.$live)
+      return "";
+    throw new Error(`Component "${this.constructor?.name || "AnonymousComponent"}" must implement render() unless $live = true.`);
+  }
 }
+var BLOCKED_SET_PATH_SEGMENTS;
 var init_component = __esm(() => {
+  init_value4();
+  init_file_upload();
+  init_wire_broadcast();
+  init_metadata();
   init_rule();
+  BLOCKED_SET_PATH_SEGMENTS = new Set([
+    "__proto__",
+    "constructor",
+    "prototype"
+  ]);
 });
 
-// server.ts
+// examples/fivem-example/server.ts
 var import_node_stream = require("node:stream");
 var import_node_fs3 = require("node:fs");
 var import_node_path3 = __toESM(require("node:path"));
 
-// ../../node_modules/.bun/koa@2.16.4/node_modules/koa/dist/koa.mjs
+// node_modules/.bun/koa@2.16.4/node_modules/koa/dist/koa.mjs
 var import_application = __toESM(require_application(), 1);
 var koa_default = import_application.default;
 var HttpError = import_application.default.HttpError;
 
-// server.ts
+// examples/fivem-example/server.ts
 var import_koa_router = __toESM(require_router(), 1);
 var import_http_wrapper = __toESM(require_http_wrapper(), 1);
 
-// ../../packages/wire/src/kirewire.ts
-var import_node_crypto2 = require("node:crypto");
+// packages/wire/src/adapters/http.ts
+var import_node_fs2 = require("node:fs");
+var import_node_path2 = require("node:path");
+var import_node_url = require("node:url");
 
-// ../../packages/wire/src/event-controller.ts
+// packages/wire/src/adapter.ts
+class Adapter {
+  wire;
+  kire;
+  install(wire, kire) {
+    this.wire = wire;
+    this.kire = kire;
+    this.setup();
+  }
+}
+
+// packages/wire/src/adapters/http.ts
+init_component();
+
+// packages/wire/src/features/file-store.ts
+var import_node_crypto = require("node:crypto");
+var import_node_fs = require("node:fs");
+var import_node_path = require("node:path");
+
+class FileStore {
+  ttl;
+  tempDir;
+  fileMap = new Map;
+  cleanupTimer;
+  constructor(tempDir, ttl = 3600000) {
+    this.ttl = ttl;
+    this.tempDir = tempDir;
+    if (!import_node_fs.existsSync(this.tempDir)) {
+      import_node_fs.mkdirSync(this.tempDir, { recursive: true });
+    }
+    this.cleanupTimer = setInterval(() => this.cleanup(), 60000);
+    if (typeof this.cleanupTimer?.unref === "function") {
+      this.cleanupTimer.unref();
+    }
+  }
+  store(filename, buffer) {
+    const id = import_node_crypto.randomUUID();
+    const safeName = import_node_path.basename(String(filename || "upload.bin")).replace(/[^\w.-]/g, "_");
+    const path = import_node_path.join(this.tempDir, `${id}_${safeName}`);
+    import_node_fs.writeFileSync(path, buffer);
+    this.fileMap.set(id, { path, expires: Date.now() + this.ttl });
+    return id;
+  }
+  get(id) {
+    const entry = this.fileMap.get(id);
+    if (entry && import_node_fs.existsSync(entry.path)) {
+      return entry.path;
+    }
+    return null;
+  }
+  delete(id) {
+    const entry = this.fileMap.get(id);
+    if (entry) {
+      if (import_node_fs.existsSync(entry.path))
+        import_node_fs.unlinkSync(entry.path);
+      this.fileMap.delete(id);
+    }
+  }
+  cleanup() {
+    const now = Date.now();
+    for (const [id, entry] of this.fileMap.entries()) {
+      if (now > entry.expires) {
+        this.delete(id);
+      }
+    }
+  }
+  destroy() {
+    clearInterval(this.cleanupTimer);
+    const ids = Array.from(this.fileMap.keys());
+    for (let i = 0;i < ids.length; i++) {
+      this.delete(ids[i]);
+    }
+  }
+}
+
+// packages/wire/src/adapters/http.ts
+init_wire_broadcast();
+var BLOCKED_SET_PATH_SEGMENTS2 = new Set([
+  "__proto__",
+  "constructor",
+  "prototype"
+]);
+var RESERVED_REMOTE_ACTIONS = new Set([
+  "constructor",
+  "render",
+  "mount",
+  "unmount",
+  "view",
+  "fill",
+  "validate",
+  "rule",
+  "getPublicState"
+]);
+function normalizeRoute(route) {
+  const value2 = String(route || "/_wire").trim();
+  if (!value2)
+    return "/_wire";
+  const withSlash = value2.startsWith("/") ? value2 : `/${value2}`;
+  return withSlash.replace(/\/+$/, "");
+}
+
+class HttpAdapter extends Adapter {
+  static DEFAULT_MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+  static MAX_UPLOAD_ERROR_PREFIX = "KIREWIRE_UPLOAD_TOO_LARGE";
+  static SOCKET_MARKER = "SocketClientAdapter";
+  static HTTP_MARKER = "HttpClientAdapter";
+  static clientScriptCache = null;
+  route;
+  fileStore;
+  ownsFileStore;
+  maxUploadBytes;
+  constructor(options = {}) {
+    super();
+    this.route = normalizeRoute(options.route || "/_wire");
+    this.fileStore = options.fileStore || new FileStore(options.tempDir || "node_modules/.kirewire_uploads");
+    this.ownsFileStore = !options.fileStore;
+    this.maxUploadBytes = this.normalizeMaxUploadBytes(options.maxUploadBytes);
+  }
+  setup() {
+    console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
+    this.wire.reference("wire:url", () => this.getClientUrl());
+    this.wire.reference("wire:upload-url", () => this.getUploadUrl());
+    this.wire.reference("wire:preview-url", () => this.getPreviewUrl());
+    this.wire.reference("wire:sse-url", () => `${this.route}/sse`);
+    this.wire.reference("wire:session-url", () => `${this.route}/session`);
+    this.wire.reference("wire:client-script-url", () => `${this.route}/kirewire.js`);
+  }
+  getClientUrl() {
+    return this.route;
+  }
+  getUploadUrl() {
+    return `${this.route}/upload`;
+  }
+  getPreviewUrl() {
+    return `${this.route}/preview`;
+  }
+  async handleRequest(req, userId, sessionId) {
+    const url = new URL(req.url, "http://localhost");
+    if (req.method === "GET" && url.pathname === `${this.route}/kirewire.js`) {
+      return this.handleClientScript();
+    }
+    if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
+      return await this.handleUpload(req.body);
+    }
+    if (req.method === "GET" && url.pathname === `${this.route}/preview`) {
+      return this.handlePreview(url);
+    }
+    if (!this.wire) {
+      return {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        result: {
+          error: "HttpAdapter is not installed. Call adapter.install(wire, kire) first."
+        }
+      };
+    }
+    const customRoute = this.wire.matchRoute(req.method, url.pathname);
+    if (customRoute) {
+      return await this.handleCustomRoute(customRoute, req, url, userId, sessionId);
+    }
+    if (req.method === "POST" && url.pathname === `${this.route}/live/init`) {
+      return await this.handleLiveInit(req.body, userId, sessionId);
+    }
+    if (req.method === "POST" && url.pathname === `${this.route}/live/save`) {
+      return await this.handleLiveSave(req.body, userId, sessionId);
+    }
+    if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
+      const pageId2 = String(url.searchParams.get("pageId") || "");
+      return this.handleSse(req, userId, pageId2, sessionId);
+    }
+    if (req.method === "GET" && url.pathname === `${this.route}/session`) {
+      const pageId2 = String(url.searchParams.get("pageId") || "");
+      const querySessionId = String(url.searchParams.get("sessionId") || sessionId || "");
+      return this.handleSessionStatus(userId, pageId2, querySessionId);
+    }
+    if (req.method !== "POST") {
+      return { status: 405, result: { error: "Method not allowed" } };
+    }
+    const reqBody = req.body;
+    if (!reqBody)
+      return { status: 400, result: { error: "Empty request body" } };
+    const actions = reqBody.batch && Array.isArray(reqBody.batch) ? reqBody.batch : [reqBody];
+    const pageId = String(reqBody.pageId || actions[0]?.pageId || "default-page");
+    const results = [];
+    const modifiedComponents = new Set;
+    const preparedComponents = new Set;
+    const touchedBroadcastRooms = new Set;
+    const modifiedRefs = new Set;
+    for (let i = 0;i < actions.length; i++) {
+      const action = actions[i];
+      try {
+        const { id, method, params } = action;
+        const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+        const instance = page.components.get(id);
+        if (!instance) {
+          console.error(`[HttpAdapter] Component ${id} not found for userId=${userId} pageId=${pageId}. Available components in this page:`, Array.from(page.components.keys()));
+          throw new Error(`Component ${id} not found.`);
+        }
+        if (!preparedComponents.has(id)) {
+          preparedComponents.add(id);
+          if (instance.$clearEffects)
+            instance.$clearEffects();
+        }
+        await this.invokeComponentAction(instance, method, params);
+        modifiedComponents.add(id);
+        results.push({ id, success: true });
+      } catch (e) {
+        results.push({ id: action?.id, error: e?.message || "Unknown error" });
+      }
+    }
+    for (const id of modifiedComponents) {
+      const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+      const instance = page.components.get(id);
+      if (!instance)
+        continue;
+      const payload = await this.renderComponentPayload(id, instance);
+      const roomIds = this.getBroadcastRoomIds(instance);
+      for (let j = 0;j < roomIds.length; j++)
+        touchedBroadcastRooms.add(roomIds[j]);
+      await this.wire.emit("component:update", {
+        userId,
+        sessionId,
+        pageId,
+        id,
+        ...payload
+      });
+      modifiedRefs.add(this.buildComponentRef(userId, sessionId, pageId, id));
+      for (let i = results.length - 1;i >= 0; i--) {
+        if (results[i].id === id && !results[i].error) {
+          Object.assign(results[i], {
+            effects: instance.__effects,
+            state: payload.state,
+            html: payload.html,
+            revision: payload.revision
+          });
+          break;
+        }
+      }
+    }
+    if (touchedBroadcastRooms.size > 0) {
+      await this.emitBroadcastUpdatesForAllPages({
+        roomIds: touchedBroadcastRooms,
+        skipRefs: modifiedRefs
+      });
+    }
+    return {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+      result: reqBody.batch ? results : results[0]
+    };
+  }
+  async handleCustomRoute(route, req, url, userId, sessionId) {
+    try {
+      const output = await route.handler({
+        method: req.method,
+        path: url.pathname,
+        url,
+        query: url.searchParams,
+        params: route.params,
+        body: req.body,
+        signal: req.signal,
+        userId,
+        sessionId,
+        wire: this.wire,
+        adapter: this
+      });
+      if (output && typeof output === "object" && (("status" in output) || ("result" in output) || ("headers" in output))) {
+        const typed = output;
+        return {
+          status: Number(typed.status || 200),
+          headers: typed.headers,
+          result: typed.result
+        };
+      }
+      return {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+        result: output
+      };
+    } catch (error3) {
+      return {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        result: {
+          route: route.name,
+          error: String(error3?.message || "Internal error")
+        }
+      };
+    }
+  }
+  async handleLiveInit(body, userId, sessionId) {
+    const componentName = String(body?.name || "").trim();
+    if (!componentName) {
+      return {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+        result: { error: "Live component name is required." }
+      };
+    }
+    const ComponentClass = this.wire.components.get(componentName);
+    if (!ComponentClass) {
+      return {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+        result: { error: `Component "${componentName}" not found.` }
+      };
+    }
+    const pageId = String(body?.pageId || "default-page");
+    const locals = body?.locals && typeof body.locals === "object" ? body.locals : {};
+    try {
+      const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+      const id = this.wire.createComponentId();
+      const instance = new ComponentClass;
+      instance.$id = id;
+      instance.$kire = this.kire;
+      instance.$wire_instance = this.wire;
+      instance.$wire_scope_id = sessionId;
+      const listenerCleanup = this.wire.bindComponentListeners(instance, {
+        userId,
+        pageId,
+        id
+      });
+      this.wire.attachLifecycleGuards(instance, listenerCleanup);
+      this.wire.applySafeLocals(instance, locals);
+      await instance.mount();
+      page.components.set(id, instance);
+      const state = typeof instance.getPublicState === "function" ? instance.getPublicState() : {};
+      return {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+        result: {
+          id,
+          state,
+          ready: true
+        }
+      };
+    } catch (error3) {
+      return {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+        result: {
+          error: String(error3?.message || "Failed to init live component.")
+        }
+      };
+    }
+  }
+  async handleLiveSave(body, userId, sessionId) {
+    const id = String(body?.id || "").trim();
+    if (!id) {
+      return {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+        result: { error: "Live component id is required." }
+      };
+    }
+    const pageId = String(body?.pageId || "default-page");
+    const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+    const instance = page.components.get(id);
+    if (!instance) {
+      return {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+        result: { error: `Component ${id} not found.` }
+      };
+    }
+    const nextState = body?.state && typeof body.state === "object" ? body.state : {};
+    if (typeof instance.$clearEffects === "function") {
+      instance.$clearEffects();
+    }
+    const keys = Object.keys(nextState);
+    for (let i = 0;i < keys.length; i++) {
+      const key = keys[i];
+      if (!this.isWritableSetPath(instance, key))
+        continue;
+      const value2 = nextState[key];
+      instance.$set(key, value2);
+      await this.runUpdatedHooks(instance, key, value2);
+    }
+    const payload = await this.renderComponentPayload(id, instance);
+    await this.wire.emit("component:update", {
+      userId,
+      sessionId,
+      pageId,
+      id,
+      ...payload
+    });
+    return {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+      result: payload
+    };
+  }
+  async handleUpload(body) {
+    const files = this.extractFilesFromBody(body);
+    if (!files.length) {
+      return { status: 400, result: { error: "No files uploaded" } };
+    }
+    const uploaded = [];
+    for (let i = 0;i < files.length; i++) {
+      const raw = files[i];
+      const file = this.normalizeUploadFile(raw);
+      const name = String(file.name || "upload.bin");
+      const mime = String(file.mime || "application/octet-stream");
+      let buffer;
+      try {
+        buffer = await this.readUploadBuffer(file.source, this.maxUploadBytes);
+      } catch (error3) {
+        if (this.isUploadTooLargeError(error3)) {
+          return {
+            status: 413,
+            result: {
+              error: String(error3?.message || "Uploaded file is too large.")
+            }
+          };
+        }
+        return {
+          status: 400,
+          result: {
+            error: String(error3?.message || "Unable to read uploaded file.")
+          }
+        };
+      }
+      if (!buffer) {
+        return {
+          status: 400,
+          result: { error: `Unable to read uploaded file "${name}".` }
+        };
+      }
+      const size = buffer.length || Number(file.size || 0);
+      let id;
+      try {
+        id = this.fileStore.store(name, buffer);
+      } catch (error3) {
+        return {
+          status: 500,
+          result: {
+            error: `Failed to store uploaded file "${name}". ${String(error3?.message || "")}`.trim()
+          }
+        };
+      }
+      uploaded.push({ id, name, size, mime, type: mime });
+    }
+    return { status: 200, result: { files: uploaded } };
+  }
+  handlePreview(url) {
+    const id = String(url.searchParams.get("id") || "").trim();
+    if (!id) {
+      return {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+        result: { error: "Preview id is required." }
+      };
+    }
+    const filePath = this.fileStore.get(id);
+    if (!filePath || !import_node_fs2.existsSync(filePath)) {
+      return {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+        result: { error: "Preview file not found." }
+      };
+    }
+    const ext = filePath.split(".").pop()?.toLowerCase() || "";
+    const typeByExt = {
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      png: "image/png",
+      gif: "image/gif",
+      webp: "image/webp",
+      svg: "image/svg+xml",
+      pdf: "application/pdf",
+      txt: "text/plain; charset=utf-8",
+      ogg: "audio/ogg",
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      m4a: "audio/mp4",
+      mp4: "video/mp4",
+      webm: "video/webm"
+    };
+    return {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": typeByExt[ext] || "application/octet-stream",
+        "X-Content-Type-Options": "nosniff"
+      },
+      result: import_node_fs2.createReadStream(filePath)
+    };
+  }
+  extractFilesFromBody(body) {
+    if (!body)
+      return [];
+    if (typeof FormData !== "undefined" && body instanceof FormData) {
+      return [...body.getAll("files[]"), ...body.getAll("files")].filter(Boolean);
+    }
+    if (body && typeof body === "object") {
+      const candidates = [body["files[]"], body.files, body.file];
+      const out = [];
+      for (let i = 0;i < candidates.length; i++) {
+        const c = candidates[i];
+        if (!c)
+          continue;
+        if (Array.isArray(c)) {
+          for (let j = 0;j < c.length; j++) {
+            const item = c[j];
+            if (!item)
+              continue;
+            if (item && typeof item === "object" && "value" in item && item.value) {
+              out.push(item.value);
+              continue;
+            }
+            out.push(item);
+          }
+          continue;
+        }
+        if (c && typeof c === "object" && "value" in c && c.value) {
+          out.push(c.value);
+          continue;
+        }
+        out.push(c);
+      }
+      return out.filter(Boolean);
+    }
+    return [];
+  }
+  normalizeUploadFile(file) {
+    if (file && typeof file === "object" && "value" in file && file.value) {
+      return this.normalizeUploadFile(file.value);
+    }
+    return {
+      name: String(file?.name || file?.filename || "upload.bin"),
+      mime: String(file?.type || file?.mime || file?.mimetype || "application/octet-stream"),
+      size: Number(file?.size || 0),
+      source: file
+    };
+  }
+  async readUploadBuffer(file, maxBytes) {
+    if (!file || typeof file !== "object")
+      return null;
+    const enforceLimit = (bytes) => {
+      if (!Number.isFinite(maxBytes) || maxBytes <= 0)
+        return;
+      if (bytes <= maxBytes)
+        return;
+      throw new Error(`${HttpAdapter.MAX_UPLOAD_ERROR_PREFIX}: Uploaded file exceeds the maximum allowed size (${maxBytes} bytes).`);
+    };
+    const declaredSize = Number(file.size || 0);
+    if (Number.isFinite(declaredSize) && declaredSize > 0) {
+      enforceLimit(declaredSize);
+    }
+    if (typeof file.arrayBuffer === "function") {
+      const data = await file.arrayBuffer();
+      enforceLimit(data?.byteLength || 0);
+      return Buffer.from(data);
+    }
+    if (typeof file.toBuffer === "function") {
+      const data = await file.toBuffer();
+      const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+      enforceLimit(buffer.length);
+      return buffer;
+    }
+    if (Buffer.isBuffer(file.buffer)) {
+      enforceLimit(file.buffer.length);
+      return file.buffer;
+    }
+    const stream = file.file;
+    if (stream && typeof stream[Symbol.asyncIterator] === "function") {
+      const chunks = [];
+      let total = 0;
+      for await (const chunk of stream) {
+        let normalized = null;
+        if (Buffer.isBuffer(chunk))
+          normalized = chunk;
+        else if (chunk)
+          normalized = Buffer.from(chunk);
+        if (!normalized)
+          continue;
+        total += normalized.length;
+        enforceLimit(total);
+        chunks.push(normalized);
+      }
+      return chunks.length > 0 ? Buffer.concat(chunks) : null;
+    }
+    return null;
+  }
+  async invokeComponentAction(instance, method, params) {
+    const name = String(method || "").trim();
+    const callParams = Array.isArray(params) ? params : [];
+    if (name === "$set") {
+      const property = String(callParams[0] ?? "").trim();
+      const value2 = callParams[1];
+      if (!this.isWritableSetPath(instance, property)) {
+        throw new Error(`Property "${property}" is not writable.`);
+      }
+      instance.$set(property, value2);
+      await this.runUpdatedHooks(instance, property, value2);
+      return;
+    }
+    if (name === "$refresh" || name === "$commit") {
+      return;
+    }
+    if (!name) {
+      throw new Error("Action method is required.");
+    }
+    if (name.startsWith("_")) {
+      throw new Error(`Method "${name}" is not callable.`);
+    }
+    if (name.startsWith("$")) {
+      throw new Error(`Internal method "${name}" is not callable.`);
+    }
+    if (!this.isAllowedActionMethod(instance, name)) {
+      throw new Error(`Method "${name}" is not callable.`);
+    }
+    await instance[name](...callParams);
+  }
+  isAllowedActionMethod(instance, name) {
+    if (!instance || !name)
+      return false;
+    if (RESERVED_REMOTE_ACTIONS.has(name))
+      return false;
+    if (typeof instance[name] !== "function")
+      return false;
+    const exposed = instance.$actions;
+    if (Array.isArray(exposed) && exposed.length > 0) {
+      return exposed.includes(name);
+    }
+    if (Object.hasOwn(instance, name)) {
+      return true;
+    }
+    let proto = Object.getPrototypeOf(instance);
+    while (proto && proto !== Object.prototype) {
+      if (Object.hasOwn(proto, name)) {
+        return proto !== Component.prototype;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+    return false;
+  }
+  isWritableSetPath(instance, property) {
+    const normalized = String(property || "").trim();
+    if (!normalized)
+      return false;
+    if (typeof instance?.$canSet === "function") {
+      try {
+        return !!instance.$canSet(normalized);
+      } catch {
+        return false;
+      }
+    }
+    const segments = normalized.split(".").map((part) => part.trim()).filter(Boolean);
+    if (segments.length === 0)
+      return false;
+    for (let i = 0;i < segments.length; i++) {
+      if (BLOCKED_SET_PATH_SEGMENTS2.has(segments[i]))
+        return false;
+    }
+    const root = segments[0];
+    const first = root.charCodeAt(0);
+    if (first === 36 || first === 95)
+      return false;
+    if (typeof instance?.getPublicState === "function") {
+      const state = instance.getPublicState();
+      return Object.hasOwn(state, root);
+    }
+    return true;
+  }
+  async runUpdatedHooks(instance, property, value2) {
+    if (!instance || !property)
+      return;
+    const callHook = async (hookName, args2) => {
+      if (!hookName)
+        return;
+      const fn2 = instance[hookName];
+      if (typeof fn2 !== "function")
+        return;
+      await fn2.apply(instance, args2);
+    };
+    const toStudly = (raw) => String(raw || "").split(/[\s._-]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+    const rootProperty = property.split(".")[0] || property;
+    const fullPathHook = `updated${toStudly(property)}`;
+    const rootHook = `updated${toStudly(rootProperty)}`;
+    await callHook(fullPathHook, [value2, property]);
+    if (rootHook !== fullPathHook) {
+      await callHook(rootHook, [value2, property]);
+    }
+    await callHook("updated", [value2, property]);
+  }
+  handleSse(req, userId, pageId, sessionId) {
+    const encoder = new TextEncoder;
+    const stream = new ReadableStream({
+      start: (controller) => {
+        const send = (data) => {
+          try {
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}
+
+`));
+          } catch (_e) {}
+        };
+        controller.enqueue(encoder.encode(`: connected
+
+`));
+        const cleanup = this.wire.on("component:update", (data) => {
+          if (data.userId !== userId)
+            return;
+          if (sessionId && data.sessionId && data.sessionId !== sessionId)
+            return;
+          if (pageId && data.pageId !== pageId)
+            return;
+          send({ type: "update", ...data });
+        });
+        const keepAlive = setInterval(() => {
+          try {
+            controller.enqueue(encoder.encode(`: keep-alive
+
+`));
+          } catch (_e) {
+            clearInterval(keepAlive);
+            cleanup();
+          }
+        }, 15000);
+        req.signal?.addEventListener("abort", () => {
+          clearInterval(keepAlive);
+          cleanup();
+          try {
+            controller.close();
+          } catch (_e) {}
+        });
+      }
+    });
+    return {
+      status: 200,
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive"
+      },
+      result: stream
+    };
+  }
+  handleSessionStatus(userId, pageId, sessionId) {
+    const sessionKey = String(sessionId || userId || "").trim();
+    const active = this.wire.sessions.hasActiveSession(sessionKey);
+    const pageActive = pageId ? this.wire.sessions.hasActivePage(sessionKey, pageId) : active;
+    const status = active && pageActive ? 200 : 410;
+    return {
+      status,
+      headers: { "Content-Type": "application/json" },
+      result: {
+        active,
+        pageActive
+      }
+    };
+  }
+  async emitBroadcastUpdatesForAllPages(params) {
+    const { roomIds, skipRefs } = params;
+    const activePages = this.wire.sessions.getActivePages();
+    for (let i = 0;i < activePages.length; i++) {
+      const { userId, sessionId, pageId, page } = activePages[i];
+      const entries = Array.from(page.components.entries());
+      for (let j = 0;j < entries.length; j++) {
+        const [id, instance] = entries[j];
+        const ref3 = this.buildComponentRef(userId, sessionId, pageId, id);
+        if (skipRefs.has(ref3))
+          continue;
+        const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
+        if (matchedRooms.length === 0)
+          continue;
+        if (typeof instance.$clearEffects === "function")
+          instance.$clearEffects();
+        const typedInstance = instance;
+        const keys = Object.keys(typedInstance);
+        for (let k = 0;k < keys.length; k++) {
+          const val = typedInstance[keys[k]];
+          if (val instanceof WireBroadcast) {
+            const roomId = val.getRoomId();
+            if (roomIds.has(roomId)) {
+              val.serverHydrate(instance);
+            }
+          }
+        }
+        const payload = await this.renderComponentPayload(id, instance);
+        await this.wire.emit("component:update", {
+          userId,
+          sessionId,
+          pageId,
+          id,
+          ...payload
+        });
+      }
+    }
+  }
+  async renderComponentPayload(id, instance) {
+    const nextRevision = Number(instance.__wireRevision || 0) + 1;
+    instance.__wireRevision = nextRevision;
+    const state = instance.getPublicState();
+    const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
+    const skipRender = Boolean(instance.__skipRender || instance.$live);
+    instance.__skipRender = false;
+    let html = "";
+    if (!skipRender) {
+      const rendered = await instance.render();
+      html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
+    }
+    return { html, state, effects: instance.__effects, revision: nextRevision };
+  }
+  getBroadcastRoomIds(instance) {
+    const out = [];
+    const keys = Object.keys(instance);
+    for (let i = 0;i < keys.length; i++) {
+      const value2 = instance[keys[i]];
+      if (value2 instanceof WireBroadcast) {
+        const roomId = value2.getRoomId();
+        if (roomId)
+          out.push(roomId);
+      }
+    }
+    return out;
+  }
+  getMatchingBroadcastRooms(instance, roomIds) {
+    const out = [];
+    const keys = Object.keys(instance);
+    for (let i = 0;i < keys.length; i++) {
+      const value2 = instance[keys[i]];
+      if (value2 instanceof WireBroadcast) {
+        const roomId = value2.getRoomId();
+        if (roomId && roomIds.has(roomId))
+          out.push(roomId);
+      }
+    }
+    return out;
+  }
+  buildComponentRef(userId, sessionId, pageId, id) {
+    return `${userId}::${sessionId}::${pageId}::${id}`;
+  }
+  handleClientScript() {
+    return {
+      status: 200,
+      headers: {
+        "Content-Type": "text/javascript; charset=utf-8",
+        "Cache-Control": "no-store"
+      },
+      result: this.getClientScriptSource()
+    };
+  }
+  getClientScriptSource() {
+    if (HttpAdapter.clientScriptCache)
+      return HttpAdapter.clientScriptCache;
+    const adapterDir = import_node_path2.dirname(import_node_url.fileURLToPath("file:///C:/Users/danie/Documents/GitHub/kire/packages/wire/src/adapters/http.ts"));
+    const workspaceClient = this.findWorkspaceClientScript();
+    const candidates = [
+      workspaceClient,
+      import_node_path2.resolve(adapterDir, "../../dist/client/wire.js"),
+      import_node_path2.resolve(adapterDir, "../../client/wire.js"),
+      import_node_path2.resolve(process.cwd(), "node_modules/@kirejs/wire/dist/client/wire.js"),
+      import_node_path2.resolve(process.cwd(), "dist/client/wire.js"),
+      import_node_path2.resolve(process.cwd(), "packages/wire/dist/client/wire.js"),
+      import_node_path2.resolve(process.cwd(), "../packages/wire/dist/client/wire.js"),
+      import_node_path2.resolve(process.cwd(), "../../packages/wire/dist/client/wire.js")
+    ].filter((value2, index, list) => Boolean(value2) && list.indexOf(value2) === index);
+    let fallback = null;
+    for (let i = 0;i < candidates.length; i++) {
+      const path = candidates[i];
+      if (!import_node_fs2.existsSync(path))
+        continue;
+      try {
+        const content = import_node_fs2.readFileSync(path, "utf8");
+        if (!fallback)
+          fallback = content;
+        if (this.isSocketCapableClientScript(content)) {
+          HttpAdapter.clientScriptCache = content;
+          return content;
+        }
+      } catch {}
+    }
+    if (fallback) {
+      HttpAdapter.clientScriptCache = fallback;
+      return fallback;
+    }
+    console.error("[Kirewire] Client script not found. Expected dist/client/wire.js (tip: run `bun run build.ts` in packages/wire).");
+    return `console.error("[Kirewire] Client script not found.");`;
+  }
+  isSocketCapableClientScript(content) {
+    return content.includes(HttpAdapter.HTTP_MARKER) && content.includes(HttpAdapter.SOCKET_MARKER);
+  }
+  findWorkspaceClientScript() {
+    let current = process.cwd();
+    for (let i = 0;i < 8; i++) {
+      const candidate = import_node_path2.resolve(current, "packages/wire/dist/client/wire.js");
+      if (import_node_fs2.existsSync(candidate))
+        return candidate;
+      const parent = import_node_path2.resolve(current, "..");
+      if (parent === current)
+        break;
+      current = parent;
+    }
+    return null;
+  }
+  destroy() {
+    if (this.ownsFileStore && this.fileStore && typeof this.fileStore.destroy === "function") {
+      this.fileStore.destroy();
+    }
+  }
+  normalizeMaxUploadBytes(value2) {
+    if (value2 === undefined || value2 === null) {
+      return HttpAdapter.DEFAULT_MAX_UPLOAD_BYTES;
+    }
+    const parsed = Number(value2);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      return Number.POSITIVE_INFINITY;
+    }
+    return Math.floor(parsed);
+  }
+  isUploadTooLargeError(error3) {
+    const message2 = String(error3?.message || "");
+    return message2.startsWith(HttpAdapter.MAX_UPLOAD_ERROR_PREFIX);
+  }
+}
+// packages/wire/src/adapters/socket.ts
+init_component();
+init_wire_broadcast();
+var BLOCKED_SET_PATH_SEGMENTS3 = new Set([
+  "__proto__",
+  "constructor",
+  "prototype"
+]);
+var RESERVED_REMOTE_ACTIONS2 = new Set([
+  "constructor",
+  "render",
+  "mount",
+  "unmount",
+  "view",
+  "fill",
+  "validate",
+  "rule",
+  "getPublicState"
+]);
+// packages/wire/src/adapters/fivem.ts
+init_component();
+init_wire_broadcast();
+var BLOCKED_SET_PATH_SEGMENTS4 = new Set([
+  "__proto__",
+  "constructor",
+  "prototype"
+]);
+var RESERVED_REMOTE_ACTIONS3 = new Set([
+  "constructor",
+  "render",
+  "mount",
+  "unmount",
+  "view",
+  "fill",
+  "validate",
+  "rule",
+  "getPublicState"
+]);
+function normalizeRoute2(route) {
+  const value2 = String(route || "/_wire").trim();
+  if (!value2)
+    return "/_wire";
+  const withSlash = value2.startsWith("/") ? value2 : `/${value2}`;
+  return withSlash.replace(/\/+$/, "");
+}
+
+class FiveMAdapter extends Adapter {
+  route;
+  fallbackHttp;
+  inboundEvent;
+  outboundEvent;
+  resolveIdentity;
+  emitToClient;
+  lastSourceByUser = new Map;
+  constructor(options = {}) {
+    super();
+    this.route = normalizeRoute2(options.route || "/_wire");
+    this.fallbackHttp = new HttpAdapter({
+      route: this.route,
+      fileStore: options.fileStore,
+      tempDir: options.tempDir,
+      maxUploadBytes: options.maxUploadBytes
+    });
+    this.inboundEvent = String(options.inboundEvent || "kirewire:call");
+    this.outboundEvent = String(options.outboundEvent || "kirewire:push");
+    this.resolveIdentity = options.resolveIdentity;
+    this.emitToClient = options.emit;
+  }
+  setup() {
+    this.fallbackHttp.install(this.wire, this.kire);
+    console.log(`[Kirewire] FiveMAdapter initialized on ${this.route}.`);
+    this.wire.reference("wire:fivem:inbound-event", () => this.inboundEvent);
+    this.wire.reference("wire:fivem:outbound-event", () => this.outboundEvent);
+    this.wire.reference("wire:fivem:route", () => this.route);
+    this.wire.on("component:update", (data) => {
+      this.pushToClient(data.userId, "update", data, undefined, data.sessionId);
+    });
+  }
+  getClientUrl() {
+    return this.route;
+  }
+  getUploadUrl() {
+    return `${this.route}/upload`;
+  }
+  getInboundEventName() {
+    return this.inboundEvent;
+  }
+  getOutboundEventName() {
+    return this.outboundEvent;
+  }
+  async handleRequest(req, userId, sessionId) {
+    return this.fallbackHttp.handleRequest(req, userId, sessionId);
+  }
+  async onNetMessage(sourceId, message2) {
+    const source = String(sourceId ?? "").trim();
+    const identity = this.resolveIdentity?.(source) || {
+      userId: source || "guest",
+      sessionId: source || "guest"
+    };
+    return this.onMessage(source, identity.userId, identity.sessionId, message2);
+  }
+  async onMessage(sourceId, userId, sessionId, message2) {
+    const source = String(sourceId || "").trim();
+    const wireUserId = String(userId || "guest");
+    if (source) {
+      this.lastSourceByUser.set(wireUserId, source);
+    }
+    const event = String(message2?.event || "").trim();
+    const payload = message2?.payload || {};
+    if (event === "ping") {
+      this.pushToClient(wireUserId, "pong", { at: Date.now() }, source, sessionId);
+      return;
+    }
+    if (event !== "call")
+      return;
+    const actions = Array.isArray(payload?.batch) ? payload.batch : [payload];
+    const pageId = String(payload?.pageId || actions[0]?.pageId || "default-page");
+    const results = [];
+    for (let i = 0;i < actions.length; i++) {
+      const action = actions[i];
+      const actionRequestId = String(action?.requestId || payload?.requestId || "");
+      try {
+        const result = await this.executeAction(wireUserId, sessionId, pageId, action);
+        results.push({
+          requestId: actionRequestId,
+          ...result
+        });
+      } catch (error3) {
+        results.push({
+          requestId: actionRequestId,
+          id: String(action?.id || ""),
+          error: String(error3?.message || "Unknown FiveM call error")
+        });
+      }
+    }
+    if (Array.isArray(payload?.batch)) {
+      this.pushToClient(wireUserId, "response", {
+        requestId: String(payload?.requestId || ""),
+        results
+      }, source, sessionId);
+      return;
+    }
+    const single = results[0] || {
+      requestId: String(payload?.requestId || ""),
+      id: String(actions[0]?.id || ""),
+      error: "Unknown FiveM call error"
+    };
+    if (single.error) {
+      this.pushToClient(wireUserId, "response", {
+        requestId: single.requestId,
+        id: single.id,
+        error: single.error
+      }, source, sessionId);
+      return;
+    }
+    this.pushToClient(wireUserId, "response", {
+      requestId: single.requestId,
+      result: single
+    }, source, sessionId);
+  }
+  async executeAction(userId, sessionId, pageId, action) {
+    const id = String(action?.id || "").trim();
+    if (!id)
+      throw new Error("Component id is required.");
+    const method = String(action?.method || "").trim();
+    const params = Array.isArray(action?.params) ? action.params : [];
+    const page = this.wire.sessions.getPage(userId, pageId, sessionId);
+    const instance = page.components.get(id);
+    if (!instance) {
+      throw new Error(`Component ${id} not found.`);
+    }
+    if (typeof instance.$clearEffects === "function") {
+      instance.$clearEffects();
+    }
+    await this.invokeComponentAction(instance, method, params);
+    const payload = await this.renderComponentPayload(id, instance);
+    const touchedBroadcastRooms = new Set(this.getBroadcastRoomIds(instance));
+    const skipRefs = new Set([
+      this.buildComponentRef(userId, sessionId, pageId, id)
+    ]);
+    await this.wire.emit("component:update", {
+      userId,
+      sessionId,
+      pageId,
+      id,
+      ...payload
+    });
+    if (touchedBroadcastRooms.size > 0) {
+      await this.emitBroadcastUpdatesForAllPages({
+        roomIds: touchedBroadcastRooms,
+        skipRefs
+      });
+    }
+    return {
+      id,
+      success: true,
+      html: payload.html,
+      state: payload.state,
+      effects: payload.effects,
+      revision: payload.revision
+    };
+  }
+  async invokeComponentAction(instance, method, params) {
+    const name = String(method || "").trim();
+    const callParams = Array.isArray(params) ? params : [];
+    if (name === "$set") {
+      const property = String(callParams[0] ?? "").trim();
+      const value2 = callParams[1];
+      if (!this.isWritableSetPath(instance, property)) {
+        throw new Error(`Property "${property}" is not writable.`);
+      }
+      instance.$set(property, value2);
+      await this.runUpdatedHooks(instance, property, value2);
+      return;
+    }
+    if (name === "$refresh" || name === "$commit") {
+      return;
+    }
+    if (!name) {
+      throw new Error("Action method is required.");
+    }
+    if (name.startsWith("_")) {
+      throw new Error(`Method "${name}" is not callable.`);
+    }
+    if (name.startsWith("$")) {
+      throw new Error(`Internal method "${name}" is not callable.`);
+    }
+    if (!this.isAllowedActionMethod(instance, name)) {
+      throw new Error(`Method "${name}" not found on component ${instance.$id}.`);
+    }
+    await instance[name](...callParams);
+  }
+  isAllowedActionMethod(instance, name) {
+    if (!instance || !name)
+      return false;
+    if (RESERVED_REMOTE_ACTIONS3.has(name))
+      return false;
+    if (typeof instance[name] !== "function")
+      return false;
+    const exposed = instance.$actions;
+    if (Array.isArray(exposed) && exposed.length > 0) {
+      return exposed.includes(name);
+    }
+    if (Object.hasOwn(instance, name))
+      return true;
+    let proto = Object.getPrototypeOf(instance);
+    while (proto && proto !== Object.prototype) {
+      if (Object.hasOwn(proto, name)) {
+        return proto !== Component.prototype;
+      }
+      proto = Object.getPrototypeOf(proto);
+    }
+    return false;
+  }
+  isWritableSetPath(instance, property) {
+    const normalized = String(property || "").trim();
+    if (!normalized)
+      return false;
+    if (typeof instance?.$canSet === "function") {
+      try {
+        return !!instance.$canSet(normalized);
+      } catch {
+        return false;
+      }
+    }
+    const segments = normalized.split(".").map((part) => part.trim()).filter(Boolean);
+    if (segments.length === 0)
+      return false;
+    for (let i = 0;i < segments.length; i++) {
+      if (BLOCKED_SET_PATH_SEGMENTS4.has(segments[i]))
+        return false;
+    }
+    const root = segments[0];
+    const first = root.charCodeAt(0);
+    if (first === 36 || first === 95)
+      return false;
+    if (typeof instance?.getPublicState === "function") {
+      const state = instance.getPublicState();
+      return Object.hasOwn(state, root);
+    }
+    return true;
+  }
+  async runUpdatedHooks(instance, property, value2) {
+    if (!instance || !property)
+      return;
+    const callHook = async (hookName, args2) => {
+      if (!hookName)
+        return;
+      const fn2 = instance[hookName];
+      if (typeof fn2 !== "function")
+        return;
+      await fn2.apply(instance, args2);
+    };
+    const toStudly = (raw) => String(raw || "").split(/[\s._-]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
+    const rootProperty = property.split(".")[0] || property;
+    const fullPathHook = `updated${toStudly(property)}`;
+    const rootHook = `updated${toStudly(rootProperty)}`;
+    await callHook(fullPathHook, [value2, property]);
+    if (rootHook !== fullPathHook) {
+      await callHook(rootHook, [value2, property]);
+    }
+    await callHook("updated", [value2, property]);
+  }
+  async renderComponentPayload(id, instance) {
+    const nextRevision = Number(instance.__wireRevision || 0) + 1;
+    instance.__wireRevision = nextRevision;
+    const state = instance.getPublicState();
+    const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
+    const skipRender = Boolean(instance.__skipRender || instance.$live);
+    instance.__skipRender = false;
+    let html = "";
+    if (!skipRender) {
+      const rendered = await instance.render();
+      html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
+    }
+    return { html, state, effects: instance.__effects, revision: nextRevision };
+  }
+  async emitBroadcastUpdatesForAllPages(params) {
+    const { roomIds, skipRefs } = params;
+    const activePages = this.wire.sessions.getActivePages();
+    for (let i = 0;i < activePages.length; i++) {
+      const { userId, sessionId, pageId, page } = activePages[i];
+      const entries = Array.from(page.components.entries());
+      for (let j = 0;j < entries.length; j++) {
+        const [id, instance] = entries[j];
+        const ref3 = this.buildComponentRef(userId, sessionId, pageId, id);
+        if (skipRefs.has(ref3))
+          continue;
+        const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
+        if (matchedRooms.length === 0)
+          continue;
+        if (typeof instance.$clearEffects === "function") {
+          instance.$clearEffects();
+        }
+        const typedInstance = instance;
+        const keys = Object.keys(typedInstance);
+        for (let k = 0;k < keys.length; k++) {
+          const val = typedInstance[keys[k]];
+          if (val instanceof WireBroadcast) {
+            const roomId = val.getRoomId();
+            if (roomId && roomIds.has(roomId)) {
+              val.serverHydrate(instance);
+            }
+          }
+        }
+        const payload = await this.renderComponentPayload(id, instance);
+        await this.wire.emit("component:update", {
+          userId,
+          sessionId,
+          pageId,
+          id,
+          ...payload
+        });
+      }
+    }
+  }
+  getBroadcastRoomIds(instance) {
+    const out = [];
+    const keys = Object.keys(instance);
+    for (let i = 0;i < keys.length; i++) {
+      const value2 = instance[keys[i]];
+      if (value2 instanceof WireBroadcast) {
+        const roomId = value2.getRoomId();
+        if (roomId)
+          out.push(roomId);
+      }
+    }
+    return out;
+  }
+  getMatchingBroadcastRooms(instance, roomIds) {
+    const out = [];
+    const keys = Object.keys(instance);
+    for (let i = 0;i < keys.length; i++) {
+      const value2 = instance[keys[i]];
+      if (value2 instanceof WireBroadcast) {
+        const roomId = value2.getRoomId();
+        if (roomId && roomIds.has(roomId))
+          out.push(roomId);
+      }
+    }
+    return out;
+  }
+  buildComponentRef(userId, sessionId, pageId, id) {
+    return `${userId}::${sessionId}::${pageId}::${id}`;
+  }
+  pushToClient(userId, event, data, sourceId, sessionId) {
+    const resolvedUserId = String(userId || "guest");
+    const targetSource = String(sourceId || this.lastSourceByUser.get(resolvedUserId) || "").trim();
+    const packet = {
+      userId: resolvedUserId,
+      sessionId: String(sessionId || "").trim() || undefined,
+      sourceId: targetSource || undefined,
+      channel: this.outboundEvent,
+      event: String(event || ""),
+      data
+    };
+    if (typeof this.emitToClient === "function") {
+      try {
+        this.emitToClient(packet);
+      } catch {}
+    }
+    this.wire.emitSync("fivem:push", packet);
+  }
+  disconnectSpecialProperties(instance) {
+    const keys = Object.keys(instance);
+    for (let i = 0;i < keys.length; i++) {
+      const key = keys[i];
+      const value2 = instance[key];
+      if (!value2 || typeof value2 !== "object")
+        continue;
+      if (value2 instanceof WireBroadcast) {
+        try {
+          value2.disconnect(instance);
+        } catch {}
+      }
+    }
+  }
+  destroy() {
+    this.fallbackHttp.destroy();
+    const activePages = this.wire.sessions.getActivePages();
+    for (let i = 0;i < activePages.length; i++) {
+      const page = activePages[i].page;
+      const components = Array.from(page.components.values());
+      for (let j = 0;j < components.length; j++) {
+        this.disconnectSpecialProperties(components[j]);
+      }
+    }
+  }
+}
+// packages/wire/src/index.ts
+init_component();
+
+// packages/wire/src/decorators.ts
+init_metadata();
+
+// packages/wire/src/index.ts
+init_file_upload();
+init_wire_broadcast();
+
+// packages/wire/src/kirewire.ts
+var import_node_crypto3 = require("node:crypto");
+
+// packages/wire/src/event-controller.ts
 class EventController {
   _listeners = Object.create(null);
   on(event, callback) {
@@ -24214,12 +26270,16 @@ class EventController {
   }
 }
 
-// ../../packages/wire/src/session.ts
-var import_node_crypto = require("node:crypto");
+// packages/wire/src/kirewire.ts
+init_metadata();
+
+// packages/wire/src/session.ts
+var import_node_crypto2 = require("node:crypto");
 
 class SessionManager {
   expireMs;
   sessions = new Map;
+  sessionKeyByUserId = new Map;
   findByPublicId = new Map;
   cleanupTimer;
   constructor(expireMs) {
@@ -24229,71 +26289,84 @@ class SessionManager {
       this.cleanupTimer.unref();
     }
   }
-  getSession(userId) {
-    let session = this.sessions.get(userId);
+  getSession(userId, sessionId) {
+    const normalizedUserId = this.normalizeUserId(userId);
+    const sessionKey = this.resolveSessionKey(normalizedUserId, sessionId);
+    let session = this.sessions.get(sessionKey);
     if (!session) {
-      const publicId = import_node_crypto.randomUUID();
+      const publicId = import_node_crypto2.randomUUID();
       session = {
+        key: sessionKey,
         publicId,
         pages: new Map,
+        userIds: new Set,
         expireAt: Date.now() + this.expireMs
       };
-      this.sessions.set(userId, session);
-      this.findByPublicId.set(publicId, userId);
+      this.sessions.set(sessionKey, session);
+      this.findByPublicId.set(publicId, sessionKey);
     }
+    session.userIds.add(normalizedUserId);
+    this.sessionKeyByUserId.set(normalizedUserId, sessionKey);
     session.expireAt = Date.now() + this.expireMs;
     return session;
   }
-  getPage(userId, pageId) {
-    const session = this.getSession(userId);
-    let page = session.pages.get(pageId);
+  getPage(userId, pageId, sessionId) {
+    const session = this.getSession(userId, sessionId);
+    const normalizedPageId = this.normalizePageId(pageId);
+    let page = session.pages.get(normalizedPageId);
     if (!page) {
       page = {
         components: new Map,
         lastSeen: Date.now()
       };
-      session.pages.set(pageId, page);
+      session.pages.set(normalizedPageId, page);
     }
     page.lastSeen = Date.now();
     return page;
   }
-  hasActiveSession(userId) {
-    const session = this.sessions.get(userId);
+  hasActiveSession(userIdOrSessionId) {
+    const session = this.findSession(userIdOrSessionId);
     if (!session)
       return false;
     if (session.expireAt && Date.now() > session.expireAt)
       return false;
     return true;
   }
-  hasActivePage(userId, pageId) {
-    const session = this.sessions.get(userId);
+  hasActivePage(userIdOrSessionId, pageId) {
+    const session = this.findSession(userIdOrSessionId);
     if (!session)
       return false;
     if (session.expireAt && Date.now() > session.expireAt)
       return false;
-    return session.pages.has(pageId);
+    return session.pages.has(this.normalizePageId(pageId));
   }
   getUserIdByPublicId(publicId) {
-    return this.findByPublicId.get(publicId);
+    const sessionKey = this.findByPublicId.get(String(publicId || "").trim());
+    if (!sessionKey)
+      return;
+    const session = this.sessions.get(sessionKey);
+    if (!session || session.userIds.size === 0)
+      return;
+    return session.userIds.values().next().value;
   }
   getActivePages() {
     const entries = [];
-    for (const [userId, session] of this.sessions.entries()) {
+    for (const [sessionId, session] of this.sessions.entries()) {
+      const userId = session.userIds.values().next().value || "guest";
       for (const [pageId, page] of session.pages.entries()) {
-        entries.push({ userId, pageId, session, page });
+        entries.push({ userId, sessionId, pageId, session, page });
       }
     }
     return entries;
   }
   async cleanup() {
     const now = Date.now();
-    for (const [userId, session] of this.sessions.entries()) {
+    for (const [sessionKey, session] of this.sessions.entries()) {
       if (session.expireAt && now > session.expireAt) {
-        for (const [pageId, page] of session.pages.entries()) {
+        for (const [_pageId, page] of session.pages.entries()) {
           await this.unmountPage(page);
         }
-        this.sessions.delete(userId);
-        this.findByPublicId.delete(session.publicId);
+        this.deleteSession(sessionKey, session);
       }
     }
   }
@@ -24315,11 +26388,74 @@ class SessionManager {
       }
     }
     this.sessions.clear();
+    this.sessionKeyByUserId.clear();
     this.findByPublicId.clear();
+  }
+  findSession(userIdOrSessionId) {
+    const raw = String(userIdOrSessionId || "").trim();
+    if (!raw)
+      return;
+    const direct = this.sessions.get(raw);
+    if (direct)
+      return direct;
+    const mapped3 = this.sessionKeyByUserId.get(raw);
+    if (!mapped3)
+      return;
+    return this.sessions.get(mapped3);
+  }
+  resolveSessionKey(userId, sessionId) {
+    const explicit = String(sessionId || "").trim();
+    if (explicit) {
+      const explicitSession = this.sessions.get(explicit);
+      if (explicitSession)
+        return explicit;
+      const mapped4 = this.sessionKeyByUserId.get(userId);
+      if (!mapped4)
+        return explicit;
+      if (mapped4 === explicit)
+        return explicit;
+      const mappedSession = this.sessions.get(mapped4);
+      if (!mappedSession)
+        return explicit;
+      this.rekeySession(mapped4, explicit, mappedSession);
+      return explicit;
+    }
+    const mapped3 = this.sessionKeyByUserId.get(userId);
+    if (mapped3)
+      return mapped3;
+    return userId || "guest";
+  }
+  normalizeUserId(userId) {
+    const value2 = String(userId || "").trim();
+    return value2 || "guest";
+  }
+  normalizePageId(pageId) {
+    const value2 = String(pageId || "").trim();
+    return value2 || "default-page";
+  }
+  deleteSession(sessionKey, session) {
+    this.sessions.delete(sessionKey);
+    this.findByPublicId.delete(session.publicId);
+    for (const userId of session.userIds.values()) {
+      if (this.sessionKeyByUserId.get(userId) === sessionKey) {
+        this.sessionKeyByUserId.delete(userId);
+      }
+    }
+  }
+  rekeySession(fromKey, toKey, session) {
+    if (fromKey === toKey)
+      return;
+    this.sessions.delete(fromKey);
+    session.key = toKey;
+    this.sessions.set(toKey, session);
+    this.findByPublicId.set(session.publicId, toKey);
+    for (const userId of session.userIds.values()) {
+      this.sessionKeyByUserId.set(userId, toKey);
+    }
   }
 }
 
-// ../../packages/wire/src/kirewire.ts
+// packages/wire/src/kirewire.ts
 function normalizeRoutePath(path) {
   const value2 = String(path || "").trim();
   if (!value2)
@@ -24447,7 +26583,31 @@ class Kirewire extends EventController {
     return null;
   }
   createComponentId() {
-    return import_node_crypto2.randomUUID();
+    return import_node_crypto3.randomUUID();
+  }
+  wired(nameOrClass, ComponentClass) {
+    let componentName = "";
+    let klass;
+    if (typeof nameOrClass === "function") {
+      klass = nameOrClass;
+      componentName = "";
+    } else {
+      componentName = String(nameOrClass || "").trim();
+      klass = ComponentClass;
+    }
+    if (typeof klass !== "function") {
+      throw new Error("Component class must be a class/function.");
+    }
+    const wireDefinition = getWireComponentDefinition(klass);
+    const resolvedName = componentName || String(wireDefinition?.name || "").trim() || String(klass?.name || "").trim();
+    const key = String(resolvedName || "").trim();
+    if (!key)
+      throw new Error("Component name is required.");
+    if (wireDefinition?.live === true) {
+      klass.prototype.$live = true;
+    }
+    this.components.set(key, klass);
+    return this;
   }
   applySafeLocals(instance, locals = {}) {
     if (!instance || typeof instance !== "object")
@@ -24539,17 +26699,47 @@ class Kirewire extends EventController {
   }
   generateChecksum(state, sessionId) {
     const data = JSON.stringify(state) + sessionId + this.secret;
-    return import_node_crypto2.createHash("sha256").update(data).digest("hex");
+    return import_node_crypto3.createHash("sha256").update(data).digest("hex");
   }
   use(fn2) {
     this.middlewares.push(fn2);
   }
+  getCache() {
+    return {
+      components: this.components,
+      propertyClasses: this.propertyClasses,
+      sessions: this.sessions,
+      references: this.references,
+      routes: this.routes
+    };
+  }
+  configureCache(next) {
+    if (!next || typeof next !== "object")
+      return this;
+    if (next.components instanceof Map)
+      this.components = next.components;
+    if (next.propertyClasses instanceof Map)
+      this.propertyClasses = next.propertyClasses;
+    if (next.sessions instanceof SessionManager)
+      this.sessions = next.sessions;
+    if (next.references instanceof Map)
+      this.references = next.references;
+    if (next.routes instanceof Map)
+      this.routes = next.routes;
+    return this;
+  }
+  mutateCache(mutator) {
+    if (typeof mutator !== "function")
+      return this;
+    mutator(this.getCache());
+    return this;
+  }
   async wireRegister(pattern2, rootDir = process.cwd(), namePrefix = "") {
-    const { existsSync, readdirSync, statSync } = await import("node:fs");
-    const { join, resolve, parse: parse4 } = await import("node:path");
+    const { existsSync: existsSync3, readdirSync, statSync } = await import("node:fs");
+    const { join: join2, resolve: resolve2, parse: parse4 } = await import("node:path");
     const { Component: Component2 } = await Promise.resolve().then(() => (init_component(), exports_component));
-    const searchDir = resolve(rootDir, pattern2.replace(/\*.*$/, ""));
-    if (!existsSync(searchDir))
+    const searchDir = resolve2(rootDir, pattern2.replace(/\*.*$/, ""));
+    if (!existsSync3(searchDir))
       return;
     const walk = (dir) => {
       let results = [];
@@ -24557,14 +26747,14 @@ class Kirewire extends EventController {
         const list = readdirSync(dir);
         for (let i = 0;i < list.length; i++) {
           const file = list[i];
-          const path = join(dir, file);
+          const path = join2(dir, file);
           const stat = statSync(path);
-          if (stat && stat.isDirectory())
+          if (stat?.isDirectory())
             results = results.concat(walk(path));
           else
             results.push(path);
         }
-      } catch (e) {}
+      } catch (_e) {}
       return results;
     };
     const files = walk(searchDir);
@@ -24572,16 +26762,22 @@ class Kirewire extends EventController {
       const file = files[i];
       if ((file.endsWith(".js") || file.endsWith(".ts")) && !file.endsWith(".d.ts")) {
         try {
-          const fullPath = resolve(file);
+          const fullPath = resolve2(file);
           const module4 = await import(fullPath);
           const componentClass = module4.default || Object.values(module4).find((e) => typeof e === "function" && e.prototype instanceof Component2);
           if (componentClass) {
+            const wireDefinition = getWireComponentDefinition(componentClass);
             const relPath = file.slice(searchDir.length + 1);
             const parsed = parse4(relPath);
-            const dirParts = parsed.dir ? parsed.dir.split(/[\\\/]/) : [];
+            const dirParts = parsed.dir ? parsed.dir.split(/[\\/]/) : [];
             const localName = [...dirParts, parsed.name].join(".");
+            const decoratedName = String(wireDefinition?.name || "").trim();
             const prefix = String(namePrefix || "").trim().replace(/\.+$/, "");
-            const name = prefix ? `${prefix}.${localName}` : localName;
+            const baseName = decoratedName || localName;
+            const name = prefix ? `${prefix}.${baseName}` : baseName;
+            if (wireDefinition?.live === true) {
+              componentClass.prototype.$live = true;
+            }
             this.components.set(name, componentClass);
             console.log(`[Kirewire] Registered component: ${name}`);
           }
@@ -24624,7 +26820,7 @@ class Kirewire extends EventController {
     const match = duration.match(/^(\d+)([smh])$/);
     if (!match)
       return 60000;
-    const val = parseInt(match[1]);
+    const val = Number.parseInt(match[1], 10);
     const unit = match[2];
     switch (unit) {
       case "s":
@@ -24647,1133 +26843,10 @@ class Kirewire extends EventController {
   }
 }
 
-// ../../packages/wire/src/index.ts
-init_component();
-
-// ../../packages/wire/src/adapter.ts
-class Adapter {
-  wire;
-  kire;
-  install(wire, kire) {
-    this.wire = wire;
-    this.kire = kire;
-    this.setup();
-  }
-}
-
-// ../../packages/wire/src/adapters/http.ts
-var import_node_fs2 = require("node:fs");
-var import_node_path2 = require("node:path");
-var import_node_url = require("node:url");
-
-// ../../packages/wire/src/features/file-store.ts
-var import_node_fs = require("node:fs");
-var import_node_path = require("node:path");
-var import_node_crypto3 = require("node:crypto");
-
-class FileStore {
-  ttl;
-  tempDir;
-  fileMap = new Map;
-  cleanupTimer;
-  constructor(tempDir, ttl = 3600000) {
-    this.ttl = ttl;
-    this.tempDir = tempDir;
-    if (!import_node_fs.existsSync(this.tempDir)) {
-      import_node_fs.mkdirSync(this.tempDir, { recursive: true });
-    }
-    this.cleanupTimer = setInterval(() => this.cleanup(), 60000);
-    if (typeof this.cleanupTimer?.unref === "function") {
-      this.cleanupTimer.unref();
-    }
-  }
-  store(filename, buffer) {
-    const id = import_node_crypto3.randomUUID();
-    const safeName = import_node_path.basename(String(filename || "upload.bin")).replace(/[^\w.\-]/g, "_");
-    const path = import_node_path.join(this.tempDir, `${id}_${safeName}`);
-    import_node_fs.writeFileSync(path, buffer);
-    this.fileMap.set(id, { path, expires: Date.now() + this.ttl });
-    return id;
-  }
-  get(id) {
-    const entry = this.fileMap.get(id);
-    if (entry && import_node_fs.existsSync(entry.path)) {
-      return entry.path;
-    }
-    return null;
-  }
-  delete(id) {
-    const entry = this.fileMap.get(id);
-    if (entry) {
-      if (import_node_fs.existsSync(entry.path))
-        import_node_fs.unlinkSync(entry.path);
-      this.fileMap.delete(id);
-    }
-  }
-  cleanup() {
-    const now = Date.now();
-    for (const [id, entry] of this.fileMap.entries()) {
-      if (now > entry.expires) {
-        this.delete(id);
-      }
-    }
-  }
-  destroy() {
-    clearInterval(this.cleanupTimer);
-    const ids = Array.from(this.fileMap.keys());
-    for (let i = 0;i < ids.length; i++) {
-      this.delete(ids[i]);
-    }
-  }
-}
-
-// ../../packages/wire/src/adapters/http.ts
-function normalizeRoute(route) {
-  const value2 = String(route || "/_wire").trim();
-  if (!value2)
-    return "/_wire";
-  const withSlash = value2.startsWith("/") ? value2 : `/${value2}`;
-  return withSlash.replace(/\/+$/, "");
-}
-
-class HttpAdapter extends Adapter {
-  static DEFAULT_MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
-  static MAX_UPLOAD_ERROR_PREFIX = "KIREWIRE_UPLOAD_TOO_LARGE";
-  static SOCKET_MARKER = "SocketClientAdapter";
-  static HTTP_MARKER = "HttpClientAdapter";
-  static clientScriptCache = null;
-  route;
-  fileStore;
-  ownsFileStore;
-  maxUploadBytes;
-  constructor(options = {}) {
-    super();
-    this.route = normalizeRoute(options.route || "/_wire");
-    this.fileStore = options.fileStore || new FileStore(options.tempDir || "node_modules/.kirewire_uploads");
-    this.ownsFileStore = !options.fileStore;
-    this.maxUploadBytes = this.normalizeMaxUploadBytes(options.maxUploadBytes);
-  }
-  setup() {
-    console.log(`[Kirewire] HttpAdapter active on ${this.route}`);
-    this.wire.reference("wire:url", () => this.getClientUrl());
-    this.wire.reference("wire:upload-url", () => this.getUploadUrl());
-    this.wire.reference("wire:sse-url", () => `${this.route}/sse`);
-    this.wire.reference("wire:session-url", () => `${this.route}/session`);
-    this.wire.reference("wire:client-script-url", () => `${this.route}/kirewire.js`);
-  }
-  getClientUrl() {
-    return this.route;
-  }
-  getUploadUrl() {
-    return `${this.route}/upload`;
-  }
-  async handleRequest(req, userId, _sessionId) {
-    const url = new URL(req.url, "http://localhost");
-    if (req.method === "GET" && url.pathname === `${this.route}/kirewire.js`) {
-      return this.handleClientScript();
-    }
-    if (req.method === "POST" && url.pathname === `${this.route}/upload`) {
-      return await this.handleUpload(req.body);
-    }
-    if (!this.wire) {
-      return {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-        result: { error: "HttpAdapter is not installed. Call adapter.install(wire, kire) first." }
-      };
-    }
-    const customRoute = this.wire.matchRoute(req.method, url.pathname);
-    if (customRoute) {
-      return await this.handleCustomRoute(customRoute, req, url, userId, _sessionId);
-    }
-    if (req.method === "GET" && url.pathname === `${this.route}/sse`) {
-      const pageId2 = String(url.searchParams.get("pageId") || "");
-      return this.handleSse(req, userId, pageId2);
-    }
-    if (req.method === "GET" && url.pathname === `${this.route}/session`) {
-      const pageId2 = String(url.searchParams.get("pageId") || "");
-      return this.handleSessionStatus(userId, pageId2);
-    }
-    if (req.method !== "POST") {
-      return { status: 405, result: { error: "Method not allowed" } };
-    }
-    const reqBody = req.body;
-    if (!reqBody)
-      return { status: 400, result: { error: "Empty request body" } };
-    const actions = reqBody.batch && Array.isArray(reqBody.batch) ? reqBody.batch : [reqBody];
-    const pageId = String(reqBody.pageId || actions[0]?.pageId || "default-page");
-    const results = [];
-    const modifiedComponents = new Set;
-    const preparedComponents = new Set;
-    const touchedBroadcastRooms = new Set;
-    const modifiedRefs = new Set;
-    for (let i = 0;i < actions.length; i++) {
-      const action = actions[i];
-      try {
-        const { id, method, params } = action;
-        const page = this.wire.sessions.getPage(userId, pageId);
-        const instance = page.components.get(id);
-        if (!instance) {
-          console.error(`[HttpAdapter] Component ${id} not found for userId=${userId} pageId=${pageId}. Available components in this page:`, Array.from(page.components.keys()));
-          throw new Error(`Component ${id} not found.`);
-        }
-        if (!preparedComponents.has(id)) {
-          preparedComponents.add(id);
-          if (instance.$clearEffects)
-            instance.$clearEffects();
-        }
-        await this.invokeComponentAction(instance, method, params);
-        modifiedComponents.add(id);
-        results.push({ id, success: true });
-      } catch (e) {
-        results.push({ id: action?.id, error: e?.message || "Unknown error" });
-      }
-    }
-    for (const id of modifiedComponents) {
-      const page = this.wire.sessions.getPage(userId, pageId);
-      const instance = page.components.get(id);
-      if (!instance)
-        continue;
-      const payload = await this.renderComponentPayload(id, instance);
-      const roomIds = this.getBroadcastRoomIds(instance);
-      for (let j = 0;j < roomIds.length; j++)
-        touchedBroadcastRooms.add(roomIds[j]);
-      await this.wire.emit("component:update", {
-        userId,
-        pageId,
-        id,
-        ...payload
-      });
-      modifiedRefs.add(this.buildComponentRef(userId, pageId, id));
-      for (let i = results.length - 1;i >= 0; i--) {
-        if (results[i].id === id && !results[i].error) {
-          Object.assign(results[i], {
-            effects: instance.__effects,
-            state: payload.state,
-            html: payload.html,
-            revision: payload.revision
-          });
-          break;
-        }
-      }
-    }
-    if (touchedBroadcastRooms.size > 0) {
-      await this.emitBroadcastUpdatesForAllPages({
-        roomIds: touchedBroadcastRooms,
-        skipRefs: modifiedRefs
-      });
-    }
-    return {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-      result: reqBody.batch ? results : results[0]
-    };
-  }
-  async handleCustomRoute(route, req, url, userId, sessionId) {
-    try {
-      const output = await route.handler({
-        method: req.method,
-        path: url.pathname,
-        url,
-        query: url.searchParams,
-        params: route.params,
-        body: req.body,
-        signal: req.signal,
-        userId,
-        sessionId,
-        wire: this.wire,
-        adapter: this
-      });
-      if (output && typeof output === "object" && (("status" in output) || ("result" in output) || ("headers" in output))) {
-        const typed = output;
-        return {
-          status: Number(typed.status || 200),
-          headers: typed.headers,
-          result: typed.result
-        };
-      }
-      return {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-        result: output
-      };
-    } catch (error3) {
-      return {
-        status: 500,
-        headers: { "Content-Type": "application/json" },
-        result: {
-          route: route.name,
-          error: String(error3?.message || "Internal error")
-        }
-      };
-    }
-  }
-  async handleUpload(body) {
-    const files = this.extractFilesFromBody(body);
-    if (!files.length) {
-      return { status: 400, result: { error: "No files uploaded" } };
-    }
-    const uploaded = [];
-    for (let i = 0;i < files.length; i++) {
-      const raw = files[i];
-      const file = this.normalizeUploadFile(raw);
-      const name = String(file.name || "upload.bin");
-      const mime = String(file.mime || "application/octet-stream");
-      let buffer;
-      try {
-        buffer = await this.readUploadBuffer(file.source, this.maxUploadBytes);
-      } catch (error3) {
-        if (this.isUploadTooLargeError(error3)) {
-          return {
-            status: 413,
-            result: { error: String(error3?.message || "Uploaded file is too large.") }
-          };
-        }
-        return {
-          status: 400,
-          result: { error: String(error3?.message || "Unable to read uploaded file.") }
-        };
-      }
-      if (!buffer) {
-        return {
-          status: 400,
-          result: { error: `Unable to read uploaded file "${name}".` }
-        };
-      }
-      const size = buffer.length || Number(file.size || 0);
-      let id;
-      try {
-        id = this.fileStore.store(name, buffer);
-      } catch (error3) {
-        return {
-          status: 500,
-          result: { error: `Failed to store uploaded file "${name}". ${String(error3?.message || "")}`.trim() }
-        };
-      }
-      uploaded.push({ id, name, size, mime, type: mime });
-    }
-    return { status: 200, result: { files: uploaded } };
-  }
-  extractFilesFromBody(body) {
-    if (!body)
-      return [];
-    if (typeof FormData !== "undefined" && body instanceof FormData) {
-      return [...body.getAll("files[]"), ...body.getAll("files")].filter(Boolean);
-    }
-    if (body && typeof body === "object") {
-      const candidates = [body["files[]"], body.files, body.file];
-      const out = [];
-      for (let i = 0;i < candidates.length; i++) {
-        const c = candidates[i];
-        if (!c)
-          continue;
-        if (Array.isArray(c)) {
-          for (let j = 0;j < c.length; j++) {
-            const item = c[j];
-            if (!item)
-              continue;
-            if (item && typeof item === "object" && "value" in item && item.value) {
-              out.push(item.value);
-              continue;
-            }
-            out.push(item);
-          }
-          continue;
-        }
-        if (c && typeof c === "object" && "value" in c && c.value) {
-          out.push(c.value);
-          continue;
-        }
-        out.push(c);
-      }
-      return out.filter(Boolean);
-    }
-    return [];
-  }
-  normalizeUploadFile(file) {
-    if (file && typeof file === "object" && "value" in file && file.value) {
-      return this.normalizeUploadFile(file.value);
-    }
-    return {
-      name: String(file?.name || file?.filename || "upload.bin"),
-      mime: String(file?.type || file?.mime || file?.mimetype || "application/octet-stream"),
-      size: Number(file?.size || 0),
-      source: file
-    };
-  }
-  async readUploadBuffer(file, maxBytes) {
-    if (!file || typeof file !== "object")
-      return null;
-    const enforceLimit = (bytes) => {
-      if (!Number.isFinite(maxBytes) || maxBytes <= 0)
-        return;
-      if (bytes <= maxBytes)
-        return;
-      throw new Error(`${HttpAdapter.MAX_UPLOAD_ERROR_PREFIX}: Uploaded file exceeds the maximum allowed size (${maxBytes} bytes).`);
-    };
-    const declaredSize = Number(file.size || 0);
-    if (Number.isFinite(declaredSize) && declaredSize > 0) {
-      enforceLimit(declaredSize);
-    }
-    if (typeof file.arrayBuffer === "function") {
-      const data = await file.arrayBuffer();
-      enforceLimit(data?.byteLength || 0);
-      return Buffer.from(data);
-    }
-    if (typeof file.toBuffer === "function") {
-      const data = await file.toBuffer();
-      const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
-      enforceLimit(buffer.length);
-      return buffer;
-    }
-    if (Buffer.isBuffer(file.buffer)) {
-      enforceLimit(file.buffer.length);
-      return file.buffer;
-    }
-    const stream = file.file;
-    if (stream && typeof stream[Symbol.asyncIterator] === "function") {
-      const chunks = [];
-      let total = 0;
-      for await (const chunk of stream) {
-        let normalized = null;
-        if (Buffer.isBuffer(chunk))
-          normalized = chunk;
-        else if (chunk)
-          normalized = Buffer.from(chunk);
-        if (!normalized)
-          continue;
-        total += normalized.length;
-        enforceLimit(total);
-        chunks.push(normalized);
-      }
-      return chunks.length > 0 ? Buffer.concat(chunks) : null;
-    }
-    return null;
-  }
-  async invokeComponentAction(instance, method, params) {
-    const name = String(method || "").trim();
-    const callParams = Array.isArray(params) ? params : [];
-    if (name === "$set") {
-      const property = String(callParams[0] ?? "").trim();
-      const value2 = callParams[1];
-      instance.$set(property, value2);
-      await this.runUpdatedHooks(instance, property, value2);
-      return;
-    }
-    if (name === "$refresh" || name === "$commit") {
-      return;
-    }
-    if (!name) {
-      throw new Error("Action method is required.");
-    }
-    if (name.startsWith("_")) {
-      throw new Error(`Method "${name}" is not callable.`);
-    }
-    if (name.startsWith("$")) {
-      throw new Error(`Internal method "${name}" is not callable.`);
-    }
-    if (typeof instance[name] !== "function") {
-      throw new Error(`Method "${name}" not found on component ${instance.$id}.`);
-    }
-    await instance[name](...callParams);
-  }
-  async runUpdatedHooks(instance, property, value2) {
-    if (!instance || !property)
-      return;
-    const callHook = async (hookName, args2) => {
-      if (!hookName)
-        return;
-      const fn2 = instance[hookName];
-      if (typeof fn2 !== "function")
-        return;
-      await fn2.apply(instance, args2);
-    };
-    const toStudly = (raw) => String(raw || "").split(/[\s._-]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
-    const rootProperty = property.split(".")[0] || property;
-    const fullPathHook = `updated${toStudly(property)}`;
-    const rootHook = `updated${toStudly(rootProperty)}`;
-    await callHook(fullPathHook, [value2, property]);
-    if (rootHook !== fullPathHook) {
-      await callHook(rootHook, [value2, property]);
-    }
-    await callHook("updated", [value2, property]);
-  }
-  handleSse(req, userId, pageId) {
-    const encoder = new TextEncoder;
-    const stream = new ReadableStream({
-      start: (controller) => {
-        const send = (data) => {
-          try {
-            controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}
-
-`));
-          } catch (e) {}
-        };
-        controller.enqueue(encoder.encode(`: connected
-
-`));
-        const cleanup = this.wire.on("component:update", (data) => {
-          if (data.userId !== userId)
-            return;
-          if (pageId && data.pageId !== pageId)
-            return;
-          send({ type: "update", ...data });
-        });
-        const keepAlive = setInterval(() => {
-          try {
-            controller.enqueue(encoder.encode(`: keep-alive
-
-`));
-          } catch (e) {
-            clearInterval(keepAlive);
-            cleanup();
-          }
-        }, 15000);
-        req.signal?.addEventListener("abort", () => {
-          clearInterval(keepAlive);
-          cleanup();
-          try {
-            controller.close();
-          } catch (e) {}
-        });
-      }
-    });
-    return {
-      status: 200,
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive"
-      },
-      result: stream
-    };
-  }
-  handleSessionStatus(userId, pageId) {
-    const active = this.wire.sessions.hasActiveSession(userId);
-    const pageActive = pageId ? this.wire.sessions.hasActivePage(userId, pageId) : active;
-    const status = active && pageActive ? 200 : 410;
-    return {
-      status,
-      headers: { "Content-Type": "application/json" },
-      result: {
-        active,
-        pageActive
-      }
-    };
-  }
-  async emitBroadcastUpdatesForAllPages(params) {
-    const { roomIds, skipRefs } = params;
-    const activePages = this.wire.sessions.getActivePages();
-    for (let i = 0;i < activePages.length; i++) {
-      const { userId, pageId, page } = activePages[i];
-      const entries = Array.from(page.components.entries());
-      for (let j = 0;j < entries.length; j++) {
-        const [id, instance] = entries[j];
-        const ref3 = this.buildComponentRef(userId, pageId, id);
-        if (skipRefs.has(ref3))
-          continue;
-        const matchedRooms = this.getMatchingBroadcastRooms(instance, roomIds);
-        if (matchedRooms.length === 0)
-          continue;
-        if (typeof instance.$clearEffects === "function")
-          instance.$clearEffects();
-        const typedInstance = instance;
-        const keys = Object.keys(typedInstance);
-        for (let k = 0;k < keys.length; k++) {
-          const val = typedInstance[keys[k]];
-          if (val instanceof WireProperty && val.__wire_type === "broadcast") {
-            const roomId = val.getRoomId?.();
-            if (roomIds.has(roomId)) {
-              val.serverHydrate?.(instance);
-            }
-          }
-        }
-        const payload = await this.renderComponentPayload(id, instance);
-        await this.wire.emit("component:update", { userId, pageId, id, ...payload });
-      }
-    }
-  }
-  async renderComponentPayload(id, instance) {
-    const nextRevision = Number(instance.__wireRevision || 0) + 1;
-    instance.__wireRevision = nextRevision;
-    const state = instance.getPublicState();
-    const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-    const skipRender = Boolean(instance.__skipRender);
-    instance.__skipRender = false;
-    let html = "";
-    if (!skipRender) {
-      const rendered = await instance.render();
-      html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
-    }
-    return { html, state, effects: instance.__effects, revision: nextRevision };
-  }
-  getBroadcastRoomIds(instance) {
-    const out = [];
-    const keys = Object.keys(instance);
-    for (let i = 0;i < keys.length; i++) {
-      const value2 = instance[keys[i]];
-      if (value2 instanceof WireProperty && value2.__wire_type === "broadcast") {
-        const roomId = value2.getRoomId?.();
-        if (roomId)
-          out.push(roomId);
-      }
-    }
-    return out;
-  }
-  getMatchingBroadcastRooms(instance, roomIds) {
-    const out = [];
-    const keys = Object.keys(instance);
-    for (let i = 0;i < keys.length; i++) {
-      const value2 = instance[keys[i]];
-      if (value2 instanceof WireProperty && value2.__wire_type === "broadcast") {
-        const roomId = value2.getRoomId();
-        if (roomId && roomIds.has(roomId))
-          out.push(roomId);
-      }
-    }
-    return out;
-  }
-  buildComponentRef(userId, pageId, id) {
-    return `${userId}::${pageId}::${id}`;
-  }
-  handleClientScript() {
-    return {
-      status: 200,
-      headers: {
-        "Content-Type": "text/javascript; charset=utf-8",
-        "Cache-Control": "no-store"
-      },
-      result: this.getClientScriptSource()
-    };
-  }
-  getClientScriptSource() {
-    if (HttpAdapter.clientScriptCache)
-      return HttpAdapter.clientScriptCache;
-    const adapterDir = import_node_path2.dirname(import_node_url.fileURLToPath("file:///C:/Users/danie/OneDrive/Documentos/GitHub/kire/packages/wire/src/adapters/http.ts"));
-    const workspaceClient = this.findWorkspaceClientScript();
-    const candidates = [
-      workspaceClient,
-      import_node_path2.resolve(adapterDir, "../../dist/client/wire.js"),
-      import_node_path2.resolve(adapterDir, "../../client/wire.js"),
-      import_node_path2.resolve(process.cwd(), "node_modules/@kirejs/wire/dist/client/wire.js"),
-      import_node_path2.resolve(process.cwd(), "dist/client/wire.js"),
-      import_node_path2.resolve(process.cwd(), "packages/wire/dist/client/wire.js"),
-      import_node_path2.resolve(process.cwd(), "../packages/wire/dist/client/wire.js"),
-      import_node_path2.resolve(process.cwd(), "../../packages/wire/dist/client/wire.js")
-    ].filter((value2, index, list) => Boolean(value2) && list.indexOf(value2) === index);
-    let fallback = null;
-    for (let i = 0;i < candidates.length; i++) {
-      const path = candidates[i];
-      if (!import_node_fs2.existsSync(path))
-        continue;
-      try {
-        const content = import_node_fs2.readFileSync(path, "utf8");
-        if (!fallback)
-          fallback = content;
-        if (this.isSocketCapableClientScript(content)) {
-          HttpAdapter.clientScriptCache = content;
-          return content;
-        }
-      } catch {}
-    }
-    if (fallback) {
-      HttpAdapter.clientScriptCache = fallback;
-      return fallback;
-    }
-    console.error("[Kirewire] Client script not found. Expected dist/client/wire.js");
-    return `console.error("[Kirewire] Client script not found.");`;
-  }
-  isSocketCapableClientScript(content) {
-    return content.includes(HttpAdapter.HTTP_MARKER) && content.includes(HttpAdapter.SOCKET_MARKER);
-  }
-  findWorkspaceClientScript() {
-    let current = process.cwd();
-    for (let i = 0;i < 8; i++) {
-      const candidate = import_node_path2.resolve(current, "packages/wire/dist/client/wire.js");
-      if (import_node_fs2.existsSync(candidate))
-        return candidate;
-      const parent = import_node_path2.resolve(current, "..");
-      if (parent === current)
-        break;
-      current = parent;
-    }
-    return null;
-  }
-  destroy() {
-    if (this.ownsFileStore && this.fileStore && typeof this.fileStore.destroy === "function") {
-      this.fileStore.destroy();
-    }
-  }
-  normalizeMaxUploadBytes(value2) {
-    if (value2 === undefined || value2 === null) {
-      return HttpAdapter.DEFAULT_MAX_UPLOAD_BYTES;
-    }
-    const parsed = Number(value2);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      return Number.POSITIVE_INFINITY;
-    }
-    return Math.floor(parsed);
-  }
-  isUploadTooLargeError(error3) {
-    const message2 = String(error3?.message || "");
-    return message2.startsWith(HttpAdapter.MAX_UPLOAD_ERROR_PREFIX);
-  }
-}
-// ../../packages/wire/src/adapters/fivem.ts
-function normalizeRoute2(route) {
-  const value2 = String(route || "/_wire").trim();
-  if (!value2)
-    return "/_wire";
-  const withSlash = value2.startsWith("/") ? value2 : `/${value2}`;
-  return withSlash.replace(/\/+$/, "");
-}
-
-class FiveMAdapter extends Adapter {
-  route;
-  fallbackHttp;
-  inboundEvent;
-  outboundEvent;
-  resolveIdentity;
-  emitToClient;
-  lastSourceByUser = new Map;
-  constructor(options = {}) {
-    super();
-    this.route = normalizeRoute2(options.route || "/_wire");
-    this.fallbackHttp = new HttpAdapter({
-      route: this.route,
-      fileStore: options.fileStore,
-      tempDir: options.tempDir,
-      maxUploadBytes: options.maxUploadBytes
-    });
-    this.inboundEvent = String(options.inboundEvent || "kirewire:call");
-    this.outboundEvent = String(options.outboundEvent || "kirewire:push");
-    this.resolveIdentity = options.resolveIdentity;
-    this.emitToClient = options.emit;
-  }
-  setup() {
-    this.fallbackHttp.install(this.wire, this.kire);
-    console.log(`[Kirewire] FiveMAdapter initialized on ${this.route}.`);
-    this.wire.reference("wire:fivem:inbound-event", () => this.inboundEvent);
-    this.wire.reference("wire:fivem:outbound-event", () => this.outboundEvent);
-    this.wire.reference("wire:fivem:route", () => this.route);
-    this.wire.on("component:update", (data) => {
-      this.pushToClient(data.userId, "update", data);
-    });
-  }
-  getClientUrl() {
-    return this.route;
-  }
-  getUploadUrl() {
-    return `${this.route}/upload`;
-  }
-  getInboundEventName() {
-    return this.inboundEvent;
-  }
-  getOutboundEventName() {
-    return this.outboundEvent;
-  }
-  async handleRequest(req, userId, sessionId) {
-    return this.fallbackHttp.handleRequest(req, userId, sessionId);
-  }
-  async onNetMessage(sourceId, message2) {
-    const source = String(sourceId ?? "").trim();
-    const identity = this.resolveIdentity?.(source) || {
-      userId: source || "guest",
-      sessionId: source || "guest"
-    };
-    return this.onMessage(source, identity.userId, identity.sessionId, message2);
-  }
-  async onMessage(sourceId, userId, _sessionId, message2) {
-    const source = String(sourceId || "").trim();
-    const wireUserId = String(userId || "guest");
-    if (source) {
-      this.lastSourceByUser.set(wireUserId, source);
-    }
-    const event = String(message2?.event || "").trim();
-    const payload = message2?.payload || {};
-    if (event === "ping") {
-      this.pushToClient(wireUserId, "pong", { at: Date.now() }, source);
-      return;
-    }
-    if (event !== "call")
-      return;
-    const actions = Array.isArray(payload?.batch) ? payload.batch : [payload];
-    const pageId = String(payload?.pageId || actions[0]?.pageId || "default-page");
-    const results = [];
-    for (let i = 0;i < actions.length; i++) {
-      const action = actions[i];
-      const actionRequestId = String(action?.requestId || payload?.requestId || "");
-      try {
-        const result = await this.executeAction(wireUserId, pageId, action);
-        results.push({
-          requestId: actionRequestId,
-          ...result
-        });
-      } catch (error3) {
-        results.push({
-          requestId: actionRequestId,
-          id: String(action?.id || ""),
-          error: String(error3?.message || "Unknown FiveM call error")
-        });
-      }
-    }
-    if (Array.isArray(payload?.batch)) {
-      this.pushToClient(wireUserId, "response", {
-        requestId: String(payload?.requestId || ""),
-        results
-      }, source);
-      return;
-    }
-    const single = results[0] || {
-      requestId: String(payload?.requestId || ""),
-      id: String(actions[0]?.id || ""),
-      error: "Unknown FiveM call error"
-    };
-    if (single.error) {
-      this.pushToClient(wireUserId, "response", {
-        requestId: single.requestId,
-        id: single.id,
-        error: single.error
-      }, source);
-      return;
-    }
-    this.pushToClient(wireUserId, "response", {
-      requestId: single.requestId,
-      result: single
-    }, source);
-  }
-  async executeAction(userId, pageId, action) {
-    const id = String(action?.id || "").trim();
-    if (!id)
-      throw new Error("Component id is required.");
-    const method = String(action?.method || "").trim();
-    const params = Array.isArray(action?.params) ? action.params : [];
-    const page = this.wire.sessions.getPage(userId, pageId);
-    const instance = page.components.get(id);
-    if (!instance) {
-      throw new Error(`Component ${id} not found.`);
-    }
-    if (typeof instance.$clearEffects === "function") {
-      instance.$clearEffects();
-    }
-    await this.invokeComponentAction(instance, method, params);
-    const payload = await this.renderComponentPayload(id, instance);
-    await this.wire.emit("component:update", {
-      userId,
-      pageId,
-      id,
-      ...payload
-    });
-    return {
-      id,
-      success: true,
-      html: payload.html,
-      state: payload.state,
-      effects: payload.effects,
-      revision: payload.revision
-    };
-  }
-  async invokeComponentAction(instance, method, params) {
-    const name = String(method || "").trim();
-    const callParams = Array.isArray(params) ? params : [];
-    if (name === "$set") {
-      const property = String(callParams[0] ?? "").trim();
-      const value2 = callParams[1];
-      instance.$set(property, value2);
-      await this.runUpdatedHooks(instance, property, value2);
-      return;
-    }
-    if (name === "$refresh" || name === "$commit") {
-      return;
-    }
-    if (!name) {
-      throw new Error("Action method is required.");
-    }
-    if (name.startsWith("_")) {
-      throw new Error(`Method "${name}" is not callable.`);
-    }
-    if (name.startsWith("$")) {
-      throw new Error(`Internal method "${name}" is not callable.`);
-    }
-    if (typeof instance[name] !== "function") {
-      throw new Error(`Method "${name}" not found on component ${instance.$id}.`);
-    }
-    await instance[name](...callParams);
-  }
-  async runUpdatedHooks(instance, property, value2) {
-    if (!instance || !property)
-      return;
-    const callHook = async (hookName, args2) => {
-      if (!hookName)
-        return;
-      const fn2 = instance[hookName];
-      if (typeof fn2 !== "function")
-        return;
-      await fn2.apply(instance, args2);
-    };
-    const toStudly = (raw) => String(raw || "").split(/[\s._-]+/).filter(Boolean).map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("");
-    const rootProperty = property.split(".")[0] || property;
-    const fullPathHook = `updated${toStudly(property)}`;
-    const rootHook = `updated${toStudly(rootProperty)}`;
-    await callHook(fullPathHook, [value2, property]);
-    if (rootHook !== fullPathHook) {
-      await callHook(rootHook, [value2, property]);
-    }
-    await callHook("updated", [value2, property]);
-  }
-  async renderComponentPayload(id, instance) {
-    const nextRevision = Number(instance.__wireRevision || 0) + 1;
-    instance.__wireRevision = nextRevision;
-    const state = instance.getPublicState();
-    const stateStr = JSON.stringify(state).replace(/'/g, "&#39;");
-    const skipRender = Boolean(instance.__skipRender);
-    instance.__skipRender = false;
-    let html = "";
-    if (!skipRender) {
-      const rendered = await instance.render();
-      html = `<div wire:id="${id}" wire:state='${stateStr}'>${rendered.toString()}</div>`;
-    }
-    return { html, state, effects: instance.__effects, revision: nextRevision };
-  }
-  pushToClient(userId, event, data, sourceId) {
-    const resolvedUserId = String(userId || "guest");
-    const targetSource = String(sourceId || this.lastSourceByUser.get(resolvedUserId) || "").trim();
-    const packet = {
-      userId: resolvedUserId,
-      sourceId: targetSource || undefined,
-      channel: this.outboundEvent,
-      event: String(event || ""),
-      data
-    };
-    if (typeof this.emitToClient === "function") {
-      try {
-        this.emitToClient(packet);
-      } catch {}
-    }
-    this.wire.emitSync("fivem:push", packet);
-  }
-  disconnectSpecialProperties(instance) {
-    const keys = Object.keys(instance);
-    for (let i = 0;i < keys.length; i++) {
-      const key = keys[i];
-      const value2 = instance[key];
-      if (!value2 || typeof value2 !== "object")
-        continue;
-      if (value2 instanceof WireProperty && value2.__wire_type === "broadcast" && typeof value2.disconnect === "function") {
-        try {
-          value2.disconnect(instance);
-        } catch {}
-      }
-    }
-  }
-  destroy() {
-    this.fallbackHttp.destroy();
-    const activePages = this.wire.sessions.getActivePages();
-    for (let i = 0;i < activePages.length; i++) {
-      const page = activePages[i].page;
-      const components = Array.from(page.components.values());
-      for (let j = 0;j < components.length; j++) {
-        this.disconnectSpecialProperties(components[j]);
-      }
-    }
-  }
-}
-
-// ../../packages/wire/src/features/file-upload.ts
-init_esm();
-var FILE_ENTRY_SCHEMA = Type.Object({
-  name: Type.String(),
-  size: Type.Number({ minimum: 0 }),
-  mime: Type.Optional(Type.String()),
-  type: Type.Optional(Type.String()),
-  id: Type.Optional(Type.String())
-}, { additionalProperties: true });
-
-// ../../packages/wire/src/features/wire-broadcast.ts
-class WireBroadcast extends WireProperty {
-  options;
-  static DEFAULT_TTL_MS = 5 * 60 * 1000;
-  static CONNECTION_STALE_FACTOR = 2;
-  static CLEANUP_INTERVAL_MS = 60 * 1000;
-  static rooms = new Map;
-  static cleanupTimer = null;
-  __wire_type = "broadcast";
-  connected = false;
-  connections = 0;
-  channel = "global";
-  chunks = [];
-  state = {};
-  constructor(options = {}) {
-    super();
-    this.options = options;
-    this.options.autodelete ??= true;
-    if (options.name)
-      this.channel = options.name;
-    WireBroadcast.ensureCleanupLoop();
-  }
-  hydrate(value2) {
-    if (value2 && typeof value2 === "object") {
-      if (value2.channel)
-        this.channel = value2.channel;
-      if (value2.state)
-        this.state = value2.state;
-      this.connected = !!value2.connected;
-      this.connections = Number(value2.connections || 0);
-    }
-  }
-  dehydrate() {
-    return {
-      channel: this.channel,
-      state: this.state,
-      connected: this.connected,
-      connections: this.connections,
-      __wire_type: this.__wire_type
-    };
-  }
-  serverHydrate(component) {
-    const room = this.getRoom();
-    this.touchConnection(room, component);
-    this.connected = true;
-    this.connections = room.connections.size;
-    const snapshot = this.filterState(room.state);
-    const keys = Object.keys(snapshot);
-    for (let i = 0;i < keys.length; i++) {
-      const key = keys[i];
-      if (key in component && typeof component[key] !== "function") {
-        component[key] = snapshot[key];
-      }
-    }
-    this.state = snapshot;
-  }
-  update(component, kirewire) {
-    const room = this.getRoom();
-    this.touchConnection(room, component);
-    this.connected = true;
-    this.connections = room.connections.size;
-    const current = this.filterState(component);
-    const keys = Object.keys(current);
-    let changed = false;
-    for (let i = 0;i < keys.length; i++) {
-      const key = keys[i];
-      if (JSON.stringify(room.state[key]) !== JSON.stringify(current[key])) {
-        room.state[key] = current[key];
-        changed = true;
-      }
-    }
-    if (changed && kirewire) {
-      this.state = { ...room.state };
-      kirewire.emit(`broadcast:${this.channel}`, {
-        channel: this.channel,
-        state: this.state
-      });
-    }
-  }
-  disconnect(component) {
-    const room = this.findRoom();
-    if (!room) {
-      this.connected = false;
-      this.connections = 0;
-      return;
-    }
-    room.connections.delete(this.makeConnectionId(component));
-    room.lastSeen = Date.now();
-    this.connections = room.connections.size;
-    this.connected = this.connections > 0;
-  }
-  getRoomId() {
-    return this.makeRoomId(this.channel, this.options.password);
-  }
-  static cleanupNow(now = Date.now()) {
-    for (const [roomId, room] of WireBroadcast.rooms.entries()) {
-      WireBroadcast.pruneConnections(room, now);
-      if (room.connections.size > 0) {
-        room.lastSeen = now;
-      }
-      if (room.autodelete && now - room.lastSeen > room.ttlMs && room.connections.size === 0) {
-        WireBroadcast.rooms.delete(roomId);
-      }
-    }
-  }
-  getRoom() {
-    const roomId = this.makeRoomId(this.channel, this.options.password);
-    let room = WireBroadcast.rooms.get(roomId);
-    if (!room) {
-      room = {
-        state: {},
-        connections: new Map,
-        password: this.options.password,
-        lastSeen: Date.now(),
-        ttlMs: this.getTtlMs(),
-        autodelete: this.options.autodelete !== false
-      };
-      WireBroadcast.rooms.set(roomId, room);
-    } else {
-      WireBroadcast.pruneConnections(room);
-      room.lastSeen = Date.now();
-    }
-    return room;
-  }
-  findRoom() {
-    return WireBroadcast.rooms.get(this.getRoomId()) || null;
-  }
-  filterState(state) {
-    const result = {};
-    const keys = Object.keys(state || {});
-    for (let i = 0;i < keys.length; i++) {
-      const key = keys[i];
-      if (key.charCodeAt(0) === 36 || key.charCodeAt(0) === 95)
-        continue;
-      if (typeof state[key] === "function")
-        continue;
-      if (this.options.excludes?.includes(key))
-        continue;
-      if (this.options.includes && !this.options.includes.includes(key))
-        continue;
-      result[key] = state[key];
-    }
-    return result;
-  }
-  static ensureCleanupLoop() {
-    if (WireBroadcast.cleanupTimer)
-      return;
-    const timer = setInterval(() => {
-      WireBroadcast.cleanupNow(Date.now());
-    }, WireBroadcast.CLEANUP_INTERVAL_MS);
-    if (typeof timer?.unref === "function") {
-      timer.unref();
-    }
-    WireBroadcast.cleanupTimer = timer;
-  }
-  touchConnection(room, component) {
-    WireBroadcast.pruneConnections(room);
-    const connectionId = this.makeConnectionId(component);
-    room.connections.set(connectionId, Date.now());
-    room.lastSeen = Date.now();
-  }
-  getTtlMs() {
-    return Number(this.options.ttlMs) || WireBroadcast.DEFAULT_TTL_MS;
-  }
-  makeRoomId(channel, password) {
-    return `${channel}:${password || ""}`;
-  }
-  makeConnectionId(component) {
-    const id = String(component.$id || "anonymous");
-    return `${id}:${this.channel}`;
-  }
-  static pruneConnections(room, now = Date.now()) {
-    const staleAfter = Math.max(WireBroadcast.CLEANUP_INTERVAL_MS, room.ttlMs * WireBroadcast.CONNECTION_STALE_FACTOR);
-    for (const [connectionId, lastSeen] of room.connections.entries()) {
-      if (now - lastSeen > staleAfter) {
-        room.connections.delete(connectionId);
-      }
-    }
-  }
-}
-
-// ../../packages/wire/src/index.ts
+// packages/wire/src/index.ts
 init_rule();
 
-// server.ts
+// examples/fivem-example/server.ts
 var ROUTE_BASE = "/fivem-example";
 var WIRE_ROUTE = "/_wire";
 var PAGE_ID_DEFAULT = "fivem-example-page";
@@ -25950,6 +27023,90 @@ function buildHtmlPage(pageId, rootHtml) {
         button:active {
             transform: translateY(1px);
         }
+        .debug-hint {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 50;
+            border: 1px solid rgba(153, 175, 214, 0.3);
+            background: rgba(11, 15, 26, 0.82);
+            color: rgba(228, 237, 255, 0.9);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 12px;
+            letter-spacing: 0.02em;
+            pointer-events: none;
+        }
+        .debug-menu {
+            position: fixed;
+            top: 18px;
+            right: 18px;
+            z-index: 60;
+            width: min(92vw, 320px);
+            border: 1px solid rgba(153, 175, 214, 0.35);
+            background: rgba(9, 13, 22, 0.92);
+            border-radius: 14px;
+            padding: 14px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+            pointer-events: auto;
+        }
+        .debug-menu[hidden] {
+            display: none !important;
+        }
+        .debug-title {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .debug-subtitle {
+            margin: 6px 0 0;
+            color: rgba(228, 237, 255, 0.72);
+            font-size: 12px;
+        }
+        .debug-status {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #b9caf1;
+            min-height: 18px;
+        }
+        .debug-status.error {
+            color: #ffb0b0;
+        }
+        .debug-badges {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .debug-badge {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 11px;
+            background: #24334f;
+            color: #ebf2ff;
+        }
+        .debug-badge.ok {
+            background: #1f4733;
+            color: #c9f2db;
+        }
+        .debug-actions {
+            margin-top: 12px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .debug-actions button {
+            width: 100%;
+            padding: 8px 10px;
+            font-size: 12px;
+            border-radius: 8px;
+        }
+        .debug-close {
+            grid-column: 1 / -1;
+        }
     </style>
     <script type="module" src="${WIRE_ROUTE}/kirewire.js"></script>
     <script type="module">
@@ -25971,22 +27128,158 @@ function buildHtmlPage(pageId, rootHtml) {
 </head>
 <body class="nui-hidden">
     <div id="kirewire-nui-root">${rootHtml}</div>
+    <div class="debug-hint">M: abrir UI | H: menu debug</div>
+    <aside id="kirewire-debug-menu" class="debug-menu" hidden>
+        <h2 class="debug-title">KireWire Debug Menu</h2>
+        <p class="debug-subtitle">Pressione <strong>H</strong> para abrir/fechar</p>
+        <div id="kirewire-debug-status" class="debug-status">Menu pronto para teste.</div>
+        <div class="debug-badges">
+            <span id="kirewire-runtime-badge" class="debug-badge">runtime: checking...</span>
+            <span id="kirewire-component-badge" class="debug-badge">component: checking...</span>
+        </div>
+        <div class="debug-actions">
+            <button type="button" data-kirewire-action="increment">+ Increment</button>
+            <button type="button" data-kirewire-action="decrement">- Decrement</button>
+            <button type="button" data-kirewire-action="reset">Reset</button>
+            <button type="button" data-kirewire-action="probe">Probe</button>
+            <button type="button" class="debug-close" data-kirewire-action="close-menu">Fechar Menu (H)</button>
+        </div>
+    </aside>
     <script>
         (() => {
+            const debugMenu = document.getElementById("kirewire-debug-menu");
+            const debugStatus = document.getElementById("kirewire-debug-status");
+            const runtimeBadge = document.getElementById("kirewire-runtime-badge");
+            const componentBadge = document.getElementById("kirewire-component-badge");
+            const componentSelector = '[wire\\\\:id="${COUNTER_COMPONENT_ID}"], [wire-id="${COUNTER_COMPONENT_ID}"]';
+            let menuVisible = false;
+            let uiVisible = false;
+
             const setVisible = (visible) => {
-                const isVisible = Boolean(visible);
-                document.body.classList.toggle("nui-visible", isVisible);
-                document.body.classList.toggle("nui-hidden", !isVisible);
+                uiVisible = Boolean(visible);
+                document.body.classList.toggle("nui-visible", uiVisible);
+                document.body.classList.toggle("nui-hidden", !uiVisible);
+                if (!uiVisible) setMenuVisible(false);
+            };
+
+            const setStatus = (message, isError = false) => {
+                if (!debugStatus) return;
+                debugStatus.textContent = String(message || "");
+                debugStatus.classList.toggle("error", Boolean(isError));
+            };
+
+            const findCounterRoot = () => {
+                return document.querySelector(componentSelector);
+            };
+
+            const updateDiagnostics = () => {
+                const hasRuntime = Boolean(window.Kirewire && typeof window.Kirewire.call === "function");
+                const hasComponent = Boolean(findCounterRoot());
+
+                if (runtimeBadge) {
+                    runtimeBadge.textContent = hasRuntime ? "runtime: ok" : "runtime: missing";
+                    runtimeBadge.classList.toggle("ok", hasRuntime);
+                }
+
+                if (componentBadge) {
+                    componentBadge.textContent = hasComponent ? "component: ok" : "component: missing";
+                    componentBadge.classList.toggle("ok", hasComponent);
+                }
+            };
+
+            const setMenuVisible = (visible) => {
+                menuVisible = Boolean(visible);
+                if (debugMenu) debugMenu.hidden = !menuVisible;
+                updateDiagnostics();
+            };
+
+            const callWireMethod = async (method) => {
+                if (!uiVisible) {
+                    setStatus("Abra a UI com M antes de testar.", true);
+                    return;
+                }
+
+                const root = findCounterRoot();
+                const runtime = window.Kirewire;
+                if (!root || !runtime || typeof runtime.call !== "function") {
+                    setStatus("Runtime/componente indisponivel.", true);
+                    updateDiagnostics();
+                    return;
+                }
+
+                try {
+                    await runtime.call(root, method, []);
+                    setStatus("Acao executada: " + method);
+                } catch (error) {
+                    const message = error && error.message ? error.message : String(error || "erro desconhecido");
+                    setStatus("Falha na acao " + method + ": " + message, true);
+                }
+
+                updateDiagnostics();
+            };
+
+            const isTypingTarget = (target) => {
+                if (!target || !(target instanceof Element)) return false;
+                if (target instanceof HTMLInputElement) return true;
+                if (target instanceof HTMLTextAreaElement) return true;
+                if (target instanceof HTMLSelectElement) return true;
+                return Boolean(target.closest("[contenteditable=''], [contenteditable='true']"));
             };
 
             window.addEventListener("message", (event) => {
                 const data = event && event.data;
                 if (!data || typeof data !== "object") return;
-                if (data.__kirewire_ui !== true) return;
-                setVisible(Boolean(data.visible));
+                if (data.__kirewire_ui === true) {
+                    setVisible(Boolean(data.visible));
+                    return;
+                }
+                if (data.__kirewire_menu === true) {
+                    setMenuVisible(Boolean(data.visible));
+                    return;
+                }
+                if (data.__kirewire_menu_toggle === true) {
+                    setMenuVisible(!menuVisible);
+                }
+            });
+
+            document.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const button = target.closest("[data-kirewire-action]");
+                if (!(button instanceof HTMLElement)) return;
+
+                const action = String(button.getAttribute("data-kirewire-action") || "").trim();
+                if (!action) return;
+
+                if (action === "close-menu") {
+                    setMenuVisible(false);
+                    setStatus("Menu fechado.");
+                    return;
+                }
+
+                if (action === "probe") {
+                    updateDiagnostics();
+                    setStatus("Probe executado.");
+                    return;
+                }
+
+                void callWireMethod(action);
+            });
+
+            window.addEventListener("keydown", (event) => {
+                if (event.repeat) return;
+                if (isTypingTarget(event.target)) return;
+
+                const key = String(event.key || "").toLowerCase();
+                if (key !== "h") return;
+
+                event.preventDefault();
+                setMenuVisible(!menuVisible);
+                setStatus(menuVisible ? "Menu aberto." : "Menu fechado.");
             });
 
             setVisible(false);
+            updateDiagnostics();
         })();
     </script>
 </body>

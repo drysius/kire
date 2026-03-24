@@ -6,6 +6,7 @@ import { syncModelElements } from "../utils/model-sync";
 type HttpClientAdapterOptions = {
     url: string;
     pageId: string;
+    sessionId?: string;
     uploadUrl?: string;
     transport?: string;
 };
@@ -13,6 +14,7 @@ type HttpClientAdapterOptions = {
 type NormalizedOptions = {
     url: string;
     pageId: string;
+    sessionId: string;
     uploadUrl: string;
     transport: string;
 };
@@ -80,6 +82,7 @@ export class HttpClientAdapter implements WireAdapter {
     private onBusFlush: ((e: CustomEvent) => Promise<void>) | null = null;
     private lastRevisionByComponent = new Map<string, number>();
     private inFlightControllers = new Set<AbortController>();
+    private reloadScheduled = false;
     private sessionCheckInFlight = false;
     private lastSessionCheckAt = 0;
     private readonly sessionCheckIntervalMs = 3000;
@@ -88,6 +91,7 @@ export class HttpClientAdapter implements WireAdapter {
         this.options = {
             url: options.url || "/_wire",
             pageId: options.pageId || "default-page",
+            sessionId: String(options.sessionId || "guest"),
             uploadUrl: resolveUploadUrl(options.url || "/_wire", options.uploadUrl),
             transport: options.transport || "sse",
         };
@@ -189,9 +193,16 @@ export class HttpClientAdapter implements WireAdapter {
                     throw new Error(`HTTP Error: ${response.status}`);
                 }
 
-                const results = await response.json();
-                this.applyBatchUpdates(toArray(results));
-                finish(results);
+                const rawResults = await response.json();
+                const results = toArray(rawResults);
+
+                if (this.processReloadInstructions(results)) {
+                    finish(rawResults);
+                    return;
+                }
+
+                this.applyBatchUpdates(results);
+                finish(rawResults);
             } catch (err) {
                 error(err);
             } finally {
@@ -207,6 +218,9 @@ export class HttpClientAdapter implements WireAdapter {
         const current = this.options;
         const nextUrl = next.url ? String(next.url) : current.url;
         const nextPageId = next.pageId ? String(next.pageId) : current.pageId;
+        const nextSessionId = next.sessionId
+            ? String(next.sessionId)
+            : current.sessionId;
         const nextTransport = next.transport ? String(next.transport) : current.transport;
         const nextUploadUrl = next.uploadUrl
             ? String(next.uploadUrl)
@@ -220,6 +234,7 @@ export class HttpClientAdapter implements WireAdapter {
         this.options = {
             url: nextUrl,
             pageId: nextPageId,
+            sessionId: nextSessionId,
             uploadUrl: nextUploadUrl,
             transport: nextTransport,
         };
@@ -282,6 +297,10 @@ export class HttpClientAdapter implements WireAdapter {
 
         for (let i = results.length - 1; i >= 0; i--) {
             const item = results[i];
+            if (this.isReloadInstruction(item)) {
+                this.schedulePageReload(String(item?.reason || "component-missing"));
+                return;
+            }
             if (!item || item.error) continue;
 
             const id = String(item.id || "");
@@ -346,6 +365,32 @@ export class HttpClientAdapter implements WireAdapter {
         });
     }
 
+    private processReloadInstructions(results: any[]): boolean {
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            if (!this.isReloadInstruction(item)) continue;
+            this.schedulePageReload(String(item?.reason || "component-missing"));
+            return true;
+        }
+        return false;
+    }
+
+    private isReloadInstruction(item: any): boolean {
+        return !!item && item.reload === true;
+    }
+
+    private schedulePageReload(reason: string) {
+        if (this.reloadScheduled) return;
+        this.reloadScheduled = true;
+
+        const navigate = (window as any).KirewireNavigate;
+        if (navigate && typeof navigate.refreshCurrentPage === "function") {
+            navigate.refreshCurrentPage({ replace: true, force: true, reason });
+            return;
+        }
+        window.location.reload();
+    }
+
     private async checkSessionAfterDisconnect() {
         if (this.sessionCheckInFlight) return;
 
@@ -372,6 +417,7 @@ export class HttpClientAdapter implements WireAdapter {
     private async isSessionFinished(): Promise<boolean> {
         const sessionUrl = new URL(`${trimTrailingSlash(this.options.url)}/session`, window.location.origin);
         sessionUrl.searchParams.set("pageId", this.options.pageId);
+        sessionUrl.searchParams.set("sessionId", this.options.sessionId);
 
         let response: Response;
         try {

@@ -39,7 +39,13 @@ export class WireBroadcast extends WireProperty {
 		WireBroadcast.ensureCleanupLoop();
 	}
 
-	public hydrate(value: any): void {
+	public hydrate(value: any, room?: string): void {
+		if (room) this.channel = String(room || "").trim() || this.channel;
+		if (this.isComponentLike(value)) {
+			this.serverHydrate(value as Record<string, any>, room);
+			return;
+		}
+
 		if (value && typeof value === "object") {
 			if (value.channel) this.channel = value.channel;
 			if (value.state) this.state = value.state;
@@ -61,13 +67,14 @@ export class WireBroadcast extends WireProperty {
 	/**
 	 * Internal server-side hydration from the room state.
 	 */
-	public serverHydrate(component: Record<string, any>) {
-		const room = this.getRoom();
-		this.touchConnection(room, component);
+	public serverHydrate(component: Record<string, any>, room?: string) {
+		if (room) this.channel = String(room || "").trim() || this.channel;
+		const roomState = this.getRoom();
+		this.touchConnection(roomState, component);
 		this.connected = true;
-		this.connections = room.connections.size;
+		this.connections = roomState.connections.size;
 
-		const snapshot = this.filterState(room.state);
+		const snapshot = this.filterState(roomState.state);
 		const keys = Object.keys(snapshot);
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
@@ -78,11 +85,26 @@ export class WireBroadcast extends WireProperty {
 		this.state = snapshot;
 	}
 
-	public update(component: Record<string, any>, kirewire?: any) {
-		const room = this.getRoom();
-		this.touchConnection(room, component);
+	public update(
+		component: Record<string, any>,
+		kirewireOrRoom?: any,
+		maybeRoom?: string,
+	) {
+		const roomName =
+			typeof kirewireOrRoom === "string"
+				? kirewireOrRoom
+				: String(maybeRoom || "");
+		if (roomName) this.channel = roomName.trim() || this.channel;
+
+		const kirewire =
+			typeof kirewireOrRoom === "string"
+				? (component as any)?.$wire_instance
+				: kirewireOrRoom || (component as any)?.$wire_instance;
+
+		const roomState = this.getRoom();
+		this.touchConnection(roomState, component);
 		this.connected = true;
-		this.connections = room.connections.size;
+		this.connections = roomState.connections.size;
 
 		const current = this.filterState(component);
 		const keys = Object.keys(current);
@@ -90,16 +112,19 @@ export class WireBroadcast extends WireProperty {
 
 		for (let i = 0; i < keys.length; i++) {
 			const key = keys[i];
-			if (JSON.stringify(room.state[key]) !== JSON.stringify(current[key])) {
-				room.state[key] = current[key];
+			if (
+				JSON.stringify(roomState.state[key]) !== JSON.stringify(current[key])
+			) {
+				roomState.state[key] = current[key];
 				changed = true;
 			}
 		}
 
-		if (changed && kirewire) {
-			this.state = { ...room.state };
+		if (changed && kirewire && typeof kirewire.emit === "function") {
+			this.state = { ...roomState.state };
 			kirewire.emit(`broadcast:${this.channel}`, {
 				channel: this.channel,
+				roomId: this.getRoomId(),
 				state: this.state,
 			});
 		}
@@ -119,8 +144,9 @@ export class WireBroadcast extends WireProperty {
 		this.connected = this.connections > 0;
 	}
 
-	public getRoomId(): string {
-		return this.makeRoomId(this.channel, this.options.password);
+	public getRoomId(room?: string): string {
+		const channel = String(room || this.channel || "").trim() || "global";
+		return this.makeRoomId(channel, this.options.password);
 	}
 
 	public static cleanupNow(now: number = Date.now()) {
@@ -167,6 +193,17 @@ export class WireBroadcast extends WireProperty {
 		return WireBroadcast.rooms.get(this.getRoomId()) || null;
 	}
 
+	private isComponentLike(value: unknown): boolean {
+		if (!value || typeof value !== "object") return false;
+		const candidate = value as Record<string, unknown>;
+		return (
+			"$id" in candidate ||
+			"$wire_instance" in candidate ||
+			typeof candidate.render === "function" ||
+			typeof candidate.mount === "function"
+		);
+	}
+
 	private filterState(state: Record<string, any>): Record<string, any> {
 		const result: Record<string, any> = {};
 		const keys = Object.keys(state || {});
@@ -208,11 +245,18 @@ export class WireBroadcast extends WireProperty {
 	}
 
 	private makeRoomId(channel: string, password?: string): string {
-		return `${channel}:${password || ""}`;
+		const normalizedChannel = String(channel || "").trim() || "global";
+		return `${normalizedChannel}:${password || ""}`;
 	}
 
 	private makeConnectionId(component: Record<string, any>): string {
-		const id = String((component as any).$id || "anonymous");
+		const scopeId = String((component as any).$wire_scope_id || "").trim();
+		const pageId = String((component as any).$wire_page_id || "").trim();
+		if (scopeId) {
+			return `${scopeId}:${pageId || "default-page"}:${this.channel}`;
+		}
+
+		const id = String((component as any).$id || "anonymous").trim() || "anonymous";
 		return `${id}:${this.channel}`;
 	}
 
