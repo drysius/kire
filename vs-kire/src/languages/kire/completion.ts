@@ -1,5 +1,6 @@
 import * as path from "node:path";
 import * as vscode from "vscode";
+import { getDirectiveContextStack } from "../../core/directiveLogic";
 import { kireStore } from "../../core/store";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 import { parseParamDefinition, splitTopLevelArgs } from "../../utils/params";
@@ -335,39 +336,10 @@ export class KireCompletionItemProvider
 		if (char === "@" || linePrefix.endsWith("@")) {
 			if (linePrefix.endsWith("@@")) return []; // Escaped
 
-			// Determine active parent directive
-			const textBefore = document.getText(
-				new vscode.Range(new vscode.Position(0, 0), position),
+			const directiveStack = getDirectiveContextStack(
+				text,
+				document.offsetAt(position),
 			);
-			const directiveStack: string[] = [];
-			const directiveRegex = /@([a-zA-Z0-9_]+)/g;
-			let match: RegExpExecArray | null;
-
-			// Re-scan to find context (simplified stack logic)
-			while ((match = directiveRegex.exec(textBefore)) !== null) {
-				const name = match[1] as string;
-				// Ignore "end" for stack pushing, but use it to pop
-				if (name === "end") {
-					directiveStack.pop();
-				} else {
-					const def = kireStore.getState().directives.get(name);
-					// Logic: if it has children and is NOT a sub-directive (no parents defined), push.
-					// Or if it simply has children. (Simplified: block starters push)
-					// We need to avoid pushing intermediate directives like @else if they don't start NEW blocks in Kire structure
-					// But for completion context, we generally want to know the "surrounding" block.
-					// Safe heuristic: if definition has children=true/"auto", push.
-					// AND if it has 'parents', we might not push? (Like @else).
-					// Actually, standard Diagnostic logic: if (allowedParents) don't push.
-					const allowedParents = kireStore
-						.getState()
-						.parentDirectives.get(name);
-					if (allowedParents && allowedParents.length > 0) {
-						// It's a sub-directive (e.g. else), doesn't start a new nesting context usually
-					} else if (def?.children) {
-						directiveStack.push(name);
-					}
-				}
-			}
 			const activeParent =
 				directiveStack.length > 0
 					? directiveStack[directiveStack.length - 1]

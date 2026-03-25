@@ -4,6 +4,9 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: `attr`,
 		signature: [`name:string`, `value:any`],
+		description:
+			"Appends a single HTML attribute when the value is not null, undefined or false.",
+		example: `@attr("data-id", item.id)`,
 		onCall(api) {
 			const name = api.getArgument(0) ?? api.getAttribute("name");
 			const value = api.getArgument(1) ?? api.getAttribute("value");
@@ -21,6 +24,9 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: `attrs`,
 		signature: [`attributes:any`],
+		description:
+			"Appends many HTML attributes from an object, array or string shorthand.",
+		example: `@attrs({ class: "btn", disabled: isSaving })`,
 		onCall(api) {
 			const attributes =
 				api.getArgument(0) ??
@@ -58,6 +64,9 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: `class`,
 		signature: [`classes:any`],
+		description:
+			"Builds a `class` attribute from strings, arrays or keyed objects.",
+		example: `@class(["btn", { "btn-primary": isPrimary }])`,
 		onCall(api) {
 			const classes = api.getArgument(0) ?? api.getAttribute("classes");
 			api.write(`{
@@ -93,6 +102,9 @@ export default (kire: Kire) => {
 	kire.directive({
 		name: `style`,
 		signature: [`styles:any`],
+		description:
+			"Builds a `style` attribute from strings, arrays or keyed objects.",
+		example: `@style({ color: accent, display: isOpen && "block" })`,
 		onCall(api) {
 			const styles = api.getArgument(0) ?? api.getAttribute("styles");
 			api.write(`{
@@ -117,6 +129,8 @@ export default (kire: Kire) => {
 		kire.directive({
 			name: attr,
 			signature: [`cond:any`],
+			description: `Outputs the boolean attribute \`${attr}\` when the condition is truthy.`,
+			example: `@${attr}(condition)`,
 			onCall(api) {
 				const cond = api.getArgument(0) ?? api.getAttribute("cond");
 				api.write(`if (${cond}) $kire_response += ' ${attr} ';`);

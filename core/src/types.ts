@@ -260,6 +260,7 @@ export interface KireAttributeDeclaration {
 	type?: string | string[];
 	description?: string;
 	example?: string;
+	[key: string]: any;
 }
 
 export interface TypeDefinition {

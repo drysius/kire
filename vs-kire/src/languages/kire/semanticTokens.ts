@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { scanDirectives } from "../../core/directiveScan";
+import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 
@@ -19,24 +21,65 @@ export const semanticTokensLegend = new vscode.SemanticTokensLegend(
 );
 
 export class KireSemanticTokensProvider
-	implements vscode.DocumentSemanticTokensProvider
+	implements vscode.DocumentSemanticTokensProvider, vscode.Disposable
 {
+	private readonly onDidChangeEmitter = new vscode.EventEmitter<void>();
+	private readonly unsubscribeStore: () => void;
+	private refreshTimer: NodeJS.Timeout | undefined;
+	public readonly onDidChangeSemanticTokens = this.onDidChangeEmitter.event;
+
+	constructor() {
+		this.unsubscribeStore = kireStore.subscribe((state, previousState) => {
+			if (state.revision === previousState.revision) return;
+			if (this.refreshTimer) clearTimeout(this.refreshTimer);
+			this.refreshTimer = setTimeout(() => {
+				kireLog(
+					"debug",
+					`Refreshing semantic tokens after store mutation: ${kireStore.getState().lastMutation || "unknown"}`,
+				);
+				this.onDidChangeEmitter.fire();
+			}, 100);
+		});
+	}
+
+	dispose() {
+		if (this.refreshTimer) clearTimeout(this.refreshTimer);
+		this.unsubscribeStore();
+		this.onDidChangeEmitter.dispose();
+	}
+
 	provideDocumentSemanticTokens(
 		document: vscode.TextDocument,
 		_token: vscode.CancellationToken,
 	): vscode.ProviderResult<vscode.SemanticTokens> {
 		const builder = new vscode.SemanticTokensBuilder(semanticTokensLegend);
 		const text = document.getText();
-
-		const directiveRegex = /@([a-zA-Z0-9_-]+)/g;
 		const elementRegex = /<\/?([a-zA-Z0-9:_-]+)/g;
 
-		for (
-			let match: RegExpExecArray | null;
-			(match = directiveRegex.exec(text));
-		) {
-			const startPos = document.positionAt(match.index + 1);
-			builder.push(startPos.line, startPos.character, match[1]!.length, 0, 0);
+		for (const directive of scanDirectives(text)) {
+			const atPos = document.positionAt(directive.start);
+			builder.push(atPos.line, atPos.character, 1, 0, 0);
+
+			const namePos = document.positionAt(directive.start + 1);
+			builder.push(
+				namePos.line,
+				namePos.character,
+				directive.name.length,
+				0,
+				0,
+			);
+
+			let cursor = directive.start + directive.name.length + 1;
+			while (cursor < text.length && /\s/.test(text[cursor]!)) cursor++;
+			if (text[cursor] === "(" && directive.end >= cursor) {
+				const openPos = document.positionAt(cursor);
+				builder.push(openPos.line, openPos.character, 1, 0, 0);
+
+				if (text[directive.end] === ")") {
+					const closePos = document.positionAt(directive.end);
+					builder.push(closePos.line, closePos.character, 1, 0, 0);
+				}
+			}
 		}
 
 		for (

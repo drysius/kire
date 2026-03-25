@@ -16,6 +16,9 @@ export default (kire: Kire<any>) => {
 		name: `slot`,
 		signature: [`name:string`],
 		children: true,
+		description:
+			"Captures a named slot block that will be exposed to the parent component render.",
+		example: `@slot("header")\n  <h1>Dashboard</h1>\n@end`,
 		onCall: (api) => {
 			const nameExpr = normalizeSlotNameExpression(
 				api.getArgument(0) || api.getAttribute("name"),
@@ -35,6 +38,9 @@ export default (kire: Kire<any>) => {
 		name: `yield`,
 		signature: [`name:string`, `default:string`],
 		children: false,
+		description:
+			"Outputs a named slot from the current component, falling back to the default value when missing.",
+		example: `@yield("header", "<h1>Fallback</h1>")`,
 		onCall: (api) => {
 			const nameExpr = normalizeSlotNameExpression(
 				api.getArgument(0) || api.getAttribute("name"),
@@ -56,6 +62,10 @@ export default (kire: Kire<any>) => {
 		name: "component",
 		signature: ["path:string", "locals:object"],
 		children: true,
+		description:
+			"Renders another Kire view as a component and exposes nested @slot blocks to it.",
+		example:
+			`@component("layouts.app", { title: "Dashboard" })\n  @slot("header")\n    <h1>Dashboard</h1>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {
@@ -93,7 +103,12 @@ export default (kire: Kire<any>) => {
 
 	kire.directive({
 		name: "layout",
+		signature: ["path:string", "locals:object"],
 		children: true,
+		description:
+			"Alias for @component(path, locals?). Commonly used for page layouts.",
+		example:
+			`@layout("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {
@@ -105,7 +120,12 @@ export default (kire: Kire<any>) => {
 	});
 	kire.directive({
 		name: "extends",
+		signature: ["path:string", "locals:object"],
 		children: true,
+		description:
+			"Alias for @component(path, locals?). Mirrors Blade-style template inheritance naming.",
+		example:
+			`@extends("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {
@@ -117,7 +137,11 @@ export default (kire: Kire<any>) => {
 	});
 	kire.directive({
 		name: "section",
+		signature: ["name:string"],
 		children: true,
+		description:
+			"Alias for @slot(name). Useful with @layout and @extends blocks.",
+		example: `@section("content")\n  <p>Hello</p>\n@end`,
 		onCall: (api) => kire.getDirective("slot")?.onCall(api),
 	});
 };

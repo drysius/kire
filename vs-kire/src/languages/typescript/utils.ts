@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { scanDirectives } from "../../core/directiveScan";
+import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 import { extractJsAttributeExpressions } from "../../utils/embedded";
@@ -260,7 +261,7 @@ function buildDirectiveDeclarationStatement(entry: {
 }
 
 export class KireTsDocumentProvider
-	implements vscode.TextDocumentContentProvider
+	implements vscode.TextDocumentContentProvider, vscode.Disposable
 {
 	private virtualContent = new Map<string, string>();
 	private sourceMaps = new Map<string, SourceMapper>();
@@ -271,7 +272,30 @@ export class KireTsDocumentProvider
 	private workspaceScanPromise: Promise<void> | null = null;
 	private workspaceInterfacesLoaded = false;
 	private workspaceScanTimer: NodeJS.Timeout | undefined;
+	private storeRefreshTimer: NodeJS.Timeout | undefined;
+	private readonly unsubscribeStore: () => void;
 	public readonly onDidChange = this._onDidChange.event;
+
+	constructor() {
+		this.unsubscribeStore = kireStore.subscribe((state, previousState) => {
+			if (state.revision === previousState.revision) return;
+			if (this.storeRefreshTimer) clearTimeout(this.storeRefreshTimer);
+			this.storeRefreshTimer = setTimeout(() => {
+				kireLog(
+					"debug",
+					`Refreshing virtual Kire TS documents after store mutation: ${kireStore.getState().lastMutation || "unknown"}`,
+				);
+				this.refreshOpenKireDocuments();
+			}, 100);
+		});
+	}
+
+	public dispose() {
+		if (this.workspaceScanTimer) clearTimeout(this.workspaceScanTimer);
+		if (this.storeRefreshTimer) clearTimeout(this.storeRefreshTimer);
+		this.unsubscribeStore();
+		this._onDidChange.dispose();
+	}
 
 	public provideTextDocumentContent(uri: vscode.Uri): string {
 		const path = uri.path.slice(0, -3);

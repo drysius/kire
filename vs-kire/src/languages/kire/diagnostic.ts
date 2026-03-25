@@ -1,6 +1,9 @@
 import * as vscode from "vscode";
+import { directiveOpensBlock } from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
+import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
+import { HtmlDiagnosticProvider } from "../html/diagnostic";
 
 const HTML_VOID = new Set([
 	"area",
@@ -21,10 +24,12 @@ const HTML_VOID = new Set([
 
 export class KireDiagnosticProvider {
 	private diagnosticCollection: vscode.DiagnosticCollection;
+	private htmlDiagnosticProvider: HtmlDiagnosticProvider;
 
 	constructor() {
 		this.diagnosticCollection =
 			vscode.languages.createDiagnosticCollection("kire");
+		this.htmlDiagnosticProvider = new HtmlDiagnosticProvider();
 	}
 
 	dispose() {
@@ -34,6 +39,7 @@ export class KireDiagnosticProvider {
 	register(_context: vscode.ExtensionContext): vscode.Disposable {
 		const disposables: vscode.Disposable[] = [];
 		disposables.push(this.diagnosticCollection);
+		let refreshTimer: NodeJS.Timeout | undefined;
 
 		const updateDiagnostics = (document: vscode.TextDocument) => {
 			if (
@@ -41,6 +47,11 @@ export class KireDiagnosticProvider {
 				document.fileName.endsWith(".kire")
 			) {
 				void this.validateDocument(document);
+			}
+		};
+		const refreshOpenDocuments = () => {
+			for (const document of vscode.workspace.textDocuments) {
+				updateDiagnostics(document);
 			}
 		};
 
@@ -53,6 +64,24 @@ export class KireDiagnosticProvider {
 				this.diagnosticCollection.delete(doc.uri),
 			),
 		);
+		disposables.push({
+			dispose: kireStore.subscribe((state, previousState) => {
+				if (state.revision === previousState.revision) return;
+				if (refreshTimer) clearTimeout(refreshTimer);
+				refreshTimer = setTimeout(() => {
+					kireLog(
+						"debug",
+						`Refreshing Kire diagnostics after store mutation: ${kireStore.getState().lastMutation || "unknown"}`,
+					);
+					refreshOpenDocuments();
+				}, 100);
+			}),
+		});
+		disposables.push({
+			dispose: () => {
+				if (refreshTimer) clearTimeout(refreshTimer);
+			},
+		});
 
 		vscode.workspace.textDocuments.forEach(updateDiagnostics);
 		return vscode.Disposable.from(...disposables);
@@ -65,6 +94,9 @@ export class KireDiagnosticProvider {
 		this.validateDirectives(document, text, diagnostics);
 		this.validateHtmlTags(document, text, diagnostics);
 		this.validateInterpolations(document, text, diagnostics);
+		diagnostics.push(
+			...this.htmlDiagnosticProvider.createAttributeDiagnostics(document),
+		);
 
 		this.diagnosticCollection.set(document.uri, diagnostics);
 	}
@@ -126,7 +158,6 @@ export class KireDiagnosticProvider {
 				continue;
 			}
 
-			const def = state.directives.get(call.name);
 			const allowedParents = state.parentDirectives.get(call.name) || [];
 			const current = stack[stack.length - 1];
 
@@ -143,7 +174,7 @@ export class KireDiagnosticProvider {
 				continue;
 			}
 
-			if (def?.children) {
+			if (directiveOpensBlock(text, call)) {
 				stack.push({
 					name: call.name,
 					start: call.start,

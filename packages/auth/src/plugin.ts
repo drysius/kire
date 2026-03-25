@@ -88,6 +88,14 @@ export const KireAuth = kirePlugin<AuthOptions>(
 		kire.directive({
 			name: "user",
 			children: false,
+			declares: [
+				{
+					name: "user",
+					type: "any",
+					description:
+						"Authenticated user object injected by the @user directive.",
+				},
+			],
 			description:
 				"Injects the current user object into a variable named 'user'.",
 			example: "@user\n<p>Hello, {{ user.name }}</p>",

@@ -15,6 +15,9 @@ export default (kire: Kire<any>) => {
 	kire.directive({
 		name: `once`,
 		children: true,
+		description:
+			"Ensures the wrapped block is rendered only once per render cycle.",
+		example: `@once\n  <script src="/app.js"></script>\n@end`,
 		onCall: (api) => {
 			const id = api.uid("once");
 			api.write(`if (!$globals['~once']) $globals['~once'] = new Set();`);
@@ -38,6 +41,10 @@ export default (kire: Kire<any>) => {
 		],
 		children: true,
 		closeBy: [`enderror`, `end`],
+		description:
+			"Renders the block when the selected field has a validation error and exposes `$message` inside it.",
+		example:
+			`@error("email")\n  <span class="error">{{ $message }}</span>\n@end`,
 		scope: () => [`$message`],
 		onCall: (api) => {
 			const field = api.getArgument(0) ?? api.getAttribute("field");
@@ -51,6 +58,9 @@ export default (kire: Kire<any>) => {
 	kire.directive({
 		name: `csrf`,
 		children: false,
+		description:
+			"Outputs a hidden CSRF token input using the global `csrf` value.",
+		example: `@csrf()`,
 		onCall: (api) => {
 			api.write(`
                 if (typeof $globals.csrf === 'undefined') {
@@ -65,6 +75,9 @@ export default (kire: Kire<any>) => {
 		name: `method`,
 		signature: [`method:string`],
 		children: false,
+		description:
+			"Outputs a hidden `_method` input for HTTP verb spoofing in forms.",
+		example: `@method("PUT")`,
 		onCall: (api) => {
 			const method = api.getArgument(0) ?? api.getAttribute("method");
 			api.write(
@@ -86,6 +99,9 @@ export default (kire: Kire<any>) => {
 			},
 		],
 		children: false,
+		description:
+			"Declares a constant expression that becomes available to later template expressions.",
+		example: `@const(title = "Dashboard")`,
 		scope: (args) => {
 			const expr = args[0] || "";
 			const first = expr.split("=")[0];
@@ -109,6 +125,9 @@ export default (kire: Kire<any>) => {
 			},
 		],
 		children: false,
+		description:
+			"Declares a mutable variable expression that becomes available to later template expressions.",
+		example: `@let(count = items.length)`,
 		scope: (args) => {
 			const expr = args[0] || "";
 			const first = expr.split("=")[0];

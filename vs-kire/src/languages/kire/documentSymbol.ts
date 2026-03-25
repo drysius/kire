@@ -1,4 +1,10 @@
 import * as vscode from "vscode";
+import {
+	directiveOpensBlock,
+	getDirectiveCloseTokens,
+	isDirectiveCloseToken,
+} from "../../core/directiveLogic";
+import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
 
 export class KireDocumentSymbolProvider
@@ -12,87 +18,106 @@ export class KireDocumentSymbolProvider
 	> {
 		const rootSymbols: vscode.DocumentSymbol[] = [];
 		const stack: vscode.DocumentSymbol[] = [];
+		const stackNames: string[] = [];
 
 		const text = document.getText();
-		const lines = text.split("\n");
+		const calls = scanDirectives(text);
+		const documentEnd = document.lineAt(document.lineCount - 1).range.end;
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i] as string;
-			const dirMatch = /@([a-zA-Z0-9_./:-]+)(?:\s*\(([^)]*)\))?/.exec(line);
+		const closeSymbol = (endRange: vscode.Range) => {
+			const symbol = stack.pop();
+			const name = stackNames.pop();
+			if (!symbol || !name) return undefined;
+			symbol.range = new vscode.Range(symbol.range.start, endRange.end);
+			return name;
+		};
 
-			if (dirMatch) {
-				const fullMatch = dirMatch[0];
-				const dirName = dirMatch[1] as string;
-				const args = (dirMatch[2] || "") as string;
+		const collapseClosedRelatedChain = (
+			endRange: vscode.Range,
+			closedName: string,
+		) => {
+			let current = closedName;
+			while (stackNames.length > 0) {
+				const parentName = stackNames[stackNames.length - 1]!;
+				const allowedParents =
+					kireStore.getState().parentDirectives.get(current) || [];
+				if (!allowedParents.includes(parentName)) break;
+				current = closeSymbol(endRange) || current;
+			}
+		};
 
-				const selectionRange = new vscode.Range(
-					i,
-					dirMatch.index,
-					i,
-					dirMatch.index + fullMatch.length,
-				);
-
-				// Default range extends to end of line, will be updated if it's a block
-				const range = new vscode.Range(i, dirMatch.index, i, line.length);
-
-				if (dirName === "end") {
-					// Close the current block
-					if (stack.length > 0) {
-						const last = stack.pop()!;
-						// Update the range of the closed block to include this @end line
-						last.range = new vscode.Range(last.range.start, range.end);
-					}
-					continue;
+		const findMatchingSymbolIndex = (closeToken: string) => {
+			for (let index = stackNames.length - 1; index >= 0; index--) {
+				const name = stackNames[index]!;
+				if (
+					closeToken === "end" ||
+					getDirectiveCloseTokens(name).includes(closeToken)
+				) {
+					return index;
 				}
+			}
+			return -1;
+		};
 
-				// Treat path-like directives as file sections
-				const isSection = dirName.includes("/") || dirName.includes(".");
+		for (const call of calls) {
+			const start = document.positionAt(call.start);
+			const end = document.positionAt(call.end);
+			const selectionRange = new vscode.Range(start, end);
+			const lineEnd = document.lineAt(start.line).range.end;
+			const range = new vscode.Range(start, lineEnd);
 
-				// Check definition for standard blocks
-				const def = kireStore.getState().directives.get(dirName);
-				const isBlock = def?.children === true || def?.children === "auto";
+			if (isDirectiveCloseToken(call.name)) {
+				const matchIndex = findMatchingSymbolIndex(call.name);
+				if (matchIndex < 0) continue;
 
-				const symbol = new vscode.DocumentSymbol(
-					dirName,
-					args,
-					isSection ? vscode.SymbolKind.File : vscode.SymbolKind.Function,
-					range,
-					selectionRange,
-				);
-
-				if (isSection) {
-					// Implicitly close previous open section if it's at the top of the stack
-					if (
-						stack.length > 0 &&
-						stack[stack.length - 1].kind === vscode.SymbolKind.File
-					) {
-						const closedSection = stack.pop()!;
-						// Previous section ends at the line before this one
-						closedSection.range = new vscode.Range(
-							closedSection.range.start,
-							new vscode.Position(Math.max(0, i - 1), 9999),
-						);
-					}
+				let closedName = "";
+				while (stackNames.length > matchIndex) {
+					closedName = closeSymbol(range) || closedName;
 				}
-
-				// Add to tree
-				if (stack.length > 0) {
-					const parent = stack[stack.length - 1];
-					parent.children.push(symbol);
-				} else {
-					rootSymbols.push(symbol);
+				if (closedName) {
+					collapseClosedRelatedChain(range, closedName);
 				}
+				continue;
+			}
 
-				// Push to stack if it's a container
-				if (isSection || isBlock) {
-					// For blocks, we assume they go until @end or implicit close
-					// We set the initial range to end of document as fallback
-					symbol.range = new vscode.Range(
-						selectionRange.start,
-						new vscode.Position(document.lineCount - 1, 9999),
+			const args = call.args.map((arg) => arg.value).join(", ");
+			const isSection = call.name.includes("/") || call.name.includes(".");
+			const isBlock = directiveOpensBlock(text, call);
+			const symbol = new vscode.DocumentSymbol(
+				call.name,
+				args,
+				isSection ? vscode.SymbolKind.File : vscode.SymbolKind.Function,
+				range,
+				selectionRange,
+			);
+
+			if (isSection) {
+				while (
+					stack.length > 0 &&
+					stack[stack.length - 1]!.kind === vscode.SymbolKind.File
+				) {
+					const closed = stack.pop()!;
+					stackNames.pop();
+					closed.range = new vscode.Range(
+						closed.range.start,
+						document.lineAt(Math.max(0, start.line - 1)).range.end,
 					);
-					stack.push(symbol);
 				}
+			}
+
+			if (stack.length > 0) {
+				stack[stack.length - 1]!.children.push(symbol);
+			} else {
+				rootSymbols.push(symbol);
+			}
+
+			if (isSection || isBlock) {
+				symbol.range = new vscode.Range(
+					selectionRange.start,
+					documentEnd,
+				);
+				stack.push(symbol);
+				stackNames.push(call.name);
 			}
 		}
 

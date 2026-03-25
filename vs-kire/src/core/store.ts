@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import { kireLog } from "./log";
 
 type KireInstance = any;
 
@@ -95,10 +96,19 @@ export interface KireState {
 	tools: Map<string, ToolDefinition>;
 	metadata: PackageMetadata;
 	parentDirectives: Map<string, string[]>;
+	revision: number;
+	lastMutation?: string;
 	setEngine: (engine: KireInstance | null) => void;
 	applyKireSchema: (schema: KireSchemaShape & Record<string, any>) => void;
 	setMetadata: (meta: PackageMetadata) => void;
 	clear: () => void;
+}
+
+function nextMutation(state: KireState, mutation: string) {
+	return {
+		revision: state.revision + 1,
+		lastMutation: mutation,
+	};
 }
 
 function normalizeAttribute(def: any): AttributeDefinition {
@@ -145,8 +155,20 @@ export const kireStore = createStore<KireState>((set) => ({
 	tools: new Map(),
 	metadata: {},
 	parentDirectives: new Map(),
+	revision: 0,
+	lastMutation: "init",
 
-	setEngine: (engine) => set({ engine }),
+	setEngine: (engine) =>
+		set((state) => {
+			kireLog(
+				"debug",
+				`Kire store setEngine: ${engine ? engine.constructor?.name || "engine" : "null"}`,
+			);
+			return {
+				engine,
+				...nextMutation(state, "setEngine"),
+			};
+		}),
 
 	applyKireSchema: (schema) =>
 		set((state) => {
@@ -257,6 +279,11 @@ export const kireStore = createStore<KireState>((set) => ({
 				}
 			}
 
+			kireLog(
+				"debug",
+				`Kire store applyKireSchema: directives=${directives.size}, elements=${elements.size}, attributes=${attributes.size}, globals=${globals.size}, tools=${tools.size}`,
+			);
+
 			return {
 				directives,
 				elements,
@@ -264,26 +291,39 @@ export const kireStore = createStore<KireState>((set) => ({
 				globals,
 				tools,
 				parentDirectives,
+				...nextMutation(state, "applyKireSchema"),
 			};
 		}),
 
 	setMetadata: (meta) =>
-		set((state) => ({
-			metadata: {
+		set((state) => {
+			const metadata = {
 				...state.metadata,
 				...meta,
-			},
-		})),
+			};
+			kireLog(
+				"debug",
+				`Kire store setMetadata: ${metadata.name || "unknown"}@${metadata.version || "0.0.0"}`,
+			);
+			return {
+				metadata,
+				...nextMutation(state, "setMetadata"),
+			};
+		}),
 
 	clear: () =>
-		set({
-			engine: null,
-			directives: new Map(),
-			elements: new Map(),
-			attributes: new Map(),
-			globals: new Map(),
-			tools: new Map(),
-			metadata: {},
-			parentDirectives: new Map(),
+		set((state) => {
+			kireLog("debug", "Kire store cleared.");
+			return {
+				engine: null,
+				directives: new Map(),
+				elements: new Map(),
+				attributes: new Map(),
+				globals: new Map(),
+				tools: new Map(),
+				metadata: {},
+				parentDirectives: new Map(),
+				...nextMutation(state, "clear"),
+			};
 		}),
 }));

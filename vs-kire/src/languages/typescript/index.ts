@@ -11,6 +11,7 @@ export const activate = (context: vscode.ExtensionContext) => {
 			provider,
 		),
 	);
+	context.subscriptions.push(provider);
 	provider.bootstrapWorkspaceInterfaces();
 
 	const selector = { language: "kire", scheme: "file" };

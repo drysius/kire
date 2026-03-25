@@ -227,7 +227,7 @@
 		"directives-with-js-args": {
 			"begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\\()",
 			"beginCaptures": {
-				"1": { "name": "punctuation.definition.directive.kire" },
+				"1": { "name": "keyword.control.directive.kire" },
 				"2": { "name": "keyword.control.directive.kire" }
 			},
 			"end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
@@ -236,11 +236,11 @@
 				{
 					"begin": "\\(",
 					"beginCaptures": {
-						"0": { "name": "punctuation.parenthesis.begin.js" }
+						"0": { "name": "keyword.control.directive.kire" }
 					},
 					"end": "\\)",
 					"endCaptures": {
-						"0": { "name": "punctuation.parenthesis.end.js" }
+						"0": { "name": "keyword.control.directive.kire" }
 					},
 					"contentName": "source.js",
 					"patterns": [
@@ -254,7 +254,7 @@
 		"interface-directive": {
 			"begin": "(@)(interface)(?=\\s*\\()",
 			"beginCaptures": {
-				"1": { "name": "punctuation.definition.directive.kire" },
+				"1": { "name": "keyword.control.directive.kire" },
 				"2": { "name": "keyword.control.directive.kire" }
 			},
 			"end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
@@ -263,11 +263,11 @@
 				{
 					"begin": "\\(",
 					"beginCaptures": {
-						"0": { "name": "punctuation.parenthesis.begin.ts" }
+						"0": { "name": "keyword.control.directive.kire" }
 					},
 					"end": "\\)",
 					"endCaptures": {
-						"0": { "name": "punctuation.parenthesis.end.ts" }
+						"0": { "name": "keyword.control.directive.kire" }
 					},
 					"contentName": "source.ts",
 					"patterns": [
@@ -281,7 +281,7 @@
 		"directives-with-string-args": {
 			"begin": "(@)([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*\")",
 			"beginCaptures": {
-				"1": { "name": "punctuation.definition.directive.kire" },
+				"1": { "name": "keyword.control.directive.kire" },
 				"2": { "name": "keyword.control.directive.kire" }
 			},
 			"end": "(?=\\s|$|@|<!--|{{|<\\?js|<|>)",
@@ -310,7 +310,7 @@
 				{
 					"match": "(@)([a-zA-Z_][a-zA-Z0-9_]*)",
 					"captures": {
-						"1": { "name": "punctuation.definition.directive.kire" },
+						"1": { "name": "keyword.control.directive.kire" },
 						"2": { "name": "keyword.control.directive.kire" }
 					}
 				}

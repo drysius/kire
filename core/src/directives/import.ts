@@ -5,6 +5,9 @@ export default (kire: Kire<any>) => {
 		name: `include`,
 		signature: [`path:string`, `locals:object`],
 		children: false,
+		description:
+			"Includes another Kire view inline and optionally merges additional locals for that render.",
+		example: `@include("partials.alert", { type: "success" })`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {

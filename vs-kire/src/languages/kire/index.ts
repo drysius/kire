@@ -16,10 +16,12 @@ export const activate = (context: vscode.ExtensionContext) => {
 		{ language: "kire", scheme: "file" },
 		{ language: "html", scheme: "file", pattern: "**/*.kire" },
 	];
+	const semanticTokensProvider = new KireSemanticTokensProvider();
 
 	// Register diagnostic provider
 	const diagnosticProvider = new KireDiagnosticProvider();
 	context.subscriptions.push(diagnosticProvider.register(context));
+	context.subscriptions.push(semanticTokensProvider);
 
 	// Register auto-close tag provider
 	context.subscriptions.push(new TagAutoCloseProvider());
@@ -48,7 +50,7 @@ export const activate = (context: vscode.ExtensionContext) => {
 		),
 		vscode.languages.registerDocumentSemanticTokensProvider(
 			selector,
-			new KireSemanticTokensProvider(),
+			semanticTokensProvider,
 			semanticTokensLegend,
 		),
 		vscode.languages.registerDocumentFormattingEditProvider(

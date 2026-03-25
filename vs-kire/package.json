@@ -2,7 +2,7 @@
 	"name": "kire-intellisense",
 	"displayName": "KIRE IntelliSense",
 	"description": "Advanced language support and IntelliSense for the Kire templating engine.",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"type": "module",
 	"publisher": "Kire",
 	"icon": "image.png",
@@ -16,6 +16,9 @@
 	"categories": [
 		"Programming Languages"
 	],
+	"vsce": {
+		"dependencies": false
+	},
 	"main": "./dist/extension.js",
 	"activationEvents": [
 		"onLanguage:kire"
@@ -23,7 +26,7 @@
 	"dependencies": {
 		"vscode-html-languageservice": "^5.5.1",
 		"vscode-languageserver-textdocument": "^1.0.12",
-		"zustand": "^5.0.8"
+		"zustand": "^5.0.12"
 	},
 	"devDependencies": {
 		"@types/vscode": "^1.104.0",
@@ -124,9 +127,10 @@
 		]
 	},
 	"scripts": {
-		"build": "vsce package",
-		"vscode:prepublish": "bun build.ts",
+		"build": "bun run bundle && bunx @vscode/vsce package --no-dependencies",
+		"bundle": "bun build.ts",
 		"watch": "bun build.ts --watch",
-		"check": "tsc --noEmit --project tsconfig.json"
+		"check": "tsc --noEmit --project tsconfig.json",
+		"test": "bun test tests"
 	}
 }

@@ -3,6 +3,7 @@ import type { Kire } from "./kire";
 export default (kire: Kire) => {
 	kire.kireSchema({
 		name: "kire",
+		description: "Core Kire runtime types and template globals.",
 		author: "Drysius",
 		version: "0.1.2",
 		repository: "https://github.com/drysius/kire",

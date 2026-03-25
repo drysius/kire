@@ -6,6 +6,9 @@ export default (kire: Kire<any>) => {
 		signature: [`expr:any`],
 		children: true,
 		closeBy: [`endisset`, `end`],
+		description:
+			"Renders the block only when the expression is defined and not null.",
+		example: `@isset(user.avatar)\n  <img src="{{ user.avatar }}">\n@end`,
 		onCall: (api) => {
 			const expr = api.getArgument(0) ?? api.getAttribute("expr");
 			api.write(
@@ -22,6 +25,9 @@ export default (kire: Kire<any>) => {
 		children: true,
 		relatedTo: [`for`, `each`],
 		closeBy: [`endempty`, `endfor`, `endeach`, `end`],
+		description:
+			"Fallback branch for empty collections or falsy values, often used alongside @for or @each.",
+		example: `@empty(items)\n  <p>No items</p>\n@end`,
 		onCall: (api) => {
 			const expr = api.getArgument(0) || api.getAttribute("expr");
 			if (!expr) {

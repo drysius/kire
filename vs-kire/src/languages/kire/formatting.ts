@@ -1,4 +1,6 @@
 import * as vscode from "vscode";
+import { directiveOpensBlock } from "../../core/directiveLogic";
+import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
 
 type LineType =
@@ -47,6 +49,15 @@ export class FeatureFormatting
 		const state = kireStore.getState();
 		const directives = state.directives;
 		const parentDirectives = state.parentDirectives;
+		const text = document.getText();
+		const directiveCalls = scanDirectives(text);
+		const directiveCallsByLine = new Map<number, typeof directiveCalls>();
+		for (const call of directiveCalls) {
+			const line = document.positionAt(call.start).line;
+			const current = directiveCallsByLine.get(line) || [];
+			current.push(call);
+			directiveCallsByLine.set(line, current);
+		}
 
 		const embeddedBlocks = this.collectEmbeddedBlocks(document);
 
@@ -100,9 +111,15 @@ export class FeatureFormatting
 
 			if (lineType === "directive-opener") {
 				const name = this.extractDirectiveName(trimmed);
-				const def = directives.get(name);
-
-				const opensBlock = def?.children === true;
+				const call = (directiveCallsByLine.get(i) || []).find(
+					(entry) =>
+						entry.name === name &&
+						document.positionAt(entry.start).character ===
+							originalLine.length - trimmed.length,
+				);
+				const opensBlock = call
+					? directiveOpensBlock(text, call)
+					: directives.get(name)?.children === true;
 
 				if (opensBlock) indentLevel++;
 			}

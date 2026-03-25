@@ -22,6 +22,9 @@ export default (kire: Kire<any>) => {
 			{ name: "$loop", type: "any" },
 		],
 		children: true,
+		description:
+			"Iterates arrays or objects using `item of source` or `(item, index) in source` syntax.",
+		example: `@for(todo of todos)\n  <li>{{ todo.title }}</li>\n@end`,
 		// closeBy removed
 		scope: (args) => {
 			const rawExpr = args[0] || "[]";
@@ -100,6 +103,9 @@ export default (kire: Kire<any>) => {
 			{ name: "$loop", type: "any" },
 		],
 		children: true,
+		description:
+			"Iterates over a collection and exposes the current item under a chosen variable name.",
+		example: `@each(todos, "todo")\n  <li>{{ todo.title }}</li>\n@end`,
 		// closeBy removed
 		scope: (args) => {
 			const _items = args[0] || "[]";

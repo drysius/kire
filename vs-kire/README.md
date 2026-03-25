@@ -1,73 +1,70 @@
 # KIRE IntelliSense
 
-**The official language support extension for the Kire templating engine.**
+Language support for the Kire templating engine in Visual Studio Code.
 
-KIRE IntelliSense provides a rich development experience for [Kire](https://github.com/drysius/kire), a powerful and expressive templating engine inspired by Blade, designed for Node.js, Bun, and Deno.
+## Features
 
-![Extension Preview](images/hero.png)
-*> Tip: Place a screenshot of the syntax highlighting here named `images/hero.png`*
+- Syntax highlighting for `.kire` and `.kire.html`
+- Schema-driven completions for directives, elements and attributes
+- Hover documentation fed by Kire core and installed `kire.schema.js` packages
+- Type-aware completions and hover for `{{ ... }}`, JS-like attributes and `<?js ?>`
+- `@interface(...)` support for local and workspace-wide template typing
+- Diagnostics for directive blocks, HTML structure, interpolations and typed attributes
+- Formatting, folding, document symbols and auto-closing tags
 
-## ✨ Features
+## Schema Loading
 
-### 🎨 Syntax Highlighting
-Full colorization for Kire's expressive syntax, distinguishing between directives, control structures, and raw HTML.
+The extension scans the workspace for `kire.schema.js` files and merges:
 
-- **Directives:** `@if`, `@else`, `@foreach`, `@wire`, etc.
-- **Interpolations:** `{{ variable }}` and `{{{ raw_html }}}`.
-- **Comments:** `{{-- Kire Comments --}}`.
+- package metadata such as name, version and repository
+- directives, elements and attributes
+- globals and types
+- tooling metadata exposed by packages
 
-### 🧠 Smart Autocomplete
-Get intelligent suggestions for directives and built-in variables as you type.
+Use `Kire: Reload Schemas` after changing plugin schemas or installing a new Kire package.
 
-![Autocomplete Example](images/autocomplete.gif)
-*> Tip: Place a gif of the autocomplete in action here named `images/autocomplete.gif`*
+## Typing
 
-### ⚡ Productivity Snippets
-Type less and do more with built-in snippets for common structures like layouts, loops, and conditional blocks.
-
-### 🛠️ Embedded Language Support
-Seamlessly write HTML, CSS, and JavaScript within your `.kire` files with full language feature support.
-
-## 🚀 Installation
-
-1. Open **VS Code**.
-2. Go to the **Extensions** view (`Ctrl+Shift+X` or `Cmd+Shift+X`).
-3. Search for **"KIRE IntelliSense"**.
-4. Click **Install**.
-
-## 🔧 Usage
-
-Simply open any file ending in `.kire`. The extension will activate automatically.
-
-**Example Code:**
+The extension understands modern Kire typing patterns, including:
 
 ```kire
-@layout('layouts.app')
+@interface(App.ViewModel)
 
-@section('content')
-    <div class="container">
-        <h1>Hello, {{ user.name }}!</h1>
+@interface({
+  user: App.User,
+  settings: Partial<App.Settings>
+}, true)
 
-        @if(user.isAdmin)
-            <button wire:click="openAdminPanel">Admin Panel</button>
-        @else
-            <p>Welcome back to the dashboard.</p>
-        @endif
+@const(title = "Dashboard")
 
-        <ul>
-        @foreach(items as item)
-            <li>{{ item.name }}</li>
-        @endforeach
-        </ul>
-    </div>
-@endsection
+<div>{{ user.name }}</div>
 ```
 
-## 🤝 Contributing
+- `@interface(Type)` enriches the current file
+- `@interface({...}, true)` contributes workspace-global typing
+- `@const` and `@let` declarations are surfaced to editor tooling
 
-Found a bug? Want to suggest a feature? Contributions are welcome!
-Please open an issue on the [GitHub Repository](https://github.com/drysius/kire).
+## Commands
 
-## 📄 License
+- `Kire: Reload Schemas`
+- `Kire: Show Logs`
 
-MIT
+## Settings
+
+- `kire.logs.debug`: enable verbose logs in the Kire output channel
+- `kire.schema.scanNodeModules`: scan `node_modules` for `kire.schema.js`
+
+## Development
+
+```sh
+bun install
+bun run check
+bun run test
+bun run bundle
+```
+
+To build a VSIX:
+
+```sh
+bun run build
+```

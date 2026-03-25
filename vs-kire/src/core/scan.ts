@@ -21,7 +21,23 @@ function tryLoadKireFromBase(basePath: string): KireCtor | null {
 	return null;
 }
 
-function resolveKireConstructor(): KireCtor {
+async function tryLoadBundledKire(): Promise<KireCtor | null> {
+	try {
+		const bundledUrl = new URL("./kire-runtime.js", import.meta.url);
+		const mod = await import(bundledUrl.href);
+		if (typeof mod?.Kire === "function") {
+			return mod.Kire as KireCtor;
+		}
+	} catch (error) {
+		kireLog(
+			"warn",
+			`Unable to load bundled Kire runtime: ${error instanceof Error ? error.message : "Unknown error"}`,
+		);
+	}
+	return null;
+}
+
+async function resolveKireConstructor(): Promise<KireCtor> {
 	const folders = vscode.workspace.workspaceFolders || [];
 	for (const folder of folders) {
 		const kireCtor = tryLoadKireFromBase(
@@ -39,10 +55,16 @@ function resolveKireConstructor(): KireCtor {
 	const fallback =
 		tryLoadKireFromBase(import.meta.url) ||
 		tryLoadKireFromBase(join(process.cwd(), "package.json"));
-	if (fallback) return fallback;
+	if (fallback) {
+		kireLog("debug", "Using fallback Kire runtime resolved from process base.");
+		return fallback;
+	}
 
-	const mod = runtimeRequire("kire") as { Kire?: KireCtor };
-	if (typeof mod?.Kire === "function") return mod.Kire;
+	const bundledKire = await tryLoadBundledKire();
+	if (bundledKire) {
+		kireLog("warn", "Using bundled Kire runtime fallback.");
+		return bundledKire;
+	}
 
 	throw new Error("Unable to resolve the Kire runtime for schema loading.");
 }
@@ -392,16 +414,15 @@ async function loadSchemaModule(
 
 export async function loadSchemas(): Promise<void> {
 	const startedAt = Date.now();
-	const state = kireStore.getState();
-	state.clear();
+	kireStore.getState().clear();
 	kireLog("info", "Starting schema load.");
 
-	const Kire = resolveKireConstructor();
+	const Kire = await resolveKireConstructor();
 	const engine = new Kire({
 		production: true,
 		silent: true,
 	});
-	state.setEngine(engine);
+	kireStore.getState().setEngine(engine);
 	const collected = createEmptySchema();
 
 	if (
@@ -452,8 +473,11 @@ export async function loadSchemas(): Promise<void> {
 			await loadSchemaModule(uri, engine, collected);
 		}
 
-		mergeSchema(collected, extractEngineSchema(engine, state.metadata));
-		state.applyKireSchema(collected as any);
+		mergeSchema(
+			collected,
+			extractEngineSchema(engine, kireStore.getState().metadata),
+		);
+		kireStore.getState().applyKireSchema(collected as any);
 		kireLog(
 			"info",
 			`Schema load completed in ${Date.now() - startedAt}ms. directives=${collected.directives?.length || 0}, elements=${collected.elements?.length || 0}, attributes=${collected.attributes?.length || 0}, types=${collected.types?.length || 0}`,

@@ -53,6 +53,9 @@ export default (kire: Kire<any>) => {
 		name: `define`,
 		signature: [`name:string`],
 		children: true,
+		description:
+			"Captures a reusable named content fragment that can later be resolved by @defined.",
+		example: `@define("hero")\n  <h1>Hero</h1>\n@end`,
 		onCall: (api) => {
 			const id = api.uid("def");
 			const name = normalizeStackNameLiteral(
@@ -72,6 +75,9 @@ export default (kire: Kire<any>) => {
 		name: `defined`,
 		signature: [`name:string`],
 		children: `auto`,
+		description:
+			"Outputs a previously defined fragment or renders its inline fallback block when missing.",
+		example: `@defined("hero")\n  <h1>Fallback</h1>\n@enddefined`,
 		onCall: (api) => {
 			const name = normalizeStackNameLiteral(
 				api.getArgument(0) || api.getAttribute("name"),
@@ -91,6 +97,9 @@ export default (kire: Kire<any>) => {
 		name: `stack`,
 		signature: [`name:string`],
 		children: false,
+		description:
+			"Injects the rendered contents that were pushed into a named stack.",
+		example: `@stack("scripts")`,
 		onCall: (api) => {
 			const name = normalizeStackNameLiteral(
 				api.getArgument(0) || api.getAttribute("name"),
@@ -113,6 +122,9 @@ export default (kire: Kire<any>) => {
 		name: `push`,
 		signature: [`name:string`],
 		children: true,
+		description:
+			"Appends the current block to a named stack that can later be rendered with @stack.",
+		example: `@push("scripts")\n  <script src="/app.js"></script>\n@end`,
 		onCall: (api) => {
 			const id = api.uid("push");
 			const name = normalizeStackNameLiteral(
