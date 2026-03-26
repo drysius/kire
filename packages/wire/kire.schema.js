@@ -1,3 +1,5 @@
+import { wireAttributeDocs, wireElementDocs } from "./schema.docs.js";
+
 const defineSchema = (schema) => schema;
 
 export default defineSchema({
@@ -8,6 +10,8 @@ export default defineSchema({
 	author: "drysius",
 	repository: "git+https://github.com/drysius/kire.git",
 	dependencies: ["@sinclair/typebox", "kire"],
+	elements: wireElementDocs,
+	attributes: wireAttributeDocs,
 	handle: async (kire) => {
 		try {
 			const { KirewirePlugin } = await import("@kirejs/wire");

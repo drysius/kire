@@ -91,6 +91,7 @@ export const KireIconify = kirePlugin<IconifyOptions>(
 		kire.element({
 			name: "iconify",
 			description: "Renders an Iconify icon.",
+			example: '<iconify icon="mdi:home" class="text-blue-500" width="24" />',
 			void: true,
 			onCall(api) {
 				const attrs = { ...api.node.attributes };

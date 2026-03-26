@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import {
 	type AttributeDefinition,
 	type ElementDefinition,
+	type PackageMetadata,
 	kireStore,
 } from "../../core/store";
 
@@ -35,6 +36,11 @@ interface ResolvedAttribute {
 	def: AttributeDefinition;
 	matchedName: string;
 	baseSegmentCount: number;
+}
+
+interface ResolvedElement {
+	def: ElementDefinition;
+	matchedName: string;
 }
 
 interface HoverToken {
@@ -347,7 +353,78 @@ function resolveAttribute(word: string): ResolvedAttribute | undefined {
 		}
 	}
 
+	for (let i = parts.length; i > 0; i--) {
+		const candidate = parts.slice(0, i).join(".");
+		let bestMatch:
+			| {
+					def: AttributeDefinition;
+					score: number;
+			  }
+			| undefined;
+
+		for (const [name, def] of store.attributes.entries()) {
+			if (!name.includes("*")) continue;
+			const pattern = new RegExp(
+				`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^.]+")}$`,
+			);
+			if (!pattern.test(candidate)) continue;
+
+			const wildcardCount = (name.match(/\*/g) || []).length;
+			const score =
+				name.split(".").filter(Boolean).length * 10 - wildcardCount * 2;
+			if (!bestMatch || score > bestMatch.score) {
+				bestMatch = { def, score };
+			}
+		}
+
+		if (bestMatch) {
+			return {
+				def: bestMatch.def,
+				matchedName: candidate,
+				baseSegmentCount: candidate.split(".").filter(Boolean).length,
+			};
+		}
+	}
+
 	return undefined;
+}
+
+function resolveElement(word: string): ResolvedElement | undefined {
+	const elements = kireStore.getState().elements;
+	const exact = elements.get(word);
+	if (exact) {
+		return {
+			def: exact,
+			matchedName: word,
+		};
+	}
+
+	let bestMatch:
+		| {
+				def: ElementDefinition;
+				score: number;
+		  }
+		| undefined;
+
+	for (const [name, def] of elements.entries()) {
+		if (!name.includes("*")) continue;
+		const pattern = new RegExp(
+			`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
+		);
+		if (!pattern.test(word)) continue;
+
+		const wildcardCount = (name.match(/\*/g) || []).length;
+		const score = name.length * 10 - wildcardCount * 2;
+		if (!bestMatch || score > bestMatch.score) {
+			bestMatch = { def, score };
+		}
+	}
+
+	if (!bestMatch) return undefined;
+	return {
+		def: bestMatch.def,
+		matchedName: word,
+	};
 }
 
 function getElementAttributes(elementDef: ElementDefinition): Array<{
@@ -376,19 +453,34 @@ function getElementAttributes(elementDef: ElementDefinition): Array<{
 	return out;
 }
 
-function appendModuleInfo(md: vscode.MarkdownString) {
+function getPackageInfo(
+	def?: Record<string, any>,
+): PackageMetadata | undefined {
+	const fromDefinition =
+		def?.package && typeof def.package === "object" ? def.package : undefined;
+	if (fromDefinition?.name) return fromDefinition;
+
 	const meta = kireStore.getState().metadata;
-	if (!meta || !meta.name) return;
+	if (meta?.name) return meta;
+	return undefined;
+}
+
+function appendPackageInfo(
+	md: vscode.MarkdownString,
+	def?: Record<string, any>,
+) {
+	const meta = getPackageInfo(def);
+	if (!meta?.name) return;
 
 	md.appendMarkdown(`\n\n---\n`);
-	md.appendMarkdown(`**Module**\n`);
-	if (meta.author) md.appendMarkdown(`@author "${meta.author}"\n`);
+	md.appendMarkdown(`**Package**\n`);
+	if (meta.author) md.appendMarkdown(`Author: \`${meta.author}\`\n\n`);
 
 	let pkgLabel = meta.name;
 	if (meta.repository) {
 		pkgLabel = `[${meta.name}](${meta.repository})`;
 	}
-	md.appendMarkdown(`${pkgLabel} - ${meta.version || "0.0.0"}`);
+	md.appendMarkdown(`${pkgLabel}${meta.version ? ` - ${meta.version}` : ""}`);
 }
 
 function getHoverToken(
@@ -422,6 +514,7 @@ function buildDirectiveHover(word: string): vscode.Hover | undefined {
 	const declares = formatDeclares((def as any).declares);
 	if (declares) md.appendMarkdown(`\n\nDeclares: \`${declares}\``);
 	if (def.example) md.appendCodeblock(String(def.example), "kire");
+	appendPackageInfo(md, def as any);
 	return new vscode.Hover(md);
 }
 
@@ -431,8 +524,9 @@ function buildElementHover(
 	range: vscode.Range,
 	word: string,
 ): vscode.Hover | undefined {
-	const elementDef = kireStore.getState().elements.get(word);
-	if (!elementDef) return undefined;
+	const resolved = resolveElement(word);
+	if (!resolved) return undefined;
+	const { def: elementDef, matchedName } = resolved;
 
 	const line = document.lineAt(position.line).text;
 	const before = line.slice(0, range.start.character);
@@ -440,7 +534,7 @@ function buildElementHover(
 
 	const md = new vscode.MarkdownString();
 	md.appendCodeblock(
-		elementDef.void ? `<${elementDef.name} />` : `<${elementDef.name}>`,
+		elementDef.void ? `<${matchedName} />` : `<${matchedName}>`,
 		"html",
 	);
 
@@ -471,7 +565,7 @@ function buildElementHover(
 	const declares = formatDeclares((elementDef as any).declares);
 	if (declares) md.appendMarkdown(`\n\n**Declares**\n\n\`${declares}\``);
 
-	appendModuleInfo(md);
+	appendPackageInfo(md, elementDef as any);
 	return new vscode.Hover(md);
 }
 
@@ -488,7 +582,10 @@ function buildAttributeHover(
 	md.isTrusted = true;
 
 	const type = toTypeLabel(def.type);
-	md.appendCodeblock(`${matchedName}="${type}"`, "html");
+	md.appendCodeblock(
+		type === "boolean" ? matchedName : `${matchedName}="${type}"`,
+		"html",
+	);
 
 	const description = stripLegacyModifiersSection(getDescription(def as any));
 	if (description) md.appendMarkdown(`\n\n${description}`);
@@ -567,7 +664,7 @@ function buildAttributeHover(
 		}
 	}
 
-	appendModuleInfo(md);
+	appendPackageInfo(md, def as any);
 	return new vscode.Hover(md);
 }
 

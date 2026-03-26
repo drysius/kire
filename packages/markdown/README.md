@@ -1,30 +1,32 @@
 # @kirejs/markdown
 
-Adds Markdown rendering capabilities directly to Kire templates.
+`@kirejs/markdown` renders Markdown content inside Kire.
 
-## Features
+## What It Adds
 
-- **`@markdown()` directive** for inline markdown or file paths.
-- **Wildcard support** via patterns like `posts/*.md`.
-- **`@mdslots()` directive** to preload markdown collections.
+- `@markdown(source)` for Markdown strings, files, or glob patterns
+- `@mdslots(pattern, name)` for preloading Markdown collections into a variable
+- file and glob resolution relative to the Kire root
+- protection for Kire syntax inside code blocks
 
-## Installation
+## Typical Usage
 
-```bash
-npm install @kirejs/markdown
-# or
-bun add @kirejs/markdown
+```ts
+import { Kire } from "kire";
+import KireMarkdown from "@kirejs/markdown";
+
+const kire = new Kire({ root: "content" }).plugin(KireMarkdown);
 ```
 
-## Usage
-
-```html
-@markdown("# Hello World")
-@markdown("content/post.md")
-@markdown("content/*.md")
+```kire
+@markdown("# Hello")
+@markdown("posts/intro.md")
+@markdown("posts/*.md")
 
 @mdslots("posts/*.md", "posts")
 ```
+
+The plugin registers directive metadata used by `KIRE IntelliSense`, including examples and descriptions for the Markdown helpers.
 
 ## License
 

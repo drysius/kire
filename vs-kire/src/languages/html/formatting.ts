@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getLanguageService } from "vscode-html-languageservice";
+import { getLanguageService } from "./service";
 import { toLspDocument, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();

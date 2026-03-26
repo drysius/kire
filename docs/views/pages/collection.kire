@@ -8,6 +8,5 @@
             without rerendering the full component shell.
         </p>
     </div>
-
-    @wire('collection')
+    <livewire:collection />
 @end

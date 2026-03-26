@@ -109,6 +109,57 @@ describe("Kire Elements System (Pattern-based)", () => {
 		expect(result).toContain("<li>3</li>");
 	});
 
+	it("should handle kire:include and kire:define aliases", async () => {
+		const kire = new Kire({ silent: true });
+		kire.$files[kire.resolvePath("partials.card")] =
+			"<article>{{ title }}</article>";
+
+		const template = `
+			<kire:define name="hero"><h1>Hero</h1></kire:define>
+			<kire:defined name="hero"><p>Fallback</p></kire:defined>
+			<kire:include path="partials.card" locals="{ title: 'Card' }" />
+		`;
+
+		const result = await kire.render(template);
+		expect(result).toContain("<h1>Hero</h1>");
+		expect(result).toContain("<article>Card</article>");
+	});
+
+	it("should handle kire:component, kire:slot and kire:yield aliases", async () => {
+		const kire = new Kire({ silent: true });
+		kire.$files[kire.resolvePath("card")] =
+			'<article><kire:yield name="header" default="\'No header\'" />|<kire:yield name="default" /></article>';
+
+		const template = `
+			<kire:component path="card">
+				<kire:slot name="header">Head</kire:slot>
+				Body
+			</kire:component>
+		`;
+
+		const result = await kire.render(template);
+		const normalized = result.replace(/\s+/g, " ").trim();
+		expect(normalized).toContain("<article>Head|");
+		expect(normalized).toContain("Body </article>");
+	});
+
+	it("should handle kire:layout and kire:section aliases", async () => {
+		const kire = new Kire({ silent: true });
+		kire.$files[kire.resolvePath("layouts.app")] =
+			'<main><kire:yield name="content" default="\'Empty\'" /></main>';
+
+		const template = `
+			<kire:layout path="layouts.app">
+				<kire:section name="content"><p>Hello</p></kire:section>
+			</kire:layout>
+		`;
+
+		const result = await kire.render(template);
+		expect(result.replace(/\s+/g, " ").trim()).toContain(
+			"<main><p>Hello</p></main>",
+		);
+	});
+
 	it("should handle attributes via attribute() helper", async () => {
 		const kire = new Kire({ silent: true });
 

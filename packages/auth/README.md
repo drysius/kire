@@ -1,29 +1,40 @@
 # @kirejs/auth
 
-Authentication directives and helpers for Kire. Simplifies handling user states in your templates.
+`@kirejs/auth` adds authentication and permission directives to Kire templates.
 
-## Features
+## What It Adds
 
-- **@auth / @guest**: Conditionally render content based on authentication state.
-- **Role/Permission Checks**: (If configured) Directives for checking user roles.
+- `@auth`, `@guest`, `@noauth`
+- aliases such as `@logged`, `@authenticated`, and `@notlogged`
+- permission checks with `@can`, `@notcan`, and `@canany`
+- `@user`, which injects the current authenticated user into the template scope
 
-## Installation
+## Typical Usage
 
-```bash
-npm install @kirejs/auth
-# or
-bun add @kirejs/auth
+```ts
+import { Kire } from "kire";
+import { KireAuth } from "@kirejs/auth";
+
+const kire = new Kire().plugin(KireAuth, {
+	getUser: async () => ({ id: 1, name: "Danie" }),
+	canPerm: async (perm, user) => Boolean(user) && perm === "edit_posts",
+});
 ```
 
-## Usage
-
-```html
+```kire
 @auth
-  <p>Welcome back, {{ user.name }}!</p>
+	@user
+	<p>Hello {{ user.name }}</p>
 @else
-  <a href="/login">Login</a>
+	<a href="/login">Login</a>
+@end
+
+@can("edit_posts")
+	<button>Edit</button>
 @end
 ```
+
+The package attaches descriptions, examples, and declarations to its directives so editor tooling such as `KIRE IntelliSense` can explain what each auth directive does.
 
 ## License
 

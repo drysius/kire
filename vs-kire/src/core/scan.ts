@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import * as vscode from "vscode";
 import { kireLog } from "./log";
-import { kireStore } from "./store";
+import { type PackageMetadata, kireStore } from "./store";
 
 const runtimeRequire = createRequire(import.meta.url);
 
@@ -114,6 +114,150 @@ function safeResolveRepository(repository: any): string | undefined {
 	if (typeof repository === "string") return repository;
 	if (typeof repository === "object") return repository.url;
 	return String(repository);
+}
+
+function getPackageMetadata(source: {
+	name?: string;
+	version?: string;
+	description?: string;
+	author?: string;
+	repository?: string | { url?: string };
+}): PackageMetadata {
+	return {
+		name: typeof source.name === "string" ? source.name : undefined,
+		version: typeof source.version === "string" ? source.version : undefined,
+		description:
+			typeof source.description === "string" ? source.description : undefined,
+		author: typeof source.author === "string" ? source.author : undefined,
+		repository: safeResolveRepository(source.repository),
+	};
+}
+
+function annotateDefinitionPackage<T>(value: T, pkg: PackageMetadata): T {
+	if (!value || typeof value !== "object") return value;
+	if (Array.isArray(value)) {
+		return value.map((entry) => annotateDefinitionPackage(entry, pkg)) as T;
+	}
+
+	const next = {
+		...(value as Record<string, any>),
+		package: { ...pkg },
+	} as Record<string, any>;
+
+	if (next.extends) {
+		next.extends = annotateDefinitionPackage(next.extends, pkg);
+	}
+
+	return next as T;
+}
+
+function annotateElementAttributes(
+	attributes: any[] | Record<string, any> | undefined,
+	pkg: PackageMetadata,
+) {
+	if (!attributes) return attributes;
+	if (Array.isArray(attributes)) {
+		return attributes.map((entry) => annotateDefinitionPackage(entry, pkg));
+	}
+	if (typeof attributes !== "object") return attributes;
+	return Object.fromEntries(
+		Object.entries(attributes).map(([name, value]) => {
+			if (!value || typeof value !== "object") return [name, value];
+			return [name, annotateDefinitionPackage(value, pkg)];
+		}),
+	);
+}
+
+function annotateSchemaPackage(
+	schema: KireSchemaShape,
+	pkg: PackageMetadata,
+): KireSchemaShape {
+	return {
+		...schema,
+		directives: Array.isArray(schema.directives)
+			? schema.directives.map((entry) => annotateDefinitionPackage(entry, pkg))
+			: [],
+		elements: Array.isArray(schema.elements)
+			? schema.elements.map((entry) => {
+					const annotated = annotateDefinitionPackage(entry, pkg) as Record<
+						string,
+						any
+					>;
+					annotated.attributes = annotateElementAttributes(
+						annotated.attributes,
+						pkg,
+					);
+					return annotated;
+				})
+			: [],
+		attributes: Array.isArray(schema.attributes)
+			? schema.attributes.map((entry) => annotateDefinitionPackage(entry, pkg))
+			: [],
+		types: Array.isArray(schema.types)
+			? schema.types.map((entry) => annotateDefinitionPackage(entry, pkg))
+			: [],
+		tools:
+			schema.tools && typeof schema.tools === "object"
+				? annotateDefinitionPackage(schema.tools, pkg)
+				: {},
+	};
+}
+
+function diffNamedList(
+	before: any[] | undefined,
+	after: any[] | undefined,
+	key: "name" | "variable",
+) {
+	const previous = new Map<string, string>();
+	for (const item of before || []) {
+		if (!item || typeof item !== "object") continue;
+		const name = item[key];
+		if (typeof name !== "string") continue;
+		previous.set(name, JSON.stringify(item));
+	}
+
+	const out: any[] = [];
+	for (const item of after || []) {
+		if (!item || typeof item !== "object") continue;
+		const name = item[key];
+		if (typeof name !== "string") {
+			out.push(item);
+			continue;
+		}
+
+		if (previous.get(name) !== JSON.stringify(item)) {
+			out.push(item);
+		}
+	}
+
+	return out;
+}
+
+function diffTools(
+	before: Record<string, any> | undefined,
+	after: Record<string, any> | undefined,
+) {
+	const out: Record<string, any> = {};
+	for (const [name, value] of Object.entries(after || {})) {
+		if (JSON.stringify(before?.[name]) !== JSON.stringify(value)) {
+			out[name] = value;
+		}
+	}
+	return out;
+}
+
+function diffSchema(
+	before: KireSchemaShape,
+	after: KireSchemaShape,
+): KireSchemaShape {
+	return {
+		dependencies: [],
+		directives: diffNamedList(before.directives, after.directives, "name"),
+		elements: diffNamedList(before.elements, after.elements, "name"),
+		attributes: diffNamedList(before.attributes, after.attributes, "name"),
+		types: diffNamedList(before.types, after.types, "variable"),
+		tools: diffTools(before.tools, after.tools),
+	};
 }
 
 function normalizeAttributes(attributes: any): any[] {
@@ -351,8 +495,12 @@ async function loadSchemaModule(
 			| Partial<KireSchemaDefinition>
 			| undefined;
 		if (!schema || typeof schema !== "object") return;
+		const packageMeta = getPackageMetadata(schema);
 
-		mergeSchema(collected, normalizeSchemaLike(schema));
+		mergeSchema(
+			collected,
+			annotateSchemaPackage(normalizeSchemaLike(schema), packageMeta),
+		);
 		kireLog("debug", `Schema parsed: ${modulePath}`);
 
 		if (
@@ -386,8 +534,14 @@ async function loadSchemaModule(
 		}
 
 		if (typeof schema.handle === "function") {
+			const beforeHandle = extractEngineSchema(engine, packageMeta);
 			try {
 				await Promise.resolve(schema.handle(engine));
+				const afterHandle = extractEngineSchema(engine, packageMeta);
+				mergeSchema(
+					collected,
+					annotateSchemaPackage(diffSchema(beforeHandle, afterHandle), packageMeta),
+				);
 				kireLog("debug", `Schema handle executed: ${modulePath}`);
 			} catch (error) {
 				kireLog(
@@ -424,6 +578,16 @@ export async function loadSchemas(): Promise<void> {
 	});
 	kireStore.getState().setEngine(engine);
 	const collected = createEmptySchema();
+	mergeSchema(
+		collected,
+		annotateSchemaPackage(
+			extractEngineSchema(engine, {
+				name: "kire",
+				version: "0.0.0",
+			}),
+			{ name: "kire", version: "0.0.0" },
+		),
+	);
 
 	if (
 		typeof (engine as any).use !== "function" &&

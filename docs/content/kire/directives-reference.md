@@ -11,6 +11,9 @@ order: 1
 
 This page documents all native directives shipped by Kire core.
 
+For native element syntax like `<kire:if>` and `x-*`, see [Elements Reference](/docs/kire/elements-reference).
+For attribute helpers and template context, see [Attributes and Template Context](/docs/kire/attributes-and-context).
+
 ## Output and Escaping
 
 ### `{{ expression }}`
@@ -303,3 +306,9 @@ Then unknown directives throw compile errors with file and position.
 - `@define`: `@enddefine` or `@end`
 - `@push`: `@endpush` or `@end`
 - `@error`: `@enderror` or `@end`
+
+## Related pages
+
+- [Getting Started](/docs/kire/getting-started)
+- [Elements Reference](/docs/kire/elements-reference)
+- [Attributes and Template Context](/docs/kire/attributes-and-context)

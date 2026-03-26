@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/packages/tailwind"
 title: "@kirejs/tailwind"
 description: "Tailwind integration for Kire projects, focused on class extraction, build flow, and runtime-friendly output."
@@ -9,28 +9,39 @@ order: 7
 
 # @kirejs/tailwind
 
-`@kirejs/tailwind` helps Kire projects integrate Tailwind CSS efficiently.
+`@kirejs/tailwind` compiles Tailwind CSS from inside Kire templates.
 
-## Goals
+## What it adds
 
-- align template files with Tailwind scanning/extraction
-- simplify generated CSS flow for Kire-based apps
-- keep style output deterministic between environments
+- `<tailwind>...</tailwind>`
+- `@tailwind(...)`
+- integration with `@kirejs/assets` when both are installed
 
-## Typical Workflow
+## Examples
 
-1. write Tailwind classes in `.kire` templates
-2. run Tailwind build/extraction pipeline
-3. serve generated CSS through your asset strategy
+Element form:
 
-## Where It Helps
+```kire
+<tailwind>
+  @import "tailwindcss";
 
-- Kire-first apps where templates are the main view source
-- monorepos with shared components and predictable build targets
-- teams that want utility CSS without custom parser glue code
+  .card {
+    @apply rounded-2xl border p-4;
+  }
+</tailwind>
+```
 
-## Recommendations
+Directive form:
 
-- keep class naming intentional and reusable
-- segment large utility sets with component-level patterns
-- combine with `@kirejs/assets` for stable style injection
+```kire
+@tailwind("
+  @import \"tailwindcss\";
+  .btn { @apply px-4 py-2 rounded-xl; }
+")
+```
+
+If `@kirejs/assets` is present, compiled CSS is pushed into the asset pipeline. Otherwise the package writes a `<style>` tag directly.
+
+## Configuration
+
+The plugin forwards Tailwind compile options, so configure it the same way you would configure the underlying Tailwind compile call.

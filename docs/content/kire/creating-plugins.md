@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/kire/creating-plugins"
 title: "Creating Plugins"
 description: "Extend Kire with directives, elements, globals, and schema-driven metadata for robust ecosystem modules."
@@ -9,65 +9,178 @@ order: 2
 
 # Creating Plugins
 
-Kire plugins are the main extension mechanism for new language features and runtime helpers.
+Plugins are how Kire grows. Packages such as `@kirejs/wire`, `@kirejs/iconify` and `@kirejs/tailwind` all extend the engine through the same plugin surface.
 
-## Plugin Goals
+## Minimal plugin shape
 
-A good plugin should be:
+```ts
+import { kirePlugin } from "kire";
 
-- small and focused
-- explicit about directives/elements it adds
-- safe under production cache
-- easy to test in isolation
+export const MyPlugin = kirePlugin({}, (kire, _opts) => {
+  kire.directive({
+    name: "hello",
+    signature: ["name:string"],
+    description: "Writes a greeting.",
+    example: "@hello('world')",
+    onCall(api) {
+      const name = api.getArgument(0) || "'world'";
+      api.write(`$kire_response += "Hello " + (${name});`);
+    },
+  });
+});
+```
 
-## Minimal Plugin Shape
+## What a plugin can add
+
+Plugins can register:
+
+- directives with `kire.directive(...)`
+- elements with `kire.element(...)`
+- attribute declarations with `kire.attribute(...)`
+- type declarations with `kire.type(...)`
+- globals with `kire.$global(...)`
+- engine setup hooks with `kire.onFork(...)`
+
+## Directive definitions
+
+A directive definition can describe runtime behavior and editor metadata at the same time.
+
+```ts
+kire.directive({
+  name: "hello",
+  signature: ["name:string"],
+  children: false,
+  description: "Writes a greeting.",
+  example: "@hello('world')",
+  onCall(api) {
+    const name = api.getArgument(0) || "'world'";
+    api.write(`$kire_response += "Hello " + (${name});`);
+  },
+});
+```
+
+Useful metadata fields:
+
+- `signature`
+- `children`
+- `description`
+- `example`
+- `declares`
+- `related`
+- `exposes`
+
+That same metadata is consumed by tooling like `vs-kire`.
+
+## Element definitions
+
+Elements work similarly:
+
+```ts
+kire.element({
+  name: "my-box",
+  description: "Render a boxed container.",
+  example: "<my-box tone=\"info\">Hello</my-box>",
+  attributes: [
+    {
+      name: "tone",
+      type: "string",
+      description: "Visual tone of the box.",
+    },
+  ],
+  onCall(api) {
+    api.append("<div class=\\"my-box\\">");
+    api.renderChildren();
+    api.append("</div>");
+  },
+});
+```
+
+If you want declaration-only metadata for editors, you can register an element without `onCall`.
+
+## Attribute declarations
+
+Use `kire.attribute(...)` when your plugin adds attribute-level syntax but not a new tag.
+
+```ts
+kire.attribute({
+  name: "wire:navigate",
+  type: "boolean",
+  description: "Intercept anchor navigation through the client runtime.",
+});
+```
+
+This is how packages document wildcard attributes like `wire:*`.
+
+## Schema metadata
+
+If you publish a package, define schema metadata as well:
+
+```ts
+kire.kireSchema({
+  name: "@acme/kire-plugin",
+  version: "0.1.0",
+  description: "Adds custom directives for Acme apps.",
+});
+```
+
+And for external schema loaders:
 
 ```ts
 import { defineSchema } from "kire";
 
 export default defineSchema({
-  name: "my-kire-plugin",
-  description: "Adds custom directives",
-  handle: (kire) => {
-    kire.directive({
-      name: "hello",
-      params: ["name:string"],
-      onCall(api) {
-        const name = api.getArgument(0) || "'world'";
-        api.write(`$kire_response += "Hello " + (${name});`);
-      },
-    });
+  name: "@acme/kire-plugin",
+  handle(kire) {
+    // register docs or runtime helpers
   },
 });
 ```
 
-## Directive Design Tips
+## Fork-aware setup
 
-- Validate params early.
-- Keep generated code minimal.
-- Make async behavior explicit (`api.markAsync()` when required).
-- Prefer deterministic output for easier caching and testing.
+If your plugin stores request-sensitive globals or managers, wire them into both the root engine and future forks:
 
-## Element Extensions
+```ts
+const setup = (instance) => {
+  instance.$global("auth", createAuthApi());
+};
 
-Custom elements can provide semantic shortcuts and editor tooling metadata.
-When adding custom elements, document expected attributes and behavior clearly.
+setup(kire);
+kire.onFork((fork) => setup(fork));
+```
 
-## Schema Metadata
+That is the pattern used by packages like `@kirejs/wire` and `@kirejs/utils`.
 
-Schema metadata helps tooling (for example VS extensions) with:
+## Documentation quality matters
 
-- completion
-- hover descriptions
-- argument typing hints
+If you want the docs site and the VS Code extension to explain your package well, fill these fields consistently:
 
-## Testing Strategy
+- `description`
+- `example`
+- `signature`
+- `attributes`
+- `declares`
 
-1. unit test directive code generation
-2. integration test rendered output
-3. regression test invalid inputs and edge cases
+Without them, the runtime still works, but the package becomes much harder to discover and use correctly.
 
-## Versioning and Compatibility
+## Testing strategy
 
-When changing directive signatures, treat it as an API change.
-Document migration notes and keep backwards compatibility when possible.
+Recommended coverage:
+
+1. compile-time output tests for directives and elements
+2. render integration tests for expected HTML
+3. schema and tooling tests for docs, attributes and declarations
+
+## Good plugin rules
+
+- keep runtime output deterministic
+- prefer explicit names over magical context
+- document every public directive, element and attribute
+- expose editor metadata together with runtime behavior
+- use `children`, `declares` and `attributes` accurately so tooling can keep up
+
+## Related pages
+
+- [How Kire Works](/docs/kire/how-kire-works)
+- [Directives Reference](/docs/kire/directives-reference)
+- [Elements Reference](/docs/kire/elements-reference)

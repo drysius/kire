@@ -13,6 +13,7 @@ interface KireSchemaShape {
 
 export interface DirectiveDefinition {
 	name: string;
+	package?: PackageMetadata;
 	signature?: string[];
 	declares?: Array<{
 		name?: string;
@@ -33,6 +34,7 @@ export interface DirectiveDefinition {
 
 export interface ElementDefinition {
 	name: string;
+	package?: PackageMetadata;
 	description?: string;
 	example?: string;
 	void?: boolean;
@@ -61,6 +63,7 @@ export interface ElementDefinition {
 
 export interface AttributeDefinition {
 	name?: string;
+	package?: PackageMetadata;
 	type: string | string[];
 	comment?: string;
 	description?: string;
@@ -78,7 +81,8 @@ export interface PackageMetadata {
 }
 
 export interface ToolDefinition {
-	type?: string | string[];
+	package?: PackageMetadata;
+	type?: string | string[];		
 	tstype?: string;
 	comment?: string;
 	description?: string;

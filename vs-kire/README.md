@@ -1,48 +1,28 @@
 # KIRE IntelliSense
 
-Language support for the Kire templating engine in Visual Studio Code.
+`vs-kire/` is the Visual Studio Code extension for Kire templates.
 
-## Features
+It provides:
 
-- Syntax highlighting for `.kire` and `.kire.html`
-- Schema-driven completions for directives, elements and attributes
-- Hover documentation fed by Kire core and installed `kire.schema.js` packages
-- Type-aware completions and hover for `{{ ... }}`, JS-like attributes and `<?js ?>`
-- `@interface(...)` support for local and workspace-wide template typing
-- Diagnostics for directive blocks, HTML structure, interpolations and typed attributes
-- Formatting, folding, document symbols and auto-closing tags
+- syntax highlighting for `.kire` and `.kire.html`
+- Blade-style interpolation highlighting
+- Blade-style Kire comments such as `{{-- ... --}}`
+- directive, element, and attribute completions
+- hover docs with examples and package ownership
+- semantic coloring for Kire directives, Kire elements, and Kire-specific attributes
+- HTML hover/completion support inside Kire documents
+- diagnostics for directives, schema-driven attributes, HTML structure, and embedded expressions
+- document symbols, formatting, auto-closing tags, and schema reload commands
 
-## Schema Loading
+## How It Gets Documentation
 
-The extension scans the workspace for `kire.schema.js` files and merges:
+The extension loads metadata from:
 
-- package metadata such as name, version and repository
-- directives, elements and attributes
-- globals and types
-- tooling metadata exposed by packages
+- Kire core
+- workspace packages that expose `kire.schema.js`
+- runtime-registered metadata such as directive descriptions, examples, declarations, and types
 
-Use `Kire: Reload Schemas` after changing plugin schemas or installing a new Kire package.
-
-## Typing
-
-The extension understands modern Kire typing patterns, including:
-
-```kire
-@interface(App.ViewModel)
-
-@interface({
-  user: App.User,
-  settings: Partial<App.Settings>
-}, true)
-
-@const(title = "Dashboard")
-
-<div>{{ user.name }}</div>
-```
-
-- `@interface(Type)` enriches the current file
-- `@interface({...}, true)` contributes workspace-global typing
-- `@const` and `@let` declarations are surfaced to editor tooling
+That metadata is what drives hover text, examples, package labels, and many completion details.
 
 ## Commands
 
@@ -51,7 +31,7 @@ The extension understands modern Kire typing patterns, including:
 
 ## Settings
 
-- `kire.logs.debug`: enable verbose logs in the Kire output channel
+- `kire.logs.debug`: enable verbose debug logs in the Kire output channel
 - `kire.schema.scanNodeModules`: scan `node_modules` for `kire.schema.js`
 
 ## Development
@@ -63,8 +43,17 @@ bun run test
 bun run bundle
 ```
 
-To build a VSIX:
+To generate the VSIX:
 
 ```sh
 bun run build
 ```
+
+## Related Docs
+
+- Repo overview: [`../README.md`](../README.md)
+- Core package: [`../core/README.md`](../core/README.md)
+
+## License
+
+MIT

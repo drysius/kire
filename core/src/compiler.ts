@@ -472,6 +472,16 @@ export class Compiler {
 				}
 
 				if (def) {
+					const aliasName = typeof n.tagName === "string" && n.tagName.startsWith("kire:")
+						? n.tagName.slice("kire:".length)
+						: "";
+					if (aliasName === "defined" || aliasName === "define") {
+						idents.add("__kire_defines");
+					}
+					if (aliasName === "stack" || aliasName === "push") {
+						idents.add("__kire_stack");
+					}
+
 					if (def.isDependency) {
 						const paths = def.isDependency(n.args || [], n.attributes);
 						for (const path of paths) {
@@ -494,9 +504,45 @@ export class Compiler {
 
 				if (n.attributes) {
 					for (const [key, val] of Object.entries(n.attributes)) {
-						if (n.tagName?.startsWith("kire:") || key.startsWith("@")) {
+						if (key.startsWith("@")) {
 							scanIdents(val);
 						} else {
+							const attrDecl =
+								Array.isArray(def?.attributes)
+									? def.attributes.find((entry: any) => {
+											if (!entry?.name) return false;
+											if (entry.name === key) return true;
+											if (
+												typeof entry.name === "string" &&
+												entry.name.includes("*")
+											) {
+												const pattern = new RegExp(
+													`^${entry.name.replace("*", ".*")}$`,
+												);
+												return pattern.test(key);
+											}
+											return false;
+									  })
+									: undefined;
+							const attrTypes = Array.isArray(attrDecl?.type)
+								? attrDecl.type
+								: attrDecl?.type
+									? [attrDecl.type]
+									: [];
+							const shouldScanAsJs =
+								key.startsWith(":") ||
+								attrTypes.some(
+									(type: string) =>
+										type === "javascript" ||
+										type === "js" ||
+										type === "any",
+								);
+
+							if (shouldScanAsJs) {
+								scanIdents(val);
+								continue;
+							}
+
 							const code = this.parseAttrCode(val);
 							if (code !== val) scanIdents(code);
 						}

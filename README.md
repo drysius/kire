@@ -1,137 +1,84 @@
-# Kire - Ultra-Fast JIT Template Engine for JavaScript
+# Kire
 
-Kire is a high-performance, generic, and extensible template engine inspired by **Blade** (Laravel) and **Edge.js** (AdonisJS). It compiles templates directly into optimized JavaScript functions, offering near-native performance with an intuitive and expressive syntax.
+Kire is a template engine for JavaScript and TypeScript that compiles template text directly into optimized JavaScript functions. It borrows the ergonomics of Blade-style directives, adds custom elements and plugins, and keeps the runtime open enough to power full server rendering, package-level extensions, and reactive layers such as Kirewire.
 
-## ✨ Features
+## What Is In This Repo
 
-- **JIT Compilation**: Templates are compiled to pure JS functions for maximum execution speed.
-- **Intuitive Syntax**: Use `{{ expr }}` for interpolation and `@directive` for control flow.
-- **Namespaces**: Organize templates into logical modules or directories.
-- **Component-Based**: Native support for components and slots using `@component` or `<x-tag>`.
-- **Request Isolation**: Use `kire.fork()` to safely handle per-request context in web servers.
-- **Extensible Architecture**: The core is generic; all logic (directives, elements) is provided via a modular plugin system.
-- **Async & Sync**: Intelligent detection of `await` to switch between sync and async execution.
-- **First-Class Error Reporting**: Integrated source maps point exactly to the template line that caused an error.
+| Path | Purpose |
+| --- | --- |
+| `core/` | The `kire` package: parser, compiler, runtime, native directives, native elements, and type metadata. |
+| `vs-kire/` | `KIRE IntelliSense`, the VS Code extension for highlighting, hover docs, completions, diagnostics, semantic coloring, and schema loading. |
+| `packages/assets/` | Asset capture helpers such as `@assets`, `@svg`, inline `<style>`, and inline `<script>`. |
+| `packages/auth/` | Auth-aware directives such as `@auth`, `@guest`, `@can`, and `@user`. |
+| `packages/iconify/` | Iconify integration with `@icon(...)` and `<iconify ... />`. |
+| `packages/markdown/` | Markdown rendering helpers such as `@markdown(...)` and `@mdslots(...)`. |
+| `packages/tailwind/` | Tailwind CSS compilation from `@tailwind` and `<tailwind>...</tailwind>`. |
+| `packages/utils/` | Laravel-style helpers such as `Route`, `Html`, `Str`, `Arr`, `@error`, and `@old`. |
+| `packages/vite/` | Vite integration with Laravel-style `@vite(...)` support. |
+| `packages/wire/` | Kirewire: reactive components, `@wire(...)`, `@kirewire()`, and `wire:*` attributes. |
 
-## 📦 Installation
+## Core Features
 
-```bash
-npm install kire
-# or
-bun add kire
-```
+- JIT compilation to JavaScript functions.
+- Blade-like directives such as `@if`, `@for`, `@switch`, `@define`, `@slot`, and `@component`.
+- Native logic elements such as `<kire:if>`, `<kire:for>`, and `<kire:switch>`.
+- Extensible directives, elements, attributes, globals, and custom types through plugins.
+- Per-request isolation with `fork()`.
+- Source-aware errors and editor-friendly metadata.
 
-## 🚀 Quick Start
+## Quick Start
 
-```typescript
-import { Kire } from 'kire';
+```ts
+import { Kire } from "kire";
 
-const kire = new Kire();
-
-// Render a raw string
-const output = await kire.render('Hello {{ name }}!', { name: 'Kire' });
-console.log(output);
-
-// Use a layout and component
-const template = `
-    @layout('base')
-        @slot('content')
-            <x-alert type="'success'">
-                Operation completed!
-            </x-alert>
-        @endslot
-    @endlayout
-`;
-```
-
-## 🔑 Core Concepts
-
-### Local Variables & `$props`
-By default, all data passed to `render` is available via the `it` or `$props` aliases.
-```html
-<h1>{{ it.title }}</h1>
-<p>{{ $props.content }}</p>
-```
-You can customize the local variable name in the constructor:
-```typescript
-const kire = new Kire({ local_variable: 'data' }); // Use {{ data.title }}
-```
-
-### Namespaces & Path Resolution
-Organize your views across multiple directories.
-```typescript
-kire.namespace('admin', './views/admin');
-kire.namespace('shared', './views/shared');
-
-// Resolves to ./views/admin/dashboard.kire
-await kire.view('admin.dashboard');
-```
-
-### Request Isolation (`fork`)
-Crucial for web servers (Hono, Express, etc.). A fork shares the template cache but has isolated global state.
-```typescript
-app.get('/profile', async (c) => {
-    const requestKire = kire.fork();
-    requestKire.$global('auth', c.get('user'));
-    
-    return c.html(await requestKire.view('profile'));
-});
-```
-
-### Virtual Files (`files`)
-Load templates from memory or pre-compiled bundles.
-```typescript
 const kire = new Kire({
-    files: {
-        'button.kire': '<button>{{ label }}</button>'
-    }
+	root: "views",
 });
+
+const html = await kire.render(
+	`
+		@if(user)
+			<h1>Hello {{ user.name }}</h1>
+		@else
+			<h1>Hello guest</h1>
+		@end
+	`,
+	{ user: { name: "Kire" } },
+);
+
+console.log(html);
 ```
 
-## 🛠️ Directives & Elements
+## VS Code Extension
 
-### Control Flow
-- `@if(cond) ... @elseif(cond) ... @else ... @end`
-- `@switch(expr) ... @case(val) ... @default ... @end`
-- `@for(item of items) ... @end`
-- `@unless(cond) ... @end`
-- `@isset(var) ... @end`
+The recommended editor companion is `KIRE IntelliSense`:
 
-### Stacks & Layouts
-- `@stack('name')` / `@push('name')`
-- `@yield('name', default)` / `@slot('name')`
-- `@define('name')` / `@defined('name')`
+- Marketplace: <https://marketplace.visualstudio.com/items?itemName=Kire.kire-intellisense>
+- Source: [`vs-kire/`](./vs-kire)
 
-### Native Elements
-Kire supports HTML-like elements for logic:
-```html
-<kire:if cond="user.isLogged">
-    <x-user-menu />
-</kire:if>
-```
+The extension reads metadata from Kire core and workspace schemas such as `kire.schema.js`. That is how directives, elements, attributes, examples, package ownership, and hover documentation show up inside `.kire` files.
 
-## 🧩 Plugin System
+## Package Philosophy
 
-Kire is designed to be extended. You can add your own directives and elements.
+Kire keeps the core generic. The engine knows how to parse and compile templates, but package-specific behavior lives in plugins. Packages can register:
 
-```typescript
-kire.plugin({
-    name: 'my-plugin',
-    load(kire) {
-        kire.directive({
-            name: 'hello',
-            onCall(api) {
-                api.append('Hello from Directive!');
-            }
-        });
-    }
-});
-```
+- directives
+- elements
+- attributes
+- globals
+- types
+- schema metadata for tooling
 
-## 🎓 VS Code Extension
+That same metadata is what powers a large part of the experience in `KIRE IntelliSense`.
 
-Install the official extension for syntax highlighting and autocompletion:
-👉 **[Kire Intellisense](https://marketplace.visualstudio.com/items?itemName=Kire.kire-intellisense)**
+## AI-Assisted Development
+
+Large parts of this project were developed with AI-assisted workflows, especially:
+
+- Codex (ChatGPT)
+- Gemini-CLI (Google Gemini 3)
+
+The repository is still authored and reviewed as a normal codebase, but those tools were heavily used to speed up implementation, refactors, diagnostics, and documentation work.
 
 ## License
 

@@ -1,81 +1,80 @@
 # Kire Core
 
-This is the generic core of the **Kire** template engine. It provides the foundation for parsing, compiling, and executing templates while remaining agnostic about specific directive or element logic.
+`core/` is the source of the published `kire` package. It contains the parser, compiler, runtime, native directives, native elements, and the type/schema primitives used by the rest of the monorepo.
 
-## 🏗️ Architecture
+## What Core Provides
 
-Kire operates in three main stages:
+- template parsing for interpolations, directives, elements, and embedded code
+- JavaScript code generation with source-aware error handling
+- runtime helpers for rendering, caching, file loading, and request isolation
+- plugin APIs for directives, elements, attributes, globals, tools, and types
+- built-in Kire syntax such as `@if`, `@for`, `@switch`, `@define`, `@component`, and `<kire:*>`
 
-1.  **Parser**: Scans the template string and generates a typed AST (Abstract Syntax Tree). It handles interpolation `{{ }}`, directives `@`, and elements `<tag>`.
-2.  **Compiler**: Transforms the AST into highly optimized JavaScript code. It performs identifier collection for automatic variable declaration and integrates source maps.
-3.  **Runtime**: Executes the compiled JS functions. It manages the context (`$props`, `$globals`, `$kire`), request isolation (`fork`), and error mapping.
+## Plugin Authoring
 
-## 🧩 Developing Plugins
+Kire core is intentionally generic. Features such as auth, markdown, vite, wire, or icon integrations are layered on top through plugins.
 
-The core doesn't know what `@if` or `<x-button>` means. These are provided by plugins (like the built-in `KireDirectives`).
+```ts
+import { Kire, kirePlugin } from "kire";
 
-### Creating a Plugin
-```typescript
-import { Kire, KirePlugin } from 'kire';
+export const MyPlugin = kirePlugin({}, (kire) => {
+	kire.directive({
+		name: "hello",
+		description: "Append a greeting to the output.",
+		example: "@hello()",
+		onCall(api) {
+			api.append("Hello from MyPlugin");
+		},
+	});
 
-export const MyPlugin: KirePlugin = {
-    name: 'my-custom-logic',
-    load(kire: Kire) {
-        // Register a directive
-        kire.directive({
-            name: 'uppercase',
-            onCall(api) {
-                const arg = api.getArgument(0);
-                api.write(`$kire_response += String(${arg}).toUpperCase();`);
-            }
-        });
+	kire.element({
+		name: "my-box",
+		description: "Wrap children in a div.",
+		example: "<my-box>content</my-box>",
+		onCall(api) {
+			api.append("<div>");
+			api.renderChildren();
+			api.append("</div>");
+		},
+	});
+});
 
-        // Register an element
-        kire.element({
-            name: 'my-tag',
-            onCall(api) {
-                api.append('<div>');
-                api.renderChildren();
-                api.append('</div>');
-            }
-        });
-    }
-};
+const kire = new Kire();
+kire.plugin(MyPlugin);
 ```
 
-## 🛠️ Core API for Plugin Authors
+## Tooling Metadata
 
-### `api.write(jsCode)`
-Injects raw JavaScript into the generated function's body. Use this for control flow (if, for).
+If you are authoring a plugin, add metadata to everything you register:
 
-### `api.append(content)`
-Appends static string content to the output buffer. If a non-string is passed, it generates `$kire_response += content;`.
+- `description`
+- `example`
+- `signature`
+- `declares`
+- `comment` and `tstype` for types
 
-### `api.prologue(jsCode)`
-Injects code at the beginning of the generated function (e.g., variable initialization).
+`KIRE IntelliSense` consumes that metadata to show hover docs, examples, completions, declared variables, and package ownership inside VS Code.
 
-### `api.epilogue(jsCode)`
-Injects code at the end of the generated function, just before the return.
+## Typical Extension Points
 
-### `api.getAttribute(name)`
-Retrieves an attribute value from an element or a parameter from a directive, automatically handling interpolation.
+- `kire.directive(...)`
+- `kire.element(...)`
+- `kire.attribute(...)`
+- `kire.type(...)`
+- `kire.$global(...)`
+- `kire.kireSchema(...)`
+- `kire.onFork(...)`
 
-### `api.depend(path)`
-Registers a dependency on another template and returns its internal identifier.
+## Running Tests
 
-## ⚡ Performance Optimization
-
-Kire Core is built for speed:
-- **NullProtoObj**: Uses `Object.create(null)` for all internal maps/stores to avoid prototype chain overhead and security risks.
-- **Fast Matchers**: Uses pre-compiled, length-sorted regex patterns for element and directive detection.
-- **Lazy Resolution**: Dependencies are resolved only during execution, not compilation.
-
-## 🧪 Testing
-
-We use **Bun:test** for our test suite. To run core tests:
-```bash
+```sh
 bun test core/tests
 ```
+
+## Related Packages
+
+- Root overview: [`../README.md`](../README.md)
+- VS Code extension: [`../vs-kire/README.md`](../vs-kire/README.md)
 
 ## License
 

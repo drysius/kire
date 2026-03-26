@@ -1,6 +1,9 @@
 export interface ParsedAttribute {
 	tagName: string;
 	name: string;
+	nameStart: number;
+	nameEnd: number;
+	hasValue: boolean;
 	value: string;
 	valueStart: number;
 	valueEnd: number;
@@ -126,6 +129,7 @@ export function extractTagAttributes(
 			const nameStart = cursor;
 			while (cursor < text.length && !isNameBreak(text[cursor])) cursor++;
 			const name = text.slice(nameStart, cursor);
+			const nameEnd = cursor;
 			if (!name) {
 				cursor++;
 				continue;
@@ -133,6 +137,18 @@ export function extractTagAttributes(
 
 			while (cursor < text.length && isWhitespace(text[cursor])) cursor++;
 			if (text[cursor] !== "=") {
+				if (!filter || filter(name)) {
+					out.push({
+						tagName,
+						name,
+						nameStart,
+						nameEnd,
+						hasValue: false,
+						value: "",
+						valueStart: cursor,
+						valueEnd: cursor,
+					});
+				}
 				continue;
 			}
 
@@ -151,6 +167,9 @@ export function extractTagAttributes(
 					out.push({
 						tagName,
 						name,
+						nameStart,
+						nameEnd,
+						hasValue: true,
 						value,
 						valueStart: contentStart,
 						valueEnd,
@@ -167,6 +186,9 @@ export function extractTagAttributes(
 				out.push({
 					tagName,
 					name,
+					nameStart,
+					nameEnd,
+					hasValue: true,
 					value,
 					valueStart,
 					valueEnd,
@@ -189,7 +211,7 @@ export function extractJsAttributeExpressions(text: string): ParsedAttribute[] {
 			name.startsWith("@") ||
 			name.startsWith("x-") ||
 			name.startsWith("wire:"),
-	);
+	).filter((attr) => attr.hasValue);
 
 	const allAttributes = extractTagAttributes(text);
 	for (const attr of allAttributes) {

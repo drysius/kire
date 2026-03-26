@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/packages/utils"
 title: "@kirejs/utils"
 description: "Utility helpers for routes, HTML helpers, and common template ergonomics inspired by Laravel style APIs."
@@ -9,33 +9,48 @@ order: 8
 
 # @kirejs/utils
 
-`@kirejs/utils` provides helper functions and template conveniences used across Kire views.
+`@kirejs/utils` provides convenience globals and a few form-oriented directives.
 
-## Utility Scope
+## What it adds
 
-- route/path helpers
-- HTML helper shortcuts
-- common formatting and utility functions
+- globals like `Str`, `Arr`, `Route`, `Html`
+- `old(key, default?)`
+- engine helpers `route(...)`, `withInput(...)`, `withErrors(...)`
+- `@error(name)`
+- `@old(name, default?)`
 
-## Why It Exists
+## Typical setup
 
-Templates often repeat small operations (route URLs, attribute helpers, formatting).
-A utility package centralizes these patterns and keeps templates cleaner.
+```ts
+import { KireUtils } from "@kirejs/utils";
 
-## Practical Benefits
+kire.plugin(KireUtils);
+kire.route("https://example.com");
+```
 
-- fewer ad-hoc helper functions in every project
-- consistent behavior across pages/components
-- easier migration from Laravel-like template habits
+## Examples
 
-## Usage Guidance
+Old input:
 
-- prefer helpers for repeated primitives only
-- do not hide business rules in utility helpers
-- keep helper names explicit and domain-safe
+```kire
+<input type="email" name="email" value="@old('email')" />
+```
 
-## Works Well With
+Validation error:
 
-- `kire` core templates
-- `@kirejs/wire` components
-- package-level docs/layout templates where helper reuse is frequent
+```kire
+@error("email")
+  <span class="text-error">{{ $message }}</span>
+@end
+```
+
+Request data:
+
+```ts
+kire.withInput(req.body);
+kire.withErrors({
+  email: ["Email is required"],
+});
+```
+
+The package is useful when you want Laravel-style template ergonomics without wiring those helpers by hand in every project.

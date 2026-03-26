@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/packages/auth"
 title: "@kirejs/auth"
 description: "Authentication and authorization directives for conditional rendering in Kire templates."
@@ -9,17 +9,40 @@ order: 4
 
 # @kirejs/auth
 
-`@kirejs/auth` adds auth-aware directives so templates can express access rules directly.
+`@kirejs/auth` adds auth-aware directives to Kire.
 
-## What It Solves
+## Configuration
 
-- show/hide sections by auth state
-- role/permission-aware blocks
-- consistent authorization checks in views
+The plugin expects two callbacks:
 
-## Typical Directives
+- `getUser(ctx)`: return the current user or `null`
+- `canPerm(perm, user)`: return whether the user has a permission
 
-Depending on configuration, you can use patterns like:
+```ts
+import { KireAuth } from "@kirejs/auth";
+
+kire.plugin(KireAuth, {
+  getUser: async () => session.user || null,
+  canPerm: async (perm, user) => {
+    return Boolean(user?.permissions?.includes(perm));
+  },
+});
+```
+
+## Directives added
+
+- `@auth`
+- `@guest`
+- `@notlogged`
+- `@logged`
+- `@authenticated`
+- `@user`
+- `@can`
+- `@notcan`
+- `@canany`
+- `@noauth`
+
+## Common examples
 
 ```kire
 @auth
@@ -37,13 +60,19 @@ Depending on configuration, you can use patterns like:
 @end
 ```
 
-## Integration Notes
+```kire
+@canany(["posts.edit", "posts.delete"])
+  <button>Manage post</button>
+@end
+```
 
-- bind your auth provider/session state before rendering
-- keep permission names stable and explicit
-- prefer policy-level checks in backend + directive checks in views
+`@user` injects the authenticated user into a `user` variable:
 
-## Recommended Approach
+```kire
+@user
+<p>Hello {{ user.name }}</p>
+```
 
-Treat template auth directives as UI guards, not as your only security layer.
-Always validate permissions server-side for sensitive actions.
+## Important note
+
+These are UI guards, not your only security boundary. Continue enforcing permissions server-side in your actions and routes.

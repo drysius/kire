@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/packages/iconify"
 title: "@kirejs/iconify"
 description: "Render Iconify SVG icons directly in Kire templates with reusable helper patterns."
@@ -9,29 +9,50 @@ order: 5
 
 # @kirejs/iconify
 
-`@kirejs/iconify` integrates Iconify icon sets into Kire rendering.
+`@kirejs/iconify` integrates Iconify icon sets into Kire.
 
-## Why It Is Useful
+## Configuration
 
-- unified icon source for the whole app
-- lightweight SVG output in templates
-- no manual copy/paste of SVG paths
+```ts
+import { KireIconify } from "@kirejs/iconify";
 
-## Example Usage
-
-```kire
-@icon("mdi:account", { class: "w-5 h-5" })
-@icon("lucide:search")
+kire.plugin(KireIconify, {
+  apiUrl: "https://api.iconify.design",
+  defaultClass: "size-5",
+});
 ```
 
-## Typical Scenarios
+Options:
 
-- admin dashboards
-- action buttons and status indicators
-- navigation menus with consistent icon style
+- `apiUrl`
+- `defaultClass`
 
-## Best Practices
+## What it adds
 
-- standardize on one or two icon families
-- wrap repeated icon patterns in small components
-- avoid using too many unique icon packs in the same page
+- `@icon(name, className?, attrs?)`
+- `<iconify ... />`
+
+## Directive example
+
+```kire
+@icon("mdi:account", "text-blue-500", { width: "24" })
+```
+
+## Element example
+
+```kire
+<iconify icon="mdi:home" class="text-blue-500" width="24" />
+```
+
+Supported convenience attributes include:
+
+- `icon` or `i`
+- `class` or `className`
+- `size`
+- `width`
+- `height`
+- `color`
+- `flip`
+- `rotate`
+
+The package fetches the SVG, injects attributes and returns inline SVG markup.

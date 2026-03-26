@@ -6,6 +6,38 @@ import {
 } from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
+import {
+	type SymbolPoint,
+	type SymbolSpan,
+	ensureRangeContainsSelection,
+} from "./documentSymbolRange";
+
+const toSymbolPoint = (position: vscode.Position): SymbolPoint => ({
+	line: position.line,
+	character: position.character,
+});
+
+const toSymbolSpan = (range: vscode.Range): SymbolSpan => ({
+	start: toSymbolPoint(range.start),
+	end: toSymbolPoint(range.end),
+});
+
+const toVsCodeRange = (range: SymbolSpan) =>
+	new vscode.Range(
+		new vscode.Position(range.start.line, range.start.character),
+		new vscode.Position(range.end.line, range.end.character),
+	);
+
+const createContainedRange = (
+	range: vscode.Range,
+	selectionRange: vscode.Range,
+) =>
+	toVsCodeRange(
+		ensureRangeContainsSelection(
+			toSymbolSpan(range),
+			toSymbolSpan(selectionRange),
+		),
+	);
 
 export class KireDocumentSymbolProvider
 	implements vscode.DocumentSymbolProvider
@@ -28,7 +60,10 @@ export class KireDocumentSymbolProvider
 			const symbol = stack.pop();
 			const name = stackNames.pop();
 			if (!symbol || !name) return undefined;
-			symbol.range = new vscode.Range(symbol.range.start, endRange.end);
+			symbol.range = createContainedRange(
+				new vscode.Range(symbol.range.start, endRange.end),
+				symbol.selectionRange,
+			);
 			return name;
 		};
 
@@ -62,9 +97,16 @@ export class KireDocumentSymbolProvider
 		for (const call of calls) {
 			const start = document.positionAt(call.start);
 			const end = document.positionAt(call.end);
-			const selectionRange = new vscode.Range(start, end);
 			const lineEnd = document.lineAt(start.line).range.end;
-			const range = new vscode.Range(start, lineEnd);
+			const selectionEnd = document.positionAt(call.start + call.name.length + 1);
+			const selectionRange = new vscode.Range(start, selectionEnd);
+			const range = createContainedRange(
+				new vscode.Range(
+					start,
+					end.isAfter(lineEnd) ? end : lineEnd,
+				),
+				selectionRange,
+			);
 
 			if (isDirectiveCloseToken(call.name)) {
 				const matchIndex = findMatchingSymbolIndex(call.name);
@@ -98,9 +140,12 @@ export class KireDocumentSymbolProvider
 				) {
 					const closed = stack.pop()!;
 					stackNames.pop();
-					closed.range = new vscode.Range(
-						closed.range.start,
-						document.lineAt(Math.max(0, start.line - 1)).range.end,
+					closed.range = createContainedRange(
+						new vscode.Range(
+							closed.range.start,
+							document.lineAt(Math.max(0, start.line - 1)).range.end,
+						),
+						closed.selectionRange,
 					);
 				}
 			}
@@ -112,9 +157,9 @@ export class KireDocumentSymbolProvider
 			}
 
 			if (isSection || isBlock) {
-				symbol.range = new vscode.Range(
-					selectionRange.start,
-					documentEnd,
+				symbol.range = createContainedRange(
+					new vscode.Range(selectionRange.start, documentEnd),
+					selectionRange,
 				);
 				stack.push(symbol);
 				stackNames.push(call.name);

@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
+import { extractTagAttributes } from "../../utils/embedded";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 
 const tokenTypes = [
@@ -55,6 +56,48 @@ export class KireSemanticTokensProvider
 		const builder = new vscode.SemanticTokensBuilder(semanticTokensLegend);
 		const text = document.getText();
 		const elementRegex = /<\/?([a-zA-Z0-9:_-]+)/g;
+		const state = kireStore.getState();
+		const isKireAttribute = (name: string) => {
+			if (
+				name.startsWith("wire:") ||
+				name.startsWith(":") ||
+				name.startsWith("@") ||
+				name.startsWith("x-")
+			) {
+				return true;
+			}
+
+			if (state.attributes.has(name)) return true;
+			for (const key of state.attributes.keys()) {
+				if (!key.includes("*")) continue;
+				const pattern = new RegExp(
+					`^${key.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^.]+")}$`,
+				);
+				if (pattern.test(name)) return true;
+			}
+			return false;
+		};
+		const isCustomElementName = (tagName: string) => {
+			if (
+				tagName.startsWith("x-") ||
+				tagName.startsWith("kire:") ||
+				tagName.startsWith("wire:") ||
+				tagName.startsWith("livewire:") ||
+				tagName.startsWith("kirewire:")
+			) {
+				return true;
+			}
+
+			if (state.elements.has(tagName)) return true;
+			for (const key of state.elements.keys()) {
+				if (!key.includes("*")) continue;
+				const pattern = new RegExp(
+					`^${key.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
+				);
+				if (pattern.test(tagName)) return true;
+			}
+			return false;
+		};
 
 		for (const directive of scanDirectives(text)) {
 			const atPos = document.positionAt(directive.start);
@@ -89,13 +132,41 @@ export class KireSemanticTokensProvider
 			const full = match[0]!;
 			const tagName = match[1]!;
 			const startOffset = match.index + (full.startsWith("</") ? 2 : 1);
-			if (
-				!kireStore.getState().elements.has(tagName) &&
-				!tagName.startsWith("x-")
-			)
+			const tokenType = isCustomElementName(tagName) ? 1 : 2;
+			if (tokenType === 1 && tagName.includes(":")) {
+				const namespaceLength = tagName.indexOf(":") + 1;
+				const localName = tagName.slice(namespaceLength);
+				const startPos = document.positionAt(startOffset + namespaceLength);
+				builder.push(
+					startPos.line,
+					startPos.character,
+					localName.length,
+					tokenType,
+					0,
+				);
 				continue;
+			}
+
 			const startPos = document.positionAt(startOffset);
-			builder.push(startPos.line, startPos.character, tagName.length, 1, 0);
+			builder.push(
+				startPos.line,
+				startPos.character,
+				tagName.length,
+				tokenType,
+				0,
+			);
+		}
+
+		for (const attr of extractTagAttributes(text)) {
+			if (!isKireAttribute(attr.name)) continue;
+			const startPos = document.positionAt(attr.nameStart);
+			builder.push(
+				startPos.line,
+				startPos.character,
+				attr.nameEnd - attr.nameStart,
+				5,
+				0,
+			);
 		}
 
 		const declarations = extractTopLevelDirectiveDeclarations(text);

@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/packages/assets"
 title: "@kirejs/assets"
 description: "Asset stack management for scripts and styles with deduplication and predictable output order."
@@ -9,41 +9,59 @@ order: 3
 
 # @kirejs/assets
 
-`@kirejs/assets` provides a clean way to register and render scripts/styles across nested templates.
+`@kirejs/assets` captures scripts, styles and SVG references and emits them from a stable placeholder.
 
-## Why Use It
+## Configuration
 
-- avoid duplicated `<script>` and `<link>` tags
-- keep output order deterministic
-- collect assets from partials/components and render once in layout
+```ts
+import { KireAssets } from "@kirejs/assets";
 
-## Typical Pattern
+kire.plugin(KireAssets, {
+  prefix: "_kire",
+  domain: "https://cdn.example.com",
+});
+```
 
-1. push assets from pages/components
-2. render stack in the main layout
+Options:
+
+- `prefix`
+- `domain`
+
+## What it adds
+
+- `@assets()`
+- `@svg(path, attrs?)`
+- captured `<style>` handling
+- captured `<script>` handling
+
+## Typical flow
+
+Write assets in nested templates:
 
 ```kire
-@push("styles", '<link rel="stylesheet" href="/app.css">')
-@push("scripts", '<script src="/app.js" defer></script>')
+<style>
+  .card { display: grid; }
+</style>
+
+<script>
+  console.log("boot");
+</script>
 ```
+
+Then place the emission point in the layout:
 
 ```kire
 <head>
-  @stack("styles")
+  @assets()
 </head>
-<body>
-  @stack("scripts")
-</body>
 ```
 
-## Use Cases
+The package hashes content, deduplicates it and writes final `<link>` and `<script>` tags once.
 
-- multi-page apps with per-page bundles
-- plugin modules that need to inject assets
-- component libraries with optional JS/CSS
+## SVG helper
 
-## Best Practices
+```kire
+@svg("./icons/logo.svg", { class: "size-5" })
+```
 
-- keep stack names consistent (`styles`, `scripts`, `head`, `footer`)
-- avoid inline scripts when possible
-- pair with build hashing/versioning for cache correctness
+That loads the SVG, registers it as an asset and emits an `<img>` pointing to the generated asset path.

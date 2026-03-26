@@ -13,7 +13,7 @@
             </p>
             <div class="mt-6 flex flex-wrap gap-3">
                 <a wire:navigate href="/docs/kire/getting-started" class="btn btn-primary">Start with Kire</a>
-                <a wire:navigate href="/docs/kire/directives-reference" class="btn btn-outline">Directives</a>
+                <a wire:navigate href="/docs/kire/browser-playground" class="btn btn-outline">Browser Playground</a>
                 <a wire:navigate href="/kirewire" class="btn btn-ghost">Open KireWire Playground</a>
             </div>
         </article>
@@ -47,6 +47,43 @@
                     </div>
                 </a>
             @end
+        </div>
+    </section>
+
+    <section class="mt-8">
+        <div class="mb-4 flex items-center justify-between gap-3">
+            <h2 class="text-2xl font-bold">Try Kire In The Browser</h2>
+            <a wire:navigate href="/docs/kire/browser-playground" class="btn btn-sm btn-outline">Open live sandbox</a>
+        </div>
+        <div class="rounded-3xl border border-base-300/70 bg-base-100/80 p-5 sm:p-6">
+            <div class="grid gap-5 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+                <div>
+                    <p class="text-xs uppercase tracking-[0.2em] text-base-content/55">Browser Runtime</p>
+                    <h2 class="mt-3 text-2xl font-bold">Edit a `.kire` template, locals JSON and virtual files in real time.</h2>
+                    <p class="mt-3 max-w-2xl text-base-content/70">
+                        The docs now ship a sandbox powered by <code>kire/browser</code>, so you can test
+                        <code>&#64;if</code>, <code>&#64;for</code>, <code>&#64;layout</code>, <code>x-*</code> components
+                        and in-memory views without leaving the page.
+                    </p>
+                    <div class="mt-5 flex flex-wrap gap-3">
+                        <a wire:navigate href="/docs/kire/browser-playground" class="btn btn-primary">Launch sandbox</a>
+                        <a wire:navigate href="/docs/kire/elements-reference" class="btn btn-ghost">See elements reference</a>
+                    </div>
+                </div>
+                <div class="rounded-2xl border border-base-300/70 bg-neutral text-neutral-content p-4 shadow-sm">
+                    <pre class="!m-0 overflow-auto text-sm"><code class="language-ts">import { Kire } from "kire/browser";
+
+const kire = new Kire({
+  root: "/",
+  files: {
+    "/views/home.kire": "&lt;h1&gt;&#123;&#123; title &#125;&#125;&lt;/h1&gt;"
+  }
+});
+
+kire.namespace("views", "/views");
+const html = await kire.view("views.home", { title: "Browser runtime" });</code></pre>
+                </div>
+            </div>
         </div>
     </section>
 

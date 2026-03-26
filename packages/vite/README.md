@@ -1,22 +1,15 @@
 # @kirejs/vite
 
-Laravel-style Vite integration for Kire.
+`@kirejs/vite` connects Kire to Vite with Laravel-style asset tags.
 
-## Features
+## What It Adds
 
-- Vite plugin with `publicDirectory`, `buildDirectory`, `input`, `manifest.json`, and `.kire` refresh.
-- Optional `.kire` template bundle mode (`kire: true`) using `Kire.compileAndBuild`.
-- Runtime Kire plugin with `@vite(...)` directive for dev (`hot`) and production (`manifest.json`).
+- runtime `@vite(...)` directive
+- development support through the Vite hot file
+- production support through `manifest.json`
+- a Vite plugin that can also bundle `.kire` views when required
 
-## Installation
-
-```bash
-npm install @kirejs/vite
-# or
-bun add @kirejs/vite
-```
-
-## Vite Usage
+## Typical Usage
 
 ```ts
 import { defineConfig } from "vite";
@@ -25,32 +18,11 @@ import kire from "@kirejs/vite";
 export default defineConfig({
 	plugins: [
 		kire({
-			publicDirectory: "../../public",
-			buildDirectory: "themes/phoenix",
-			input: ["./css/app.css", "js/app.js"],
-		}),
-		kire({
-			kire: true,
-			root: "views",
-			namespaces: {
-				views: ["views/**/*.kire"],
-			},
-			outfile: ".kire.builded.js",
+			publicDirectory: "public",
+			buildDirectory: "build",
+			input: ["css/app.css", "js/app.js"],
 		}),
 	],
-});
-```
-
-## Kire Runtime Usage
-
-```ts
-import { Kire } from "kire";
-import { KireVite } from "@kirejs/vite";
-
-const kire = new Kire({ root: "views" }).plugin(KireVite, {
-	publicDirectory: "public",
-	buildDirectory: "themes/phoenix",
-	input: ["css/app.css", "js/app.js"],
 });
 ```
 
@@ -59,6 +31,8 @@ const kire = new Kire({ root: "views" }).plugin(KireVite, {
 @vite("js/app.js")
 @vite(["css/app.css", "js/app.js"])
 ```
+
+The package registers directive documentation so `KIRE IntelliSense` can describe `@vite(...)` in the editor.
 
 ## License
 

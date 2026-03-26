@@ -2,7 +2,7 @@
 	"name": "kire-intellisense",
 	"displayName": "KIRE IntelliSense",
 	"description": "Advanced language support and IntelliSense for the Kire templating engine.",
-	"version": "0.1.4",
+	"version": "0.1.5",
 	"type": "module",
 	"publisher": "Kire",
 	"icon": "image.png",
@@ -99,11 +99,11 @@
 						"keyword.control"
 					],
 					"class": [
-						"entity.name.tag.custom.kire",
-						"entity.name.tag.html",
-						"entity.name.type.class"
+						"entity.name.type.class",
+						"entity.name.tag.custom.kire"
 					],
 					"type": [
+						"entity.name.tag.html",
 						"entity.name.type",
 						"support.type"
 					],
@@ -116,6 +116,7 @@
 						"meta.definition.variable"
 					],
 					"property": [
+						"entity.other.attribute-name.kire",
 						"variable.other.property",
 						"entity.other.attribute-name.html"
 					],

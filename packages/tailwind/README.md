@@ -1,33 +1,34 @@
 # @kirejs/tailwind
 
-Tailwind CSS integration helpers for Kire. Streamlines the usage of utility classes and conditional styling within Kire templates.
+`@kirejs/tailwind` compiles Tailwind CSS directly from Kire templates.
 
-## Features
+## What It Adds
 
-- **`@tailwind ... @end` directive** to compile CSS on render.
-- **`<tailwind>...</tailwind>` element** support.
-- **Production cache** for compiled CSS.
-- **Optional integration with `@kirejs/assets`** for hashed CSS output.
+- `@tailwind ... @end`
+- `<tailwind>...</tailwind>`
+- Tailwind compilation with cache reuse in production
+- optional integration with `@kirejs/assets` for hashed CSS output instead of inline `<style>`
 
-## Installation
+## Typical Usage
 
-```bash
-npm install @kirejs/tailwind
-# or
-bun add @kirejs/tailwind
+```ts
+import { Kire } from "kire";
+import { KireTailwind } from "@kirejs/tailwind";
+
+const kire = new Kire().plugin(KireTailwind);
 ```
 
-## Usage
-
-```html
+```kire
 @tailwind
-.btn-primary { @apply px-4 py-2 bg-blue-600 text-white rounded; }
+	.btn { @apply rounded bg-black px-4 py-2 text-white; }
 @end
 
 <tailwind id="layout-css">
-.card { @apply p-4 border rounded-lg; }
+	.card { @apply rounded-xl border p-6; }
 </tailwind>
 ```
+
+Descriptions and examples for the directive and element are registered in the plugin so `KIRE IntelliSense` can surface them inside the editor.
 
 ## License
 

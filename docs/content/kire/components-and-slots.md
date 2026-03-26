@@ -1,4 +1,4 @@
-﻿---
+---
 route: "/docs/kire/components-and-slots"
 title: "Components and Slots"
 description: "Compose reusable Kire UI with @component, x-* elements, named slots, and layout boundaries for large applications."
@@ -11,12 +11,12 @@ order: 2
 
 Kire supports two composition styles:
 
-- directive-based (`@component`, `@slot`, `@yield`)
-- element-based (`<x-card>`, `<x-slot>`)
+- directive-based composition with `@component`, `@slot`, `@yield`, `@layout` and `@extends`
+- element-based composition with `x-*` and `x-slot`
 
-Both styles map to the same component execution model.
+They compile to the same component model: a parent render builds props, collects slot content, then calls another Kire template.
 
-## Directive-Based Components
+## Directive-based components
 
 ### Caller
 
@@ -24,43 +24,107 @@ Both styles map to the same component execution model.
 @component("layouts.app", { pageTitle: "Dashboard" })
   @slot("header")
     <h1>Dashboard</h1>
-  @endslot
+  @end
 
   @slot("default")
     <p>Welcome back</p>
-  @endslot
-@endcomponent
+  @end
+@end
 ```
 
-### Target (`layouts/app.kire`)
+### Target component
+
+`layouts/app.kire`
 
 ```kire
 <html>
   <body>
-    <header>@yield("header", "Default Header")</header>
+    <header>@yield("header", "Default header")</header>
     <main>@yield("default")</main>
   </body>
 </html>
 ```
 
-`@layout(...)` and `@extends(...)` are aliases of `@component(...)`.
+### What Kire does internally
 
-## Element-Based Components (`x-*`)
+1. resolves the component path
+2. renders slot blocks into a `$slots` object
+3. merges parent locals with your component locals
+4. calls the target template
+5. lets the target pull slot values with `@yield(...)`
 
-Kire resolves `<x-name>` as a component template.
+## `@layout(...)` and `@extends(...)`
+
+These are aliases of `@component(...)`. They exist for readability.
+
+Use `@layout` when a page wraps itself in a layout:
+
+```kire
+@layout("layouts.docs")
+  @section("content")
+    <h1>{{ title }}</h1>
+  @end
+@end
+```
+
+Use `@extends` when you prefer inheritance-oriented naming.
+
+## `@include(...)` vs `@component(...)`
+
+Use `@include` when you only need locals:
+
+```kire
+@include("partials.card", { title: "Quick card" })
+```
+
+Use `@component` or `x-*` when you need slots and a stronger component contract.
+
+## Element-based components with `x-*`
+
+Any `x-*` tag is treated as a component element.
 
 ```kire
 <x-card>
   <x-slot name="header">Profile</x-slot>
-  Main content
+  <p>Main content</p>
 </x-card>
 ```
 
-Default slot = children not captured by named `x-slot`.
+If the `components` namespace exists, `x-card` resolves as `components.card`.
 
-### Slot naming forms
+## Prop binding forms
 
-All forms below are valid:
+Kire lets you pass props in a few useful forms.
+
+### Plain string
+
+```kire
+<x-alert tone="success"></x-alert>
+```
+
+### Interpolated string
+
+```kire
+<x-alert title="Hello {{ user.name }}"></x-alert>
+```
+
+### Forced expression in braces
+
+```kire
+<x-alert title="{computeTitle(user)}"></x-alert>
+```
+
+### Expression prop with `:`
+
+```kire
+<x-alert :title="pageTitle"></x-alert>
+```
+
+Use `:` when the prop should stay a JavaScript expression instead of becoming a literal string.
+
+## Slot element forms
+
+All of these are valid:
 
 ```kire
 <x-slot name="header">...</x-slot>
@@ -68,48 +132,28 @@ All forms below are valid:
 <x-slot.header>...</x-slot.header>
 ```
 
-## How Component Resolution Works
+Children outside named slots become the default slot.
 
-1. Kire resolves component path (with namespaces).
-2. It creates a `$slots` object.
-3. Caller children are rendered into named/default slots.
-4. Target component receives merged props plus `{ slots }`.
-5. Target reads slots with `@yield(...)`.
+## Layout pattern
 
-## Include vs Component
-
-Use `@include` when:
-
-- you only need to inject locals
-- you do not need named/default slot contracts
-
-Use `@component` or `x-*` when:
-
-- parent-child composition needs explicit slot boundaries
-- layout-like APIs should be stable and reusable
-
-## Native `kire:*` Element Syntax
-
-Kire also supports native control-flow elements:
-
-- `<kire:if cond="...">`
-- `<kire:elseif cond="...">`
-- `<kire:else>`
-- `<kire:for items="..." as="item" index="i">`
-- `<kire:switch value="...">`, `<kire:case value="...">`, `<kire:default>`
-
-Example:
+A common page pattern looks like this:
 
 ```kire
-<kire:if cond="user">
-  <p>Hello {{ user.name }}</p>
-</kire:if>
-<kire:else>
-  <p>Please login</p>
-</kire:else>
+@layout("layouts.app", { title })
+  @section("sidebar")
+    <x-doc-nav :items="docsNav"></x-doc-nav>
+  @end
+
+  @section("content")
+    <article>
+      <h1>{{ title }}</h1>
+      {{{ body }}}
+    </article>
+  @end
+@end
 ```
 
-## Recommended Structure
+## Recommended structure
 
 ```text
 views/
@@ -127,9 +171,15 @@ views/
     dashboard.kire
 ```
 
-## Practical Tips
+## Practical rules
 
-- Keep component inputs explicit (`user`, `title`, `actions`).
-- Avoid deep implicit global dependencies inside components.
-- Prefer small composable components over large multi-mode templates.
-- Treat slots as public API contracts between caller and component.
+- keep component inputs explicit
+- prefer small reusable templates over giant multi-mode files
+- treat slot names as public API
+- use `@include` for simple partials and `@component` or `x-*` for real composition boundaries
+
+## Related pages
+
+- [Elements Reference](/docs/kire/elements-reference)
+- [Directives Reference](/docs/kire/directives-reference)
+- [Browser Runtime and Playground](/docs/kire/browser-playground)

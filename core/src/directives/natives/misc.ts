@@ -7,6 +7,7 @@ export default (kire: Kire<any>) => {
 		children: false,
 		description:
 			"Type-only directive for tooling. Does not render output. Use @interface(Type) for local typing or @interface({ user: Type }, true) for workspace-global typing in editors.",
+		example: `@interface({ user: AppUser, posts: Post[] }, true)`,
 		onCall: () => {
 			// Intentionally noop at runtime. This directive exists for tooling/type hints only.
 		},

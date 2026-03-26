@@ -6,6 +6,40 @@ import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDecla
 import { parseParamDefinition, splitTopLevelArgs } from "../../utils/params";
 import { provider as tsProvider } from "../typescript/utils";
 
+function packageSuffix(def: Record<string, any> | undefined): string {
+	const pkg = def?.package;
+	return pkg?.name ? ` · ${pkg.name}` : "";
+}
+
+function resolveElementDefinition(tagName: string) {
+	const elements = kireStore.getState().elements;
+	const exact = elements.get(tagName);
+	if (exact) return exact;
+
+	let bestMatch:
+		| {
+				def: any;
+				score: number;
+		  }
+		| undefined;
+
+	for (const [name, def] of elements.entries()) {
+		if (!name.includes("*")) continue;
+		const pattern = new RegExp(
+			`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
+		);
+		if (!pattern.test(tagName)) continue;
+
+		const wildcardCount = (name.match(/\*/g) || []).length;
+		const score = name.length * 10 - wildcardCount * 2;
+		if (!bestMatch || score > bestMatch.score) {
+			bestMatch = { def, score };
+		}
+	}
+
+	return bestMatch?.def;
+}
+
 export class KireCompletionItemProvider
 	implements vscode.CompletionItemProvider
 {
@@ -220,11 +254,16 @@ export class KireCompletionItemProvider
 			state.attributes.forEach((def, key) => {
 				if (key.startsWith(`${namespace}:`)) {
 					const subName = key.slice(namespace.length + 1);
-					if (!subName.includes(":") && !subName.includes(".")) {
+					if (
+						!subName.includes(":") &&
+						!subName.includes(".") &&
+						!subName.includes("*")
+					) {
 						const item = new vscode.CompletionItem(
 							subName,
 							vscode.CompletionItemKind.Property,
 						);
+						item.detail = `Attribute${packageSuffix(def as any)}`;
 						if (def.comment) item.documentation = def.comment;
 						items.push(item);
 					}
@@ -235,11 +274,16 @@ export class KireCompletionItemProvider
 			state.elements.forEach((def, key) => {
 				if (key.startsWith(`${namespace}:`)) {
 					const subName = key.slice(namespace.length + 1);
-					if (!subName.includes(":") && !subName.includes(".")) {
+					if (
+						!subName.includes(":") &&
+						!subName.includes(".") &&
+						!subName.includes("*")
+					) {
 						const item = new vscode.CompletionItem(
 							subName,
 							vscode.CompletionItemKind.Class,
 						);
+						item.detail = `Element${packageSuffix(def as any)}`;
 						if (def.description) item.documentation = def.description;
 						items.push(item);
 					}
@@ -317,7 +361,7 @@ export class KireCompletionItemProvider
 					name,
 					vscode.CompletionItemKind.Class,
 				);
-				item.detail = "Kire Element";
+				item.detail = `Kire Element${packageSuffix(def as any)}`;
 				item.documentation = new vscode.MarkdownString(
 					(def.description || "") as string,
 				);
@@ -351,7 +395,7 @@ export class KireCompletionItemProvider
 					name,
 					vscode.CompletionItemKind.Keyword,
 				);
-				item.detail = `Kire Directive (${def.type || "general"})`;
+				item.detail = `Kire Directive (${def.type || "general"})${packageSuffix(def as any)}`;
 				item.documentation = new vscode.MarkdownString(
 					(def.description || "") as string,
 				);
@@ -428,7 +472,9 @@ export class KireCompletionItemProvider
 		// 3. Attributes (Inside element tag)
 		// Heuristic: line starts with <tagName ... (handling multiline is harder with linePrefix, assuming single line or simple context)
 		// Better regex: Find last <TAG that isn't closed
-		const lastTagMatch = linePrefix.match(/<([a-zA-Z0-9_-]+)(?:\s+[^>]*?)?$/);
+		const lastTagMatch = linePrefix.match(
+			/<([a-zA-Z0-9_:@.-]+)(?:\s+[^>]*?)?$/,
+		);
 
 		if (lastTagMatch) {
 			const tagName = lastTagMatch[1] as string;
@@ -439,11 +485,12 @@ export class KireCompletionItemProvider
 
 			// Global Attributes
 			kireStore.getState().attributes.forEach((def, name) => {
+				if (name.includes("*")) return;
 				const item = new vscode.CompletionItem(
 					name,
 					vscode.CompletionItemKind.Property,
 				);
-				item.detail = `Attribute (${def.type})`;
+				item.detail = `Attribute (${def.type})${packageSuffix(def as any)}`;
 
 				const doc = new vscode.MarkdownString(def.comment || "");
 				if (def.example) {
@@ -456,7 +503,7 @@ export class KireCompletionItemProvider
 			});
 
 			// Element-specific Attributes
-			const elementDef = kireStore.getState().elements.get(tagName);
+			const elementDef = resolveElementDefinition(tagName);
 			if (elementDef?.attributes) {
 				const attrs = Array.isArray(elementDef.attributes)
 					? elementDef.attributes
@@ -471,7 +518,7 @@ export class KireCompletionItemProvider
 						name,
 						vscode.CompletionItemKind.Property,
 					);
-					item.detail = `Attribute (${def.type || "any"}) [${tagName}]`;
+					item.detail = `Attribute (${def.type || "any"}) [${tagName}]${packageSuffix(def as any)}`;
 					item.sortText = `0_${name}`;
 
 					const doc = new vscode.MarkdownString(

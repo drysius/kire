@@ -1,5 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { extractJsAttributeExpressions } from "../src/utils/embedded";
+import {
+	extractJsAttributeExpressions,
+	extractTagAttributes,
+} from "../src/utils/embedded";
 
 describe("extractJsAttributeExpressions", () => {
 	it("extracts forced dynamic expressions from x-* component props", () => {
@@ -17,5 +20,18 @@ describe("extractJsAttributeExpressions", () => {
 		);
 
 		expect(attrs.find((entry) => entry.name === "title")).toBeUndefined();
+	});
+
+	it("captures boolean kire attributes for tokenization without treating them as js expressions", () => {
+		const attrs = extractTagAttributes('<a wire:navigate href="/docs"></a>');
+		const navigate = attrs.find((entry) => entry.name === "wire:navigate");
+
+		expect(navigate?.hasValue).toBe(false);
+		expect(navigate?.value).toBe("");
+		expect(
+			extractJsAttributeExpressions('<a wire:navigate href="/docs"></a>').find(
+				(entry) => entry.name === "wire:navigate",
+			),
+		).toBeUndefined();
 	});
 });

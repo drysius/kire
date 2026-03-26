@@ -40,316 +40,188 @@ import {
 	type ValidationResult,
 	validateRuleString as validateRule,
 } from "./validation/rule";
+import { wireAttributeDocs, wireElementDocs } from "../schema.docs.js";
 
-const wireEventModifierDocs = [
-	{
-		name: "prevent",
-		description: "Prevent the browser default action before dispatching the wire event.",
-	},
-	{
-		name: "stop",
-		description: "Stop DOM event propagation after the wire handler runs.",
-	},
-	{
-		name: "self",
-		description: "Only react when the event originates from the element itself.",
-	},
-	{
-		name: "once",
-		description: "Run the listener only once for the current element.",
-	},
-];
+const INTERPOLATION_GLOBAL_REGEX = /\{\{\s*([\s\S]+?)\s*\}\}/g;
+const INTERPOLATION_PURE_REGEX = /^\s*\{\{\s*([\s\S]+?)\s*\}\}\s*$/;
+const INTERPOLATION_START_REGEX = /\{\{/;
 
-const wireAttributeDocs = [
-	{
-		name: "wire:model",
-		type: "javascript",
-		description:
-			"Synchronizes an input, textarea or select value with component state.",
-		example: '<input wire:model="title" />',
-		extends: [
-			{
-				name: "live",
-				description:
-					"Send updates immediately instead of waiting for an action.",
-			},
-			{
-				name: "defer",
-				description:
-					"Queue updates locally and flush them on the next component call.",
-			},
-			{
-				name: "debounce",
-				description:
-					"Debounce outgoing updates. You can append a duration like .debounce.300ms.",
-				signature: ["duration:string"],
-			},
-			{
-				name: "lazy",
-				description: "Update on blur for text-like inputs.",
-			},
-			{
-				name: "blur",
-				description: "Update when the field loses focus.",
-			},
-		],
-	},
-	{
-		name: "wire:click",
-		type: "javascript",
-		description: "Calls a component method when the element is clicked.",
-		example: '<button wire:click="save">Save</button>',
-		extends: wireEventModifierDocs,
-	},
-	{
-		name: "wire:init",
-		type: "javascript",
-		description: "Runs a component action once the element is initialized.",
-		example: '<div wire:init="loadStats"></div>',
-	},
-	{
-		name: "wire:loading",
-		type: "string",
-		description:
-			"Shows, hides or decorates an element while one or more component actions are running.",
-		example: '<div wire:loading>Saving...</div>',
-		extends: [
-			{
-				name: "remove",
-				description: "Invert the default visibility behaviour.",
-			},
-			{
-				name: "class",
-				description: "Toggle a CSS class instead of toggling visibility.",
-			},
-			{
-				name: "attr",
-				description: "Toggle an attribute instead of toggling visibility.",
-			},
-			{
-				name: "failsafe",
-				description:
-					"Force cleanup after a timeout. You can append a duration like .failsafe.30s.",
-				signature: ["duration:string"],
-			},
-		],
-	},
-	{
-		name: "wire:target",
-		type: "string",
-		description:
-			"Limits another wire directive, such as wire:loading, to one or more specific actions or state paths.",
-		example: '<div wire:loading wire:target="save,remove">Working...</div>',
-	},
-	{
-		name: "wire:poll",
-		type: "javascript",
-		description:
-			"Periodically triggers a component action or refresh while the page is active.",
-		example: '<div wire:poll.5s="$refresh"></div>',
-		extends: [
-			{
-				name: "visible",
-				description: "Only poll while the element is visible in the viewport.",
-			},
-			{
-				name: "once",
-				description: "Stop polling after the first successful run.",
-			},
-			{
-				name: "throttle",
-				description:
-					"Throttle polling triggers. You can append a duration like .throttle.500ms.",
-				signature: ["duration:string"],
-			},
-			{
-				name: "debounce",
-				description:
-					"Debounce polling triggers. You can append a duration like .debounce.500ms.",
-				signature: ["duration:string"],
-			},
-		],
-	},
-	{
-		name: "wire:intersect",
-		type: "javascript",
-		description:
-			"Calls a component action when the element intersects the viewport or a specific edge.",
-		example: '<div wire:intersect.once="loadMore"></div>',
-		extends: [
-			{
-				name: "once",
-				description: "Disconnect the observer after the first match.",
-			},
-			{
-				name: "top",
-				description: "Only trigger when the intersection touches the top edge.",
-			},
-			{
-				name: "bottom",
-				description: "Only trigger when the intersection touches the bottom edge.",
-			},
-			{
-				name: "left",
-				description: "Only trigger when the intersection touches the left edge.",
-			},
-			{
-				name: "right",
-				description: "Only trigger when the intersection touches the right edge.",
-			},
-			{
-				name: "throttle",
-				description:
-					"Throttle observer callbacks. You can append a duration like .throttle.250ms.",
-				signature: ["duration:string"],
-			},
-			{
-				name: "debounce",
-				description:
-					"Debounce observer callbacks. You can append a duration like .debounce.250ms.",
-				signature: ["duration:string"],
-			},
-		],
-	},
-	{
-		name: "wire:show",
-		type: "javascript",
-		description: "Shows or hides an element based on a component state expression.",
-		example: '<div wire:show="open">Panel</div>',
-	},
-	{
-		name: "wire:dirty",
-		type: "string",
-		description:
-			"Marks an element when a bound model value has diverged from the last server snapshot.",
-		example: '<div wire:dirty.class="ring-amber-400"></div>',
-		extends: [
-			{
-				name: "class",
-				description: "Toggle a CSS class while the element is dirty.",
-			},
-			{
-				name: "attr",
-				description: "Toggle an attribute while the element is dirty.",
-			},
-		],
-	},
-	{
-		name: "wire:ignore",
-		type: "boolean",
-		description:
-			"Exclude the element from DOM morphing performed by Kirewire updates.",
-		example: '<div wire:ignore></div>',
-		extends: [
-			{
-				name: "self",
-				description: "Ignore updates only for the current element, not its children.",
-			},
-		],
-	},
-	{
-		name: "wire:offline",
-		type: "string",
-		description:
-			"React to offline state changes by toggling visibility, classes or attributes.",
-		example: '<div wire:offline.class="opacity-50">Offline</div>',
-		extends: [
-			{
-				name: "class",
-				description: "Toggle a CSS class while offline.",
-			},
-			{
-				name: "attr",
-				description: "Toggle an attribute while offline.",
-			},
-		],
-	},
-	{
-		name: "wire:collection",
-		type: "string",
-		description:
-			"Targets an element as a DOM collection sink for streamed collection updates.",
-		example: '<ul wire:collection="todos"></ul>',
-		extends: [
-			{
-				name: "empty",
-				description:
-					"Treat the element as the empty-state placeholder for the collection.",
-			},
-		],
-	},
-	{
-		name: "wire:broadcast",
-		type: "string",
-		description:
-			"Subscribes the current component tree to a named broadcast channel.",
-		example: '<section wire:broadcast="chat.room.1"></section>',
-	},
-	{
-		name: "wire:canvas",
-		type: "javascript",
-		description:
-			"Bootstraps the game-canvas integration for a canvas element and action channel.",
-		example: '<canvas wire:canvas="tank.game"></canvas>',
-	},
-	{
-		name: "wire:canvas-channel",
-		type: "string",
-		description:
-			"Stores the resolved canvas channel used by the game-canvas integration.",
-	},
-	{
-		name: "wire:canvas-method",
-		type: "string",
-		description:
-			"Stores the action method associated with a canvas control binding.",
-	},
-	{
-		name: "wire:file",
-		type: "javascript",
-		description:
-			"Enables enhanced upload behaviour and optional preview handling on file inputs.",
-		example: '<input type="file" wire:file.preview wire:model="avatar" />',
-		extends: [
-			{
-				name: "preview",
-				description: "Generate client-side previews for selected files when possible.",
-			},
-		],
-	},
-	{
-		name: "wire:navigate",
-		type: "boolean",
-		description:
-			"Intercepts same-origin anchor navigation and swaps the document through Kirewire.",
-		example: '<a href="/dashboard" wire:navigate>Dashboard</a>',
-		extends: [
-			{
-				name: "replace",
-				description: "Replace the current history entry instead of pushing a new one.",
-			},
-		],
-	},
-	{
-		name: "wire:key",
-		type: "string",
-		description:
-			"Provides a stable morph key so DOM diffing can preserve the right element instance.",
-		example: '<li wire:key="todo-{{ todo.id }}"></li>',
-	},
-	{
-		name: "wire:id",
-		type: "string",
-		description:
-			"Internal hydration identifier assigned to a server-rendered Kirewire component root.",
-	},
-	{
-		name: "wire:state",
-		type: "string",
-		description:
-			"Serialized component state snapshot used to hydrate and resume the client runtime.",
-	},
-];
+function toTemplateLiteral(value: string) {
+	const escaped = value
+		.replace(/\\/g, "\\\\")
+		.replace(/`/g, "\\`")
+		.replace(/\$/g, "\\$");
+
+	return (
+		"`" +
+		escaped.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${${expr}}`) +
+		"`"
+	);
+}
+
+function normalizeWirePropName(attrName: string) {
+	const cleaned = String(attrName || "")
+		.trim()
+		.replace(/^[:@]/, "");
+	if (!cleaned) return "";
+
+	const camel = cleaned.replace(/[-:.]+([a-zA-Z0-9])/g, (_, next: string) =>
+		next.toUpperCase(),
+	);
+	return camel.slice(0, 1).toLowerCase() + camel.slice(1);
+}
+
+function toWireLocalEntry(
+	api: any,
+	attrName: string,
+	value: string,
+	quoted: boolean,
+) {
+	const normalizedName = normalizeWirePropName(attrName);
+	if (!normalizedName) return undefined;
+
+	if (value === "" && !quoted && !attrName.startsWith(":")) {
+		return {
+			name: normalizedName,
+			expression: "true",
+		};
+	}
+
+	if (attrName.startsWith(":")) {
+		return {
+			name: normalizedName,
+			expression: api.transform(value),
+		};
+	}
+
+	if (!quoted) {
+		return {
+			name: normalizedName,
+			expression: api.getAttribute(attrName),
+		};
+	}
+
+	const trimmed = value.trim();
+	if (
+		trimmed.startsWith("{") &&
+		trimmed.endsWith("}") &&
+		trimmed.length > 2 &&
+		!trimmed.startsWith("{{") &&
+		!trimmed.endsWith("}}")
+	) {
+		return {
+			name: normalizedName,
+			expression: trimmed.slice(1, -1),
+		};
+	}
+
+	const pureInterpolation = value.match(INTERPOLATION_PURE_REGEX);
+	if (pureInterpolation) {
+		return {
+			name: normalizedName,
+			expression: pureInterpolation[1]!,
+		};
+	}
+
+	return {
+		name: normalizedName,
+		expression: INTERPOLATION_START_REGEX.test(value)
+			? toTemplateLiteral(value)
+			: JSON.stringify(value),
+	};
+}
+
+function resolveWireElementCandidates(tagName: string): string[] {
+	const raw = String(tagName || "").trim();
+	if (!raw.includes(":")) return [];
+
+	const [, ...rest] = raw.split(":");
+	const path = rest.join(":").trim();
+	if (!path) return [];
+
+	const normalized = path
+		.replace(/[\\/]+/g, ".")
+		.replace(/:+/g, ".")
+		.replace(/\.+/g, ".")
+		.replace(/^\./, "")
+		.replace(/\.$/, "");
+
+	if (!normalized) return [];
+
+	return [...new Set([
+		normalized,
+		`kirewire.${normalized}`,
+		`livewire.${normalized}`,
+		`components.${normalized}`,
+	])];
+}
+
+function writeWireComponentMount(
+	api: any,
+	componentLookupExpr: string,
+	localsExpr: string,
+) {
+	api.markAsync();
+	api.write(`{
+                    const $wireComponentLookups = ${componentLookupExpr};
+                    const $wireLookupList = Array.isArray($wireComponentLookups)
+                        ? $wireComponentLookups
+                        : [$wireComponentLookups];
+                    const $locals = ${localsExpr};
+                    const $userId = String($globals.user?.id || 'guest');
+                    const $sessionId = String($globals.wireKey || $userId || 'guest');
+                    const $pageId = String($globals.pageId || 'default-page');
+
+                    let $componentName = '';
+                    let $componentClass = null;
+                    for (const $candidateRaw of $wireLookupList) {
+                        const $candidate = String($candidateRaw || '').trim();
+                        if (!$candidate) continue;
+                        const $resolved = this.wire.components.get($candidate);
+                        if (!$resolved) continue;
+                        $componentName = $candidate;
+                        $componentClass = $resolved;
+                        break;
+                    }
+
+                    if (!$componentClass) {
+                        const $attempted = [...new Set(
+                            $wireLookupList
+                                .map(($candidate) => String($candidate || '').trim())
+                                .filter(Boolean)
+                        )].join(', ');
+                        $kire_response += \`<!-- Component "\${$attempted || 'unknown'}" not found -->\`;
+                    } else {
+                        const $page = this.wire.sessions.getPage($userId, $pageId, $sessionId);
+                        const $id = this.wire.createComponentId();
+
+                        const $instance = new $componentClass();
+                        $instance.$id = $id;
+                        $instance.$kire = this;
+                        $instance.$wire_instance = this.wire;
+                        $instance.$wire_scope_id = $sessionId;
+                        $instance.$wire_page_id = $pageId;
+
+                        const $listenerCleanup = this.wire.bindComponentListeners($instance, {
+                            userId: $userId,
+                            pageId: $pageId,
+                            id: $id
+                        });
+                        this.wire.attachLifecycleGuards($instance, $listenerCleanup);
+                        this.wire.applySafeLocals($instance, $locals);
+
+                        await $instance.mount();
+                        $page.components.set($id, $instance);
+
+                        const $rendered = await $instance.render();
+                        const $html = $rendered.toString();
+                        const $finalState = $instance.getPublicState();
+                        const $finalStateStr = JSON.stringify($finalState).replace(/'/g, "&#39;");
+
+                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}'>\${$html}</div>\`;
+                    }
+                }`);
+}
 
 export class KirewirePlugin {
 	public wire!: Kirewire;
@@ -501,50 +373,55 @@ export class KirewirePlugin {
 				const nameExpr = api.getArgument(0) || api.getAttribute("name");
 				const localsExpr =
 					api.getArgument(1) || api.getAttribute("locals") || "{}";
-
-				api.markAsync();
-                api.write(`{
-                    const $name = (${nameExpr}).replace(/^['"]|['"]$/g, '');
-                    const $locals = ${localsExpr};
-                    const $userId = String($globals.user?.id || 'guest');
-                    const $sessionId = String($globals.wireKey || $userId || 'guest');
-                    const $pageId = String($globals.pageId || 'default-page');
-
-                    const $componentClass = this.wire.components.get($name);
-                    if (!$componentClass) {
-                        $kire_response += \`<!-- Component "\${$name}" not found -->\`;
-                    } else {
-                        const $page = this.wire.sessions.getPage($userId, $pageId, $sessionId);
-                        const $id = this.wire.createComponentId();
-                        
-                        const $instance = new $componentClass();
-                        $instance.$id = $id;
-                        $instance.$kire = this;
-                        $instance.$wire_instance = this.wire;
-                        $instance.$wire_scope_id = $sessionId;
-                        $instance.$wire_page_id = $pageId;
-
-                        const $listenerCleanup = this.wire.bindComponentListeners($instance, {
-                            userId: $userId,
-                            pageId: $pageId,
-                            id: $id
-                        });
-                        this.wire.attachLifecycleGuards($instance, $listenerCleanup);
-                        this.wire.applySafeLocals($instance, $locals);
-
-                        await $instance.mount();
-                        $page.components.set($id, $instance);
-
-                        const $rendered = await $instance.render();
-                        const $html = $rendered.toString();
-                        const $finalState = $instance.getPublicState();
-                        const $finalStateStr = JSON.stringify($finalState).replace(/'/g, "&#39;");
-
-                        $kire_response += \`<div wire:id="\${$id}" wire:state='\${$finalStateStr}'>\${$html}</div>\`;
-                    }
-                }`);
+				writeWireComponentMount(api, `[${nameExpr}]`, localsExpr);
 			},
 		});
+
+		const wireElementDocsByName = new Map(
+			wireElementDocs.map((entry) => [entry.name, entry]),
+		);
+		const registerWireElement = (name: string) => {
+			const doc = wireElementDocsByName.get(name);
+			kire.element({
+				name,
+				description: doc?.description,
+				example: doc?.example,
+				onCall: (api) => {
+					const candidates = resolveWireElementCandidates(api.node.tagName || "");
+					const attrs = api.node.attributes || {};
+					const attrMeta = api.node.attributeMeta || {};
+					const locals = Object.keys(attrs)
+						.filter(
+							(key) =>
+								!key.startsWith("@") &&
+								!key.startsWith("wire:") &&
+								!key.startsWith("x-"),
+						)
+						.map((key) => {
+							const entry = toWireLocalEntry(
+								api,
+								key,
+								attrs[key]!,
+								!!attrMeta[key]?.quoted,
+							);
+							if (!entry) return "";
+							return `${JSON.stringify(entry.name)}: ${entry.expression}`;
+						})
+						.filter(Boolean)
+						.join(",");
+
+					writeWireComponentMount(
+						api,
+						JSON.stringify(candidates),
+						locals ? `{ ${locals} }` : "{}",
+					);
+				},
+			});
+		};
+
+		registerWireElement("wire:*");
+		registerWireElement("kirewire:*");
+		registerWireElement("livewire:*");
 
 		if (this.wire.options.adapter) {
 			this.wire.options.adapter.install(this.wire, kire);

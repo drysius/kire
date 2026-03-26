@@ -1,4 +1,5 @@
 import type { Kire } from "../kire";
+import type { KireAttributeDeclaration } from "../types";
 import {
 	INTERPOLATION_GLOBAL_REGEX,
 	INTERPOLATION_PURE_REGEX,
@@ -63,10 +64,16 @@ const toComponentPropExpression = (
 	};
 };
 
+const relateKireNames = (values: string[] = []) =>
+	values.map((value) => (value.startsWith("kire:") ? value : `kire:${value}`));
+
 export default (kire: Kire<any>) => {
 	kire.element({
 		name: "style",
 		raw: true,
+		description:
+			"Raw style block forwarded to the output without escaping child content.",
+		example: `<style>.card { display: grid; }</style>`,
 		onCall: (api) => {
 			api.append("<style");
 			api.renderAttributes();
@@ -79,6 +86,9 @@ export default (kire: Kire<any>) => {
 	kire.element({
 		name: "script",
 		raw: true,
+		description:
+			"Raw script block forwarded to the output without escaping child content.",
+		example: `<script>window.boot = true;</script>`,
 		onCall: (api) => {
 			api.append("<script");
 			api.renderAttributes();
@@ -88,9 +98,267 @@ export default (kire: Kire<any>) => {
 		},
 	});
 
+	const directiveElementAttr = (
+		name: string,
+		type: string,
+		description: string,
+	) => ({
+		name,
+		type,
+		description,
+	});
+
+	const registerDirectiveElementAlias = (
+		directiveName: string,
+	options: {
+			description: string;
+			example: string;
+			void?: boolean;
+			attributes?: KireAttributeDeclaration[];
+			relatedTo?: string[];
+		},
+	) => {
+		const directive = kire.getDirective(directiveName);
+		if (!directive) return;
+
+		kire.element({
+			name: `kire:${directiveName}`,
+			void: options.void,
+			description: options.description,
+			example: options.example,
+			attributes: options.attributes,
+			relatedTo: options.relatedTo || relateKireNames(directive.relatedTo || []),
+			isDependency: directive.isDependency,
+			scope: directive.scope,
+			onCall: (api) => {
+				const attrDefs = options.attributes || [];
+				const proxyApi = Object.create(api);
+				proxyApi.getAttribute = (name: string) => {
+					const original = api.getAttribute(name);
+					const rawValue = api.node?.attributes?.[name];
+					const attrDef = attrDefs.find((entry) => entry?.name === name);
+					const attrTypes = Array.isArray(attrDef?.type)
+						? attrDef.type
+						: attrDef?.type
+							? [attrDef.type]
+							: [];
+
+					if (
+						typeof rawValue === "string" &&
+						attrTypes.includes("string") &&
+						!rawValue.includes("{{") &&
+						!(rawValue.trim().startsWith("{") && rawValue.trim().endsWith("}"))
+					) {
+						return JSON.stringify(rawValue.trim());
+					}
+
+					return original;
+				};
+				directive.onCall(proxyApi);
+			},
+		});
+	};
+
+	registerDirectiveElementAlias("unless", {
+		description: "Element alias for @unless that renders children when cond is falsy.",
+		example: '<kire:unless cond="user">Guest only</kire:unless>',
+		attributes: [
+			directiveElementAttr(
+				"cond",
+				"javascript",
+				"Expression that must evaluate falsy for the element body to render.",
+			),
+		],
+		relatedTo: ["kire:else"],
+	});
+
+	registerDirectiveElementAlias("isset", {
+		description:
+			"Element alias for @isset that renders children when expr is defined and not null.",
+		example: '<kire:isset expr="user.avatar"><img src="{{ user.avatar }}"></kire:isset>',
+		attributes: [
+			directiveElementAttr(
+				"expr",
+				"javascript",
+				"Expression checked for defined and non-null values.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("include", {
+		description:
+			"Element alias for @include that renders another Kire view inline.",
+		example: '<kire:include path="partials.card" locals="{ title: pageTitle }" />',
+		void: true,
+		attributes: [
+			directiveElementAttr(
+				"path",
+				"string",
+				"View path that should be rendered inline.",
+			),
+			directiveElementAttr(
+				"locals",
+				"javascript",
+				"Extra locals merged into the included view scope.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("component", {
+		description:
+			"Element alias for @component that renders a dependency view and exposes nested slots.",
+		example:
+			'<kire:component path="layouts.card" locals="{ title: pageTitle }"><kire:slot name="header">Header</kire:slot>Body</kire:component>',
+		attributes: [
+			directiveElementAttr(
+				"path",
+				"string",
+				"View path that should be rendered as the target component.",
+			),
+			directiveElementAttr(
+				"locals",
+				"javascript",
+				"Extra locals merged into the component props.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("layout", {
+		description:
+			"Element alias for @layout that renders a layout component and captures nested sections.",
+		example:
+			'<kire:layout path="layouts.app"><kire:section name="content"><p>Hello</p></kire:section></kire:layout>',
+		attributes: [
+			directiveElementAttr("path", "string", "Layout view path to render."),
+			directiveElementAttr(
+				"locals",
+				"javascript",
+				"Extra locals merged into the layout props.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("extends", {
+		description:
+			"Element alias for @extends that mirrors layout-style component inheritance.",
+		example:
+			'<kire:extends path="layouts.app"><kire:section name="content"><p>Hello</p></kire:section></kire:extends>',
+		attributes: [
+			directiveElementAttr("path", "string", "Parent view path to render."),
+			directiveElementAttr(
+				"locals",
+				"javascript",
+				"Extra locals merged into the parent component props.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("slot", {
+		description:
+			"Element alias for @slot that captures named slot content for the parent component.",
+		example: '<kire:slot name="header"><h1>Dashboard</h1></kire:slot>',
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Slot name that will be exposed to the parent component.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("section", {
+		description:
+			"Element alias for @section that behaves like a named slot within a layout or extends block.",
+		example: '<kire:section name="content"><p>Hello</p></kire:section>',
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Section name captured for the target layout.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("yield", {
+		description:
+			"Element alias for @yield that renders a named slot and can fall back to a default expression.",
+		example: '<kire:yield name="content" default="\'<p>Empty</p>\'" />',
+		void: true,
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Slot name to resolve from the current component props.",
+			),
+			directiveElementAttr(
+				"default",
+				"javascript",
+				"Fallback expression rendered when the slot is missing.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("define", {
+		description:
+			"Element alias for @define that captures a reusable named fragment.",
+		example: '<kire:define name="hero"><h1>Hero</h1></kire:define>',
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Fragment name stored in the define registry.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("defined", {
+		description:
+			"Element alias for @defined that renders a named fragment or its inline fallback children.",
+		example:
+			'<kire:defined name="hero"><h1>Fallback</h1></kire:defined>',
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Fragment name looked up in the define registry.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("stack", {
+		description:
+			"Element alias for @stack that renders the accumulated contents of a named stack.",
+		example: '<kire:stack name="scripts" />',
+		void: true,
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Stack name to inject at the current output position.",
+			),
+		],
+	});
+
+	registerDirectiveElementAlias("push", {
+		description:
+			"Element alias for @push that appends the rendered body to a named stack.",
+		example:
+			'<kire:push name="scripts"><script src="/app.js"></script></kire:push>',
+		attributes: [
+			directiveElementAttr(
+				"name",
+				"string",
+				"Stack name that should receive the current element body.",
+			),
+		],
+	});
+
 	kire.element({
 		name: "kire:else",
 		relatedTo: ["kire:if", "kire:elseif"],
+		description:
+			"Fallback branch for a preceding <kire:if> or <kire:elseif> block.",
+		example: "<kire:else>Fallback content</kire:else>",
 		onCall: (api) => {
 			api.write(`} else {`);
 			api.renderChildren();
@@ -100,6 +368,16 @@ export default (kire: Kire<any>) => {
 	kire.element({
 		name: "kire:elseif",
 		relatedTo: ["kire:if", "kire:elseif"],
+		description:
+			"Conditional branch evaluated after a previous <kire:if> or <kire:elseif>.",
+		example: '<kire:elseif cond="status === 2">Two</kire:elseif>',
+		attributes: [
+			{
+				name: "cond",
+				type: "javascript",
+				description: "Expression that must evaluate truthy for this branch.",
+			},
+		],
 		onCall: (api) => {
 			const cond = api.getAttribute("cond");
 			api.write(`} else if (${cond}) {`);
@@ -110,6 +388,16 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:if",
+		description:
+			"Conditional block element alternative to the @if directive syntax.",
+		example: '<kire:if cond="user">Hello</kire:if>',
+		attributes: [
+			{
+				name: "cond",
+				type: "javascript",
+				description: "Expression that controls whether the children are rendered.",
+			},
+		],
 		onCall: (api) => {
 			const cond = api.getAttribute("cond");
 			api.write(`if (${cond}) {`);
@@ -121,6 +409,32 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:for",
+		description:
+			"Loop element that iterates arrays or objects and exposes item aliases to its children.",
+		example:
+			'<kire:for items="items" as="item" index="i">{{ item }}</kire:for>',
+		attributes: [
+			{
+				name: "items",
+				type: "javascript",
+				description: "Collection expression to iterate.",
+			},
+			{
+				name: "each",
+				type: "javascript",
+				description: "Alias of items for compatibility with loop-style APIs.",
+			},
+			{
+				name: "as",
+				type: "string",
+				description: "Variable name used for the current item.",
+			},
+			{
+				name: "index",
+				type: "string",
+				description: "Variable name used for the current index or key.",
+			},
+		],
 		declares: [
 			{ fromAttribute: "as", type: "any" },
 			{ fromAttribute: "index", type: "number" },
@@ -161,6 +475,9 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:empty",
+		description:
+			"Empty-state branch used together with loop-oriented Kire elements.",
+		example: "<kire:empty>No items</kire:empty>",
 		onCall: (api) => {
 			api.renderChildren();
 		},
@@ -168,6 +485,17 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:switch",
+		description:
+			"Switch container for related <kire:case> and <kire:default> branches.",
+		example:
+			'<kire:switch value="status"><kire:case value="1">Draft</kire:case></kire:switch>',
+		attributes: [
+			{
+				name: "value",
+				type: "javascript",
+				description: "Expression evaluated once and compared by nested cases.",
+			},
+		],
 		onCall: (api) => {
 			api.write(`switch (${api.getAttribute("value")}) {`);
 			if (api.node.children) {
@@ -184,6 +512,16 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:case",
+		description:
+			"Case branch that matches the nearest parent <kire:switch> value.",
+		example: '<kire:case value="1">Draft</kire:case>',
+		attributes: [
+			{
+				name: "value",
+				type: "javascript",
+				description: "Case expression compared against the parent switch value.",
+			},
+		],
 		onCall: (api) => {
 			api.write(`case ${api.getAttribute("value")}: {`);
 			api.renderChildren();
@@ -193,6 +531,9 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: "kire:default",
+		description:
+			"Fallback branch rendered when no sibling <kire:case> matches.",
+		example: "<kire:default>Unknown</kire:default>",
 		onCall: (api) => {
 			api.write(`default: {`);
 			api.renderChildren();
@@ -202,6 +543,10 @@ export default (kire: Kire<any>) => {
 
 	kire.element({
 		name: /^x-/,
+		description:
+			"Generic component element namespace. Use x-* tags to render registered Kire components and x-slot to define named slots.",
+		example:
+			`<x-card title="Dashboard">\n  <x-slot:name>Header</x-slot:name>\n  <p>Body</p>\n</x-card>`,
 		onCall: (api) => {
 			const tagName = api.node.tagName!;
 			if (

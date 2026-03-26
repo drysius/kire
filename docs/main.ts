@@ -1,5 +1,6 @@
 import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { wirePlugin, HttpAdapter, SocketAdapter } from "./lib/wire";
 import { KireMarkdown } from "@kirejs/markdown";
@@ -42,7 +43,12 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const USE_SOCKET = process.argv.includes("--socket");
 const APP_ROOT = path.dirname(fileURLToPath(import.meta.url));
 const VIEWS_ROOT = path.join(APP_ROOT, "views");
+const DOCS_PUBLIC_DIR = path.join(APP_ROOT, "public");
 const WIRE_DIST_DIR = path.resolve(APP_ROOT, "../packages/wire/dist");
+const KIRE_BROWSER_ENTRY = path.resolve(APP_ROOT, "../core/src/browser.ts");
+const KIRE_BROWSER_DIST_DIR = path.join(APP_ROOT, ".generated/kire-browser");
+const KIRE_BROWSER_FILE = path.join(KIRE_BROWSER_DIST_DIR, "browser.js");
+const KIRE_BROWSER_MAP_FILE = `${KIRE_BROWSER_FILE}.map`;
 
 const WIRE_ROUTES: WireRoute[] = [
     { path: "/kirewire", view: "pages.index", title: "Dashboard" },
@@ -102,6 +108,8 @@ const app = createApp(kire);
 void bootstrap();
 
 async function bootstrap() {
+    await ensureKireBrowserRuntime();
+
     const wire = new wirePlugin({
         secret: "change-me-in-production",
         bus_delay: 10,
@@ -114,6 +122,7 @@ async function bootstrap() {
 
     registerGlobalContext(app);
     registerGlobalErrorHandler(app);
+    registerBrowserRuntimeRoutes(app);
     registerDocumentationRoutes(app);
     registerWirePlaygroundRoutes(app);
     registerLegacyWireRedirects(app);
@@ -121,7 +130,45 @@ async function bootstrap() {
 
     app.listen(3000);
     console.log(`[docs] serving wire assets from ${WIRE_DIST_DIR}`);
+    console.log(`[docs] serving kire/browser runtime from ${KIRE_BROWSER_DIST_DIR}`);
     console.log(`Check it out at http://localhost:3000 (${USE_SOCKET ? "socket mode" : "http+sse mode"})`);
+}
+
+async function ensureKireBrowserRuntime() {
+    mkdirSync(KIRE_BROWSER_DIST_DIR, { recursive: true });
+
+    const shouldBuild =
+        !IS_PRODUCTION || !(await Bun.file(KIRE_BROWSER_FILE).exists());
+
+    if (!shouldBuild) return;
+
+    console.log(`[docs] building kire/browser runtime from ${KIRE_BROWSER_ENTRY}`);
+
+    const result = await Bun.build({
+        entrypoints: [KIRE_BROWSER_ENTRY],
+        outdir: KIRE_BROWSER_DIST_DIR,
+        target: "browser",
+        format: "esm",
+        minify: IS_PRODUCTION,
+        sourcemap: "external",
+    });
+
+    if (!result.success) {
+        const details = result.logs
+            .map((entry) => entry.message || String(entry))
+            .join("\n");
+        throw new Error(
+            `Failed to build kire/browser runtime.${details ? `\n${details}` : ""}`,
+        );
+    }
+
+    const bundleSource = await Bun.file(KIRE_BROWSER_FILE).text();
+    if (
+        /from\s*["']node:/.test(bundleSource) ||
+        /import\(\s*["']node:/.test(bundleSource)
+    ) {
+        throw new Error("Built kire/browser bundle still references node:* modules.");
+    }
 }
 
 function createKireEngine(): KireEngine {
@@ -137,6 +184,10 @@ function createApp(engine: KireEngine) {
             maxRequestBodySize: 10000 * 600 * 1024 * 1024,
         },
     })
+        .use(staticPlugin({
+            assets: DOCS_PUBLIC_DIR,
+            prefix: "/docs-assets",
+        }))
         .use(staticPlugin({
             assets: WIRE_DIST_DIR,
             prefix: "/dist",
@@ -441,6 +492,27 @@ function registerDocumentationRoutes(server: any) {
             });
         });
     }
+}
+
+function registerBrowserRuntimeRoutes(server: any) {
+    server.get("/assets/kire-browser.js", async (context: DocsContext) => {
+        if (!(await Bun.file(KIRE_BROWSER_FILE).exists())) {
+            await ensureKireBrowserRuntime();
+        }
+
+        context.set.headers["Content-Type"] =
+            "application/javascript; charset=utf-8";
+        return Bun.file(KIRE_BROWSER_FILE);
+    });
+
+    server.get("/assets/kire-browser.js.map", async (context: DocsContext) => {
+        if (!(await Bun.file(KIRE_BROWSER_MAP_FILE).exists())) {
+            await ensureKireBrowserRuntime();
+        }
+
+        context.set.headers["Content-Type"] = "application/json; charset=utf-8";
+        return Bun.file(KIRE_BROWSER_MAP_FILE);
+    });
 }
 
 function registerWirePlaygroundRoutes(server: any) {

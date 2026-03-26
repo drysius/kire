@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { getLanguageService } from "vscode-html-languageservice";
+import { getLanguageService } from "./service";
 import { HtmlCompletionItemProvider } from "./completion";
 import { HtmlHoverProvider } from "./hover";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
@@ -102,7 +102,11 @@ export class HtmlFoldingRangeProvider implements vscode.FoldingRangeProvider {
 }
 
 export const activate = (context: vscode.ExtensionContext) => {
-	const selector = { language: "kire" };
+	const selector = [
+		{ language: "kire", scheme: "file" },
+		{ language: "html", scheme: "file", pattern: "**/*.kire" },
+		{ language: "html", scheme: "file", pattern: "**/*.kire.html" },
+	];
 	const disposables: vscode.Disposable[] = [
 		vscode.languages.registerCompletionItemProvider(
 			selector,
