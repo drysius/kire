@@ -192,9 +192,6 @@ class Builder {
 	public async build(): Promise<void> {
 		await this.cleanPublishDirectory();
 
-		console.log("📜 Running schema generator...");
-		await $`bun run tools/schema.ts`;
-
 		const packages = await getPackages({ publishableOnly: true });
 
 		for (const pkg of packages) {

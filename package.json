@@ -19,7 +19,6 @@
 		"benchmark:bun": "bun run benchmark/create.ts --runtime=bun --skip-build",
 		"benchmark:deno": "deno run --allow-read --allow-write --allow-env --allow-run --allow-sys --node-modules-dir=auto benchmark/create.ts --runtime=deno --skip-build",
 		"benchmark:all": "bun run benchmark/create.ts --runtime=all",
-		"schema": "bun run tools/schema.ts",
 		"build": "bun run tools/build.ts",
 		"publish": "bun run tools/publish.ts",
 		"llms": "bun run tools/llms.ts",
