@@ -435,10 +435,9 @@ export class Kire<Asyncronos extends boolean = true> {
 			aliases.add(resolved);
 
 			if (platform.isAbsolute(resolved)) {
-				const relative = platform.relative(config.root, resolved).replace(
-					/\\/g,
-					"/",
-				);
+				const relative = platform
+					.relative(config.root, resolved)
+					.replace(/\\/g, "/");
 				if (
 					relative &&
 					relative !== "." &&

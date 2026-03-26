@@ -5,8 +5,7 @@ import { resolveSourceLocation } from "./source-map";
 
 const SOURCE_MAP_PREFIX =
 	"//# sourceMappingURL=data:application/json;charset=utf-8;base64,";
-const STACK_FRAME_REGEX =
-	/^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
+const STACK_FRAME_REGEX = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
 
 type TemplateMeta = KireTplFunction["meta"];
 
@@ -30,7 +29,9 @@ function getTemplateMap(template?: TemplateMeta | null) {
 		const mapUrlIndex = template.code.lastIndexOf(SOURCE_MAP_PREFIX);
 		if (mapUrlIndex !== -1) {
 			try {
-				const base64 = template.code.slice(mapUrlIndex + SOURCE_MAP_PREFIX.length).trim();
+				const base64 = template.code
+					.slice(mapUrlIndex + SOURCE_MAP_PREFIX.length)
+					.trim();
 				template.map = JSON.parse(decodeBase64(base64));
 				return template.map;
 			} catch {}
@@ -41,7 +42,9 @@ function getTemplateMap(template?: TemplateMeta | null) {
 }
 
 function getTemplateSourceLines(template?: TemplateMeta | null): string[] {
-	return typeof template?.source === "string" ? template.source.split("\n") : [];
+	return typeof template?.source === "string"
+		? template.source.split("\n")
+		: [];
 }
 
 function getTemplateCodeLines(template?: TemplateMeta | null): string[] {
