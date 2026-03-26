@@ -1,11 +1,8 @@
-import type { Kire, KireRendered } from "kire";
 import { Value } from "@sinclair/typebox/value";
-import { WireUpload, normalizeFileList } from "./features/file-upload";
+import type { Kire, KireRendered } from "kire";
+import { normalizeFileList, WireUpload } from "./features/file-upload";
 import { WireBroadcast } from "./features/wire-broadcast";
-import {
-	getWireVariables,
-	type WireVariableDefinition,
-} from "./metadata";
+import { getWireVariables, type WireVariableDefinition } from "./metadata";
 import {
 	type ComponentRuleDescriptor,
 	isTypeBoxSchema,

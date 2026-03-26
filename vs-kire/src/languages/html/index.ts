@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { getLanguageService } from "./service";
 import { HtmlCompletionItemProvider } from "./completion";
 import { HtmlHoverProvider } from "./hover";
+import { getLanguageService } from "./service";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();

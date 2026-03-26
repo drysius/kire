@@ -1,46 +1,46 @@
 {
-  "name": "@kirejs/wire",
-  "description": "Kirewire v2 framework with decorators, live components and Kire-first adapters.",
-  "version": "0.1.0",
-  "type": "module",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "types": "dist/types/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/esm/index.js",
-      "require": "./dist/cjs/index.js"
-    },
-    "./methods": {
-      "types": "./dist/types/methods/index.d.ts",
-      "import": "./dist/esm/methods/index.js",
-      "require": "./dist/cjs/methods/index.js"
-    },
-    "./adapters": {
-      "types": "./dist/types/adapters/index.d.ts",
-      "import": "./dist/esm/adapters/index.js",
-      "require": "./dist/cjs/adapters/index.js"
-    },
-    "./client": {
-      "import": "./dist/client/wire.js"
-    },
-    "./fivem-client": {
-      "import": "./dist/fivem-client.js",
-      "require": "./dist/fivem-client.js"
-    }
-  },
-  "scripts": {
-    "prebuild": "bun run build.ts"
-  },
-  "devDependencies": {
-    "@alpinejs/morph": "^3.15.4",
-    "@types/jsdom": "^28.0.0",
-    "alpinejs": "^3.15.4",
-    "jsdom": "^28.1.0"
-  },
-  "dependencies": {
-    "@sinclair/typebox": "^0.34.48",
-    "kire": "workspace:../../core"
-  }
+	"name": "@kirejs/wire",
+	"description": "Kirewire v2 framework with decorators, live components and Kire-first adapters.",
+	"version": "0.1.0",
+	"type": "module",
+	"main": "dist/cjs/index.js",
+	"module": "dist/esm/index.js",
+	"types": "dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/esm/index.js",
+			"require": "./dist/cjs/index.js"
+		},
+		"./methods": {
+			"types": "./dist/types/methods/index.d.ts",
+			"import": "./dist/esm/methods/index.js",
+			"require": "./dist/cjs/methods/index.js"
+		},
+		"./adapters": {
+			"types": "./dist/types/adapters/index.d.ts",
+			"import": "./dist/esm/adapters/index.js",
+			"require": "./dist/cjs/adapters/index.js"
+		},
+		"./client": {
+			"import": "./dist/client/wire.js"
+		},
+		"./fivem-client": {
+			"import": "./dist/fivem-client.js",
+			"require": "./dist/fivem-client.js"
+		}
+	},
+	"scripts": {
+		"prebuild": "bun run build.ts"
+	},
+	"devDependencies": {
+		"@alpinejs/morph": "^3.15.4",
+		"@types/jsdom": "^28.0.0",
+		"alpinejs": "^3.15.4",
+		"jsdom": "^28.1.0"
+	},
+	"dependencies": {
+		"@sinclair/typebox": "^0.34.48",
+		"kire": "workspace:../../core"
+	}
 }

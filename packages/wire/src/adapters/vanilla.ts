@@ -22,7 +22,11 @@ export type VanillaWireAdapter = {
 		url: string;
 		body?: any;
 		signal?: AbortSignal;
-	}) => Promise<{ status?: number; headers?: Record<string, string>; result?: any }>;
+	}) => Promise<{
+		status?: number;
+		headers?: Record<string, string>;
+		result?: any;
+	}>;
 };
 
 function normalizeRoute(route: string): string {
@@ -36,7 +40,9 @@ function defaultUserIdResolver(request: any): string {
 	const explicit = String(request?.user?.id || "").trim();
 	if (explicit) return explicit;
 
-	const fromSession = String(request?.session?.id || request?.sessionId || "").trim();
+	const fromSession = String(
+		request?.session?.id || request?.sessionId || "",
+	).trim();
 	if (fromSession) return fromSession;
 
 	const fromCookie = String(request?.cookies?.session || "").trim();
@@ -49,7 +55,9 @@ function defaultSessionIdResolver(request: any, userId: string): string {
 	const explicit = String(request?.wireKey || request?.sessionKey || "").trim();
 	if (explicit) return explicit;
 
-	const fromSession = String(request?.session?.id || request?.sessionId || "").trim();
+	const fromSession = String(
+		request?.session?.id || request?.sessionId || "",
+	).trim();
 	if (fromSession) return fromSession;
 
 	return userId || "guest";
@@ -73,10 +81,14 @@ export function createVanillaWireAdapter(
 			: new HttpAdapter({ route }));
 
 	if (typeof method?.install !== "function") {
-		throw new Error("Invalid wire method. Expected an install(wire, kire) function.");
+		throw new Error(
+			"Invalid wire method. Expected an install(wire, kire) function.",
+		);
 	}
 	if (typeof method?.handleRequest !== "function") {
-		throw new Error("Invalid wire method. Expected a handleRequest(...) function.");
+		throw new Error(
+			"Invalid wire method. Expected a handleRequest(...) function.",
+		);
 	}
 
 	method.install(options.wire, options.kire);
@@ -89,7 +101,8 @@ export function createVanillaWireAdapter(
 		method,
 		async handle(input) {
 			const request = input?.request || {};
-			const userId = String(resolveUserId(request) || "guest").trim() || "guest";
+			const userId =
+				String(resolveUserId(request) || "guest").trim() || "guest";
 			const sessionId =
 				String(resolveSessionId(request, userId) || userId).trim() || userId;
 

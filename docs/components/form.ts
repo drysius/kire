@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "form" })
 export default class RegisterForm extends Component {
 	@Variable("string")
@@ -32,4 +32,3 @@ export default class RegisterForm extends Component {
 		return this.view("components.form");
 	}
 }
-

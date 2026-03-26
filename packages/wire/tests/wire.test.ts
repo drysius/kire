@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { Type } from "@sinclair/typebox";
 import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Type } from "@sinclair/typebox";
 import { Component } from "../src/component";
 import { Variable } from "../src/decorators";
 import { FileStore } from "../src/features/file-store";
@@ -203,7 +203,9 @@ describe("Kirewire Kernel", () => {
 		instance.fill({ profile: { age: 21 } });
 		expect(instance.profile.age).toBe(21);
 
-		expect(() => instance.fill({ profile: { age: "invalid" } as any })).toThrow();
+		expect(() =>
+			instance.fill({ profile: { age: "invalid" } as any }),
+		).toThrow();
 	});
 
 	test("@Variable supports wildcard shape rules for arrays", () => {

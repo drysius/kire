@@ -181,7 +181,7 @@ export class KireCompletionItemProvider
 
 			// For now, let's just add common Kire globals if not present
 			["$ctx", "$props", "$slots", "$refs", "$wire"].forEach((g) => {
-				if (!globals || !globals.has(g)) {
+				if (!globals?.has(g)) {
 					const item = new vscode.CompletionItem(
 						g,
 						vscode.CompletionItemKind.Variable,

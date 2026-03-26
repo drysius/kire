@@ -1,7 +1,10 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
+
 // Simple in-memory store for demo purposes
 const db = {
-	messages: [{ user: "System", text: "Welcome to the chat!", time: Date.now() }] as Array<{
+	messages: [
+		{ user: "System", text: "Welcome to the chat!", time: Date.now() },
+	] as Array<{
 		user: string;
 		text: string;
 		time: number;

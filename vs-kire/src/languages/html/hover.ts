@@ -1,9 +1,6 @@
 import * as vscode from "vscode";
-import {
-	getLanguageService,
-	type HoverSettings,
-} from "./service";
 import { hasKireHoverTarget } from "../kire/schemaHover";
+import { getLanguageService, type HoverSettings } from "./service";
 import { toLspDocument, toLspPosition, toVsCodeRange } from "./utils";
 
 const htmlLanguageService = getLanguageService();
@@ -34,7 +31,7 @@ export class HtmlHoverProvider implements vscode.HoverProvider {
 			hoverSettings,
 		);
 
-		if (!hover || !hover.contents) {
+		if (!hover?.contents) {
 			return undefined;
 		}
 

@@ -62,7 +62,7 @@ function seedOptimisticPreview(
 	files: FileList | File[],
 ) {
 	const proxy = ctx.wire.components.get(ctx.componentId) as any;
-	if (!proxy || !proxy.__target) return;
+	if (!proxy?.__target) return;
 
 	const list = Array.isArray(files) ? files : Array.from(files || []);
 	const FileCtor = typeof File !== "undefined" ? File : null;
@@ -85,7 +85,7 @@ function seedOptimisticPreview(
 
 function updateUploadState(ctx: WireClientContext, uploading: any) {
 	const proxy = ctx.wire.components.get(ctx.componentId) as any;
-	if (!proxy || !proxy.__target) return;
+	if (!proxy?.__target) return;
 
 	const target = proxy.__target as Record<string, any>;
 	const current =

@@ -1,17 +1,17 @@
 {
-  "extends": "../tsconfig.base.json",
-  "compilerOptions": {
-    "downlevelIteration":true,
-    "rootDir": ".",
-    "outDir": "dist",
-    "baseUrl": ".",
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": false,
-    "paths": {
-      "kire": ["../../core/src/index.ts"],
-      "@kirejs/wire": ["src/index.ts"]
-    }
-  },
-  "include": ["src/**/*", "web/**/*", "fivem/**/*"],
-  "exclude": ["node_modules", "dist"]
+	"extends": "../tsconfig.base.json",
+	"compilerOptions": {
+		"downlevelIteration": true,
+		"rootDir": ".",
+		"outDir": "dist",
+		"baseUrl": ".",
+		"experimentalDecorators": true,
+		"emitDecoratorMetadata": false,
+		"paths": {
+			"kire": ["../../core/src/index.ts"],
+			"@kirejs/wire": ["src/index.ts"]
+		}
+	},
+	"include": ["src/**/*", "web/**/*", "fivem/**/*"],
+	"exclude": ["node_modules", "dist"]
 }

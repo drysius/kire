@@ -1,4 +1,7 @@
-import { createVanillaWireAdapter, type VanillaWireAdapterOptions } from "./vanilla";
+import {
+	createVanillaWireAdapter,
+	type VanillaWireAdapterOptions,
+} from "./vanilla";
 
 function pathnameFromUrl(rawUrl: string): string {
 	try {
@@ -80,7 +83,9 @@ export function ExpressPlugin(options: VanillaWireAdapterOptions) {
 				return;
 			}
 			res.statusCode = 500;
-			res.end(JSON.stringify({ error: String((error as any)?.message || error) }));
+			res.end(
+				JSON.stringify({ error: String((error as any)?.message || error) }),
+			);
 		}
 	};
 }

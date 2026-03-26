@@ -581,7 +581,7 @@ export class Lexer {
 
 	private hasExplicitDirectiveEnd(name: string, fromCursor: number): boolean {
 		const def = this.kire.getDirective(name);
-		if (!def || !def.closeBy) {
+		if (!def?.closeBy) {
 			const rest = this.template.slice(fromCursor);
 			return (
 				this.findUnescapedDirective(rest, `end${name}`) !== -1 ||

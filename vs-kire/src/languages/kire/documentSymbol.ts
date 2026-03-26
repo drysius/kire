@@ -7,9 +7,9 @@ import {
 import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
 import {
+	ensureRangeContainsSelection,
 	type SymbolPoint,
 	type SymbolSpan,
-	ensureRangeContainsSelection,
 } from "./documentSymbolRange";
 
 const toSymbolPoint = (position: vscode.Position): SymbolPoint => ({
@@ -98,13 +98,12 @@ export class KireDocumentSymbolProvider
 			const start = document.positionAt(call.start);
 			const end = document.positionAt(call.end);
 			const lineEnd = document.lineAt(start.line).range.end;
-			const selectionEnd = document.positionAt(call.start + call.name.length + 1);
+			const selectionEnd = document.positionAt(
+				call.start + call.name.length + 1,
+			);
 			const selectionRange = new vscode.Range(start, selectionEnd);
 			const range = createContainedRange(
-				new vscode.Range(
-					start,
-					end.isAfter(lineEnd) ? end : lineEnd,
-				),
+				new vscode.Range(start, end.isAfter(lineEnd) ? end : lineEnd),
 				selectionRange,
 			);
 

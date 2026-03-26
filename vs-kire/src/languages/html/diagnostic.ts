@@ -32,7 +32,9 @@ export class HtmlDiagnosticProvider {
 		return diagnostics;
 	}
 
-	createAttributeDiagnostics(document: vscode.TextDocument): vscode.Diagnostic[] {
+	createAttributeDiagnostics(
+		document: vscode.TextDocument,
+	): vscode.Diagnostic[] {
 		const diagnostics: vscode.Diagnostic[] = [];
 		this.validateAttributes(document, document.getText(), diagnostics);
 		return diagnostics;

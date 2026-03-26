@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "receiver" })
 export default class Receiver extends Component {
 	@Variable("string")

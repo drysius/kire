@@ -134,7 +134,7 @@ export function resolveSourceLocation(
 	genLine: number,
 	genCol: number,
 ): { line: number; column: number; source: string } | null {
-	if (!map || !map.mappings) return null;
+	if (!map?.mappings) return null;
 
 	const lines = map.mappings.split(";");
 	// If generated line is out of bounds

@@ -82,7 +82,7 @@ export interface PackageMetadata {
 
 export interface ToolDefinition {
 	package?: PackageMetadata;
-	type?: string | string[];		
+	type?: string | string[];
 	tstype?: string;
 	comment?: string;
 	description?: string;

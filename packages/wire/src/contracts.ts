@@ -32,4 +32,3 @@ export interface AdapterTransport {
 		result?: any;
 	}>;
 }
-

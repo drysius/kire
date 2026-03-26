@@ -98,7 +98,9 @@ function getMissingSchemaDocs() {
 				if (!/example\s*:/.test(block)) missingFields.push("example");
 
 				if (missingFields.length > 0) {
-					missing.push(`${file} :: ${type} ${name} :: ${missingFields.join(", ")}`);
+					missing.push(
+						`${file} :: ${type} ${name} :: ${missingFields.join(", ")}`,
+					);
 				}
 			}
 		}

@@ -1,32 +1,48 @@
 import { Kire } from "kire";
-import { wirePlugin, Component } from "./lib/wire";
+import { Component, wirePlugin } from "./lib/wire";
 
 const kire = new Kire({
-    production: false,
-    silent: true,
+	production: false,
+	silent: true,
 });
 
 // Setup plugin before registering components
-kire.plugin(new wirePlugin({
-    secret:"1a2s13as1as1das231"
-}), {});
+kire.plugin(
+	new wirePlugin({
+		secret: "1a2s13as1as1das231",
+	}),
+	{},
+);
 
 // Mocking components
-kire.wireRegister('success', class extends Component {
-    async render() { return "<div>I am working fine!</div>"; }
-});
+kire.wireRegister(
+	"success",
+	class extends Component {
+		async render() {
+			return "<div>I am working fine!</div>";
+		}
+	},
+);
 
-kire.wireRegister('error-js', class extends Component {
-    async render() { 
-        // @ts-ignore
-        const fail = this.notExistentMethod();
-        return "<div>Should not reach here</div>"; 
-    }
-});
+kire.wireRegister(
+	"error-js",
+	class extends Component {
+		async render() {
+			// @ts-expect-error
+			const _fail = this.notExistentMethod();
+			return "<div>Should not reach here</div>";
+		}
+	},
+);
 
-kire.wireRegister('error-tpl', class extends Component {
-    async render() { return "<div>{{ it.missing.nested.prop }}</div>"; }
-});
+kire.wireRegister(
+	"error-tpl",
+	class extends Component {
+		async render() {
+			return "<div>{{ it.missing.nested.prop }}</div>";
+		}
+	},
+);
 
 const mainTpl = `
 <html>
@@ -60,16 +76,15 @@ const mainTpl = `
 console.log("Wire error preview server running at http://localhost:3001");
 
 Bun.serve({
-    port: 3001,
-    async fetch(req) {
-        try {
-            const html = await kire.render(mainTpl);
-            return new Response(html as string, {
-                headers: { "Content-Type": "text/html" }
-            });
-        } catch (e: any) {
-            return new Response(e.toString(), { status: 500 });
-        }
-    }
+	port: 3001,
+	async fetch(_req) {
+		try {
+			const html = await kire.render(mainTpl);
+			return new Response(html as string, {
+				headers: { "Content-Type": "text/html" },
+			});
+		} catch (e: any) {
+			return new Response(e.toString(), { status: 500 });
+		}
+	},
 });
-

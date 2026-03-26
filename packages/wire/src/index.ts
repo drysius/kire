@@ -1,4 +1,5 @@
 import type { Kire } from "kire";
+import { wireAttributeDocs, wireElementDocs } from "../schema.docs.js";
 import {
 	ElysiaAdapter,
 	ElysiaPlugin,
@@ -7,11 +8,6 @@ import {
 	KoaPlugin,
 	VanillaAdapter,
 } from "./adapters";
-import { HttpSocketAdapter } from "./methods/http-socket";
-import { HttpSseAdapter } from "./methods/http-sse";
-import { FiveMAdapter } from "./methods/fivem";
-import { HttpAdapter } from "./methods/http";
-import { SocketAdapter } from "./methods/socket";
 import {
 	Component,
 	type WireCollectionAction,
@@ -36,11 +32,15 @@ import {
 	type KirewireOptions,
 	type WireCacheStore,
 } from "./kirewire";
+import { FiveMAdapter } from "./methods/fivem";
+import { HttpAdapter } from "./methods/http";
+import { HttpSocketAdapter } from "./methods/http-socket";
+import { HttpSseAdapter } from "./methods/http-sse";
+import { SocketAdapter } from "./methods/socket";
 import {
 	type ValidationResult,
 	validateRuleString as validateRule,
 } from "./validation/rule";
-import { wireAttributeDocs, wireElementDocs } from "../schema.docs.js";
 
 const INTERPOLATION_GLOBAL_REGEX = /\{\{\s*([\s\S]+?)\s*\}\}/g;
 const INTERPOLATION_PURE_REGEX = /^\s*\{\{\s*([\s\S]+?)\s*\}\}\s*$/;
@@ -148,12 +148,14 @@ function resolveWireElementCandidates(tagName: string): string[] {
 
 	if (!normalized) return [];
 
-	return [...new Set([
-		normalized,
-		`kirewire.${normalized}`,
-		`livewire.${normalized}`,
-		`components.${normalized}`,
-	])];
+	return [
+		...new Set([
+			normalized,
+			`kirewire.${normalized}`,
+			`livewire.${normalized}`,
+			`components.${normalized}`,
+		]),
+	];
 }
 
 function writeWireComponentMount(
@@ -387,7 +389,9 @@ export class KirewirePlugin {
 				description: doc?.description,
 				example: doc?.example,
 				onCall: (api) => {
-					const candidates = resolveWireElementCandidates(api.node.tagName || "");
+					const candidates = resolveWireElementCandidates(
+						api.node.tagName || "",
+					);
 					const attrs = api.node.attributes || {};
 					const attrMeta = api.node.attributeMeta || {};
 					const locals = Object.keys(attrs)
@@ -432,7 +436,10 @@ export class KirewirePlugin {
 				try {
 					this.wire.options.adapter.autoCleanUploads();
 				} catch (error) {
-					console.warn("[Kirewire] Failed to auto clean upload storage:", error);
+					console.warn(
+						"[Kirewire] Failed to auto clean upload storage:",
+						error,
+					);
 				}
 			}
 		}
@@ -453,6 +460,9 @@ export {
 	Component,
 	type ComponentState,
 	type EffectPacket,
+	ElysiaAdapter,
+	ElysiaPlugin,
+	ExpressPlugin,
 	FileStore,
 	FiveMAdapter,
 	HttpAdapter,
@@ -460,21 +470,18 @@ export {
 	HttpSseAdapter,
 	Kirewire,
 	type KirewireOptions,
-	type WireCacheStore,
-	ElysiaAdapter,
-	ElysiaPlugin,
-	ExpressPlugin,
 	KoaAdapter,
 	KoaPlugin,
-	VanillaAdapter,
-	Variable,
-	Wire,
 	Rule,
 	SocketAdapter,
 	type ValidationResult,
+	VanillaAdapter,
+	Variable,
 	validateRule,
+	Wire,
 	WireBroadcast,
 	type WireBroadcastOptions,
+	type WireCacheStore,
 	type WireCollectionAction,
 	type WireCollectionMode,
 	type WireCollectionPayload,

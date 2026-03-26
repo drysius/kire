@@ -64,7 +64,7 @@ function normalizeShapeRules(
 }
 
 export function Wire(input?: WireDecoratorInput) {
-	return function (...args: any[]) {
+	return (...args: any[]) => {
 		// Legacy decorators: @Wire()(class Target {})
 		if (args.length === 1 && typeof args[0] === "function") {
 			applyWireDefinition(args[0], input);
@@ -88,10 +88,7 @@ export function Wire(input?: WireDecoratorInput) {
 
 export function Variable(
 	rules: string | TSchema = "any",
-	shape?:
-		| WireVariableShapeRules
-		| Array<WireVariableShapeRules>
-		| undefined,
+	shape?: WireVariableShapeRules | Array<WireVariableShapeRules> | undefined,
 ) {
 	const variableInput: WireVariableInput = isTypeBoxSchema(rules)
 		? {
@@ -104,7 +101,7 @@ export function Variable(
 				shapeRules: normalizeShapeRules(shape),
 			};
 
-	return function (...args: any[]) {
+	return (...args: any[]) => {
 		// Legacy decorators: @Variable() prop
 		if (
 			args.length >= 2 &&

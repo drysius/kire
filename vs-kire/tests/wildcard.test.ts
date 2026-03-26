@@ -1,8 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import {
-	findBestWildcardMatch,
-	wildcardToRegExp,
-} from "../src/utils/wildcard";
+import { findBestWildcardMatch, wildcardToRegExp } from "../src/utils/wildcard";
 
 describe("wildcard schema matching", () => {
 	it("matches namespaced custom elements against wildcard definitions", () => {

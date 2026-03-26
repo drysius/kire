@@ -1,4 +1,4 @@
-import { Type, type TSchema } from "@sinclair/typebox";
+import { type TSchema, Type } from "@sinclair/typebox";
 import { buildRuleSchema } from "./validation/rule";
 
 export type WireDefinition = {
@@ -55,7 +55,9 @@ function parseIntSafe(value: string): number | undefined {
 }
 
 function parseSizeToBytes(raw: string): number | undefined {
-	const value = String(raw || "").trim().toLowerCase();
+	const value = String(raw || "")
+		.trim()
+		.toLowerCase();
 	if (!value) return undefined;
 	const match = value.match(/^(\d+(?:\.\d+)?)\s*(b|kb|mb|gb)?$/i);
 	if (!match) return undefined;
@@ -131,7 +133,9 @@ function buildSchemaForKind(
 
 function inferKindFromSchema(schema?: TSchema): WireVariableKind | undefined {
 	if (!schema || typeof schema !== "object") return undefined;
-	const raw = String((schema as any).type || "").trim().toLowerCase();
+	const raw = String((schema as any).type || "")
+		.trim()
+		.toLowerCase();
 	if (raw === "string") return "string";
 	if (raw === "number") return "number";
 	if (raw === "integer") return "integer";

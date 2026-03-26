@@ -10,7 +10,8 @@ export const wireEventModifierDocs = [
 	},
 	{
 		name: "self",
-		description: "Only react when the event originates from the element itself.",
+		description:
+			"Only react when the event originates from the element itself.",
 	},
 	{
 		name: "once",
@@ -102,7 +103,7 @@ export const wireAttributeDocs = [
 		type: "string",
 		description:
 			"Shows, hides or decorates an element while one or more component actions are running.",
-		example: '<div wire:loading>Saving...</div>',
+		example: "<div wire:loading>Saving...</div>",
 		extends: [
 			{
 				name: "remove",
@@ -173,8 +174,7 @@ export const wireAttributeDocs = [
 			},
 			{
 				name: "top",
-				description:
-					"Only trigger when the intersection touches the top edge.",
+				description: "Only trigger when the intersection touches the top edge.",
 			},
 			{
 				name: "bottom",

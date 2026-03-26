@@ -183,6 +183,32 @@
         padding: 1rem;
     }
 
+    .kire-doc .mockup-code {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid color-mix(in oklab, var(--color-base-content) 18%, transparent);
+        background:
+            linear-gradient(180deg, color-mix(in oklab, black 10%, var(--color-neutral)) 0%, color-mix(in oklab, var(--color-neutral) 88%, var(--color-base-300)) 100%);
+        color: var(--color-neutral-content);
+        box-shadow: 0 18px 45px color-mix(in oklab, black 18%, transparent);
+    }
+
+    .kire-doc .mockup-code pre {
+        position: relative;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: inherit;
+        padding: 1.35rem 1rem 1rem;
+        overflow: auto;
+        box-shadow: none;
+    }
+
+    .kire-doc .mockup-code pre[data-prefix] {
+        padding-left: 3.25rem;
+    }
+
     .kire-doc pre[data-code-lang]::before {
         content: attr(data-code-lang);
         position: absolute;
@@ -192,6 +218,18 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         opacity: 0.6;
+    }
+
+    .kire-doc .mockup-code pre[data-code-lang]::before {
+        top: 0.75rem;
+        right: 0.85rem;
+        padding: 0.2rem 0.45rem;
+        border-radius: 0.45rem;
+        border: 1px solid color-mix(in oklab, var(--color-neutral-content) 16%, transparent);
+        background: color-mix(in oklab, black 35%, transparent);
+        color: color-mix(in oklab, var(--color-neutral-content) 88%, transparent);
+        opacity: 1;
+        font-weight: 700;
     }
 
     .kire-doc pre[data-code-lang="kire"] {
@@ -228,6 +266,29 @@
         overflow-x: auto;
         background: transparent;
         color: inherit;
+    }
+
+    .kire-doc .mockup-code .hljs {
+        background: transparent !important;
+        color: inherit !important;
+    }
+
+    .kire-doc .diff {
+        margin-top: 1.25rem;
+        margin-bottom: 1.25rem;
+        overflow: hidden;
+    }
+
+    .kire-doc .diff .mockup-code {
+        height: 100%;
+        margin: 0;
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .kire-doc .diff .mockup-code pre {
+        min-height: 100%;
     }
 
     .kire-doc .hljs-template-tag { color: oklch(78% 0.17 308); font-weight: 700; }

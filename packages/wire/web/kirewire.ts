@@ -945,7 +945,7 @@ export class KirewireClient extends EventController {
 
 	private getProxyTarget(componentId: string) {
 		const proxy = this.components.get(componentId) as any;
-		if (!proxy || !proxy.__target) return null;
+		if (!proxy?.__target) return null;
 		return proxy.__target as Record<string, any>;
 	}
 
@@ -1247,7 +1247,7 @@ export class KirewireClient extends EventController {
 
 		for (let i = 0; i < effects.length; i++) {
 			const effect = effects[i];
-			if (!effect || !effect.type) continue;
+			if (!effect?.type) continue;
 
 			switch (effect.type) {
 				case "redirect":

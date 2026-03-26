@@ -256,7 +256,8 @@ export class WireBroadcast extends WireProperty {
 			return `${scopeId}:${pageId || "default-page"}:${this.channel}`;
 		}
 
-		const id = String((component as any).$id || "anonymous").trim() || "anonymous";
+		const id =
+			String((component as any).$id || "anonymous").trim() || "anonymous";
 		return `${id}:${this.channel}`;
 	}
 

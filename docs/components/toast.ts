@@ -21,4 +21,3 @@ export default class Toast extends Component {
 		return this.view("components.toast");
 	}
 }
-

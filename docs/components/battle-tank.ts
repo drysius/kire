@@ -1,4 +1,5 @@
-import { Component, Wire, Variable, WireBroadcast } from "../lib/wire";
+import { Component, Variable, Wire, WireBroadcast } from "../lib/wire";
+
 type Direction = "up" | "down" | "left" | "right";
 type Owner = "enemy" | `player:${string}`;
 
@@ -67,7 +68,9 @@ function randomDirection(): Direction {
 }
 
 function normalizeInputToken(value: unknown): string {
-	return String(value || "").trim().toLowerCase();
+	return String(value || "")
+		.trim()
+		.toLowerCase();
 }
 
 function createControls(): ControlsState {
@@ -254,7 +257,13 @@ export default class BattleTank extends Component {
 				player.controls[action] = isPressed;
 				if (isPressed) {
 					player.dir = action;
-					this.tryMoveTank(player, action, player.speed * 0.55, true, player.id);
+					this.tryMoveTank(
+						player,
+						action,
+						player.speed * 0.55,
+						true,
+						player.id,
+					);
 				}
 			}
 			this.finishCycle("input-keyboard");
@@ -264,12 +273,26 @@ export default class BattleTank extends Component {
 		if (type === "pointer") {
 			const x = Number(payload.x);
 			const y = Number(payload.y);
-			const canvasWidth = Math.max(1, Number(payload.canvasWidth) || this.boardSize * this.tileSize);
-			const canvasHeight = Math.max(1, Number(payload.canvasHeight) || this.boardSize * this.tileSize);
+			const canvasWidth = Math.max(
+				1,
+				Number(payload.canvasWidth) || this.boardSize * this.tileSize,
+			);
+			const canvasHeight = Math.max(
+				1,
+				Number(payload.canvasHeight) || this.boardSize * this.tileSize,
+			);
 			if (!Number.isFinite(x) || !Number.isFinite(y)) return;
 
-			const tx = clamp(Math.floor((x / canvasWidth) * this.boardSize), 0, this.boardSize - 1);
-			const ty = clamp(Math.floor((y / canvasHeight) * this.boardSize), 0, this.boardSize - 1);
+			const tx = clamp(
+				Math.floor((x / canvasWidth) * this.boardSize),
+				0,
+				this.boardSize - 1,
+			);
+			const ty = clamp(
+				Math.floor((y / canvasHeight) * this.boardSize),
+				0,
+				this.boardSize - 1,
+			);
 			const dx = tx - player.x;
 			const dy = ty - player.y;
 
@@ -348,7 +371,9 @@ export default class BattleTank extends Component {
 	}
 
 	private getSortedPlayerIds(): string[] {
-		return Object.keys(this.players).sort((a, b) => this.players[a]!.joinedAt - this.players[b]!.joinedAt);
+		return Object.keys(this.players).sort(
+			(a, b) => this.players[a]!.joinedAt - this.players[b]!.joinedAt,
+		);
 	}
 
 	private ensurePlayerJoined() {
@@ -403,7 +428,9 @@ export default class BattleTank extends Component {
 			this.spawnEnemy();
 		}
 
-		const ids = Object.keys(previousPlayers).sort((a, b) => previousPlayers[a]!.joinedAt - previousPlayers[b]!.joinedAt);
+		const ids = Object.keys(previousPlayers).sort(
+			(a, b) => previousPlayers[a]!.joinedAt - previousPlayers[b]!.joinedAt,
+		);
 		const rebuilt: Record<string, PlayerTank> = {};
 		for (let index = 0; index < ids.length; index++) {
 			const id = ids[index]!;
@@ -479,7 +506,10 @@ export default class BattleTank extends Component {
 		const elapsed = now - this.lastStepAt;
 		if (elapsed < STEP_INTERVAL_MS) return 0;
 
-		const steps = Math.min(MAX_CATCHUP_STEPS, Math.max(1, Math.floor(elapsed / STEP_INTERVAL_MS)));
+		const steps = Math.min(
+			MAX_CATCHUP_STEPS,
+			Math.max(1, Math.floor(elapsed / STEP_INTERVAL_MS)),
+		);
 		this.lastStepAt += steps * STEP_INTERVAL_MS;
 		return steps;
 	}
@@ -497,7 +527,10 @@ export default class BattleTank extends Component {
 
 		for (const player of activePlayers) {
 			player.cooldown = Math.max(0, player.cooldown - 1);
-			const direction = this.resolveControlDirection(player.controls, player.dir);
+			const direction = this.resolveControlDirection(
+				player.controls,
+				player.dir,
+			);
 			if (direction) {
 				this.tryMoveTank(player, direction, player.speed, true, player.id);
 			}
@@ -532,7 +565,10 @@ export default class BattleTank extends Component {
 			.filter((player) => player && player.lives > 0);
 	}
 
-	private resolveControlDirection(controls: ControlsState, fallback: Direction): Direction | null {
+	private resolveControlDirection(
+		controls: ControlsState,
+		fallback: Direction,
+	): Direction | null {
 		const pressed: Direction[] = [];
 		if (controls.up) pressed.push("up");
 		if (controls.down) pressed.push("down");
@@ -543,7 +579,13 @@ export default class BattleTank extends Component {
 		return pressed[0] || null;
 	}
 
-	private tryMoveTank(tank: TankUnit, dir: Direction, distance: number, isPlayer: boolean, playerId?: string): boolean {
+	private tryMoveTank(
+		tank: TankUnit,
+		dir: Direction,
+		distance: number,
+		isPlayer: boolean,
+		playerId?: string,
+	): boolean {
 		if (distance <= 0) return false;
 		const vec = DIR_VECTORS[dir];
 		tank.dir = dir;
@@ -568,28 +610,38 @@ export default class BattleTank extends Component {
 		return moved;
 	}
 
-	private canOccupy(tank: TankUnit, x: number, y: number, isPlayer: boolean, playerId?: string): boolean {
+	private canOccupy(
+		tank: TankUnit,
+		x: number,
+		y: number,
+		isPlayer: boolean,
+		playerId?: string,
+	): boolean {
 		if (!this.isInsideRect(x, y, tank.size)) return false;
 		if (this.rectHitsSolid(x, y, tank.size)) return false;
 
 		if (isPlayer) {
 			for (const enemy of this.enemies) {
-				if (this.rectOverlap(x, y, tank.size, enemy.x, enemy.y, enemy.size)) return false;
+				if (this.rectOverlap(x, y, tank.size, enemy.x, enemy.y, enemy.size))
+					return false;
 			}
 			for (const [id, player] of Object.entries(this.players)) {
 				if (id === playerId || player.lives <= 0) continue;
-				if (this.rectOverlap(x, y, tank.size, player.x, player.y, player.size)) return false;
+				if (this.rectOverlap(x, y, tank.size, player.x, player.y, player.size))
+					return false;
 			}
 			return true;
 		}
 
 		for (const player of this.getActivePlayers()) {
-			if (this.rectOverlap(x, y, tank.size, player.x, player.y, player.size)) return false;
+			if (this.rectOverlap(x, y, tank.size, player.x, player.y, player.size))
+				return false;
 		}
 
 		for (const enemy of this.enemies) {
 			if (enemy === tank) continue;
-			if (this.rectOverlap(x, y, tank.size, enemy.x, enemy.y, enemy.size)) return false;
+			if (this.rectOverlap(x, y, tank.size, enemy.x, enemy.y, enemy.size))
+				return false;
 		}
 		return true;
 	}
@@ -620,7 +672,9 @@ export default class BattleTank extends Component {
 			}
 		} else if (isPlayerOwner(owner)) {
 			const shooterId = ownerToPlayerId(owner);
-			const enemyIndex = this.enemies.findIndex((enemy) => this.bulletHitsTank(bx, by, enemy));
+			const enemyIndex = this.enemies.findIndex((enemy) =>
+				this.bulletHitsTank(bx, by, enemy),
+			);
 			if (enemyIndex >= 0) {
 				this.enemies.splice(enemyIndex, 1);
 				this.awardScore(shooterId, 120);
@@ -652,9 +706,14 @@ export default class BattleTank extends Component {
 				if (target) {
 					const dx = target.x - enemy.x;
 					const dy = target.y - enemy.y;
-					enemy.dir = Math.abs(dx) >= Math.abs(dy)
-						? (dx >= 0 ? "right" : "left")
-						: (dy >= 0 ? "down" : "up");
+					enemy.dir =
+						Math.abs(dx) >= Math.abs(dy)
+							? dx >= 0
+								? "right"
+								: "left"
+							: dy >= 0
+								? "down"
+								: "up";
 				}
 			} else if (Math.random() < 0.12) {
 				enemy.dir = randomDirection();
@@ -670,7 +729,10 @@ export default class BattleTank extends Component {
 		}
 	}
 
-	private getClosestPlayer(enemy: TankUnit, players: PlayerTank[]): PlayerTank | null {
+	private getClosestPlayer(
+		enemy: TankUnit,
+		players: PlayerTank[],
+	): PlayerTank | null {
 		let closest: PlayerTank | null = null;
 		let bestDistance = Number.POSITIVE_INFINITY;
 		for (const player of players) {
@@ -707,7 +769,9 @@ export default class BattleTank extends Component {
 				}
 			} else if (isPlayerOwner(bullet.owner)) {
 				const shooterId = ownerToPlayerId(bullet.owner);
-				const enemyIndex = this.enemies.findIndex((enemy) => this.bulletHitsTank(nx, ny, enemy));
+				const enemyIndex = this.enemies.findIndex((enemy) =>
+					this.bulletHitsTank(nx, ny, enemy),
+				);
 				if (enemyIndex >= 0) {
 					this.enemies.splice(enemyIndex, 1);
 					this.awardScore(shooterId, 120);
@@ -728,7 +792,11 @@ export default class BattleTank extends Component {
 		this.bullets = survivors;
 	}
 
-	private findHitPlayer(x: number, y: number, excludePlayerId?: string): string | null {
+	private findHitPlayer(
+		x: number,
+		y: number,
+		excludePlayerId?: string,
+	): string | null {
 		for (const player of this.getActivePlayers()) {
 			if (excludePlayerId && player.id === excludePlayerId) continue;
 			if (this.bulletHitsTank(x, y, player)) return player.id;
@@ -748,7 +816,13 @@ export default class BattleTank extends Component {
 
 		player.lives--;
 		player.controls = createControls();
-		this.bullets = this.bullets.filter((bullet) => !(isPlayerOwner(bullet.owner) && ownerToPlayerId(bullet.owner) === playerId));
+		this.bullets = this.bullets.filter(
+			(bullet) =>
+				!(
+					isPlayerOwner(bullet.owner) &&
+					ownerToPlayerId(bullet.owner) === playerId
+				),
+		);
 
 		if (player.lives <= 0) {
 			player.x = -99;
@@ -834,7 +908,11 @@ export default class BattleTank extends Component {
 		for (let index = 0; index < ids.length; index++) {
 			const player = this.players[ids[index]!]!;
 			if (player.lives <= 0) continue;
-			if (this.isInsideRect(player.x, player.y, player.size) && !this.rectHitsSolid(player.x, player.y, player.size)) continue;
+			if (
+				this.isInsideRect(player.x, player.y, player.size) &&
+				!this.rectHitsSolid(player.x, player.y, player.size)
+			)
+				continue;
 			const spawn = this.getPlayerSpawn(index);
 			player.x = spawn.x;
 			player.y = spawn.y;
@@ -845,7 +923,9 @@ export default class BattleTank extends Component {
 	private getEnemySpawns(): Array<{ x: number; y: number }> {
 		const center = Math.floor(this.boardSize / 2);
 		const anchors = [2, center - 5, center, center + 5, this.boardSize - 3];
-		const unique = Array.from(new Set(anchors.map((value) => clamp(value, 1, this.boardSize - 2))));
+		const unique = Array.from(
+			new Set(anchors.map((value) => clamp(value, 1, this.boardSize - 2))),
+		);
 		return unique.map((x) => ({ x, y: 1 }));
 	}
 
@@ -861,13 +941,23 @@ export default class BattleTank extends Component {
 		const picked = rawSpawns[slot % rawSpawns.length] || rawSpawns[0]!;
 		const offset = (1 - this.tankSize) / 2;
 		return {
-			x: clamp(picked.x + offset, 1 + offset, this.boardSize - 1 - this.tankSize),
-			y: clamp(picked.y + offset, 1 + offset, this.boardSize - 1 - this.tankSize),
+			x: clamp(
+				picked.x + offset,
+				1 + offset,
+				this.boardSize - 1 - this.tankSize,
+			),
+			y: clamp(
+				picked.y + offset,
+				1 + offset,
+				this.boardSize - 1 - this.tankSize,
+			),
 		};
 	}
 
 	private createMap(): number[][] {
-		const playerSpawns = Array.from({ length: MAX_PLAYERS }, (_, index) => this.getPlayerSpawn(index)).map((spawn) => ({
+		const playerSpawns = Array.from({ length: MAX_PLAYERS }, (_, index) =>
+			this.getPlayerSpawn(index),
+		).map((spawn) => ({
 			x: Math.floor(spawn.x),
 			y: Math.floor(spawn.y),
 		}));
@@ -875,7 +965,13 @@ export default class BattleTank extends Component {
 
 		const map = Array.from({ length: this.boardSize }, (_, y) =>
 			Array.from({ length: this.boardSize }, (_, x) => {
-				if (x === 0 || y === 0 || x === this.boardSize - 1 || y === this.boardSize - 1) return 2;
+				if (
+					x === 0 ||
+					y === 0 ||
+					x === this.boardSize - 1 ||
+					y === this.boardSize - 1
+				)
+					return 2;
 				const roll = Math.random();
 				if (roll < 0.14) return 1;
 				if (roll < 0.17) return 3;
@@ -915,7 +1011,12 @@ export default class BattleTank extends Component {
 	}
 
 	private isInsideRect(x: number, y: number, size: number): boolean {
-		return x >= 0 && y >= 0 && x + size <= this.boardSize && y + size <= this.boardSize;
+		return (
+			x >= 0 &&
+			y >= 0 &&
+			x + size <= this.boardSize &&
+			y + size <= this.boardSize
+		);
 	}
 
 	private isSolidCell(x: number, y: number): boolean {
@@ -940,7 +1041,14 @@ export default class BattleTank extends Component {
 		return false;
 	}
 
-	private rectOverlap(ax: number, ay: number, as: number, bx: number, by: number, bs: number): boolean {
+	private rectOverlap(
+		ax: number,
+		ay: number,
+		as: number,
+		bx: number,
+		by: number,
+		bs: number,
+	): boolean {
 		return ax < bx + bs && ax + as > bx && ay < by + bs && ay + as > by;
 	}
 
@@ -959,7 +1067,12 @@ export default class BattleTank extends Component {
 	private bulletHitsTank(x: number, y: number, tank: TankUnit): boolean {
 		const cx = x + 0.5;
 		const cy = y + 0.5;
-		return cx >= tank.x && cx <= tank.x + tank.size && cy >= tank.y && cy <= tank.y + tank.size;
+		return (
+			cx >= tank.x &&
+			cx <= tank.x + tank.size &&
+			cy >= tank.y &&
+			cy <= tank.y + tank.size
+		);
 	}
 
 	private syncCanvas(reason: string) {
@@ -988,7 +1101,10 @@ export default class BattleTank extends Component {
 			};
 		});
 
-		const fallbackPlayer = players.find((player) => player.id === this.currentPlayerId) || players[0] || null;
+		const fallbackPlayer =
+			players.find((player) => player.id === this.currentPlayerId) ||
+			players[0] ||
+			null;
 
 		return {
 			boardSize: this.boardSize,
@@ -1010,5 +1126,3 @@ export default class BattleTank extends Component {
 		};
 	}
 }
-
-

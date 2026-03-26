@@ -25,7 +25,7 @@ export function mergeType(
 ): string | undefined {
 	const next = incoming?.trim();
 	if (!next) return existing;
-	if (!existing || !existing.trim()) return next;
+	if (!existing?.trim()) return next;
 	if (existing.trim() === next) return existing.trim();
 	return `(${existing.trim()}) & (${next})`;
 }

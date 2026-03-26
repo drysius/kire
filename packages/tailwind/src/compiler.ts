@@ -10,7 +10,7 @@ export async function compileCSSWithTailwind(
 	candidates: string[] = [],
 ): Promise<string> {
 	try {
-		if (!css || !css.trim()) return "";
+		if (!css?.trim()) return "";
 
 		const result = await compile(css, options);
 		const processedCSS = result.build(candidates);

@@ -78,62 +78,52 @@ The sandbox below uses the real `kire/browser` bundle. It supports:
 
 <div data-kire-browser-playground data-preset="starter" class="kire-browser-playground">
   <div class="kire-browser-playground__hero">
-    <strong>Interactive `kire/browser` sandbox</strong>
+    <strong>Interactive <code>kire/browser</code> sandbox</strong>
     <p>Edit the template, locals and virtual files with Monaco. The right panel renders the result immediately.</p>
   </div>
-
   <div class="kire-browser-playground__body">
     <div class="kire-browser-playground__toolbar">
       <div class="kire-browser-playground__modes">
-        <button type="button" class="btn btn-sm kire-browser-playground__mode" data-action="mode" data-mode="view" aria-pressed="true">Run `view()`</button>
-        <button type="button" class="btn btn-sm kire-browser-playground__mode" data-action="mode" data-mode="render" aria-pressed="false">Run `render()`</button>
+        <button type="button" class="btn btn-sm kire-browser-playground__mode" data-action="mode" data-mode="view" aria-pressed="true">Run <code>view()</code></button>
+        <button type="button" class="btn btn-sm kire-browser-playground__mode" data-action="mode" data-mode="render" aria-pressed="false">Run <code>render()</code></button>
         <button type="button" class="btn btn-sm btn-ghost" data-action="reset">Reset preset</button>
       </div>
-
       <label class="kire-browser-playground__toggle">
         <input type="checkbox" data-role="autorun" checked />
         Auto render while typing
       </label>
     </div>
-
     <div class="kire-browser-playground__status" data-role="status"></div>
-
     <div class="kire-browser-playground__grid">
       <section class="kire-browser-playground__panel kire-browser-playground__stack">
         <div class="kire-browser-playground__field">
           <label class="kire-browser-playground__label" for="kire-browser-view-path">View path</label>
           <input id="kire-browser-view-path" class="kire-browser-playground__input" data-role="view-path" value="views.playground" />
         </div>
-
         <div class="kire-browser-playground__field">
           <label class="kire-browser-playground__label" for="kire-browser-template">Template</label>
           <textarea id="kire-browser-template" class="kire-browser-playground__textarea" data-role="template"></textarea>
         </div>
-
         <div class="kire-browser-playground__field">
           <label class="kire-browser-playground__label" for="kire-browser-locals">Locals JSON</label>
           <textarea id="kire-browser-locals" class="kire-browser-playground__textarea" data-role="locals"></textarea>
         </div>
-
         <div class="kire-browser-playground__field">
           <label class="kire-browser-playground__label" for="kire-browser-files">Virtual files JSON</label>
           <textarea id="kire-browser-files" class="kire-browser-playground__textarea" data-role="files"></textarea>
         </div>
       </section>
-
       <section class="kire-browser-playground__panel kire-browser-playground__stack">
         <div>
           <p class="kire-browser-playground__caption">Rendered preview</p>
           <iframe class="kire-browser-playground__preview" data-role="preview" sandbox=""></iframe>
         </div>
-
         <div>
           <p class="kire-browser-playground__caption">HTML output</p>
           <pre data-code-lang="html"><code class="language-html" data-role="output"></code></pre>
         </div>
       </section>
     </div>
-
     <p class="kire-browser-playground__hint">
       Tip: in <code>view()</code> mode the sandbox writes the template editor into <code>/views/playground.kire</code>, so the JSON file map only needs your extra layouts and components.
     </p>
@@ -168,7 +158,7 @@ kire.namespace("views", "/views");
 
 ## Code blocks in the docs
 
-If you want Kire syntax highlighted inside the documentation markdown, use fenced code blocks with the `kire` language. The docs site registers a dedicated `highlight.js` grammar for Kire, so directives, interpolations and HTML all render with the same syntax rules:
+If you want Kire syntax highlighted inside the documentation markdown, use fenced code blocks with the `kire` language. The docs site renders them inside DaisyUI `mockup-code` blocks and registers a dedicated `highlight.js` grammar for Kire, so directives, interpolations and HTML all render with the same syntax rules:
 
 ````md
 ```kire

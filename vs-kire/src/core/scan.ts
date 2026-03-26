@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import * as vscode from "vscode";
 import { kireLog } from "./log";
-import { type PackageMetadata, kireStore } from "./store";
+import { kireStore, type PackageMetadata } from "./store";
 
 const runtimeRequire = createRequire(import.meta.url);
 
@@ -540,7 +540,10 @@ async function loadSchemaModule(
 				const afterHandle = extractEngineSchema(engine, packageMeta);
 				mergeSchema(
 					collected,
-					annotateSchemaPackage(diffSchema(beforeHandle, afterHandle), packageMeta),
+					annotateSchemaPackage(
+						diffSchema(beforeHandle, afterHandle),
+						packageMeta,
+					),
 				);
 				kireLog("debug", `Schema handle executed: ${modulePath}`);
 			} catch (error) {

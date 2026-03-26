@@ -1,4 +1,7 @@
-import { createVanillaWireAdapter, type VanillaWireAdapterOptions } from "./vanilla";
+import {
+	createVanillaWireAdapter,
+	type VanillaWireAdapterOptions,
+} from "./vanilla";
 
 export function ElysiaAdapter(app: any, options: VanillaWireAdapterOptions) {
 	const adapter = createVanillaWireAdapter(options);

@@ -342,11 +342,7 @@ export class HttpAdapter extends Adapter {
 		}
 	}
 
-	private async handleLiveInit(
-		body: any,
-		userId: string,
-		sessionId: string,
-	) {
+	private async handleLiveInit(body: any, userId: string, sessionId: string) {
 		const componentName = String(body?.name || "").trim();
 		if (!componentName) {
 			return {
@@ -414,11 +410,7 @@ export class HttpAdapter extends Adapter {
 		}
 	}
 
-	private async handleLiveSave(
-		body: any,
-		userId: string,
-		sessionId: string,
-	) {
+	private async handleLiveSave(body: any, userId: string, sessionId: string) {
 		const id = String(body?.id || "").trim();
 		if (!id) {
 			return {
@@ -694,9 +686,7 @@ export class HttpAdapter extends Adapter {
 		return [];
 	}
 
-	private extractUploadMoveEntries(
-		body: any,
-	): Array<{
+	private extractUploadMoveEntries(body: any): Array<{
 		id: string;
 		destination: string;
 		overwrite?: boolean;

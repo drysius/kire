@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "counter" })
 export default class Counter extends Component {
 	@Variable("number")
@@ -20,4 +20,3 @@ export default class Counter extends Component {
 		return this.view("components.counter");
 	}
 }
-

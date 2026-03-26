@@ -1,6 +1,6 @@
-import { $ } from "bun";
 import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { $ } from "bun";
 
 const outDir = join(import.meta.dir, "dist/client");
 const esmDir = join(import.meta.dir, "dist/esm");
@@ -32,7 +32,8 @@ async function buildServerEntry(
 	format: "esm" | "cjs",
 	label: string,
 ) {
-	const result = await $`bun build ${entry} --outfile ${outfile} --format ${format} --target node --packages external`;
+	const result =
+		await $`bun build ${entry} --outfile ${outfile} --format ${format} --target node --packages external`;
 	if (result.exitCode !== 0) {
 		throw new Error(`${label} build failed.`);
 	}
@@ -41,7 +42,8 @@ async function buildServerEntry(
 console.log("[wire] Building web client...");
 
 try {
-	const clientResult = await $`bun build ./web/index.ts --outdir ${outDir} --minify --sourcemap=external --target browser`;
+	const clientResult =
+		await $`bun build ./web/index.ts --outdir ${outDir} --minify --sourcemap=external --target browser`;
 	if (clientResult.exitCode !== 0) {
 		throw new Error("Wire client build failed.");
 	}
@@ -94,15 +96,24 @@ try {
 	);
 
 	const fivemClientFile = join(distDir, "fivem-client.js");
-	const fivemClientResult = await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
+	const fivemClientResult =
+		await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
 	if (fivemClientResult.exitCode !== 0) {
 		throw new Error("Wire FiveM client build failed.");
 	}
 
-	writeFileSync(join(esmDir, "package.json"), JSON.stringify({ type: "module" }));
-	writeFileSync(join(cjsDir, "package.json"), JSON.stringify({ type: "commonjs" }));
+	writeFileSync(
+		join(esmDir, "package.json"),
+		JSON.stringify({ type: "module" }),
+	);
+	writeFileSync(
+		join(cjsDir, "package.json"),
+		JSON.stringify({ type: "commonjs" }),
+	);
 
-	console.log("[wire] Build complete: client, server, methods, adapters, fivem-client.");
+	console.log(
+		"[wire] Build complete: client, server, methods, adapters, fivem-client.",
+	);
 } catch (error) {
 	console.error("[wire] Build error:", error);
 	process.exit(1);

@@ -248,6 +248,34 @@ const html = await kire.view("pages.home", {
 });
 ```
 
+## Template to result
+
+Use the resizer below to compare a Kire template against the HTML shape it produces after render:
+
+<figure class="diff rounded-2xl border border-base-300/70 bg-base-200/60 aspect-[16/10]" tabindex="0">
+  <div class="diff-item-1" role="img" tabindex="0">
+    <div class="h-full bg-neutral p-4">
+      <div class="mockup-code w-full h-full">
+        <pre data-code-lang="kire"><code class="language-kire">@layout("layouts.app")
+  @slot("content")
+    <h1>Hello {{ user.name }}</h1>
+  @end
+@end</code></pre>
+      </div>
+    </div>
+  </div>
+  <div class="diff-item-2" role="img">
+    <div class="grid h-full place-items-center bg-base-100 p-6">
+      <section class="w-full max-w-md rounded-2xl border border-base-300/70 bg-base-100/90 p-6 shadow-sm">
+        <p class="text-xs font-semibold uppercase tracking-[0.16em] text-base-content/55">Rendered output</p>
+        <h1 class="mt-3 text-2xl font-bold">Hello Ada</h1>
+        <p class="mt-2 text-sm text-base-content/70">Kire resolves the layout, runs the slot and returns plain HTML for the browser.</p>
+      </section>
+    </div>
+  </div>
+  <div class="diff-resizer"></div>
+</figure>
+
 ## Request isolation with `fork()`
 
 In long-running servers, configure the engine once and fork it per request:

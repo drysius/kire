@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "infinity-scroll" })
 export default class InfinityScroll extends Component {
 	@Variable("array")
@@ -34,4 +34,3 @@ export default class InfinityScroll extends Component {
 		return this.view("components.infinity-scroll");
 	}
 }
-

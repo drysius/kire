@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "todo" })
 export default class Todo extends Component {
 	@Variable("string")
@@ -25,4 +25,3 @@ export default class Todo extends Component {
 		return this.view("components.todo");
 	}
 }
-

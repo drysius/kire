@@ -7,8 +7,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		relatedTo: [`if`, `elseif`, `unless`],
 		closeBy: [`endif`, `endunless`],
-		description:
-			"Fallback branch for @if, @elseif and @unless chains.",
+		description: "Fallback branch for @if, @elseif and @unless chains.",
 		example: `@else\n  <p>Fallback</p>`,
 		onCall: (api) => {
 			api.write(`} else {`);
@@ -39,8 +38,7 @@ export default (kire: Kire<any>) => {
 		...elseDirective,
 		name: `elseif`,
 		signature: [`cond:any`],
-		description:
-			"Additional conditional branch for an @if or @unless chain.",
+		description: "Additional conditional branch for an @if or @unless chain.",
 		example: `@elseif(user.isAdmin)\n  <p>Admin</p>`,
 		onCall: (api) => {
 			const cond = api.getArgument(0) ?? api.getAttribute("cond");

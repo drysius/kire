@@ -143,12 +143,12 @@ export class Compiler {
 		this.allIdentifiers = new Set();
 		this.identifiers.clear();
 
-			this.header.push(
-				`$globals = Object.assign(Object.create(this.$globals), $globals);`,
-			);
-			this.header.push(`let $kire_response = "";`);
-			const localsAlias = this.kire.$var_locals || "it";
-			const identifierDeclarations: Array<{ id: string; line: string }> = [];
+		this.header.push(
+			`$globals = Object.assign(Object.create(this.$globals), $globals);`,
+		);
+		this.header.push(`let $kire_response = "";`);
+		const localsAlias = this.kire.$var_locals || "it";
+		const identifierDeclarations: Array<{ id: string; line: string }> = [];
 
 		// Deep identifier collection (including dependencies)
 		const localDecls = new Set<string>();
@@ -174,11 +174,11 @@ export class Compiler {
 			// Skip variables that have existVar handlers (they will be injected by the loop below)
 			if (this.kire.$kire["~handlers"].exists_vars.has(id)) continue;
 
-				identifierDeclarations.push({
-					id,
-					line: `let ${id} = $props['${id}'] ?? $globals['${id}'];`,
-				});
-			}
+			identifierDeclarations.push({
+				id,
+				line: `let ${id} = $props['${id}'] ?? $globals['${id}'];`,
+			});
+		}
 
 		this.compileNodes(nodes);
 		this.flushText();
@@ -237,10 +237,7 @@ export class Compiler {
 							triggered.add(nameStr);
 							break;
 						}
-						if (
-							entry.unique &&
-							uniqueCallbacks.has(entry.callback)
-						) {
+						if (entry.unique && uniqueCallbacks.has(entry.callback)) {
 							continue;
 						}
 						entry.callback?.(
@@ -268,70 +265,70 @@ export class Compiler {
 			}
 		}
 
-			// Keep generated output lean: only emit helper aliases and variable declarations
-			// that are actually referenced by this template body/footer code.
-			// Dependencies are excluded from this scan so parent templates don't inherit
-			// declarations required only inside dependency closures.
-			const bodyFooterSource = `${this.body.join("\n")}\n${this.footer.join("\n")}`;
-			const bodyFooterNormalized = bodyFooterSource
-				.replace(JS_STRINGS_REGEX, '""')
-				.replace(JS_LINE_COMMENT_REGEX, "")
-				.replace(JS_BLOCK_COMMENT_REGEX, "");
+		// Keep generated output lean: only emit helper aliases and variable declarations
+		// that are actually referenced by this template body/footer code.
+		// Dependencies are excluded from this scan so parent templates don't inherit
+		// declarations required only inside dependency closures.
+		const bodyFooterSource = `${this.body.join("\n")}\n${this.footer.join("\n")}`;
+		const bodyFooterNormalized = bodyFooterSource
+			.replace(JS_STRINGS_REGEX, '""')
+			.replace(JS_LINE_COMMENT_REGEX, "")
+			.replace(JS_BLOCK_COMMENT_REGEX, "");
 
-			if (createVarThenRegex("$escape").test(bodyFooterNormalized)) {
-				this.header.push(`const $escape = this.$escape;`);
+		if (createVarThenRegex("$escape").test(bodyFooterNormalized)) {
+			this.header.push(`const $escape = this.$escape;`);
+		}
+		if (createVarThenRegex("NullProtoObj").test(bodyFooterNormalized)) {
+			this.header.push(`const NullProtoObj = this.NullProtoObj;`);
+		}
+
+		for (let i = 0; i < identifierDeclarations.length; i++) {
+			const declaration = identifierDeclarations[i]!;
+			if (createVarThenRegex(declaration.id).test(bodyFooterNormalized)) {
+				this.header.push(declaration.line);
 			}
-			if (createVarThenRegex("NullProtoObj").test(bodyFooterNormalized)) {
-				this.header.push(`const NullProtoObj = this.NullProtoObj;`);
+		}
+
+		if (
+			this.identifiers.has(localsAlias) &&
+			createVarThenRegex(localsAlias).test(bodyFooterNormalized)
+		) {
+			this.header.push(`const ${localsAlias} = $props;`);
+		}
+
+		// Finalize dependencies as closures after header pruning.
+		// This avoids polluting parent declaration analysis with dependency internals.
+		if (Object.keys(this.dependencies).length > 0) {
+			const dependencyCodes: string[] = [];
+			for (const path in this.dependencies) {
+				const id = this.dependencies[path]!;
+				const compiledDependency = this.kire.getOrCompile(path, true);
+				let fallbackAsync = false;
+				const depCode =
+					typeof compiledDependency?.meta?.code === "string"
+						? compiledDependency.meta.code
+						: (() => {
+								const depNodes = this.kire.parse(
+									this.kire.readFile(this.kire.resolvePath(path)),
+								);
+								const compilerInstance = new Compiler(this.kire, path);
+								const code = compilerInstance.compile(depNodes, [], true);
+								fallbackAsync = compilerInstance.async;
+								return code;
+							})();
+				const asyncDep =
+					compiledDependency?.meta?.async === undefined
+						? fallbackAsync
+						: Boolean(compiledDependency.meta.async);
+
+				dependencyCodes.push(
+					`const ${id} = ${asyncDep ? "async " : ""}function($props = {}, $globals = {}, $kire) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: ${JSON.stringify(path)} };`,
+				);
 			}
+			this.body.unshift(`// Dependencies`, ...dependencyCodes);
+		}
 
-			for (let i = 0; i < identifierDeclarations.length; i++) {
-				const declaration = identifierDeclarations[i]!;
-				if (createVarThenRegex(declaration.id).test(bodyFooterNormalized)) {
-					this.header.push(declaration.line);
-				}
-			}
-
-			if (
-				this.identifiers.has(localsAlias) &&
-				createVarThenRegex(localsAlias).test(bodyFooterNormalized)
-			) {
-				this.header.push(`const ${localsAlias} = $props;`);
-			}
-
-			// Finalize dependencies as closures after header pruning.
-			// This avoids polluting parent declaration analysis with dependency internals.
-			if (Object.keys(this.dependencies).length > 0) {
-				const dependencyCodes: string[] = [];
-				for (const path in this.dependencies) {
-					const id = this.dependencies[path]!;
-					const compiledDependency = this.kire.getOrCompile(path, true);
-					let fallbackAsync = false;
-					const depCode =
-						typeof compiledDependency?.meta?.code === "string"
-							? compiledDependency.meta.code
-							: (() => {
-									const depNodes = this.kire.parse(
-										this.kire.readFile(this.kire.resolvePath(path)),
-									);
-									const compilerInstance = new Compiler(this.kire, path);
-									const code = compilerInstance.compile(depNodes, [], true);
-									fallbackAsync = compilerInstance.async;
-									return code;
-								})();
-					const asyncDep =
-						compiledDependency?.meta?.async === undefined
-							? fallbackAsync
-							: Boolean(compiledDependency.meta.async);
-
-					dependencyCodes.push(
-						`const ${id} = ${asyncDep ? "async " : ""}function($props = {}, $globals = {}, $kire) {\n${depCode}\n};\n${id}.meta = { async: ${asyncDep}, path: ${JSON.stringify(path)} };`,
-					);
-				}
-				this.body.unshift(`// Dependencies`, ...dependencyCodes);
-			}
-
-			let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
+		let code = `\n${this.header.join("\n")}\n${this.body.join("\n")}\n${this.footer.join("\n")}\nreturn $kire_response;\n//# sourceURL=${this.filename}`;
 
 		if (!this.kire.$production) {
 			const headerLines = `${this.header.join("\n")}\n`.split("\n").length + 1;
@@ -472,9 +469,10 @@ export class Compiler {
 				}
 
 				if (def) {
-					const aliasName = typeof n.tagName === "string" && n.tagName.startsWith("kire:")
-						? n.tagName.slice("kire:".length)
-						: "";
+					const aliasName =
+						typeof n.tagName === "string" && n.tagName.startsWith("kire:")
+							? n.tagName.slice("kire:".length)
+							: "";
 					if (aliasName === "defined" || aliasName === "define") {
 						idents.add("__kire_defines");
 					}
@@ -507,23 +505,22 @@ export class Compiler {
 						if (key.startsWith("@")) {
 							scanIdents(val);
 						} else {
-							const attrDecl =
-								Array.isArray(def?.attributes)
-									? def.attributes.find((entry: any) => {
-											if (!entry?.name) return false;
-											if (entry.name === key) return true;
-											if (
-												typeof entry.name === "string" &&
-												entry.name.includes("*")
-											) {
-												const pattern = new RegExp(
-													`^${entry.name.replace("*", ".*")}$`,
-												);
-												return pattern.test(key);
-											}
-											return false;
-									  })
-									: undefined;
+							const attrDecl = Array.isArray(def?.attributes)
+								? def.attributes.find((entry: any) => {
+										if (!entry?.name) return false;
+										if (entry.name === key) return true;
+										if (
+											typeof entry.name === "string" &&
+											entry.name.includes("*")
+										) {
+											const pattern = new RegExp(
+												`^${entry.name.replace("*", ".*")}$`,
+											);
+											return pattern.test(key);
+										}
+										return false;
+									})
+								: undefined;
 							const attrTypes = Array.isArray(attrDecl?.type)
 								? attrDecl.type
 								: attrDecl?.type
@@ -533,9 +530,7 @@ export class Compiler {
 								key.startsWith(":") ||
 								attrTypes.some(
 									(type: string) =>
-										type === "javascript" ||
-										type === "js" ||
-										type === "any",
+										type === "javascript" || type === "js" || type === "any",
 								);
 
 							if (shouldScanAsJs) {

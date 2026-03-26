@@ -157,10 +157,15 @@ export class SocketAdapter extends Adapter {
 		}
 
 		if (Array.isArray(payload?.batch)) {
-			this.pushToClient(userId, "response", {
-				requestId: String(payload?.requestId || ""),
-				results,
-			}, sessionId);
+			this.pushToClient(
+				userId,
+				"response",
+				{
+					requestId: String(payload?.requestId || ""),
+					results,
+				},
+				sessionId,
+			);
 			return;
 		}
 
@@ -171,18 +176,28 @@ export class SocketAdapter extends Adapter {
 		};
 
 		if (single.error) {
-			this.pushToClient(userId, "response", {
-				requestId: single.requestId,
-				id: single.id,
-				error: single.error,
-			}, sessionId);
+			this.pushToClient(
+				userId,
+				"response",
+				{
+					requestId: single.requestId,
+					id: single.id,
+					error: single.error,
+				},
+				sessionId,
+			);
 			return;
 		}
 
-		this.pushToClient(userId, "response", {
-			requestId: single.requestId,
-			result: single,
-		}, sessionId);
+		this.pushToClient(
+			userId,
+			"response",
+			{
+				requestId: single.requestId,
+				result: single,
+			},
+			sessionId,
+		);
 	}
 
 	private async executeAction(

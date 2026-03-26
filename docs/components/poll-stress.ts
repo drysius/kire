@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "poll-stress" })
 export default class PollStress extends Component {
 	@Variable("number")
@@ -15,5 +15,3 @@ export default class PollStress extends Component {
 		return this.view("components.poll-stress");
 	}
 }
-
-

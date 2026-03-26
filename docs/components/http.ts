@@ -1,4 +1,4 @@
-import { Component, Wire, Variable, WireBroadcast } from "../lib/wire";
+import { Component, Variable, Wire, WireBroadcast } from "../lib/wire";
 @Wire({ name: "http" })
 export default class Http extends Component {
 	@Variable("number")

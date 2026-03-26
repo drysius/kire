@@ -1,4 +1,5 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
+
 // Mock data
 let ALL_USERS = Array.from({ length: 50 }, (_, i) => ({
 	id: i + 1,
@@ -19,7 +20,7 @@ export default class Users extends Component {
 	public queryString = ["search", "page"];
 
 	public delete(id: number) {
-		ALL_USERS = ALL_USERS.filter(u => u.id !== id);
+		ALL_USERS = ALL_USERS.filter((u) => u.id !== id);
 	}
 
 	get users() {
@@ -64,4 +65,3 @@ export default class Users extends Component {
 		return this.view("components.users");
 	}
 }
-

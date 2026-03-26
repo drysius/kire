@@ -40,7 +40,7 @@ export function createDocsMarkdownReader(options: {
 
 export function redirect(context: DocsContext, to: string, status = 302) {
 	context.set.status = status;
-	context.set.headers["Location"] = to;
+	context.set.headers.Location = to;
 	return "";
 }
 

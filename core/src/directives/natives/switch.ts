@@ -26,8 +26,7 @@ export default (kire: Kire<any>) => {
 		signature: [`val:any`],
 		children: true,
 		relatedTo: [`switch`, `case`, `default`],
-		description:
-			"Matches a value inside the current @switch chain.",
+		description: "Matches a value inside the current @switch chain.",
 		example: `@case("ok")\n  <span>OK</span>`,
 		onCall: (api) => {
 			const val = api.getArgument(0) ?? api.getAttribute("val");

@@ -155,8 +155,11 @@ export class WireFile extends WireProperty {
 export class WireUpload extends WireProperty {
 	public readonly __wire_type = "upload";
 	public files: WireFile[] = [];
-	public uploading: { percent?: number; loaded?: number; total?: number } | null =
-		null;
+	public uploading: {
+		percent?: number;
+		loaded?: number;
+		total?: number;
+	} | null = null;
 
 	constructor(initial?: FileLike[] | FileLike | null) {
 		super();

@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
-import { extractTagAttributes } from "../../utils/embedded";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
+import { extractTagAttributes } from "../../utils/embedded";
 import { findBestWildcardMatch } from "../../utils/wildcard";
 
 const tokenTypes = [
@@ -69,11 +69,7 @@ export class KireSemanticTokensProvider
 			}
 
 			if (state.attributes.has(name)) return true;
-			return !!findBestWildcardMatch(
-				state.attributes.entries(),
-				name,
-				"[^.]+",
-			);
+			return !!findBestWildcardMatch(state.attributes.entries(), name, "[^.]+");
 		};
 		const isCustomElementName = (tagName: string) => {
 			if (

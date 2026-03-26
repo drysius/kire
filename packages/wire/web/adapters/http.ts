@@ -4,444 +4,480 @@ import { bus, type WirePayload } from "../utils/message-bus";
 import { syncModelElements } from "../utils/model-sync";
 
 type HttpClientAdapterOptions = {
-    url: string;
-    pageId: string;
-    sessionId?: string;
-    uploadUrl?: string;
-    transport?: string;
+	url: string;
+	pageId: string;
+	sessionId?: string;
+	uploadUrl?: string;
+	transport?: string;
 };
 
 type NormalizedOptions = {
-    url: string;
-    pageId: string;
-    sessionId: string;
-    uploadUrl: string;
-    transport: string;
+	url: string;
+	pageId: string;
+	sessionId: string;
+	uploadUrl: string;
+	transport: string;
 };
 
 function trimTrailingSlash(value: string): string {
-    return value.replace(/\/+$/, "");
+	return value.replace(/\/+$/, "");
 }
 
 function resolveUploadUrl(baseUrl: string, uploadUrl?: string): string {
-    if (uploadUrl) return uploadUrl;
-    return `${trimTrailingSlash(baseUrl)}/upload`;
+	if (uploadUrl) return uploadUrl;
+	return `${trimTrailingSlash(baseUrl)}/upload`;
 }
 
 function toArray<T>(value: T | T[] | null | undefined): T[] {
-    if (!value) return [];
-    return Array.isArray(value) ? value : [value];
+	if (!value) return [];
+	return Array.isArray(value) ? value : [value];
 }
 
-function findStreamTarget(root: ParentNode, target: string): HTMLElement | null {
-    let element: HTMLElement | null = null;
-    try {
-        element = root.querySelector(target) as HTMLElement | null;
-    } catch {
-        element = null;
-    }
-    if (!element) {
-        const value = target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-        try {
-            element = root.querySelector(`[wire\\:stream="${value}"]`) as HTMLElement | null;
-        } catch {
-            element = null;
-        }
-    }
-    return element;
+function findStreamTarget(
+	root: ParentNode,
+	target: string,
+): HTMLElement | null {
+	let element: HTMLElement | null = null;
+	try {
+		element = root.querySelector(target) as HTMLElement | null;
+	} catch {
+		element = null;
+	}
+	if (!element) {
+		const value = target.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+		try {
+			element = root.querySelector(
+				`[wire\\:stream="${value}"]`,
+			) as HTMLElement | null;
+		} catch {
+			element = null;
+		}
+	}
+	return element;
 }
 
-function snapshotStreams(root: HTMLElement, effects: any[] | undefined): Map<string, string> {
-    const snapshots = new Map<string, string>();
-    const list = Array.isArray(effects) ? effects : [];
+function snapshotStreams(
+	root: HTMLElement,
+	effects: any[] | undefined,
+): Map<string, string> {
+	const snapshots = new Map<string, string>();
+	const list = Array.isArray(effects) ? effects : [];
 
-    for (let i = 0; i < list.length; i++) {
-        const effect = list[i];
-        if (!effect || effect.type !== "stream") continue;
+	for (let i = 0; i < list.length; i++) {
+		const effect = list[i];
+		if (!effect || effect.type !== "stream") continue;
 
-        const targetKey = String(effect.payload?.target || "");
-        if (!targetKey || snapshots.has(targetKey)) continue;
+		const targetKey = String(effect.payload?.target || "");
+		if (!targetKey || snapshots.has(targetKey)) continue;
 
-        const target = findStreamTarget(root, targetKey);
-        if (target) snapshots.set(targetKey, target.innerHTML);
-    }
+		const target = findStreamTarget(root, targetKey);
+		if (target) snapshots.set(targetKey, target.innerHTML);
+	}
 
-    return snapshots;
+	return snapshots;
 }
 
 function restoreStreams(root: HTMLElement, snapshots: Map<string, string>) {
-    for (const [targetKey, html] of snapshots.entries()) {
-        const target = findStreamTarget(root, targetKey);
-        if (target) target.innerHTML = html;
-    }
+	for (const [targetKey, html] of snapshots.entries()) {
+		const target = findStreamTarget(root, targetKey);
+		if (target) target.innerHTML = html;
+	}
 }
 
 export class HttpClientAdapter implements WireAdapter {
-    private options: NormalizedOptions;
-    private sse: EventSource | null = null;
-    private onBusFlush: ((e: CustomEvent) => Promise<void>) | null = null;
-    private lastRevisionByComponent = new Map<string, number>();
-    private inFlightControllers = new Set<AbortController>();
-    private reloadScheduled = false;
-    private sessionCheckInFlight = false;
-    private lastSessionCheckAt = 0;
-    private readonly sessionCheckIntervalMs = 3000;
+	private options: NormalizedOptions;
+	private sse: EventSource | null = null;
+	private onBusFlush: ((e: CustomEvent) => Promise<void>) | null = null;
+	private lastRevisionByComponent = new Map<string, number>();
+	private inFlightControllers = new Set<AbortController>();
+	private reloadScheduled = false;
+	private sessionCheckInFlight = false;
+	private lastSessionCheckAt = 0;
+	private readonly sessionCheckIntervalMs = 3000;
 
-    constructor(options: HttpClientAdapterOptions) {
-        this.options = {
-            url: options.url || "/_wire",
-            pageId: options.pageId || "default-page",
-            sessionId: String(options.sessionId || "guest"),
-            uploadUrl: resolveUploadUrl(options.url || "/_wire", options.uploadUrl),
-            transport: options.transport || "sse",
-        };
+	constructor(options: HttpClientAdapterOptions) {
+		this.options = {
+			url: options.url || "/_wire",
+			pageId: options.pageId || "default-page",
+			sessionId: String(options.sessionId || "guest"),
+			uploadUrl: resolveUploadUrl(options.url || "/_wire", options.uploadUrl),
+			transport: options.transport || "sse",
+		};
 
-        Kirewire.pageId = this.options.pageId;
-        this.setup();
-    }
+		Kirewire.pageId = this.options.pageId;
+		this.setup();
+	}
 
-    public async call(componentId: string, method: string, params: any[] = []) {
-        const payload: WirePayload = {
-            id: String(componentId),
-            method: String(method),
-            params: Array.isArray(params) ? params : [],
-            pageId: this.options.pageId,
-        };
-        return bus.enqueue(payload);
-    }
+	public async call(componentId: string, method: string, params: any[] = []) {
+		const payload: WirePayload = {
+			id: String(componentId),
+			method: String(method),
+			params: Array.isArray(params) ? params : [],
+			pageId: this.options.pageId,
+		};
+		return bus.enqueue(payload);
+	}
 
-    public defer(componentId: string, property: string, value: any) {
-        Kirewire.defer(componentId, property, value);
-    }
+	public defer(componentId: string, property: string, value: any) {
+		Kirewire.defer(componentId, property, value);
+	}
 
-    public upload(files: FileList | File[], onProgress?: (progress: any) => void): Promise<any> {
-        const list = Array.isArray(files) ? files : Array.from(files || []);
-        if (list.length === 0) {
-            return Promise.reject(new Error("No files to upload."));
-        }
+	public upload(
+		files: FileList | File[],
+		onProgress?: (progress: any) => void,
+	): Promise<any> {
+		const list = Array.isArray(files) ? files : Array.from(files || []);
+		if (list.length === 0) {
+			return Promise.reject(new Error("No files to upload."));
+		}
 
-        return new Promise((resolve, reject) => {
-            const formData = new FormData();
-            for (let i = 0; i < list.length; i++) {
-                formData.append("files[]", list[i]!);
-            }
+		return new Promise((resolve, reject) => {
+			const formData = new FormData();
+			for (let i = 0; i < list.length; i++) {
+				formData.append("files[]", list[i]!);
+			}
 
-            const xhr = new XMLHttpRequest();
+			const xhr = new XMLHttpRequest();
 
-            if (onProgress) {
-                xhr.upload.addEventListener("progress", (event) => {
-                    if (!event.lengthComputable) return;
-                    onProgress({
-                        loaded: event.loaded,
-                        total: event.total,
-                        percent: Math.round((event.loaded / event.total) * 100),
-                        status: "uploading",
-                    });
-                });
-            }
+			if (onProgress) {
+				xhr.upload.addEventListener("progress", (event) => {
+					if (!event.lengthComputable) return;
+					onProgress({
+						loaded: event.loaded,
+						total: event.total,
+						percent: Math.round((event.loaded / event.total) * 100),
+						status: "uploading",
+					});
+				});
+			}
 
-            xhr.addEventListener("error", () => reject(new Error("Upload request failed.")));
-            xhr.addEventListener("abort", () => reject(new Error("Upload aborted.")));
-            xhr.addEventListener("load", () => {
-                if (xhr.status < 200 || xhr.status >= 300) {
-                    reject(new Error(xhr.statusText || `Upload failed (${xhr.status}).`));
-                    return;
-                }
+			xhr.addEventListener("error", () =>
+				reject(new Error("Upload request failed.")),
+			);
+			xhr.addEventListener("abort", () => reject(new Error("Upload aborted.")));
+			xhr.addEventListener("load", () => {
+				if (xhr.status < 200 || xhr.status >= 300) {
+					reject(new Error(xhr.statusText || `Upload failed (${xhr.status}).`));
+					return;
+				}
 
-                try {
-                    const parsed = xhr.responseText ? JSON.parse(xhr.responseText) : null;
-                    resolve(parsed);
-                } catch {
-                    resolve(null);
-                }
-            });
+				try {
+					const parsed = xhr.responseText ? JSON.parse(xhr.responseText) : null;
+					resolve(parsed);
+				} catch {
+					resolve(null);
+				}
+			});
 
-            xhr.open("POST", this.options.uploadUrl);
-            xhr.send(formData);
-        });
-    }
+			xhr.open("POST", this.options.uploadUrl);
+			xhr.send(formData);
+		});
+	}
 
-    public setup() {
-        const globalObj = window as any;
-        const existing = globalObj.__kirewire_http_adapter as HttpClientAdapter | undefined;
-        if (existing && existing !== this) {
-            existing.destroy();
-        }
-        globalObj.__kirewire_http_adapter = this;
+	public setup() {
+		const globalObj = window as any;
+		const existing = globalObj.__kirewire_http_adapter as
+			| HttpClientAdapter
+			| undefined;
+		if (existing && existing !== this) {
+			existing.destroy();
+		}
+		globalObj.__kirewire_http_adapter = this;
 
-        this.onBusFlush = async (event: CustomEvent) => {
-            const { batch, finish, error, setCancel } = event.detail || {};
-            const controller = new AbortController();
-            this.inFlightControllers.add(controller);
-            if (typeof setCancel === "function") {
-                setCancel(() => controller.abort());
-            }
+		this.onBusFlush = async (event: CustomEvent) => {
+			const { batch, finish, error, setCancel } = event.detail || {};
+			const controller = new AbortController();
+			this.inFlightControllers.add(controller);
+			if (typeof setCancel === "function") {
+				setCancel(() => controller.abort());
+			}
 
-            try {
-                const response = await fetch(this.options.url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    credentials: "same-origin",
-                    signal: controller.signal,
-                    body: JSON.stringify({
-                        batch,
-                        pageId: this.options.pageId,
-                    }),
-                });
+			try {
+				const response = await fetch(this.options.url, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "same-origin",
+					signal: controller.signal,
+					body: JSON.stringify({
+						batch,
+						pageId: this.options.pageId,
+					}),
+				});
 
-                if (!response.ok) {
-                    throw new Error(`HTTP Error: ${response.status}`);
-                }
+				if (!response.ok) {
+					throw new Error(`HTTP Error: ${response.status}`);
+				}
 
-                const rawResults = await response.json();
-                const results = toArray(rawResults);
+				const rawResults = await response.json();
+				const results = toArray(rawResults);
 
-                if (this.processReloadInstructions(results)) {
-                    finish(rawResults);
-                    return;
-                }
+				if (this.processReloadInstructions(results)) {
+					finish(rawResults);
+					return;
+				}
 
-                this.applyBatchUpdates(results);
-                finish(rawResults);
-            } catch (err) {
-                error(err);
-            } finally {
-                this.inFlightControllers.delete(controller);
-            }
-        };
+				this.applyBatchUpdates(results);
+				finish(rawResults);
+			} catch (err) {
+				error(err);
+			} finally {
+				this.inFlightControllers.delete(controller);
+			}
+		};
 
-        window.addEventListener("wire:bus:flush" as any, this.onBusFlush as any);
-        this.connectSse();
-    }
+		window.addEventListener("wire:bus:flush" as any, this.onBusFlush as any);
+		this.connectSse();
+	}
 
-    public reconfigure(next: Partial<HttpClientAdapterOptions>) {
-        const current = this.options;
-        const nextUrl = next.url ? String(next.url) : current.url;
-        const nextPageId = next.pageId ? String(next.pageId) : current.pageId;
-        const nextSessionId = next.sessionId
-            ? String(next.sessionId)
-            : current.sessionId;
-        const nextTransport = next.transport ? String(next.transport) : current.transport;
-        const nextUploadUrl = next.uploadUrl
-            ? String(next.uploadUrl)
-            : resolveUploadUrl(nextUrl, current.uploadUrl);
+	public reconfigure(next: Partial<HttpClientAdapterOptions>) {
+		const current = this.options;
+		const nextUrl = next.url ? String(next.url) : current.url;
+		const nextPageId = next.pageId ? String(next.pageId) : current.pageId;
+		const nextSessionId = next.sessionId
+			? String(next.sessionId)
+			: current.sessionId;
+		const nextTransport = next.transport
+			? String(next.transport)
+			: current.transport;
+		const nextUploadUrl = next.uploadUrl
+			? String(next.uploadUrl)
+			: resolveUploadUrl(nextUrl, current.uploadUrl);
 
-        const shouldReconnectSse =
-            nextUrl !== current.url ||
-            nextPageId !== current.pageId ||
-            nextTransport !== current.transport;
+		const shouldReconnectSse =
+			nextUrl !== current.url ||
+			nextPageId !== current.pageId ||
+			nextTransport !== current.transport;
 
-        this.options = {
-            url: nextUrl,
-            pageId: nextPageId,
-            sessionId: nextSessionId,
-            uploadUrl: nextUploadUrl,
-            transport: nextTransport,
-        };
-        Kirewire.pageId = nextPageId;
-        this.lastRevisionByComponent.clear();
+		this.options = {
+			url: nextUrl,
+			pageId: nextPageId,
+			sessionId: nextSessionId,
+			uploadUrl: nextUploadUrl,
+			transport: nextTransport,
+		};
+		Kirewire.pageId = nextPageId;
+		this.lastRevisionByComponent.clear();
 
-        if (shouldReconnectSse) {
-            if (this.sse) {
-                this.sse.close();
-                this.sse = null;
-            }
-            this.connectSse();
-        }
-    }
+		if (shouldReconnectSse) {
+			if (this.sse) {
+				this.sse.close();
+				this.sse = null;
+			}
+			this.connectSse();
+		}
+	}
 
-    public abortAllRequests() {
-        for (const controller of this.inFlightControllers.values()) {
-            try {
-                controller.abort();
-            } catch {}
-        }
-        this.inFlightControllers.clear();
-    }
+	public abortAllRequests() {
+		for (const controller of this.inFlightControllers.values()) {
+			try {
+				controller.abort();
+			} catch {}
+		}
+		this.inFlightControllers.clear();
+	}
 
-    public destroy() {
-        if (this.onBusFlush) {
-            window.removeEventListener("wire:bus:flush" as any, this.onBusFlush as any);
-            this.onBusFlush = null;
-        }
+	public destroy() {
+		if (this.onBusFlush) {
+			window.removeEventListener(
+				"wire:bus:flush" as any,
+				this.onBusFlush as any,
+			);
+			this.onBusFlush = null;
+		}
 
-        if (this.sse) {
-            this.sse.close();
-            this.sse = null;
-        }
-        this.abortAllRequests();
-    }
+		if (this.sse) {
+			this.sse.close();
+			this.sse = null;
+		}
+		this.abortAllRequests();
+	}
 
-    private connectSse() {
-        if (this.options.transport !== "sse") return;
+	private connectSse() {
+		if (this.options.transport !== "sse") return;
 
-        const sseUrl = new URL(`${trimTrailingSlash(this.options.url)}/sse`, window.location.origin);
-        sseUrl.searchParams.set("pageId", this.options.pageId);
+		const sseUrl = new URL(
+			`${trimTrailingSlash(this.options.url)}/sse`,
+			window.location.origin,
+		);
+		sseUrl.searchParams.set("pageId", this.options.pageId);
 
-        this.sse = new EventSource(sseUrl.toString());
-        this.sse.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data?.type === "ping") return;
-                if (data?.type !== "update") return;
-                this.applyComponentUpdate(data);
-            } catch {
-                // Ignore malformed messages to keep connection alive.
-            }
-        };
-        this.sse.onerror = () => { void this.checkSessionAfterDisconnect(); };
-    }
+		this.sse = new EventSource(sseUrl.toString());
+		this.sse.onmessage = (event) => {
+			try {
+				const data = JSON.parse(event.data);
+				if (data?.type === "ping") return;
+				if (data?.type !== "update") return;
+				this.applyComponentUpdate(data);
+			} catch {
+				// Ignore malformed messages to keep connection alive.
+			}
+		};
+		this.sse.onerror = () => {
+			void this.checkSessionAfterDisconnect();
+		};
+	}
 
-    private applyBatchUpdates(results: any[]) {
-        const processedIds = new Set<string>();
+	private applyBatchUpdates(results: any[]) {
+		const processedIds = new Set<string>();
 
-        for (let i = results.length - 1; i >= 0; i--) {
-            const item = results[i];
-            if (this.isReloadInstruction(item)) {
-                this.schedulePageReload(String(item?.reason || "component-missing"));
-                return;
-            }
-            if (!item || item.error) continue;
+		for (let i = results.length - 1; i >= 0; i--) {
+			const item = results[i];
+			if (this.isReloadInstruction(item)) {
+				this.schedulePageReload(String(item?.reason || "component-missing"));
+				return;
+			}
+			if (!item || item.error) continue;
 
-            const id = String(item.id || "");
-            if (!id || processedIds.has(id)) continue;
+			const id = String(item.id || "");
+			if (!id || processedIds.has(id)) continue;
 
-            this.applyComponentUpdate(item);
-            processedIds.add(id);
-        }
-    }
+			this.applyComponentUpdate(item);
+			processedIds.add(id);
+		}
+	}
 
-    private applyComponentUpdate(payload: any) {
-        const id = String(payload?.id || "");
-        if (!id) return;
+	private applyComponentUpdate(payload: any) {
+		const id = String(payload?.id || "");
+		if (!id) return;
 
-        const revision = Number(payload?.revision);
-        if (Number.isFinite(revision)) {
-            const lastRevision = this.lastRevisionByComponent.get(id) ?? 0;
-            if (revision <= lastRevision) return;
-            this.lastRevisionByComponent.set(id, revision);
-        }
+		const revision = Number(payload?.revision);
+		if (Number.isFinite(revision)) {
+			const lastRevision = this.lastRevisionByComponent.get(id) ?? 0;
+			if (revision <= lastRevision) return;
+			this.lastRevisionByComponent.set(id, revision);
+		}
 
-        const root = document.querySelector(
-            `[wire\\:id="${id}"], [wire-id="${id}"]`,
-        ) as HTMLElement | null;
+		const root = document.querySelector(
+			`[wire\\:id="${id}"], [wire-id="${id}"]`,
+		) as HTMLElement | null;
 
-        if (root) {
-            if (payload.state !== undefined) {
-                root.setAttribute("wire:state", JSON.stringify(payload.state));
-            } else {
-                root.removeAttribute("wire:state");
-            }
-            root.removeAttribute("wire:checksum");
-        }
+		if (root) {
+			if (payload.state !== undefined) {
+				root.setAttribute("wire:state", JSON.stringify(payload.state));
+			} else {
+				root.removeAttribute("wire:state");
+			}
+			root.removeAttribute("wire:checksum");
+		}
 
-        let nextRoot = root;
-        if (root && typeof payload?.html === "string" && payload.html.length > 0) {
-            const snapshots = snapshotStreams(root, payload.effects);
+		let nextRoot = root;
+		if (root && typeof payload?.html === "string" && payload.html.length > 0) {
+			const snapshots = snapshotStreams(root, payload.effects);
 
-            Kirewire.patch(root, payload.html);
+			Kirewire.patch(root, payload.html);
 
-            nextRoot = document.querySelector(
-                `[wire\\:id="${id}"], [wire-id="${id}"]`,
-            ) as HTMLElement | null;
-            if (nextRoot) {
-                restoreStreams(nextRoot, snapshots);
-            }
-        }
+			nextRoot = document.querySelector(
+				`[wire\\:id="${id}"], [wire-id="${id}"]`,
+			) as HTMLElement | null;
+			if (nextRoot) {
+				restoreStreams(nextRoot, snapshots);
+			}
+		}
 
-        if (nextRoot && payload.state && typeof payload.state === "object") {
-            syncModelElements(nextRoot, payload.state);
-        }
+		if (nextRoot && payload.state && typeof payload.state === "object") {
+			syncModelElements(nextRoot, payload.state);
+		}
 
-        if (Array.isArray(payload?.effects)) {
-            Kirewire.processEffects(payload.effects, id);
-        }
+		if (Array.isArray(payload?.effects)) {
+			Kirewire.processEffects(payload.effects, id);
+		}
 
-        Kirewire.emitSync("component:update", {
-            id,
-            state: payload?.state || {},
-            html: payload?.html || "",
-            effects: Array.isArray(payload?.effects) ? payload.effects : [],
-        });
-    }
+		Kirewire.emitSync("component:update", {
+			id,
+			state: payload?.state || {},
+			html: payload?.html || "",
+			effects: Array.isArray(payload?.effects) ? payload.effects : [],
+		});
+	}
 
-    private processReloadInstructions(results: any[]): boolean {
-        for (let i = 0; i < results.length; i++) {
-            const item = results[i];
-            if (!this.isReloadInstruction(item)) continue;
-            this.schedulePageReload(String(item?.reason || "component-missing"));
-            return true;
-        }
-        return false;
-    }
+	private processReloadInstructions(results: any[]): boolean {
+		for (let i = 0; i < results.length; i++) {
+			const item = results[i];
+			if (!this.isReloadInstruction(item)) continue;
+			this.schedulePageReload(String(item?.reason || "component-missing"));
+			return true;
+		}
+		return false;
+	}
 
-    private isReloadInstruction(item: any): boolean {
-        return !!item && item.reload === true;
-    }
+	private isReloadInstruction(item: any): boolean {
+		return !!item && item.reload === true;
+	}
 
-    private schedulePageReload(reason: string) {
-        if (this.reloadScheduled) return;
-        this.reloadScheduled = true;
+	private schedulePageReload(reason: string) {
+		if (this.reloadScheduled) return;
+		this.reloadScheduled = true;
 
-        const navigate = (window as any).KirewireNavigate;
-        if (navigate && typeof navigate.refreshCurrentPage === "function") {
-            navigate.refreshCurrentPage({ replace: true, force: true, reason });
-            return;
-        }
-        window.location.reload();
-    }
+		const navigate = (window as any).KirewireNavigate;
+		if (navigate && typeof navigate.refreshCurrentPage === "function") {
+			navigate.refreshCurrentPage({ replace: true, force: true, reason });
+			return;
+		}
+		window.location.reload();
+	}
 
-    private async checkSessionAfterDisconnect() {
-        if (this.sessionCheckInFlight) return;
+	private async checkSessionAfterDisconnect() {
+		if (this.sessionCheckInFlight) return;
 
-        const now = Date.now();
-        if (now - this.lastSessionCheckAt < this.sessionCheckIntervalMs) return;
-        this.lastSessionCheckAt = now;
-        this.sessionCheckInFlight = true;
+		const now = Date.now();
+		if (now - this.lastSessionCheckAt < this.sessionCheckIntervalMs) return;
+		this.lastSessionCheckAt = now;
+		this.sessionCheckInFlight = true;
 
-        try {
-            const ended = await this.isSessionFinished();
-            if (ended) {
-                const navigate = (window as any).KirewireNavigate;
-                if (navigate && typeof navigate.refreshCurrentPage === "function") {
-                    navigate.refreshCurrentPage({ replace: true, force: true, reason: "session-expired" });
-                } else {
-                    window.location.reload();
-                }
-            }
-        } finally {
-            this.sessionCheckInFlight = false;
-        }
-    }
+		try {
+			const ended = await this.isSessionFinished();
+			if (ended) {
+				const navigate = (window as any).KirewireNavigate;
+				if (navigate && typeof navigate.refreshCurrentPage === "function") {
+					navigate.refreshCurrentPage({
+						replace: true,
+						force: true,
+						reason: "session-expired",
+					});
+				} else {
+					window.location.reload();
+				}
+			}
+		} finally {
+			this.sessionCheckInFlight = false;
+		}
+	}
 
-    private async isSessionFinished(): Promise<boolean> {
-        const sessionUrl = new URL(`${trimTrailingSlash(this.options.url)}/session`, window.location.origin);
-        sessionUrl.searchParams.set("pageId", this.options.pageId);
-        sessionUrl.searchParams.set("sessionId", this.options.sessionId);
+	private async isSessionFinished(): Promise<boolean> {
+		const sessionUrl = new URL(
+			`${trimTrailingSlash(this.options.url)}/session`,
+			window.location.origin,
+		);
+		sessionUrl.searchParams.set("pageId", this.options.pageId);
+		sessionUrl.searchParams.set("sessionId", this.options.sessionId);
 
-        let response: Response;
-        try {
-            response = await fetch(sessionUrl.toString(), {
-                method: "GET",
-                cache: "no-store",
-                credentials: "same-origin",
-                headers: { Accept: "application/json" },
-            });
-        } catch {
-            return false;
-        }
+		let response: Response;
+		try {
+			response = await fetch(sessionUrl.toString(), {
+				method: "GET",
+				cache: "no-store",
+				credentials: "same-origin",
+				headers: { Accept: "application/json" },
+			});
+		} catch {
+			return false;
+		}
 
-        if (response.status === 410 || response.status === 401 || response.status === 403) {
-            return true;
-        }
+		if (
+			response.status === 410 ||
+			response.status === 401 ||
+			response.status === 403
+		) {
+			return true;
+		}
 
-        if (!response.ok) return false;
+		if (!response.ok) return false;
 
-        try {
-            const payload = await response.json();
-            return payload?.active === false || payload?.pageActive === false;
-        } catch {
-            return false;
-        }
-    }
+		try {
+			const payload = await response.json();
+			return payload?.active === false || payload?.pageActive === false;
+		} catch {
+			return false;
+		}
+	}
 }

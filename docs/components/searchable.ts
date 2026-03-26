@@ -1,4 +1,5 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
+
 interface User {
 	id: number;
 	name: string;
@@ -37,4 +38,3 @@ export default class Searchable extends Component {
 		return this.view("components.searchable");
 	}
 }
-

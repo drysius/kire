@@ -107,6 +107,18 @@ describe("KireMarkdown", () => {
 		expect(html).toContain("&#123;&#123; value &#125;&#125;");
 	});
 
+	it("should optionally wrap code blocks with a custom mockup class", async () => {
+		const kire = new Kire({ silent: true }).plugin(KireMarkdown, {
+			codeBlockClass: "mockup-code w-full",
+		});
+		const html = await kire.mdrender("```ts\nconst answer = 42;\n```");
+
+		expect(html).toContain('<div class="mockup-code w-full"');
+		expect(html).toContain('data-code-lang="ts"');
+		expect(html).toContain("<pre");
+		expect(html).toContain("<code");
+	});
+
 	it("should treat npm scoped package names as plain text", async () => {
 		const kire = new Kire({ silent: true }).plugin(KireMarkdown);
 		const html = await kire.mdrender("# @kirejs/wire");

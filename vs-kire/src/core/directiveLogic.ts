@@ -4,9 +4,7 @@ import { kireStore } from "./store";
 
 function normalizeCloseByTokens(value: unknown): string[] {
 	if (Array.isArray(value)) {
-		return value
-			.map((entry) => String(entry || "").trim())
-			.filter(Boolean);
+		return value.map((entry) => String(entry || "").trim()).filter(Boolean);
 	}
 
 	if (typeof value === "string" && value.trim()) {
@@ -45,7 +43,10 @@ export function getDirectiveCloseTokens(name: string): string[] {
 	return Array.from(tokens);
 }
 
-export function directiveOpensBlock(text: string, call: DirectiveCall): boolean {
+export function directiveOpensBlock(
+	text: string,
+	call: DirectiveCall,
+): boolean {
 	const def = kireStore.getState().directives.get(call.name);
 	if (!def?.children) return false;
 	if (def.children === true) return true;
@@ -79,14 +80,20 @@ function findMatchingDirectiveStackIndex(
 ): number {
 	for (let index = stack.length - 1; index >= 0; index--) {
 		const name = stack[index]!;
-		if (closeToken === "end" || getDirectiveCloseTokens(name).includes(closeToken)) {
+		if (
+			closeToken === "end" ||
+			getDirectiveCloseTokens(name).includes(closeToken)
+		) {
 			return index;
 		}
 	}
 	return -1;
 }
 
-export function getDirectiveContextStack(text: string, offset: number): string[] {
+export function getDirectiveContextStack(
+	text: string,
+	offset: number,
+): string[] {
 	const stack: string[] = [];
 	const state = kireStore.getState();
 	const calls = scanDirectives(text);

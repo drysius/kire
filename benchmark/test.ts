@@ -52,12 +52,10 @@ const kire = new Kire({
 });
 
 kire.namespace("components", "components");
-kire.$files[kire.resolvePath("components.user-row")] = templates.componentUserRow;
+kire.$files[kire.resolvePath("components.user-row")] =
+	templates.componentUserRow;
 
-const compiledFlat = kire.compile(
-	templates.kire,
-	"__inspect_kire_flat__.kire",
-);
+const compiledFlat = kire.compile(templates.kire, "__inspect_kire_flat__.kire");
 const compiledComponents = kire.compile(
 	templates.kire_components,
 	"__inspect_kire_components__.kire",
@@ -79,11 +77,7 @@ writeFileSync(
 	String(compiledFlat.code || ""),
 	"utf8",
 );
-writeFileSync(
-	join(outDir, "flat.main.fn.js"),
-	String(compiledFlat.fn),
-	"utf8",
-);
+writeFileSync(join(outDir, "flat.main.fn.js"), String(compiledFlat.fn), "utf8");
 writeFileSync(
 	join(outDir, "components.main.code.js"),
 	String(compiledComponents.code || ""),

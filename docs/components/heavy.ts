@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "heavy" })
 export default class Heavy extends Component {
 	@Variable("boolean")
@@ -18,9 +18,8 @@ export default class Heavy extends Component {
 		];
 		this.loaded = true;
 	}
-	
+
 	render() {
 		return this.view("components.heavy");
 	}
 }
-

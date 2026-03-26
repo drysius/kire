@@ -14,4 +14,3 @@ export default class Streamer extends Component {
 		return this.view("components.streamer");
 	}
 }
-

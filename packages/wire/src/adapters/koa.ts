@@ -1,4 +1,7 @@
-import { createVanillaWireAdapter, type VanillaWireAdapterOptions } from "./vanilla";
+import {
+	createVanillaWireAdapter,
+	type VanillaWireAdapterOptions,
+} from "./vanilla";
 
 function pathnameFromUrl(rawUrl: string): string {
 	try {
@@ -14,7 +17,10 @@ function pathnameFromUrl(rawUrl: string): string {
 export function KoaPlugin(options: VanillaWireAdapterOptions) {
 	const adapter = createVanillaWireAdapter(options);
 
-	return async function kirewireKoaMiddleware(ctx: any, next: () => Promise<any>) {
+	return async function kirewireKoaMiddleware(
+		ctx: any,
+		next: () => Promise<any>,
+	) {
 		const rawUrl = String(ctx?.originalUrl || ctx?.url || "");
 		const path = pathnameFromUrl(rawUrl);
 		if (!path.startsWith(adapter.route)) {

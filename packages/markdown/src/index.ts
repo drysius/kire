@@ -8,7 +8,51 @@ declare module "kire" {
 	}
 }
 
-export type MarkdownOptions = {};
+export type MarkdownOptions = {
+	codeBlockClass?: string;
+};
+
+function extractCodeLanguage(preAttrs: string, innerHtml: string): string {
+	const preLang = /\bdata-code-lang\s*=\s*["']([^"']+)["']/i.exec(preAttrs);
+	if (preLang?.[1]) return String(preLang[1]).trim().toLowerCase();
+
+	const codeClass = /<code\b[^>]*\bclass\s*=\s*["']([^"']*)["']/i.exec(
+		innerHtml,
+	);
+	if (!codeClass?.[1]) return "text";
+
+	const languageClass = codeClass[1]
+		.split(/\s+/)
+		.map((token) => token.trim())
+		.find((token) => token.startsWith("language-"));
+
+	if (!languageClass) return "text";
+	return languageClass.slice("language-".length).trim().toLowerCase() || "text";
+}
+
+function decorateCodeBlocks(
+	html: string,
+	options?: { codeBlockClass?: string },
+): string {
+	const wrapperClass = String(options?.codeBlockClass || "").trim();
+	if (!wrapperClass) return html;
+
+	return html.replace(
+		/<pre\b([^>]*)>([\s\S]*?)<\/pre>/gi,
+		(segment, rawPreAttrs, innerHtml) => {
+			if (!/<code\b/i.test(innerHtml)) return segment;
+			if (/\bdata-kire-code-wrapper\s*=/.test(rawPreAttrs)) return segment;
+
+			const preAttrs = String(rawPreAttrs || "");
+			const language = extractCodeLanguage(preAttrs, innerHtml);
+			const withLanguage = /\bdata-code-lang\s*=/.test(preAttrs)
+				? preAttrs
+				: `${preAttrs} data-code-lang="${language}"`;
+
+			return `<div class="${wrapperClass}" data-kire-code-wrapper="1"><pre${withLanguage}>${innerHtml}</pre></div>`;
+		},
+	);
+}
 
 const IGNORED_SCAN_DIRS = new Set([
 	".git",
@@ -150,7 +194,7 @@ function protectKireSyntaxInCode(html: string): string {
 	return out;
 }
 
-export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
+export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, opts) => {
 	kire.kireSchema({
 		name: "@kirejs/markdown",
 		author: "Drysius",
@@ -161,7 +205,9 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 	const _fnCache = kire.cached("@kirejs/markdown");
 
 	kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {
-		const html = protectKireSyntaxInCode(await marked.parse(content));
+		const html = protectKireSyntaxInCode(
+			decorateCodeBlocks(await marked.parse(content), opts),
+		);
 		return (await kire.render(html, locals)) as any;
 	};
 
@@ -175,7 +221,9 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, _opts) => {
 		try {
 			const resolved = resolveMarkdownPath(kire, path);
 			const content = kire.readFile(resolved);
-			const htmlTemplate = protectKireSyntaxInCode(await marked.parse(content));
+			const htmlTemplate = protectKireSyntaxInCode(
+				decorateCodeBlocks(await marked.parse(content), opts),
+			);
 			const entry = kire.compile(htmlTemplate, resolved);
 
 			if (kire.$production) _fnCache[cacheKey] = entry.fn;

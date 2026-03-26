@@ -1,4 +1,4 @@
-import { Component, Wire, Variable } from "../lib/wire";
+import { Component, Variable, Wire } from "../lib/wire";
 @Wire({ name: "textarea-test" })
 export default class TextareaTest extends Component {
 	@Variable("string")
@@ -15,5 +15,3 @@ export default class TextareaTest extends Component {
 		return this.view("components.textarea-test");
 	}
 }
-
-

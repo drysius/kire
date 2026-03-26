@@ -64,8 +64,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		description:
 			"Renders another Kire view as a component and exposes nested @slot blocks to it.",
-		example:
-			`@component("layouts.app", { title: "Dashboard" })\n  @slot("header")\n    <h1>Dashboard</h1>\n  @end\n@end`,
+		example: `@component("layouts.app", { title: "Dashboard" })\n  @slot("header")\n    <h1>Dashboard</h1>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {
@@ -87,7 +86,7 @@ export default (kire: Kire<any>) => {
                 const $slots = new this.NullProtoObj();
                 const _oldRes${id} = $kire_response; $kire_response = "";`);
 			api.renderChildren();
-				api.write(`
+			api.write(`
 	                if (!$slots.default) $slots.default = $kire_response;
 	                $kire_response = _oldRes${id};
 	                const _oldProps${id} = $props;
@@ -107,8 +106,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		description:
 			"Alias for @component(path, locals?). Commonly used for page layouts.",
-		example:
-			`@layout("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
+		example: `@layout("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {
@@ -124,8 +122,7 @@ export default (kire: Kire<any>) => {
 		children: true,
 		description:
 			"Alias for @component(path, locals?). Mirrors Blade-style template inheritance naming.",
-		example:
-			`@extends("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
+		example: `@extends("layouts.app")\n  @section("content")\n    <p>Hello</p>\n  @end\n@end`,
 		isDependency: (args) => {
 			const rawPath = args[0];
 			if (typeof rawPath === "string") {

@@ -453,10 +453,8 @@ export class Kirewire extends EventController {
 			this.propertyClasses = next.propertyClasses;
 		if (next.sessions instanceof SessionManager) this.sessions = next.sessions;
 		if (next.references instanceof Map) this.references = next.references;
-		if (next.routes instanceof Map) this.routes = next.routes as Map<
-			string,
-			RegisteredRoute
-		>;
+		if (next.routes instanceof Map)
+			this.routes = next.routes as Map<string, RegisteredRoute>;
 		return this;
 	}
 

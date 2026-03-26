@@ -2,8 +2,8 @@ import * as vscode from "vscode";
 import {
 	type AttributeDefinition,
 	type ElementDefinition,
-	type PackageMetadata,
 	kireStore,
+	type PackageMetadata,
 } from "../../core/store";
 import { findBestWildcardMatch } from "../../utils/wildcard";
 
@@ -384,11 +384,7 @@ function resolveElement(word: string): ResolvedElement | undefined {
 		};
 	}
 
-	const bestMatch = findBestWildcardMatch(
-		elements.entries(),
-		word,
-		"[^\\s>]+",
-	);
+	const bestMatch = findBestWildcardMatch(elements.entries(), word, "[^\\s>]+");
 
 	if (!bestMatch) return undefined;
 	return {

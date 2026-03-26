@@ -168,10 +168,9 @@ describe("Kire Core (Bun)", () => {
 
 	test("should mark template async when await keyword is actually used", async () => {
 		const asyncKire = new Kire({ production: true, async: true, silent: true });
-		const result = await asyncKire.render(
-			"{{ await Promise.resolve('ok') }}",
-			{ Promise },
-		);
+		const result = await asyncKire.render("{{ await Promise.resolve('ok') }}", {
+			Promise,
+		});
 		expect(result).toBe("ok");
 	});
 

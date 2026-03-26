@@ -44,8 +44,7 @@ export default (kire: Kire<any>) => {
 		closeBy: [`enderror`, `end`],
 		description:
 			"Renders the block when the selected field has a validation error and exposes `$message` inside it.",
-		example:
-			`@error("email")\n  <span class="error">{{ $message }}</span>\n@end`,
+		example: `@error("email")\n  <span class="error">{{ $message }}</span>\n@end`,
 		scope: () => [`$message`],
 		onCall: (api) => {
 			const field = api.getArgument(0) ?? api.getAttribute("field");

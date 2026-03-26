@@ -38,10 +38,13 @@ jobs:
       - name: Install Dependencies
         run: bun install
 
+      - name: Build Extension Bundle
+        run: bun run bundle
+
       - name: Package Extension (Node/VSCE)
         id: package_step
         run: |
-          npx @vscode/vsce package
+          npx @vscode/vsce package --no-dependencies
           echo "Generated: $(ls *.vsix)"
 
       - name: Upload Artifact

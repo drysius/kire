@@ -1,58 +1,60 @@
-import { Component, Wire, Variable } from "../lib/wire";
-import { searchDocs, type DocsPage } from "../lib/docs-index";
+import { type DocsPage, searchDocs } from "../lib/docs-index";
+import { Component, Variable, Wire } from "../lib/wire";
 
-type DocsResult = Pick<DocsPage, "id" | "href" | "title" | "section" | "summary">;
+type DocsResult = Pick<
+	DocsPage,
+	"id" | "href" | "title" | "section" | "summary"
+>;
 
 @Wire({ name: "docs-search" })
 export default class DocsSearch extends Component {
-    @Variable("string")
-    public query = "";
-    @Variable("string")
-    public placeholder = "Search docs, directives, packages...";
-    @Variable("number")
-    public limit = 8;
+	@Variable("string")
+	public query = "";
+	@Variable("string")
+	public placeholder = "Search docs, directives, packages...";
+	@Variable("number")
+	public limit = 8;
 
-    get trimmedQuery(): string {
-        return String(this.query || "").trim();
-    }
+	get trimmedQuery(): string {
+		return String(this.query || "").trim();
+	}
 
-    get hasQuery(): boolean {
-        return this.trimmedQuery.length > 0;
-    }
+	get hasQuery(): boolean {
+		return this.trimmedQuery.length > 0;
+	}
 
-    get searchHref(): string {
-        if (!this.hasQuery) return "/docs/search";
-        return `/docs/search?q=${encodeURIComponent(this.trimmedQuery)}`;
-    }
+	get searchHref(): string {
+		if (!this.hasQuery) return "/docs/search";
+		return `/docs/search?q=${encodeURIComponent(this.trimmedQuery)}`;
+	}
 
-    get results(): DocsResult[] {
-        if (!this.hasQuery) return [];
+	get results(): DocsResult[] {
+		if (!this.hasQuery) return [];
 
-        const maxResults = Number.isFinite(Number(this.limit))
-            ? Math.max(1, Math.floor(Number(this.limit)))
-            : 8;
+		const maxResults = Number.isFinite(Number(this.limit))
+			? Math.max(1, Math.floor(Number(this.limit)))
+			: 8;
 
-        return searchDocs(this.trimmedQuery)
-            .slice(0, maxResults)
-            .map((item) => ({
-                id: item.id,
-                href: item.href,
-                title: item.title,
-                section: item.section,
-                summary: item.summary,
-            }));
-    }
+		return searchDocs(this.trimmedQuery)
+			.slice(0, maxResults)
+			.map((item) => ({
+				id: item.id,
+				href: item.href,
+				title: item.title,
+				section: item.section,
+				summary: item.summary,
+			}));
+	}
 
-    get hasResults(): boolean {
-        return this.results.length > 0;
-    }
+	get hasResults(): boolean {
+		return this.results.length > 0;
+	}
 
-    async clear() {
-        this.query = "";
-    }
+	async clear() {
+		this.query = "";
+	}
 
-    render() {
-        return this.view("components.docs-search");
-    }
+	render() {
+		return this.view("components.docs-search");
+	}
 }
-

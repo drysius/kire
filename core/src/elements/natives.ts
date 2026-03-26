@@ -110,7 +110,7 @@ export default (kire: Kire<any>) => {
 
 	const registerDirectiveElementAlias = (
 		directiveName: string,
-	options: {
+		options: {
 			description: string;
 			example: string;
 			void?: boolean;
@@ -127,7 +127,8 @@ export default (kire: Kire<any>) => {
 			description: options.description,
 			example: options.example,
 			attributes: options.attributes,
-			relatedTo: options.relatedTo || relateKireNames(directive.relatedTo || []),
+			relatedTo:
+				options.relatedTo || relateKireNames(directive.relatedTo || []),
 			isDependency: directive.isDependency,
 			scope: directive.scope,
 			onCall: (api) => {
@@ -160,7 +161,8 @@ export default (kire: Kire<any>) => {
 	};
 
 	registerDirectiveElementAlias("unless", {
-		description: "Element alias for @unless that renders children when cond is falsy.",
+		description:
+			"Element alias for @unless that renders children when cond is falsy.",
 		example: '<kire:unless cond="user">Guest only</kire:unless>',
 		attributes: [
 			directiveElementAttr(
@@ -175,7 +177,8 @@ export default (kire: Kire<any>) => {
 	registerDirectiveElementAlias("isset", {
 		description:
 			"Element alias for @isset that renders children when expr is defined and not null.",
-		example: '<kire:isset expr="user.avatar"><img src="{{ user.avatar }}"></kire:isset>',
+		example:
+			'<kire:isset expr="user.avatar"><img src="{{ user.avatar }}"></kire:isset>',
 		attributes: [
 			directiveElementAttr(
 				"expr",
@@ -188,7 +191,8 @@ export default (kire: Kire<any>) => {
 	registerDirectiveElementAlias("include", {
 		description:
 			"Element alias for @include that renders another Kire view inline.",
-		example: '<kire:include path="partials.card" locals="{ title: pageTitle }" />',
+		example:
+			'<kire:include path="partials.card" locals="{ title: pageTitle }" />',
 		void: true,
 		attributes: [
 			directiveElementAttr(
@@ -314,8 +318,7 @@ export default (kire: Kire<any>) => {
 	registerDirectiveElementAlias("defined", {
 		description:
 			"Element alias for @defined that renders a named fragment or its inline fallback children.",
-		example:
-			'<kire:defined name="hero"><h1>Fallback</h1></kire:defined>',
+		example: '<kire:defined name="hero"><h1>Fallback</h1></kire:defined>',
 		attributes: [
 			directiveElementAttr(
 				"name",
@@ -395,7 +398,8 @@ export default (kire: Kire<any>) => {
 			{
 				name: "cond",
 				type: "javascript",
-				description: "Expression that controls whether the children are rendered.",
+				description:
+					"Expression that controls whether the children are rendered.",
 			},
 		],
 		onCall: (api) => {
@@ -519,7 +523,8 @@ export default (kire: Kire<any>) => {
 			{
 				name: "value",
 				type: "javascript",
-				description: "Case expression compared against the parent switch value.",
+				description:
+					"Case expression compared against the parent switch value.",
 			},
 		],
 		onCall: (api) => {
@@ -545,8 +550,7 @@ export default (kire: Kire<any>) => {
 		name: /^x-/,
 		description:
 			"Generic component element namespace. Use x-* tags to render registered Kire components and x-slot to define named slots.",
-		example:
-			`<x-card title="Dashboard">\n  <x-slot:name>Header</x-slot:name>\n  <p>Body</p>\n</x-card>`,
+		example: `<x-card title="Dashboard">\n  <x-slot:name>Header</x-slot:name>\n  <p>Body</p>\n</x-card>`,
 		onCall: (api) => {
 			const tagName = api.node.tagName!;
 			if (
@@ -591,57 +595,57 @@ export default (kire: Kire<any>) => {
 			const depId = api.depend(componentPath);
 			const dep = api.getDependency(componentPath);
 
-				const attrs = api.node.attributes || new NullProtoObj();
-				const attrMeta = api.node.attributeMeta || new NullProtoObj();
-				const hasChildren = Boolean(
-					api.node.children && api.node.children.length > 0,
-				);
-				const propsStr = Object.keys(attrs)
-					.map((k) => {
-						const prop = toComponentPropExpression(
+			const attrs = api.node.attributes || new NullProtoObj();
+			const attrMeta = api.node.attributeMeta || new NullProtoObj();
+			const hasChildren = Boolean(
+				api.node.children && api.node.children.length > 0,
+			);
+			const propsStr = Object.keys(attrs)
+				.map((k) => {
+					const prop = toComponentPropExpression(
 						api,
 						k,
 						attrs[k]!,
 						!!attrMeta[k]?.quoted,
 					);
 					return `${JSON.stringify(prop.name)}: ${prop.expression}`;
-					})
-					.join(",");
+				})
+				.join(",");
 
-				if (hasChildren) {
-					api.write(`{
+			if (hasChildren) {
+				api.write(`{
 	                const $slots = new this.NullProtoObj();
 	                const _oldRes${id} = $kire_response; $kire_response = "";`);
-				} else {
-					api.write(`{`);
+			} else {
+				api.write(`{`);
+			}
+
+			if (api.node.children) {
+				const slots = api.node.children.filter((c) => c.tagName === "x-slot");
+				const defContent = api.node.children.filter(
+					(c) => c.tagName !== "x-slot",
+				);
+				if (hasChildren) {
+					api.renderChildren(slots);
 				}
 
-				if (api.node.children) {
-					const slots = api.node.children.filter((c) => c.tagName === "x-slot");
-					const defContent = api.node.children.filter(
-						(c) => c.tagName !== "x-slot",
-					);
-					if (hasChildren) {
-						api.renderChildren(slots);
-					}
-
-					// Trim default content to avoid whitespace issues in tests and layouts
-					const hasRealContent = defContent.some(
-						(c) => c.type !== "text" || c.content?.trim(),
-					);
-					if (hasChildren && hasRealContent) {
-						const defId = api.uid("def");
-						api.write(
-							`{ const _defRes${defId} = $kire_response; $kire_response = "";`,
+				// Trim default content to avoid whitespace issues in tests and layouts
+				const hasRealContent = defContent.some(
+					(c) => c.type !== "text" || c.content?.trim(),
+				);
+				if (hasChildren && hasRealContent) {
+					const defId = api.uid("def");
+					api.write(
+						`{ const _defRes${defId} = $kire_response; $kire_response = "";`,
 					);
 					api.renderChildren(defContent);
 					api.write(
 						`$slots.default = $kire_response.trim(); $kire_response = _defRes${defId}; }`,
-						);
-					}
+					);
 				}
+			}
 
-					api.write(`
+			api.write(`
 	                ${hasChildren ? `$kire_response = _oldRes${id};` : ""}
 	                const _oldProps${id} = $props;
 	                $props = Object.assign(Object.create($globals), _oldProps${id}, { ${propsStr} }${hasChildren ? ", { slots: $slots }" : ""});

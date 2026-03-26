@@ -265,7 +265,9 @@ describe("HttpAdapter upload parsing", () => {
 		expect(moved.length).toBe(1);
 		expect(String(moved[0]?.path || "")).toContain("moved");
 		expect(existsSync(String(moved[0]?.path || ""))).toBe(true);
-		expect(readFileSync(String(moved[0]?.path || ""), "utf8")).toBe("hello upload");
+		expect(readFileSync(String(moved[0]?.path || ""), "utf8")).toBe(
+			"hello upload",
+		);
 	});
 
 	test("autoclean removes stale upload files on adapter setup", async () => {
