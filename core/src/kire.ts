@@ -199,7 +199,21 @@ export class Kire<Asyncronos extends boolean = true> {
 				return cached?.fn ? cached.fn : s;
 			},
 			set: (target, prop, value) => {
+				if (typeof prop === "string") {
+					this.setVirtualFile(prop, value as string | KireTplFunction, target);
+					return true;
+				}
 				return Reflect.set(target, prop, value);
+			},
+			deleteProperty: (target, prop) => {
+				if (typeof prop === "string") {
+					for (const alias of this.getVirtualFileAliases(prop)) {
+						Reflect.deleteProperty(target, alias);
+						cache.delete(alias);
+					}
+					return true;
+				}
+				return Reflect.deleteProperty(target, prop);
 			},
 		}) as any;
 	}
@@ -359,10 +373,6 @@ export class Kire<Asyncronos extends boolean = true> {
 		conf.root = options.root ? plat.resolve(options.root) : plat.cwd();
 		conf.namespaces = new NullProtoObj();
 
-		if (options.files) {
-			this["~store"].files = { ...options.files };
-		}
-
 		Object.defineProperty(this, "$globals", {
 			value: this["~store"].globals,
 			writable: true,
@@ -398,8 +408,59 @@ export class Kire<Asyncronos extends boolean = true> {
 			configurable: true,
 		});
 
+		if (options.files) {
+			for (const [path, value] of Object.entries(options.files)) {
+				this.setVirtualFile(path, value, this["~store"].files);
+			}
+		}
+
 		if (!options.emptykire) {
 			this.plugin(KireDirectives);
+		}
+	}
+
+	private getVirtualFileAliases(filepath: string): string[] {
+		const normalized = String(filepath || "").replace(/\\/g, "/");
+		if (!normalized) return [];
+
+		const aliases = new Set<string>([normalized]);
+		const platform = this["~store"].platform;
+		const config = this["~store"].config;
+
+		try {
+			const resolved = resolvePathUtil(normalized, config, platform).replace(
+				/\\/g,
+				"/",
+			);
+			aliases.add(resolved);
+
+			if (platform.isAbsolute(resolved)) {
+				const relative = platform.relative(config.root, resolved).replace(
+					/\\/g,
+					"/",
+				);
+				if (
+					relative &&
+					relative !== "." &&
+					!relative.startsWith("..") &&
+					!platform.isAbsolute(relative)
+				) {
+					aliases.add(relative);
+				}
+			}
+		} catch {}
+
+		return Array.from(aliases);
+	}
+
+	private setVirtualFile(
+		filepath: string,
+		value: string | KireTplFunction,
+		target = this["~store"].files,
+	) {
+		for (const alias of this.getVirtualFileAliases(filepath)) {
+			target[alias] = value;
+			this.$cache.files.delete(alias);
 		}
 	}
 

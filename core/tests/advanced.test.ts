@@ -153,12 +153,56 @@ describe("Kire Advanced Features", () => {
 		}
 	});
 
+	test("Error Handling: should map <?js ?> runtime errors to the real source line", async () => {
+		const source = [
+			"<html>",
+			"<body>",
+			"    <?js",
+			"        const x = it.user.nested.property;",
+			"    ?>",
+			"</body>",
+			"</html>",
+		].join("\n");
+		const k = new Kire({
+			production: false,
+			silent: true,
+			files: {
+				"test.kire": source,
+			},
+		});
+
+		try {
+			await k.view("test.kire", { user: {} });
+			expect.unreachable("Should have thrown a js block runtime error");
+		} catch (e: any) {
+			expect(e).toBeInstanceOf(KireError);
+			expect(e.stack).toContain("test.kire:4");
+
+			const html = k.renderError(e);
+			expect(html).toContain("test.kire:4");
+			expect(html).toContain("Visual Tree");
+			expect(html).toContain("Copy JSON");
+		}
+	});
+
 	test("VFiles: should resolve templates from memory", async () => {
 		const k = new Kire();
 		k["~store"].files[k.resolvePath("partials/header")] = "<h1>Header</h1>";
 
 		const result = await k.render("@include('partials.header')");
 		expect(result).toBe("<h1>Header</h1>");
+	});
+
+	test("VFiles: should resolve constructor files registered with relative keys", async () => {
+		const k = new Kire({
+			silent: true,
+			files: {
+				"test.kire": "<h1>Hello World</h1>",
+			},
+		});
+
+		const result = await k.view("test.kire");
+		expect(result).toBe("<h1>Hello World</h1>");
 	});
 
 	test("readFile: should use normalized path for platform access", () => {

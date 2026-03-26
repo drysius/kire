@@ -340,7 +340,16 @@ export class Compiler {
 			}
 
 			for (const m of this.mappings) {
-				const genLine = bodyLineOffsets[m.bodyIndex];
+				let targetBodyIndex = m.bodyIndex;
+				if (
+					typeof this.body[targetBodyIndex] === "string" &&
+					this.body[targetBodyIndex]!.trim().startsWith("// kire-line:") &&
+					targetBodyIndex + 1 < this.body.length
+				) {
+					targetBodyIndex += 1;
+				}
+
+				const genLine = bodyLineOffsets[targetBodyIndex];
 				if (genLine !== undefined && m.node.loc) {
 					this.generator.addMapping({
 						genLine,
