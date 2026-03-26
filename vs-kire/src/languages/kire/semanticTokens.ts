@@ -4,6 +4,7 @@ import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
 import { extractTagAttributes } from "../../utils/embedded";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
+import { findBestWildcardMatch } from "../../utils/wildcard";
 
 const tokenTypes = [
 	"keyword",
@@ -68,14 +69,11 @@ export class KireSemanticTokensProvider
 			}
 
 			if (state.attributes.has(name)) return true;
-			for (const key of state.attributes.keys()) {
-				if (!key.includes("*")) continue;
-				const pattern = new RegExp(
-					`^${key.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^.]+")}$`,
-				);
-				if (pattern.test(name)) return true;
-			}
-			return false;
+			return !!findBestWildcardMatch(
+				state.attributes.entries(),
+				name,
+				"[^.]+",
+			);
 		};
 		const isCustomElementName = (tagName: string) => {
 			if (
@@ -89,14 +87,11 @@ export class KireSemanticTokensProvider
 			}
 
 			if (state.elements.has(tagName)) return true;
-			for (const key of state.elements.keys()) {
-				if (!key.includes("*")) continue;
-				const pattern = new RegExp(
-					`^${key.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
-				);
-				if (pattern.test(tagName)) return true;
-			}
-			return false;
+			return !!findBestWildcardMatch(
+				state.elements.entries(),
+				tagName,
+				"[^\\s>]+",
+			);
 		};
 
 		for (const directive of scanDirectives(text)) {

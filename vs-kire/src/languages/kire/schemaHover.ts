@@ -5,6 +5,7 @@ import {
 	type PackageMetadata,
 	kireStore,
 } from "../../core/store";
+import { findBestWildcardMatch } from "../../utils/wildcard";
 
 type ModifierLike = {
 	name?: string;
@@ -355,31 +356,15 @@ function resolveAttribute(word: string): ResolvedAttribute | undefined {
 
 	for (let i = parts.length; i > 0; i--) {
 		const candidate = parts.slice(0, i).join(".");
-		let bestMatch:
-			| {
-					def: AttributeDefinition;
-					score: number;
-			  }
-			| undefined;
-
-		for (const [name, def] of store.attributes.entries()) {
-			if (!name.includes("*")) continue;
-			const pattern = new RegExp(
-				`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^.]+")}$`,
-			);
-			if (!pattern.test(candidate)) continue;
-
-			const wildcardCount = (name.match(/\*/g) || []).length;
-			const score =
-				name.split(".").filter(Boolean).length * 10 - wildcardCount * 2;
-			if (!bestMatch || score > bestMatch.score) {
-				bestMatch = { def, score };
-			}
-		}
+		const bestMatch = findBestWildcardMatch(
+			store.attributes.entries(),
+			candidate,
+			"[^.]+",
+		);
 
 		if (bestMatch) {
 			return {
-				def: bestMatch.def,
+				def: bestMatch.value,
 				matchedName: candidate,
 				baseSegmentCount: candidate.split(".").filter(Boolean).length,
 			};
@@ -399,30 +384,15 @@ function resolveElement(word: string): ResolvedElement | undefined {
 		};
 	}
 
-	let bestMatch:
-		| {
-				def: ElementDefinition;
-				score: number;
-		  }
-		| undefined;
-
-	for (const [name, def] of elements.entries()) {
-		if (!name.includes("*")) continue;
-		const pattern = new RegExp(
-			`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
-		);
-		if (!pattern.test(word)) continue;
-
-		const wildcardCount = (name.match(/\*/g) || []).length;
-		const score = name.length * 10 - wildcardCount * 2;
-		if (!bestMatch || score > bestMatch.score) {
-			bestMatch = { def, score };
-		}
-	}
+	const bestMatch = findBestWildcardMatch(
+		elements.entries(),
+		word,
+		"[^\\s>]+",
+	);
 
 	if (!bestMatch) return undefined;
 	return {
-		def: bestMatch.def,
+		def: bestMatch.value,
 		matchedName: word,
 	};
 }
@@ -681,7 +651,7 @@ export function hasKireHoverTarget(
 		if (kireStore.getState().directives.has(directiveName)) return true;
 	}
 
-	if (kireStore.getState().elements.has(word)) {
+	if (resolveElement(word)) {
 		const line = document.lineAt(position.line).text;
 		const before = line.slice(0, range.start.character);
 		if (/<(\/)?\s*$/.test(before)) return true;

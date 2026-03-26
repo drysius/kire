@@ -4,6 +4,7 @@ import { getDirectiveContextStack } from "../../core/directiveLogic";
 import { kireStore } from "../../core/store";
 import { extractTopLevelDirectiveDeclarations } from "../../utils/directiveDeclarations";
 import { parseParamDefinition, splitTopLevelArgs } from "../../utils/params";
+import { findBestWildcardMatch } from "../../utils/wildcard";
 import { provider as tsProvider } from "../typescript/utils";
 
 function packageSuffix(def: Record<string, any> | undefined): string {
@@ -16,28 +17,7 @@ function resolveElementDefinition(tagName: string) {
 	const exact = elements.get(tagName);
 	if (exact) return exact;
 
-	let bestMatch:
-		| {
-				def: any;
-				score: number;
-		  }
-		| undefined;
-
-	for (const [name, def] of elements.entries()) {
-		if (!name.includes("*")) continue;
-		const pattern = new RegExp(
-			`^${name.replace(/[|\\{}()[\]^$+?.]/g, "\\$&").replace(/\\\*/g, "[^\\s>]+")}$`,
-		);
-		if (!pattern.test(tagName)) continue;
-
-		const wildcardCount = (name.match(/\*/g) || []).length;
-		const score = name.length * 10 - wildcardCount * 2;
-		if (!bestMatch || score > bestMatch.score) {
-			bestMatch = { def, score };
-		}
-	}
-
-	return bestMatch?.def;
+	return findBestWildcardMatch(elements.entries(), tagName, "[^\\s>]+")?.value;
 }
 
 export class KireCompletionItemProvider
