@@ -41,7 +41,7 @@ describe("Kire Bundle System", () => {
 
 		expect(content).toContain("temp_templates/hello.kire");
 		expect(content).toContain("temp_templates/list.kire");
-		expect(content).toContain("function($props = {}, $globals = {}, $kire)");
+		expect(content).toContain("function($props = {}) {");
 	});
 
 	test("should be able to load and use bundled templates", async () => {

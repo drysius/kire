@@ -30,7 +30,7 @@ export default (kire: Kire<any>) => {
 			api.write(`{
                 const _oldProps = $props;
                 $props = Object.assign(Object.create($globals), _oldProps, ${locals});
-                const res = ${depId}.call(this, $props, $globals, ${depId}); 
+                const res = ${depId}($props);
                 ${dep.meta.async ? `$kire_response += await res;` : `$kire_response += res;`}
                 $props = _oldProps;
             }`);

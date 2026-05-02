@@ -266,6 +266,9 @@ export class Kire<Asyncronos extends boolean = true> {
 	public get $max_renders(): number {
 		return this.$config.max_renders;
 	}
+	public get $use_global(): boolean {
+		return this.$config.use_global;
+	}
 
 	/** Runtime Getters */
 	public get $escape() {
@@ -370,6 +373,7 @@ export class Kire<Asyncronos extends boolean = true> {
 		}
 		conf.var_locals = localVariable;
 		conf.max_renders = options.max_renders ?? 1000;
+		conf.use_global = options.use_global ?? true;
 		conf.root = options.root ? plat.resolve(options.root) : plat.cwd();
 		conf.namespaces = new NullProtoObj();
 
@@ -744,8 +748,8 @@ export class Kire<Asyncronos extends boolean = true> {
 
 				const AsyncFunc = (async () => {}).constructor;
 				const coreFunction = async
-					? new (AsyncFunc as any)("$props, $globals, $kire", code)
-					: new Function("$props, $globals, $kire", code);
+					? new (AsyncFunc as any)("$props", code)
+					: new Function("$props", code);
 
 				const fn = this.$runtime.createKireFunction(this, coreFunction, {
 					async,
@@ -842,18 +846,21 @@ export class Kire<Asyncronos extends boolean = true> {
 	): KireRendered<Asyncronos> {
 		try {
 			let effectiveProps = locals;
-			const effectiveGlobals = globals || this.$globals;
 
 			if (this["~parent"]) {
 				effectiveProps = Object.assign(Object.create(this.$props), locals);
 			}
 
-			const result = template.call(
-				this,
-				effectiveProps,
-				effectiveGlobals,
-				template as never,
-			);
+			// Per-call globals: create a temporary context object that shadows $globals
+			// without mutating the Kire instance. Arrow-fn deps close over `this` from
+			// the main template function, so they also see the merged globals.
+			const callContext = globals
+				? Object.assign(Object.create(this), {
+						$globals: Object.assign(Object.create(this.$globals), globals),
+					})
+				: this;
+
+			const result = template.call(callContext, effectiveProps);
 
 			if (!this.$async && result instanceof Promise) {
 				throw new Error(
@@ -922,10 +929,10 @@ export class Kire<Asyncronos extends boolean = true> {
 					const entry = this.compile(content, resolved);
 					this.$cache.files.set(resolved, entry);
 					bundled[resolved] = entry.async
-						? `async function($props = {}, $globals = {}, $kire) {
+						? `async function($props = {}) {
 ${entry.code}
 }`
-						: `function($props = {}, $globals = {}, $kire) {
+						: `function($props = {}) {
 ${entry.code}
 }`;
 				}

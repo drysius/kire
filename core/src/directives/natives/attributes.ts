@@ -35,7 +35,7 @@ export default (kire: Kire) => {
 			api.write(`{
                 const $attrs = ${attributes};
                 const $append = ($name, $value) => {
-                    const $clean = String($name || "").trim();
+                    const $clean = ("" + ($name || "")).trim();
                     if (!$clean || $value === false || $value === null || $value === undefined) return;
                     if ($value === true) $kire_response += " " + $clean;
                     else $kire_response += " " + $clean + "=\\"" + $escape($value) + "\\"";
@@ -89,7 +89,7 @@ export default (kire: Kire) => {
                         }
                         return;
                     }
-                    const $string = String($value || "").trim();
+                    const $string = ("" + ($value || "")).trim();
                     if ($string) $tokens.push($string);
                 };
                 $push($input);
@@ -112,7 +112,7 @@ export default (kire: Kire) => {
                 let $r = "";
                 if (Array.isArray($s)) $r = $s.filter(Boolean).join("; ");
                 else if (typeof $s === 'object' && $s !== null) $r = Object.entries($s).filter(([_, v]) => v).map(([k, v]) => v === true ? k : k + ": " + v).join("; ");
-                else $r = String($s || "");
+                else $r = "" + ($s || "");
                 if ($r) $kire_response += " style=\\"" + $escape($r) + "\\"";
             }`);
 		},

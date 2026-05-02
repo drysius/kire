@@ -1,0 +1,688 @@
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5/dist/full.min.css" rel="stylesheet" type="text/css" />
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+#flow-wrap {
+  font-family: "Plus Jakarta Sans", "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+#flow-viewport {
+  position: relative;
+  width: 100%;
+  height: 640px;
+  overflow: hidden;
+  border-top: 1px solid color-mix(in srgb, var(--color-base-content, #111827) 10%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-base-content, #111827) 10%, transparent);
+  background:
+    radial-gradient(circle at 20px 20px, color-mix(in srgb, var(--color-base-content, #111827) 12%, transparent) 1px, transparent 1.2px) 0 0 / 20px 20px,
+    linear-gradient(160deg, color-mix(in srgb, var(--color-base-100, #fff) 90%, #dbeafe 10%), var(--color-base-100, #fff));
+}
+
+#flow-viewport.connecting {
+  cursor: crosshair;
+}
+
+#flow-viewport.panning {
+  cursor: grabbing;
+}
+
+#flow-workspace {
+  position: absolute;
+  width: 2400px;
+  height: 1600px;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+#edge-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.node-card {
+  position: absolute;
+  width: 230px;
+  min-height: 130px;
+  user-select: none;
+  cursor: grab;
+  transition: transform .16s ease, box-shadow .2s ease;
+  animation: nodeIn .28s ease;
+}
+
+.node-card:active {
+  cursor: grabbing;
+}
+
+.node-card.selected .card {
+  outline: 2px solid color-mix(in srgb, #2563eb 78%, white 22%);
+  outline-offset: 1px;
+  box-shadow: 0 16px 34px color-mix(in srgb, #2563eb 25%, transparent);
+}
+
+.node-card .card {
+  border: 1px solid color-mix(in srgb, var(--color-base-content, #111827) 14%, transparent);
+  background: color-mix(in srgb, var(--color-base-100, #ffffff) 92%, #eff6ff 8%);
+}
+
+.node-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-base-content, #111827) 8%, transparent);
+}
+
+.node-body {
+  padding: 10px 12px 12px;
+}
+
+.node-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--color-base-content, #111827) 90%, transparent);
+}
+
+.node-sub {
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: .82;
+}
+
+.port {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--color-base-content, #111827) 24%, transparent);
+  background: var(--color-base-100, #fff);
+  z-index: 8;
+  transition: transform .15s ease, border-color .15s ease, background .15s ease;
+}
+
+.port:hover,
+.port.active {
+  transform: scale(1.15);
+  border-color: #2563eb;
+  background: #dbeafe;
+}
+
+.port.in {
+  top: -7px;
+  left: calc(50% - 7px);
+}
+
+.port.out {
+  bottom: -7px;
+  left: calc(50% - 7px);
+}
+
+.edge {
+  fill: none;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+.edge-default {
+  stroke: color-mix(in srgb, var(--color-base-content, #111827) 34%, transparent);
+  stroke-width: 1.8;
+}
+
+.edge-selected {
+  stroke: #2563eb;
+  stroke-width: 2.7;
+  filter: drop-shadow(0 0 4px rgba(37, 99, 235, .3));
+}
+
+.edge-hitbox {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 16;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+.edge-flow {
+  stroke-dasharray: 8 8;
+  animation: flowDash 1.2s linear infinite;
+}
+
+.edge-temp {
+  stroke: color-mix(in srgb, var(--color-base-content, #111827) 35%, transparent);
+  stroke-width: 1.9;
+  stroke-dasharray: 6 6;
+  animation: flowDash .9s linear infinite;
+}
+
+#flow-panel {
+  display: grid;
+  grid-template-columns: minmax(230px, 1fr) minmax(190px, 240px) auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+}
+
+.hint {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  pointer-events: none;
+}
+
+@keyframes flowDash {
+  to { stroke-dashoffset: -32; }
+}
+
+@keyframes nodeIn {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 920px) {
+  #flow-panel {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  #flow-viewport {
+    height: 560px;
+  }
+}
+</style>
+
+<div id="flow-wrap" x-data="flowEditor()" x-init="init()" :data-theme="theme" class="rounded-box border border-base-300 bg-base-100 shadow-xl overflow-hidden">
+  <div class="navbar min-h-0 bg-base-200/80 backdrop-blur-sm px-3 py-2 gap-2 flex-wrap">
+    <button class="btn btn-sm btn-outline btn-success" @click="addNode('start')">+ início</button>
+    <button class="btn btn-sm btn-outline btn-info" @click="addNode('process')">+ processo</button>
+    <button class="btn btn-sm btn-outline btn-secondary" @click="addNode('decision')">+ decisão</button>
+    <button class="btn btn-sm btn-outline btn-warning" @click="addNode('end')">+ fim</button>
+
+    <div class="divider divider-horizontal mx-1"></div>
+
+    <button class="btn btn-sm btn-error btn-outline" @click="deleteSelected">remover</button>
+    <button class="btn btn-sm btn-ghost" @click="clearAll">limpar</button>
+
+    <div class="divider divider-horizontal mx-1"></div>
+
+    <button class="btn btn-sm btn-ghost" @click="zoomOut">−</button>
+    <button class="btn btn-sm btn-ghost" @click="zoomIn">+</button>
+    <button class="btn btn-sm btn-ghost" @click="resetView">reset view</button>
+    <div class="badge badge-outline"><span x-text="Math.round(zoom * 100)"></span>%</div>
+
+    <select class="select select-xs select-bordered ml-auto w-28" x-model="theme">
+      <option value="light">light</option>
+      <option value="cupcake">cupcake</option>
+      <option value="business">business</option>
+      <option value="night">night</option>
+    </select>
+
+    <div class="badge badge-neutral badge-outline text-xs" x-text="status"></div>
+  </div>
+
+  <div
+    id="flow-viewport"
+    x-ref="viewport"
+    :class="connectingFrom ? 'connecting' : (isPanning ? 'panning' : '')"
+    @mousemove="onViewportMove($event)"
+    @mouseup="onViewportUp($event)"
+    @mouseleave="onViewportUp($event)"
+    @click="onViewportClick($event)"
+    @mousedown="startPan($event)"
+    @wheel.prevent="onWheel($event)"
+  >
+    <div id="flow-workspace" x-ref="workspace" :style="`transform: translate(${pan.x}px, ${pan.y}px) scale(${zoom});`">
+      <svg id="edge-layer">
+        <defs>
+          <marker id="arrow" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+            <path d="M1,1 L6.5,4 L1,7" fill="none" stroke="color-mix(in srgb, var(--color-base-content, #111827) 34%, transparent)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+          </marker>
+          <marker id="arrow-sel" markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto">
+            <path d="M1,1 L6.5,4 L1,7" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+          </marker>
+        </defs>
+
+        <g x-ref="edgesGroup"></g>
+
+        <path
+          x-show="connectingFrom && tempPoint"
+          :d="tempPath()"
+          class="edge edge-temp"
+          marker-end="url(#arrow)"
+        ></path>
+      </svg>
+
+      <template x-for="node in nodes" :key="node.id">
+        <div
+          class="node-card"
+          :style="`left:${node.x}px; top:${node.y}px;`"
+          :class="selectedNodeId === node.id ? 'selected' : ''"
+          @mousedown.prevent="startDrag(node, $event)"
+        >
+          <div class="port in" :data-id="node.id" data-role="in"></div>
+          <div class="port out" :data-id="node.id" data-role="out" @mousedown.stop.prevent="startConnect(node, $event)" :class="connectingFrom === node.id ? 'active' : ''"></div>
+
+          <div class="card shadow-sm">
+            <div class="node-head">
+              <div class="node-title" x-text="node.label"></div>
+              <span class="badge badge-sm" :class="badgeClass(node.type)" x-text="typeMeta[node.type].badge"></span>
+            </div>
+            <div class="node-body">
+              <div class="node-sub" x-text="node.sub"></div>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="hint badge badge-primary badge-outline text-[11px]">
+      Space + arrastar: pan • Ctrl + scroll: zoom
+    </div>
+  </div>
+
+  <div id="flow-panel" class="bg-base-200/70">
+    <label class="form-control w-full">
+      <div class="label py-1">
+        <span class="label-text text-xs">Rótulo</span>
+      </div>
+      <input
+        type="text"
+        class="input input-bordered input-sm w-full"
+        :disabled="!selectedNode"
+        :value="selectedNode ? selectedNode.label : ''"
+        placeholder="Selecione um nó..."
+        @input="updateLabel($event.target.value)"
+      />
+    </label>
+
+    <label class="form-control w-full">
+      <div class="label py-1">
+        <span class="label-text text-xs">Tipo</span>
+      </div>
+      <select
+        class="select select-bordered select-sm w-full"
+        :disabled="!selectedNode"
+        :value="selectedNode ? selectedNode.type : 'process'"
+        @change="updateType($event.target.value)"
+      >
+        <option value="start">Início</option>
+        <option value="process">Processo</option>
+        <option value="decision">Decisão</option>
+        <option value="end">Fim</option>
+      </select>
+    </label>
+
+    <button class="btn btn-primary btn-sm" @click="exportJson">Exportar JSON</button>
+  </div>
+</div>
+
+<script>
+function flowEditor() {
+  return {
+    theme: "light",
+    nodes: [],
+    edges: [],
+    selectedNodeId: null,
+    selectedEdgeId: null,
+    draggingId: null,
+    dragOffset: { x: 0, y: 0 },
+    connectingFrom: null,
+    tempPoint: null,
+    nextNode: 1,
+    nextEdge: 1,
+    status: "arraste • conecte portas • Delete remove",
+    nodeWidth: 230,
+    nodeHeight: 130,
+    zoom: 1,
+    pan: { x: 0, y: 0 },
+    isPanning: false,
+    panStart: { x: 0, y: 0 },
+    spacePressed: false,
+    typeMeta: {
+      start: { label: "Início", sub: "ponto de entrada", badge: "start" },
+      process: { label: "Processo", sub: "ação / tarefa", badge: "processo" },
+      decision: { label: "Decisão", sub: "condição", badge: "decisão" },
+      end: { label: "Fim", sub: "ponto de saída", badge: "fim" }
+    },
+
+    init() {
+      document.addEventListener("keydown", (e) => {
+        if ((e.key === "Delete" || e.key === "Backspace") && document.activeElement?.tagName !== "INPUT") {
+          this.deleteSelected();
+        }
+        if (e.code === "Space") {
+          this.spacePressed = true;
+        }
+      });
+      document.addEventListener("keyup", (e) => {
+        if (e.code === "Space") {
+          this.spacePressed = false;
+        }
+      });
+      this.seed();
+      this.$nextTick(() => this.renderEdgesDom());
+    },
+
+    get selectedNode() {
+      return this.nodes.find((n) => n.id === this.selectedNodeId) || null;
+    },
+
+    badgeClass(type) {
+      if (type === "start") return "badge-success badge-outline";
+      if (type === "process") return "badge-info badge-outline";
+      if (type === "decision") return "badge-secondary badge-outline";
+      return "badge-warning badge-outline";
+    },
+
+    clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    },
+
+    screenToWorld(clientX, clientY) {
+      const rect = this.$refs.viewport.getBoundingClientRect();
+      const sx = clientX - rect.left;
+      const sy = clientY - rect.top;
+      return {
+        x: (sx - this.pan.x) / this.zoom,
+        y: (sy - this.pan.y) / this.zoom
+      };
+    },
+
+    createNode(type, x, y, label = null, sub = null) {
+      const id = `n${this.nextNode++}`;
+      this.nodes.push({
+        id,
+        type,
+        x,
+        y,
+        label: label || this.typeMeta[type].label,
+        sub: sub || this.typeMeta[type].sub
+      });
+      return id;
+    },
+
+    addNode(type) {
+      const rect = this.$refs.viewport.getBoundingClientRect();
+      const center = this.screenToWorld(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      const x = this.clamp(center.x - this.nodeWidth / 2 + (Math.random() - 0.5) * 120, 20, 2100);
+      const y = this.clamp(center.y - this.nodeHeight / 2 + (Math.random() - 0.5) * 100, 20, 1400);
+      const id = this.createNode(type, x, y);
+      this.selectNode(id);
+      this.status = "nó adicionado";
+    },
+
+    selectNode(id) {
+      this.selectedNodeId = id;
+      this.selectedEdgeId = null;
+      this.renderEdgesDom();
+      const node = this.nodes.find((n) => n.id === id);
+      if (node) this.status = `"${node.label}" selecionado`;
+    },
+
+    selectEdge(id) {
+      this.selectedEdgeId = id;
+      this.selectedNodeId = null;
+      this.renderEdgesDom();
+      this.status = "conexão selecionada • Delete para remover";
+    },
+
+    onViewportClick(event) {
+      if (!event.target.closest(".node-card") && !event.target.closest(".edge-hitbox")) {
+        this.selectedNodeId = null;
+        this.selectedEdgeId = null;
+        this.renderEdgesDom();
+        this.status = "arraste • conecte portas • Delete remove";
+      }
+    },
+
+    startDrag(node, event) {
+      if (this.spacePressed || event.button === 1) return;
+      if (event.target.closest(".port")) return;
+      this.selectNode(node.id);
+      this.draggingId = node.id;
+      const p = this.screenToWorld(event.clientX, event.clientY);
+      this.dragOffset.x = p.x - node.x;
+      this.dragOffset.y = p.y - node.y;
+    },
+
+    startConnect(node, event) {
+      if (this.spacePressed) return;
+      this.connectingFrom = node.id;
+      this.selectedEdgeId = null;
+      this.tempPoint = this.screenToWorld(event.clientX, event.clientY);
+    },
+
+    startPan(event) {
+      if (event.button === 1 || this.spacePressed) {
+        this.isPanning = true;
+        this.panStart.x = event.clientX - this.pan.x;
+        this.panStart.y = event.clientY - this.pan.y;
+      }
+    },
+
+    onViewportMove(event) {
+      if (this.isPanning) {
+        this.pan.x = event.clientX - this.panStart.x;
+        this.pan.y = event.clientY - this.panStart.y;
+        return;
+      }
+
+      const p = this.screenToWorld(event.clientX, event.clientY);
+
+      if (this.draggingId) {
+        const node = this.nodes.find((n) => n.id === this.draggingId);
+        if (!node) return;
+        node.x = this.clamp(p.x - this.dragOffset.x, 8, 2162);
+        node.y = this.clamp(p.y - this.dragOffset.y, 8, 1462);
+        this.renderEdgesDom();
+      }
+
+      if (this.connectingFrom) {
+        this.tempPoint = p;
+      }
+    },
+
+    onViewportUp(event) {
+      this.isPanning = false;
+      this.draggingId = null;
+
+      if (this.connectingFrom) {
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const inPort = target && target.closest(".port.in");
+
+        if (inPort) {
+          const toId = inPort.dataset.id;
+          if (toId && toId !== this.connectingFrom) {
+            const exists = this.edges.some((e) => e.from === this.connectingFrom && e.to === toId);
+            if (!exists) {
+              this.edges.push({ id: `e${this.nextEdge++}`, from: this.connectingFrom, to: toId });
+              this.status = "conexão criada";
+              this.renderEdgesDom();
+            }
+          }
+        }
+
+        this.connectingFrom = null;
+        this.tempPoint = null;
+      }
+    },
+
+    onWheel(event) {
+      if (!event.ctrlKey) return;
+      const before = this.screenToWorld(event.clientX, event.clientY);
+      this.zoom = this.clamp(this.zoom + (event.deltaY < 0 ? 0.08 : -0.08), 0.55, 1.8);
+      const rect = this.$refs.viewport.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      this.pan.x = sx - before.x * this.zoom;
+      this.pan.y = sy - before.y * this.zoom;
+      this.renderEdgesDom();
+    },
+
+    zoomIn() {
+      this.zoom = this.clamp(this.zoom + 0.1, 0.55, 1.8);
+      this.renderEdgesDom();
+    },
+
+    zoomOut() {
+      this.zoom = this.clamp(this.zoom - 0.1, 0.55, 1.8);
+      this.renderEdgesDom();
+    },
+
+    resetView() {
+      this.zoom = 1;
+      this.pan = { x: 0, y: 0 };
+      this.renderEdgesDom();
+      this.status = "visualização resetada";
+    },
+
+    deleteSelected() {
+      if (this.selectedEdgeId) {
+        this.edges = this.edges.filter((e) => e.id !== this.selectedEdgeId);
+        this.selectedEdgeId = null;
+        this.status = "conexão removida";
+        this.renderEdgesDom();
+        return;
+      }
+
+      if (this.selectedNodeId) {
+        const id = this.selectedNodeId;
+        this.nodes = this.nodes.filter((n) => n.id !== id);
+        this.edges = this.edges.filter((e) => e.from !== id && e.to !== id);
+        this.selectedNodeId = null;
+        this.status = "nó removido";
+        this.renderEdgesDom();
+      }
+    },
+
+    clearAll() {
+      this.nodes = [];
+      this.edges = [];
+      this.selectedNodeId = null;
+      this.selectedEdgeId = null;
+      this.connectingFrom = null;
+      this.tempPoint = null;
+      this.status = "canvas limpo";
+      this.renderEdgesDom();
+    },
+
+    updateLabel(value) {
+      const node = this.selectedNode;
+      if (!node) return;
+      node.label = value;
+    },
+
+    updateType(type) {
+      const node = this.selectedNode;
+      if (!node) return;
+      node.type = type;
+      node.sub = this.typeMeta[type].sub;
+      this.status = `tipo alterado para ${this.typeMeta[type].label.toLowerCase()}`;
+    },
+
+    portCenter(nodeId, role) {
+      const node = this.nodes.find((n) => n.id === nodeId);
+      if (!node) return { x: 0, y: 0 };
+      const x = node.x + this.nodeWidth / 2;
+      const y = role === "out" ? node.y + this.nodeHeight + 7 : node.y - 7;
+      return { x, y };
+    },
+
+    curve(x1, y1, x2, y2) {
+      const dy = Math.abs(y2 - y1);
+      const cp = Math.max(56, Math.min(140, dy * 0.62 + 24));
+      return `M${x1},${y1} C${x1},${y1 + cp} ${x2},${y2 - cp} ${x2},${y2}`;
+    },
+
+    edgePath(fromId, toId) {
+      const from = this.portCenter(fromId, "out");
+      const to = this.portCenter(toId, "in");
+      return this.curve(from.x, from.y, to.x, to.y);
+    },
+
+    tempPath() {
+      if (!this.connectingFrom || !this.tempPoint) return "";
+      const from = this.portCenter(this.connectingFrom, "out");
+      return this.curve(from.x, from.y, this.tempPoint.x, this.tempPoint.y);
+    },
+
+    renderEdgesDom() {
+      const group = this.$refs.edgesGroup;
+      if (!group) return;
+      group.innerHTML = "";
+
+      for (const edge of this.edges) {
+        const d = this.edgePath(edge.from, edge.to);
+        const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        const hit = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const isSelected = this.selectedEdgeId === edge.id;
+
+        hit.setAttribute("class", "edge-hitbox");
+        hit.setAttribute("d", d);
+        hit.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          this.selectEdge(edge.id);
+        });
+
+        path.setAttribute("d", d);
+        path.setAttribute("class", isSelected ? "edge edge-selected" : "edge edge-default edge-flow");
+        path.setAttribute("marker-end", isSelected ? "url(#arrow-sel)" : "url(#arrow)");
+
+        g.appendChild(hit);
+        g.appendChild(path);
+        group.appendChild(g);
+      }
+    },
+
+    exportJson() {
+      const payload = {
+        viewport: {
+          zoom: Number(this.zoom.toFixed(2)),
+          pan: { x: Math.round(this.pan.x), y: Math.round(this.pan.y) }
+        },
+        nodes: this.nodes.map((n) => ({
+          id: n.id,
+          type: n.type,
+          label: n.label,
+          sub: n.sub,
+          x: Math.round(n.x),
+          y: Math.round(n.y)
+        })),
+        edges: this.edges.map((e) => ({ id: e.id, from: e.from, to: e.to }))
+      };
+
+      const json = JSON.stringify(payload, null, 2);
+
+      if (typeof window.sendPrompt === "function") {
+        window.sendPrompt(`Use este JSON do fluxo no Kire/Edge.js:\n\n${json}`);
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(json).then(() => {
+          this.status = "JSON copiado para a área de transferência";
+        }).catch(() => {
+          this.status = "não foi possível copiar o JSON";
+        });
+      }
+    },
+
+    seed() {
+      const n1 = this.createNode("start", 120, 120, "Início");
+      const n2 = this.createNode("process", 430, 120, "Validar dados");
+      const n3 = this.createNode("decision", 740, 120, "Aprovado?");
+      const n4 = this.createNode("process", 740, 340, "Revisar", "retornar ao passo anterior");
+      const n5 = this.createNode("end", 1050, 120, "Concluído");
+
+      this.edges.push({ id: `e${this.nextEdge++}`, from: n1, to: n2 });
+      this.edges.push({ id: `e${this.nextEdge++}`, from: n2, to: n3 });
+      this.edges.push({ id: `e${this.nextEdge++}`, from: n3, to: n5 });
+      this.edges.push({ id: `e${this.nextEdge++}`, from: n3, to: n4 });
+      this.renderEdgesDom();
+    }
+  };
+}
+</script>

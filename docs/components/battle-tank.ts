@@ -171,7 +171,7 @@ export default class BattleTank extends Component {
 	@Variable("boolean")
 	public spectator = false;
 
-	@Variable("any")
+	@Variable("broadcast")
 	public shared = new WireBroadcast({
 		name: this.roomChannel,
 		autodelete: true,

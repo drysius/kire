@@ -30,6 +30,10 @@ export const INTERPOLATION_GLOBAL_REGEX = /\{\{\s*(.*?)\s*\}\}/g;
 export const RESERVED_KEYWORDS_REGEX =
 	/^(?:break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|function|if|import|in|instanceof|new|return|super|switch|this|throw|try|typeof|var|void|while|with|yield|enum|await|true|false|null|of)$/;
 
+// JavaScript built-in globals that must never be shadowed by template variable declarations.
+export const JS_GLOBAL_BUILTINS_REGEX =
+	/^(?:String|Number|Boolean|Object|Array|Function|Symbol|BigInt|Date|RegExp|Map|Set|WeakMap|WeakSet|WeakRef|Promise|Proxy|Reflect|Error|TypeError|RangeError|ReferenceError|SyntaxError|URIError|EvalError|Math|JSON|console|parseInt|parseFloat|isNaN|isFinite|encodeURI|decodeURI|encodeURIComponent|decodeURIComponent|setTimeout|clearTimeout|setInterval|clearInterval|queueMicrotask|requestAnimationFrame|cancelAnimationFrame|globalThis|window|document|process|Buffer|Uint8Array|Int8Array|Uint16Array|Int16Array|Uint32Array|Int32Array|Float32Array|Float64Array|ArrayBuffer|DataView|Blob|File|FormData|URL|URLSearchParams|Headers|Request|Response|fetch|WebSocket|EventTarget|Event|CustomEvent|AbortController|AbortSignal|crypto|performance|navigator|location|history|localStorage|sessionStorage|indexedDB|undefined|NaN|Infinity|eval|isNaN|isFinite)$/;
+
 // Escaping HTML
 export const HTML_ESCAPE_CHECK_REGEX = /[&<>"']/;
 export const HTML_ESCAPE_GLOBAL_REGEX = /[&<>"']/g;

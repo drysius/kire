@@ -16,6 +16,13 @@ export interface KireOptions<Asyncronos extends boolean = boolean> {
 	strict_directives?: boolean;
 	local_variable?: string;
 	max_renders?: number;
+	/**
+	 * When true (default), template variable declarations fall back to globalThis
+	 * if the identifier is not found in props or globals.
+	 * JavaScript built-ins (String, Array, Math, etc.) are always resolved from
+	 * globalThis regardless of this setting.
+	 */
+	use_global?: boolean;
 	// Option to define the initial cache/bundle file
 	files?: Record<string, string | KireTplFunction>;
 	// Override default platform APIs (filesystem/path/env/runtime)
@@ -59,6 +66,7 @@ export interface KireConfig {
 	var_locals: string;
 	namespaces: Record<string, string>;
 	max_renders: number;
+	use_global: boolean;
 }
 
 export interface KireRuntime {

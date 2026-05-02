@@ -127,10 +127,11 @@ describe("Kire Advanced Features", () => {
 
 	test("Introspection: $kire variable usage", async () => {
 		const k = new Kire();
-		const tpl = "Path: {{ $kire.meta.path }}";
+		// $kire is now the Kire engine instance (this.$kire)
+		const tpl = "Type: {{ typeof $kire }}";
 
 		const result = await k.render(tpl, {}, {}, "custom_name.kire");
-		expect(result).toBe("Path: custom_name.kire");
+		expect(result).toBe("Type: object");
 	});
 
 	test("Error Handling: should map error to source template", async () => {

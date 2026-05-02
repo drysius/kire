@@ -133,4 +133,17 @@ describe("Kire existVar System", () => {
 		expect(triggeredCount).toBe(1);
 		expect(result).toBe("unique");
 	});
+
+	test("should support regex existVar providers without duplicate declarations", async () => {
+		const kire = new Kire({ silent: true });
+		let triggered = false;
+		kire.existVar(/^MY_/, (api) => {
+			triggered = true;
+			api.prologue("const MY_VALUE = 'ok';");
+		});
+
+		const result = await kire.render("{{ MY_VALUE }}");
+		expect(triggered).toBe(true);
+		expect(result).toBe("ok");
+	});
 });

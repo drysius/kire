@@ -11,6 +11,7 @@ export async function createRunner(
 		"__benchmark_kire__.kire",
 	);
 
+	console.log(compiled.fn.toString())
 	if (!compiled.fn) {
 		throw new Error("Kire compile did not return an executable function.");
 	}

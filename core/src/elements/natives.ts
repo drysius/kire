@@ -8,16 +8,21 @@ import {
 } from "../utils/regex";
 
 const toTemplateLiteral = (value: string) => {
-	const escaped = value
-		.replace(/\\/g, "\\\\")
-		.replace(/`/g, "\\`")
-		.replace(/\$/g, "\\$");
-
-	return (
-		"`" +
-		escaped.replace(INTERPOLATION_GLOBAL_REGEX, (_, expr) => `\${${expr}}`) +
-		"`"
-	);
+	// Use string concatenation instead of a template literal so identifiers inside
+	// {{ }} expressions remain visible to the compiler's pruning scan (JS_STRINGS_REGEX
+	// strips template literals, which would hide identifiers like `request` and cause
+	// "ReferenceError: X is not defined" at runtime).
+	const parts: string[] = [];
+	let last = 0;
+	const rx = new RegExp(INTERPOLATION_GLOBAL_REGEX.source, "g");
+	let m: RegExpExecArray | null;
+	while ((m = rx.exec(value)) !== null) {
+		if (m.index > last) parts.push(JSON.stringify(value.slice(last, m.index)));
+		parts.push(`(${m[1]!.trim()})`);
+		last = m.index + m[0].length;
+	}
+	if (last < value.length) parts.push(JSON.stringify(value.slice(last)));
+	return parts.length ? parts.join(" + ") : '""';
 };
 
 const toComponentPropExpression = (

@@ -291,6 +291,17 @@ describe("Kire Directives & Elements", () => {
 		expect(result).toBe("Inner|string");
 	});
 
+	test("@include locals should keep identifier reads between adjacent string literals", async () => {
+		const k = new Kire({ production: true, silent: true });
+		k.$files[k.resolvePath("partials.item")] = "{{ active ? 'on' : 'off' }}";
+		k.$global("request", { url: "/tickets" });
+
+		const template =
+			"@include('partials.item', { label: 'Tickets', active: request.url.startsWith('/tickets') })";
+		const result = await k.render(template);
+		expect(result).toBe("on");
+	});
+
 	test("@for should iterate object keys", async () => {
 		const template = "@for(key in data){{ key }};@endfor";
 		const result = await kire.render(template, { data: { a: 1, b: 2 } });
@@ -405,4 +416,63 @@ describe("Kire Directives & Elements", () => {
 			"{{ escaped }} {{{ raw_escaped }}}",
 		);
 	});
+
+	test("@layout: $global used inside layout attribute value is accessible (not ReferenceError)", async () => {
+		// Regression: JS_EXTRACT_IDENTS_REGEX treats the template literal produced
+		// by parseAttrCode() as a quoted string and skips it — identifiers inside
+		// interpolations within HTML attribute values (e.g. href="/themes/{{ theme }}/app.css")
+		// were never added to the identifier set, so no `let theme = ...` declaration
+		// was emitted in the dep function, causing ReferenceError at runtime.
+		const k = new Kire({ production: false });
+
+		// Virtual layout file that uses a $global inside an HTML attribute value
+		const layoutPath = k.resolvePath("layouts/app.kire");
+		k["~store"].files[layoutPath] =
+			'<link href="/themes/{{ theme }}/app.css"><main>@yield("default")</main>';
+
+		k.$global("theme", "my-theme");
+
+		const page = '@layout("layouts.app")<p>Hello</p>@endlayout';
+		const result = await k.render(page);
+
+		expect(result).toContain('/themes/my-theme/app.css');
+		expect(result).toContain('<p>Hello</p>');
+	});
+
+	test("@layout: $global used inside layout attribute value resolves from fork globals", async () => {
+		// Same regression via fork() — which is how kire-loader uses Kire per request
+		const parent = new Kire({ production: false });
+
+		const layoutPath = parent.resolvePath("layouts/app.kire");
+		parent["~store"].files[layoutPath] =
+			'<link href="/assets/{{ theme }}/app.css"><slot>@yield("default")</slot>';
+
+		parent.$global("theme", "dark");
+
+		const fork = parent.fork();
+		fork.$global("theme", "light"); // request-scoped override
+
+		const page = '@layout("layouts.app")<span>content</span>@endlayout';
+		const result = await fork.render(page);
+
+		expect(result).toContain('/assets/light/app.css');
+	});
+	test("@layout: request global from fork should be available inside nested @include locals", async () => {
+		const parent = new Kire({ production: true, silent: true });
+
+		parent.$files[parent.resolvePath("partials.nav-item")] =
+			"<span>{{ active ? 'on' : 'off' }}</span>";
+		parent.$files[parent.resolvePath("layouts.app")] =
+			"<nav>@include('partials.nav-item', { active: request.url.startsWith('/dashboard') })</nav><main>@yield('default')</main>";
+
+		parent.$global("request", { url: "/dashboard" });
+
+		const fork = parent.fork();
+		fork.$global("request", { url: "/settings" });
+
+		const result = await fork.render("@layout('layouts.app', it)Body@endlayout");
+		expect(result).toContain("<span>off</span>");
+		expect(result).toContain("<main>Body</main>");
+	});
+
 });

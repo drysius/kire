@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/danie/Documents/GitHub/kire/MultiChat/src/services/*.ts)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(bun test *)",
+      "Bash(bun -e ' *)",
+      "Bash(mkdir -p /tmp/kire-test-fixtures)",
+      "Bash(cat)",
+      "Bash(bun run *)",
+      "Bash(node -e ' *)",
+      "Bash(powershell *)",
+      "Bash(bun --version)",
+      "Bash(bun -e \"console.log\\(typeof Bun.WebView, Object.keys\\(Bun\\).filter\\(k => k.toLowerCase\\(\\).includes\\('web'\\)\\)\\)\")",
+      "Bash(bun *)",
+      "Bash(bunx tailwindcss *)"
+    ]
+  }
+}

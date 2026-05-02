@@ -8,7 +8,7 @@ const normalizeSlotNameExpression = (value: any, fallback = '"default"') => {
 	if (QUOTED_STR_CHECK_REGEX.test(trimmed) && /^(['"]).*\1$/.test(trimmed)) {
 		return JSON.stringify(trimmed.slice(1, -1));
 	}
-	return `String(${trimmed})`;
+	return `(\`\${${trimmed}}\`)`;
 };
 
 export default (kire: Kire<any>) => {
@@ -92,7 +92,7 @@ export default (kire: Kire<any>) => {
 	                const _oldProps${id} = $props;
 	                $props = Object.assign(Object.create($globals), _oldProps${id}, ${locals}, { slots: $slots });
 	                
-	                const res${id} = ${depId}.call(this, $props, $globals, ${depId});
+	                const res${id} = ${depId}($props);
 	                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
 
 	                $props = _oldProps${id};
