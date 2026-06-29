@@ -7,9 +7,21 @@
 	<meta name="description" content="{{ description || app.description }}" />
 	<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
 	<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-	<style type="text/tailwindcss">
-		.prose :where(pre):not(:where([class~="not-prose"] *)) { @apply bg-base-300/70 border border-base-content/10 rounded-xl; }
-		.prose :where(code):not(:where(pre code)):not(:where([class~="not-prose"] *)) { @apply bg-base-300/70 px-1.5 py-0.5 rounded text-primary font-medium; }
+	<style>
+		/* Style prose code blocks with DaisyUI CSS variables (not @apply, which
+		   doesn't know DaisyUI's color names under the Tailwind Play CDN). */
+		.prose :where(pre):not(:where([class~="not-prose"] *)) {
+			background-color: hsl(var(--b3) / 0.7);
+			border: 1px solid hsl(var(--bc) / 0.1);
+			border-radius: 0.75rem;
+		}
+		.prose :where(code):not(:where(pre code)):not(:where([class~="not-prose"] *)) {
+			background-color: hsl(var(--b3) / 0.7);
+			padding: 0.125rem 0.375rem;
+			border-radius: 0.375rem;
+			color: hsl(var(--p));
+			font-weight: 500;
+		}
 		.prose :where(code):not(:where(pre code))::before,
 		.prose :where(code):not(:where(pre code))::after { content: ""; }
 	</style>

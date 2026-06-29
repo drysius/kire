@@ -1,171 +1,121 @@
 import { kirePlugin } from "kire";
 import { compileCSSWithTailwind } from "./compiler";
 import { loadModule, loadStylesheet } from "./loader";
+import { type AssetsRuntime, renderTailwindBlocks, type TailwindBlock } from "./runtime";
 import type { TailwindCompileOptions } from "./types";
 
-export const KireTailwind = kirePlugin<TailwindCompileOptions>(
-	{},
-	(kire, opts) => {
-		kire.kireSchema({
-			name: "@kirejs/tailwind",
-			author: "Drysius",
-			repository: "https://github.com/drysius/kire",
-			version: "0.1.0",
+interface TailwindCache {
+	options: TailwindCompileOptions;
+	__compiled?: Map<string, string>;
+}
+
+/**
+ * Kire Tailwind plugin.
+ *
+ * A `<tailwind>` block (or `@tailwind` directive) declares a CSS source. The real
+ * work happens once per render, in the template epilogue: the full HTML is scanned
+ * for class-name candidates and Tailwind is compiled against them, so every
+ * utility used anywhere on the page is generated. Results are cached by
+ * (css source + candidate set).
+ */
+export const KireTailwind = kirePlugin<TailwindCompileOptions>({}, (kire, opts) => {
+	kire.kireSchema({
+		name: "@kirejs/tailwind",
+		author: "Drysius",
+		repository: "https://github.com/drysius/kire",
+		version: "0.2.0",
+	});
+
+	const tailwindOptions: TailwindCompileOptions = {
+		...opts,
+		loadStylesheet,
+		loadModule,
+		from: undefined,
+	};
+
+	const cache = kire.cached("@kirejs/tailwind") as TailwindCache;
+	cache.options = tailwindOptions;
+
+	const engine = kire as unknown as {
+		compileCSSWithTailwind: typeof compileCSSWithTailwind;
+		__renderTailwind: (
+			html: string,
+			blocks: TailwindBlock[],
+			assets: AssetsRuntime | null,
+		) => Promise<string>;
+	};
+
+	// Engine helpers used by generated template code.
+	engine.compileCSSWithTailwind = compileCSSWithTailwind;
+	engine.__renderTailwind = (html, blocks, assets) => {
+		const c = kire.cached("@kirejs/tailwind") as TailwindCache;
+		return renderTailwindBlocks(html, blocks, {
+			options: c.options,
+			store: (c.__compiled ??= new Map()),
+			compile: (css, options, candidates) => engine.compileCSSWithTailwind(css, options, candidates),
+			assets,
+			assetCache: assets ? (kire.cached("@kirejs/assets") as Record<string, never>) : null,
 		});
+	};
 
-		const tailwindOptions: TailwindCompileOptions = {
-			...opts,
-			loadStylesheet,
-			loadModule,
-			from: undefined,
-		};
+	// Declare the per-render block registry once, and finalize in the epilogue
+	// (after the body so candidates cover the whole page; before assets resolution
+	// when the assets plugin is loaded first, so its CSS is offloaded there).
+	kire.existVar(
+		"__twBlocks",
+		(api) => {
+			api.markAsync();
+			api.prologue("const __twBlocks = [];");
+			api.epilogue(
+				"$kire_response = await this.__renderTailwind($kire_response, __twBlocks, typeof __kire_assets !== 'undefined' ? __kire_assets : null);",
+			);
+		},
+		true,
+	);
 
-		const cache = kire.cached("@kirejs/tailwind");
-		cache.options = tailwindOptions;
+	const registerBlock = (api: { write(js: string): void }, marker: string, cssExpr: string) => {
+		api.write(`__twBlocks.push({ marker: ${JSON.stringify(marker)}, css: ${cssExpr} });`);
+	};
 
-		/**
-		 * <tailwind> element for CSS content processing
-		 */
-		kire.element({
-			name: "tailwind",
-			description: "Processes CSS content within the block using Tailwind CSS.",
-			example:
-				"<tailwind>@tailwind base; @tailwind components; @tailwind utilities;</tailwind>",
-			onCall(api) {
-				const attrs = api.node.attributes || {};
-				const id = attrs.id;
+	// <tailwind>…css…</tailwind>
+	kire.element({
+		name: "tailwind",
+		description: "Compiles the CSS inside against the page's Tailwind classes.",
+		example: "<tailwind>@theme { --color-brand: #16a34a; }</tailwind>",
+		onCall(api) {
+			api.markAsync();
+			let cssExpr = '""';
+			for (const child of api.node.children || []) {
+				if (child.type === "text") cssExpr += ` + ${JSON.stringify(child.content)}`;
+				else if (child.type === "interpolation") cssExpr += ` + (${child.content})`;
+			}
+			const marker = `<!--KIRE_TW_${api.uid("tw")}-->`;
+			registerBlock(api, marker, cssExpr);
+			api.append(marker);
+		},
+	});
 
-				api.markAsync();
-
-				// Build content expression
-				const $children = api.node.children || [];
-				let contentExpr = '""';
-				for (const $child of $children) {
-					if ($child.type === "text")
-						contentExpr += ` + ${JSON.stringify($child.content)}`;
-					else if ($child.type === "interpolation")
-						contentExpr += ` + (${$child.content})`;
-				}
-
-				api.write(`await (async () => {
-                    try {
-                        const $id = ${JSON.stringify(id)};
-                        const $tailwindCache = this.cached("@kirejs/tailwind");
-                        const $compiledCssCache =
-                            $tailwindCache.__compiled || ($tailwindCache.__compiled = {});
-                        
-                        let $tailwind_content = ${contentExpr};
-                        if (!$tailwind_content.includes('@import "tailwindcss"')) {
-                            $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
-                        }
-
-                        const $cacheKey = $id ? "id:" + String($id) : "css:" + $tailwind_content;
-                        let $processedCSS = "";
-                        if (this.$production && $compiledCssCache[$cacheKey]) {
-                            $processedCSS = $compiledCssCache[$cacheKey];
-                        } else {
-                            const $candidates = []; 
-                            $processedCSS = await this.compileCSSWithTailwind(
-                                $tailwind_content,
-                                $tailwindCache.options,
-                                $candidates
-                            );
-                            if (this.$production) {
-                                $compiledCssCache[$cacheKey] = $processedCSS;
-                            }
-                        }
-
-                        // Integration with @kirejs/assets - Just use if available
-                        if (typeof __kire_assets !== 'undefined') {
-                            const { createHash } = await import("node:crypto");
-                            const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
-                            const $assetCache = this.cached("@kirejs/assets");
-                            if (!$assetCache[$hash]) {
-                                $assetCache[$hash] = { hash: $hash, content: $processedCSS, type: "css" };
-                            }
-                            if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
-                        } else {
-                            $kire_response += '<style>' + $processedCSS + '</style>';
-                        }
-                    } catch (e) {
-                        console.warn("Tailwind compilation error:", e);
-                    }
-                }).call(this);`);
-			},
-		});
-
-		/**
-		 * @tailwind directive for processing CSS with Tailwind
-		 */
-		kire.directive({
-			name: "tailwind",
-			signature: ["code"],
-			children: true,
-			description: "Processes CSS content within the block using Tailwind CSS.",
-			example:
-				"@tailwind\n  @tailwind base;\n  @tailwind components;\n  @tailwind utilities;\n@end",
-			onCall(api) {
-				const codeExpr = api.getArgument(0);
-				api.markAsync();
-
-				api.write(`await (async () => {
-                    try {
-                        const $tailwindCache = this.cached("@kirejs/tailwind");
-                        let $tailwind_content = ${codeExpr ? `String(${codeExpr})` : '""'};
-                `);
-
-				if (!codeExpr) {
-					const contentId = api.uid("tw_content");
-					api.write(`{ 
-                        const _oldRes${contentId} = $kire_response; $kire_response = "";`);
-					api.renderChildren();
-					api.write(`
-                        $tailwind_content = $kire_response;
-                        $kire_response = _oldRes${contentId};
-                    }`);
-				}
-
-				api.write(`
-                        if (!$tailwind_content.includes('@import "tailwindcss"')) {
-                            $tailwind_content = '@import "tailwindcss";\\n' + $tailwind_content;
-                        }
-
-                        const $compiledCssCache =
-                            $tailwindCache.__compiled || ($tailwindCache.__compiled = {});
-                        const $cacheKey = "css:" + $tailwind_content;
-                        let $processedCSS = "";
-                        if (this.$production && $compiledCssCache[$cacheKey]) {
-                            $processedCSS = $compiledCssCache[$cacheKey];
-                        } else {
-                            $processedCSS = await this.compileCSSWithTailwind(
-                                $tailwind_content,
-                                $tailwindCache.options,
-                                []
-                            );
-                            if (this.$production) {
-                                $compiledCssCache[$cacheKey] = $processedCSS;
-                            }
-                        }
-
-                        if (typeof __kire_assets !== 'undefined') {
-                            const { createHash } = await import("node:crypto");
-                            const $hash = createHash("md5").update($processedCSS).digest("hex").slice(0, 8);
-                            const $assetCache = this.cached("@kirejs/assets");
-                            if (!$assetCache[$hash]) {
-                                $assetCache[$hash] = { hash: $hash, content: $processedCSS, type: "css" };
-                            }
-                            if (__kire_assets.styles.indexOf($hash) === -1) __kire_assets.styles.push($hash);
-                        } else {
-                            $kire_response += '<style>' + $processedCSS + '</style>';
-                        }
-                    } catch (e) {
-                        console.warn("Tailwind compilation error:", e);
-                    }
-                }).call(this);`);
-			},
-		});
-
-		// Inject helpers into Kire instance
-		(kire as any).compileCSSWithTailwind = compileCSSWithTailwind;
-	},
-);
+	// @tailwind(cssExpr)  or  @tailwind …css… @end
+	kire.directive({
+		name: "tailwind",
+		signature: ["code"],
+		children: true,
+		description: "Compiles the CSS argument/block against the page's Tailwind classes.",
+		example: "@tailwind\n  @theme { --color-brand: #16a34a; }\n@end",
+		onCall(api) {
+			api.markAsync();
+			const marker = `<!--KIRE_TW_${api.uid("tw")}-->`;
+			const codeExpr = api.getArgument(0);
+			if (codeExpr) {
+				registerBlock(api, marker, `String(${codeExpr})`);
+			} else {
+				const cid = api.uid("twc");
+				api.write(`{ const _old${cid} = $kire_response; $kire_response = "";`);
+				api.renderChildren();
+				registerBlock(api, marker, "$kire_response");
+				api.write(`$kire_response = _old${cid}; }`);
+			}
+			api.append(marker);
+		},
+	});
+});

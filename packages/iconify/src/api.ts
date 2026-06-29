@@ -37,6 +37,13 @@ export async function fetchIcon(
 			name = iconName;
 		}
 
+		// Validate prefix/name so they cannot inject path segments or query into
+		// the API URL (e.g. "mdi:../../admin" or "mdi:x?token=…").
+		const VALID = /^[a-z0-9-]+$/i;
+		if (!VALID.test(prefix) || !VALID.test(name)) {
+			return `<!-- Invalid icon name: ${iconName.replace(/[<>]/g, "")} -->`;
+		}
+
 		// Construct URL with query params
 		let url = `${apiUrl}/${prefix}/${name}.svg`;
 		if (queryString) {
@@ -60,6 +67,24 @@ export async function fetchIcon(
 	}
 }
 
+/** Constant attribute-parsing regex — never built from user input (no ReDoS). */
+const SVG_ATTR_REGEX = /([\w:-]+)\s*=\s*"([^"]*)"/g;
+
+function escapeAttrValue(value: string): string {
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
+
+/**
+ * Merge a class name and extra attributes into an `<svg>`'s opening tag.
+ *
+ * Parses the existing attributes with a fixed regex and rebuilds the tag — it
+ * never constructs a RegExp from a caller-supplied key (which previously allowed
+ * a ReDoS / malformed-regex via attribute names) — and escapes attribute values.
+ */
 export function processSvgAttributes(
 	svg: string,
 	className?: string,
@@ -67,27 +92,34 @@ export function processSvgAttributes(
 ): string {
 	if (!svg.startsWith("<svg")) return svg;
 
-	let finalSvg = svg;
+	const close = svg.indexOf(">");
+	if (close === -1) return svg;
 
-	// Handle Class
+	const openTag = svg.slice(4, close); // attributes portion, after "<svg"
+	const rest = svg.slice(close); // ">…</svg>"
+
+	const attrs = new Map<string, string>();
+	SVG_ATTR_REGEX.lastIndex = 0;
+	let match: RegExpExecArray | null;
+	while ((match = SVG_ATTR_REGEX.exec(openTag)) !== null) {
+		attrs.set(match[1]!, match[2]!);
+	}
+
 	if (className) {
-		if (finalSvg.includes('class="')) {
-			finalSvg = finalSvg.replace('class="', `class="${className} `);
-		} else {
-			finalSvg = finalSvg.replace("<svg", `<svg class="${className}"`);
-		}
+		const existing = attrs.get("class");
+		attrs.set("class", existing ? `${className} ${existing}` : className);
 	}
-
-	// Handle remaining HTML attributes
 	for (const [key, value] of Object.entries(attributes)) {
-		// Simple regex to check if attribute exists (basic support)
-		const regex = new RegExp(`${key}="[^"]*"`);
-		if (regex.test(finalSvg)) {
-			finalSvg = finalSvg.replace(regex, `${key}="${value}"`);
-		} else {
-			finalSvg = finalSvg.replace("<svg", `<svg ${key}="${value}"`);
-		}
+		attrs.set(key, value);
 	}
 
-	return finalSvg;
+	let rebuilt = "<svg";
+	// Emit class first (stable, matches the prior behavior), then the rest.
+	const classVal = attrs.get("class");
+	if (classVal !== undefined) {
+		rebuilt += ` class="${escapeAttrValue(classVal)}"`;
+		attrs.delete("class");
+	}
+	for (const [key, value] of attrs) rebuilt += ` ${key}="${escapeAttrValue(value)}"`;
+	return rebuilt + rest;
 }

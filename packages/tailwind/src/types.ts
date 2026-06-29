@@ -1,3 +1,3 @@
 import type { compile } from "tailwindcss";
 
-export type TailwindCompileOptions = Parameters<typeof compile>[1];
+export type TailwindCompileOptions = NonNullable<Parameters<typeof compile>[1]>;
