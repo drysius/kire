@@ -67,13 +67,16 @@ export default (kire: Kire<any>) => {
 			const shouldExposeLoop =
 				api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
 
+			// The `if (_len > 0)` guard is only needed to pick the @empty/else branch.
+			// Without one it is dead weight — the `while` already skips empty
+			// collections — so omit it to match the leaner <kire:for> element codegen.
 			api.write(`{
                 const _r${id} = ${items};
                 const _it${id} = Array.isArray(_r${id})
                     ? _r${id}
                     : (_r${id} && typeof _r${id} === "object" ? Object.keys(_r${id}) : []);
                 const _len${id} = _it${id}.length;
-                if (_len${id} > 0) {
+                ${hasEmptyBranch ? `if (_len${id} > 0) {` : ""}
                     let ${id} = 0;
                     while (${id} < _len${id}) {
                         let ${finalAs} = _it${id}[${id}];
@@ -83,7 +86,7 @@ export default (kire: Kire<any>) => {
 			api.write(`
                         ${id}++;
                     }
-                }`);
+                ${hasEmptyBranch ? `}` : ""}`);
 			if (hasEmptyBranch) {
 				api.write(` else {`);
 				api.renderChildren(relatedNodes);

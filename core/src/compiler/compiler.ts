@@ -25,6 +25,13 @@ export class Compiler {
 	private _async = false;
 	private _isDependency = false;
 	private textBuffer = "";
+	// Pending output expression fragments. Consecutive text/interpolation output
+	// is coalesced into a single `$kire_response += a + b + c;` statement instead
+	// of one statement per fragment — far fewer reads/writes of $kire_response.
+	private pendingOut: string[] = [];
+	// Coalescing is only enabled in production: dev keeps one statement per
+	// interpolation so source maps can map each output to its template line.
+	private coalesce = false;
 
 	// ── Source maps ───────────────────────────────────────────────────────────
 	private generator: SourceMapGenerator;
@@ -72,6 +79,8 @@ export class Compiler {
 		this.uidCounter = new NullProtoObj();
 		this.mappings = [];
 		this.textBuffer = "";
+		this.pendingOut = [];
+		this.coalesce = this.kire.$production;
 		this.fullBody = "";
 		this.allIdentifiers = new Set();
 		this.identifiers.clear();
@@ -340,10 +349,34 @@ export class Compiler {
 		this._async = true;
 	}
 
-	private flushText(): void {
+	// Converts any pending raw text into a template-literal fragment and queues it,
+	// without emitting a statement yet (so following expressions can join the chain).
+	private sealText(): void {
 		if (this.textBuffer) {
-			this.body.push(`$kire_response += ${this.attrCodegen.esc(this.textBuffer)};`);
+			this.pendingOut.push(this.attrCodegen.esc(this.textBuffer));
 			this.textBuffer = "";
+		}
+	}
+
+	// Queues a dynamic JS expression as output. In production it joins the pending
+	// concatenation chain; in dev it is emitted as its own statement.
+	private emitExpr(code: string): void {
+		if (this.coalesce) {
+			this.sealText();
+			this.pendingOut.push(`(${code})`);
+		} else {
+			this.flushText();
+			this.body.push(`$kire_response += ${code};`);
+		}
+	}
+
+	// Hard output boundary: emit all pending output as a single concatenation
+	// statement. Called before any non-output statement (control flow, raw JS).
+	private flushText(): void {
+		this.sealText();
+		if (this.pendingOut.length) {
+			this.body.push(`$kire_response += ${this.pendingOut.join(" + ")};`);
+			this.pendingOut = [];
 		}
 	}
 
@@ -354,17 +387,22 @@ export class Compiler {
 					this.textBuffer += n.content || "";
 					break;
 
-				case "interpolation":
-					this.flushText();
+				case "interpolation": {
 					if (this.scanner.containsAwait(n.content)) this.markAsync();
-					if (!this.kire.$production && n.loc) {
-						this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
-						this.body.push(`// kire-line: ${n.loc.line}`);
+					const expr = n.raw ? `(${n.content})` : `$escape(${n.content})`;
+					if (this.coalesce) {
+						this.sealText();
+						this.pendingOut.push(expr);
+					} else {
+						this.flushText();
+						if (!this.kire.$production && n.loc) {
+							this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+							this.body.push(`// kire-line: ${n.loc.line}`);
+						}
+						this.body.push(`$kire_response += ${expr};`);
 					}
-					this.body.push(
-						`$kire_response += ${n.raw ? n.content : `$escape(${n.content})`};`,
-					);
 					break;
+				}
 
 				case "js":
 					this.flushText();
@@ -463,9 +501,8 @@ export class Compiler {
 						}
 					} else if (INTERPOLATION_START_REGEX.test(val)) {
 						this.textBuffer += ` ${key}="`;
-						this.flushText();
 						const code = this.attrCodegen.parseHtmlAttrCode(val);
-						this.body.push(`$kire_response += ${code};`);
+						this.emitExpr(code);
 						this.textBuffer += '"';
 					} else {
 						this.textBuffer += ` ${key}="${escapeHtml(val)}"`;
@@ -540,6 +577,9 @@ export class Compiler {
 			append: (c: any) => {
 				if (typeof c === "string") {
 					this.textBuffer += c;
+				} else if (this.coalesce) {
+					this.sealText();
+					this.pendingOut.push(`(${c})`);
 				} else {
 					this.flushText();
 					this.body.push(`$kire_response += ${c};`);
@@ -560,9 +600,7 @@ export class Compiler {
 					if (key.startsWith("@")) continue;
 					if (INTERPOLATION_START_REGEX.test(val)) {
 						this.textBuffer += ` ${key}="`;
-						this.flushText();
-						const code = this.attrCodegen.parseHtmlAttrCode(val);
-						this.body.push(`$kire_response += ${code};`);
+						this.emitExpr(this.attrCodegen.parseHtmlAttrCode(val));
 						this.textBuffer += '"';
 					} else {
 						this.textBuffer += ` ${key}="${escapeHtml(val)}"`;
