@@ -210,6 +210,23 @@ Useful for collecting scripts/styles and rendering later.
 
 These are meant to be used inside tags.
 
+### `@attr(name, value)`
+Writes a single attribute, omitting it when the value is `false`/`null`/`undefined`.
+
+```kire
+<a @attr("href", post.url)>Read</a>
+```
+
+### `@attrs(attributes)`
+Writes many attributes from an object (or array/string shorthand). Falsy values
+are dropped; boolean `true` renders a bare attribute.
+
+```kire
+<button @attrs({ type: "button", disabled: isSaving, "data-id": post.id })>
+  Save
+</button>
+```
+
 ### `@class(classes)`
 Accepts array/object/string.
 
@@ -249,12 +266,12 @@ Renders block when `$props.errors[field]` exists and exposes `$message`.
 @enderror
 ```
 
-### `@csrf`
+### `@csrf()`
 Renders hidden `_token` input from `$globals.csrf`.
 
 ```kire
 <form method="POST">
-  @csrf
+  @csrf()
 </form>
 ```
 
@@ -263,7 +280,7 @@ Renders hidden `_method` input.
 
 ```kire
 <form method="POST">
-  @csrf
+  @csrf()
   @method("PUT")
 </form>
 ```
