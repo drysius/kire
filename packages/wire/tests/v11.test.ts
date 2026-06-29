@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { LiveComponent } from "../src/component";
-import { Kirewire } from "../src/kirewire";
 import { Component, lazy, prop, url } from "../src/decorators";
+import { Kirewire } from "../src/kirewire";
 
 describe("@lazy", () => {
 	@Component("report")

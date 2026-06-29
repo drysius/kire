@@ -53,7 +53,9 @@ export function reactive<T extends object>(target: T): T {
 				activeEffect.deps.add(set);
 			}
 			const value = Reflect.get(obj, key, receiver);
-			return value && typeof value === "object" ? reactive(value as object) : value;
+			return value && typeof value === "object"
+				? reactive(value as object)
+				: value;
 		},
 		set(obj, key, value, receiver) {
 			const old = Reflect.get(obj, key, receiver);
@@ -86,7 +88,10 @@ export function computed<T>(getter: () => T): { readonly value: T } {
 }
 
 /** Watch a getter and call `cb(newValue, oldValue)` when it changes. */
-export function watch<T>(getter: () => T, cb: (next: T, prev: T) => void): () => void {
+export function watch<T>(
+	getter: () => T,
+	cb: (next: T, prev: T) => void,
+): () => void {
 	let prev: T;
 	let first = true;
 	return effect(() => {

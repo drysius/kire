@@ -2,70 +2,91 @@
  * Kirewire — server-driven reactive components for Kire.
  */
 
-export * from "./contracts";
+// Framework adapters
+export {
+	createFetchHandler,
+	type ExpressAdapterOptions,
+	expressAdapter,
+	type FetchAdapterOptions,
+} from "./adapters/index";
 
 // Components & runtime
 export { LiveComponent } from "./component";
-export { Kirewire, CorruptSnapshotError, type KirewireOptions } from "./kirewire";
-export { ComponentRegistry, type ComponentClass } from "./registry";
-export { RequestContext } from "./runtime/context";
-
+export * from "./contracts";
 // Decorators
 export {
-	Component,
-	prop,
-	locked,
-	computed,
-	renderless,
-	on,
-	validate,
 	action,
+	Component,
+	computed,
 	lazy,
+	locked,
+	on,
+	prop,
+	renderless,
 	url,
+	validate,
 } from "./decorators";
+export {
+	type FileStore,
+	FileUploadFeature,
+	FileUploadSynth,
+	fileToken,
+	handleUpload,
+	MemoryFileStore,
+	type StoredFile,
+	type UploadInput,
+	WireFile,
+} from "./features/file-upload";
+export { FormValidationError, WireForm } from "./features/form";
 
 // Features
 export {
+	createDefaultFeatures,
 	Feature,
 	FeatureBus,
 	type Finisher,
+	LazyFeature,
 	LifecycleFeature,
 	LockedFeature,
 	LockedPropertyError,
-	ValidationFeature,
-	type Rule,
 	MagicFeature,
-	LazyFeature,
+	type Rule,
 	UrlFeature,
-	createDefaultFeatures,
+	ValidationFeature,
 } from "./features/index";
-export { store } from "./runtime/store";
-export { ownMeta, resolveMeta, type ComponentMeta } from "./metadata";
-
-// Synthesizers
-export { Synth, type SynthChild, type PartialMeta } from "./synth/synth";
-export { SynthRegistry } from "./synth/registry";
-export { createDefaultSynthRegistry } from "./synth/builtins";
-
+export { type Page, paginate } from "./features/pagination";
 // Kire integration
-export { kirewirePlugin, type KirewirePluginOptions } from "./kire/plugin";
+export { type KirewirePluginOptions, kirewirePlugin } from "./kire/plugin";
+export {
+	CorruptSnapshotError,
+	Kirewire,
+	type KirewireOptions,
+} from "./kirewire";
+export { type ComponentMeta, ownMeta, resolveMeta } from "./metadata";
+export { type ComponentClass, ComponentRegistry } from "./registry";
+// Snapshot primitives
+export { sign, verify } from "./runtime/checksum";
+export { RequestContext } from "./runtime/context";
+export { getDeep, setDeep } from "./runtime/properties";
+export { dehydrateData, hydrateData, takeSnapshot } from "./runtime/snapshot";
+export { store } from "./runtime/store";
 
 // Server transport (HTTP / SSE / WebSocket + broadcast hub)
 export {
+	type HttpResult,
 	Hub,
-	type PushSubscriber,
 	handleUpdate,
 	nodeHttpAdapter,
-	type HttpResult,
-	serveSse,
+	type PushSubscriber,
 	SSE_HEADERS,
 	type SseConnection,
+	serveSse,
 	serveWs,
 	type WsConnection,
 	type WsOptions,
 } from "./server/index";
-
-// Snapshot primitives
-export { sign, verify } from "./runtime/checksum";
-export { dehydrateData, hydrateData, takeSnapshot } from "./runtime/snapshot";
-export { getDeep, setDeep } from "./runtime/properties";
+export { createDefaultSynthRegistry } from "./synth/builtins";
+export { defineSynth, modelSynth } from "./synth/class";
+export { SynthRegistry } from "./synth/registry";
+// Synthesizers
+export { type PartialMeta, Synth, type SynthChild } from "./synth/synth";

@@ -1,7 +1,7 @@
 import type { LiveComponent } from "../component";
 import { resolveMeta } from "../metadata";
-import { store } from "../runtime/store";
 import type { RequestContext } from "../runtime/context";
+import { store } from "../runtime/store";
 import { Feature } from "./feature";
 
 /**
@@ -11,11 +11,18 @@ import { Feature } from "./feature";
  */
 export type Rule =
 	| ((value: unknown) => string | null | undefined)
-	| { safeParse(v: unknown): { success: boolean; error?: { message: string } } };
+	| {
+			safeParse(v: unknown): { success: boolean; error?: { message: string } };
+	  };
 
-function runRule(rule: unknown, value: unknown): string | null {
-	if (typeof rule === "function") return (rule as (v: unknown) => string | null)(value) ?? null;
-	if (rule && typeof (rule as { safeParse?: unknown }).safeParse === "function") {
+/** Evaluate one validation rule against a value, returning an error message or null. */
+export function runRule(rule: unknown, value: unknown): string | null {
+	if (typeof rule === "function")
+		return (rule as (v: unknown) => string | null)(value) ?? null;
+	if (
+		rule &&
+		typeof (rule as { safeParse?: unknown }).safeParse === "function"
+	) {
 		const res = (rule as Exclude<Rule, Function>).safeParse(value);
 		return res.success ? null : (res.error?.message ?? "Invalid value.");
 	}

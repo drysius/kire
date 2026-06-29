@@ -6,7 +6,8 @@ import { isLazyDeferred } from "./lazy";
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 function callIf(target: object, method: string, ...args: unknown[]): void {
 	const fn = (target as Record<string, unknown>)[method];
-	if (typeof fn === "function") (fn as (...a: unknown[]) => unknown).apply(target, args);
+	if (typeof fn === "function")
+		(fn as (...a: unknown[]) => unknown).apply(target, args);
 }
 
 /**

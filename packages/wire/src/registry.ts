@@ -1,4 +1,4 @@
-import { LiveComponent } from "./component";
+import type { LiveComponent } from "./component";
 import { ownMeta } from "./metadata";
 
 export type ComponentClass = new () => LiveComponent;

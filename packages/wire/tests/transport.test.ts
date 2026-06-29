@@ -1,12 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { LiveComponent } from "../src/component";
-import { Kirewire } from "../src/kirewire";
-import { Component, prop } from "../src/decorators";
-import { Hub } from "../src/server/hub";
-import { handleUpdate } from "../src/server/http";
-import { serveWs, type WsConnection } from "../src/server/ws";
-import { serveSse, type SseConnection } from "../src/server/sse";
 import type { ServerPush } from "../src/contracts";
+import { Component, prop } from "../src/decorators";
+import { Kirewire } from "../src/kirewire";
+import { handleUpdate } from "../src/server/http";
+import { Hub } from "../src/server/hub";
+import { type SseConnection, serveSse } from "../src/server/sse";
+import { serveWs, type WsConnection } from "../src/server/ws";
 
 @Component("counter")
 class Counter extends LiveComponent {
@@ -52,12 +52,18 @@ describe("Hub broadcast", () => {
 		// A component method that broadcasts.
 		class Broadcaster extends Counter {
 			ping() {
-				this.$broadcast?.("room:1", { dispatches: [{ event: "pinged", params: [] }] });
+				this.$broadcast?.("room:1", {
+					dispatches: [{ event: "pinged", params: [] }],
+				});
 			}
 		}
 		wire.component("broadcaster", Broadcaster);
 		const { snapshot } = await wire.mount("broadcaster");
-		await wire.update({ snapshot, updates: {}, calls: [{ method: "ping", params: [] }] });
+		await wire.update({
+			snapshot,
+			updates: {},
+			calls: [{ method: "ping", params: [] }],
+		});
 
 		expect(received.length).toBe(1);
 		expect(received[0]!.channel).toBe("room:1");
@@ -71,7 +77,9 @@ describe("handleUpdate (HTTP core)", () => {
 		const { snapshot } = await wire.mount("counter");
 		const res = await handleUpdate(wire, {
 			v: 1,
-			components: [{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] }],
+			components: [
+				{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] },
+			],
 		});
 		expect(res.status).toBe(200);
 		const body = res.body as unknown as {
@@ -92,7 +100,9 @@ describe("handleUpdate (HTTP core)", () => {
 		snapshot.data.count = 999;
 		const res = await handleUpdate(wire, {
 			v: 1,
-			components: [{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] }],
+			components: [
+				{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] },
+			],
 		});
 		expect(res.status).toBe(419);
 	});
@@ -114,7 +124,16 @@ describe("WebSocket adapter", () => {
 		messageCb!(
 			JSON.stringify({
 				id: 7,
-				request: { v: 1, components: [{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] }] },
+				request: {
+					v: 1,
+					components: [
+						{
+							snapshot,
+							updates: {},
+							calls: [{ method: "increment", params: [] }],
+						},
+					],
+				},
 			}),
 		);
 		await new Promise((r) => setTimeout(r, 5));
@@ -132,7 +151,10 @@ describe("SSE adapter", () => {
 	test("writes channel pushes as SSE data frames", () => {
 		const hub = new Hub();
 		const frames: string[] = [];
-		const conn: SseConnection = { write: (f) => frames.push(f), onClose: () => {} };
+		const conn: SseConnection = {
+			write: (f) => frames.push(f),
+			onClose: () => {},
+		};
 		serveSse(hub, "room:1", conn);
 		hub.publish({ v: 1, channel: "room:1", effects: { html: "x" } });
 		expect(frames[0]).toStartWith("data: ");

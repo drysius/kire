@@ -1,5 +1,5 @@
-import type { ComponentCall } from "../contracts";
 import type { LiveComponent } from "../component";
+import type { ComponentCall } from "../contracts";
 import { resolveMeta } from "../metadata";
 import { store } from "../runtime/store";
 import { Feature } from "./feature";
@@ -29,10 +29,16 @@ export class LazyFeature extends Feature {
 		store.set(c, PARAMS, (memo.lazyParams as Record<string, unknown>) ?? {});
 	}
 
-	override call(c: LiveComponent, call: ComponentCall): { earlyReturn: unknown } | void {
+	override call(
+		c: LiveComponent,
+		call: ComponentCall,
+	): { earlyReturn: unknown } | void {
 		if (call.method !== "__lazyLoad") return;
 		const params = store.get<Record<string, unknown>>(c, PARAMS, {});
-		const target = c as unknown as { mount?: (p: unknown) => void; booted?: () => void };
+		const target = c as unknown as {
+			mount?: (p: unknown) => void;
+			booted?: () => void;
+		};
 		target.mount?.(params);
 		target.booted?.();
 		c.$context!.memo.lazyLoaded = true;

@@ -36,7 +36,10 @@ export function serveWs(
 			return;
 		}
 		if (!msg.request) return;
-		const response = await kirewire.handle(msg.request, options.engineFactory?.());
+		const response = await kirewire.handle(
+			msg.request,
+			options.engineFactory?.(),
+		);
 		conn.send(JSON.stringify({ id: msg.id, response }));
 	});
 

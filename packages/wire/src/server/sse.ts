@@ -13,7 +13,11 @@ export interface SseConnection {
  * published to `channel` is serialized as an SSE `data:` frame. Returns an
  * unsubscribe function (also fired automatically on disconnect).
  */
-export function serveSse(hub: Hub, channel: string, conn: SseConnection): () => void {
+export function serveSse(
+	hub: Hub,
+	channel: string,
+	conn: SseConnection,
+): () => void {
 	const unsubscribe = hub.subscribe(channel, (push) => {
 		conn.write(`data: ${JSON.stringify(push)}\n\n`);
 	});

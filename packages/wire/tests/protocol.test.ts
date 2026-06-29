@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import type { Snapshot, SnapshotMemo } from "../src/contracts";
 import { sign, verify } from "../src/runtime/checksum";
 import { hydrateData, takeSnapshot } from "../src/runtime/snapshot";
 import { createDefaultSynthRegistry } from "../src/synth/builtins";
-import type { Snapshot, SnapshotMemo } from "../src/contracts";
 
 const synth = createDefaultSynthRegistry();
 const SECRET = "test-secret";
@@ -39,7 +39,10 @@ describe("synthesizers", () => {
 	});
 
 	test("nested rich types inside arrays/objects survive", () => {
-		const value = { when: new Date("2026-06-29T00:00:00.000Z"), tags: new Set(["a"]) };
+		const value = {
+			when: new Date("2026-06-29T00:00:00.000Z"),
+			tags: new Set(["a"]),
+		};
 		expect(synth.hydrate(synth.dehydrate(value))).toEqual(value);
 	});
 
@@ -96,7 +99,11 @@ describe("checksum", () => {
 
 describe("snapshot", () => {
 	test("takes a signed snapshot that round-trips and verifies", () => {
-		const data = { count: 7, when: new Date("2026-01-01T00:00:00.000Z"), tags: new Set(["a"]) };
+		const data = {
+			count: 7,
+			when: new Date("2026-01-01T00:00:00.000Z"),
+			tags: new Set(["a"]),
+		};
 		const memo: SnapshotMemo = { id: "c1", name: "counter" };
 
 		const snapshot = takeSnapshot(data, memo, synth, SECRET);

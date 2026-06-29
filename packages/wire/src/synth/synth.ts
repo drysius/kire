@@ -22,7 +22,10 @@ export abstract class Synth<T = unknown> {
 	abstract match(value: unknown): boolean;
 
 	/** Convert a runtime value into wire data plus metadata. */
-	abstract dehydrate(value: T, child: SynthChild): [data: Dehydrated, meta: PartialMeta];
+	abstract dehydrate(
+		value: T,
+		child: SynthChild,
+	): [data: Dehydrated, meta: PartialMeta];
 
 	/** Reconstruct the runtime value from wire data and metadata. */
 	abstract hydrate(data: Dehydrated, meta: SynthMeta, child: SynthChild): T;

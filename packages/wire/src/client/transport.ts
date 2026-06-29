@@ -1,4 +1,9 @@
-import type { ServerPush, Transport, UpdateRequest, UpdateResponse } from "../contracts";
+import type {
+	ServerPush,
+	Transport,
+	UpdateRequest,
+	UpdateResponse,
+} from "../contracts";
 
 /** HTTP transport: POSTs a batched update and awaits the response. No push. */
 export class HttpTransport implements Transport {
@@ -35,7 +40,9 @@ export class SseTransport implements Transport {
 	subscribe(channel: string, onPush: (p: ServerPush) => void): () => void {
 		this.listeners.add(onPush);
 		if (!this.source) {
-			this.source = new EventSource(`${this.channelUrl}?channel=${encodeURIComponent(channel)}`);
+			this.source = new EventSource(
+				`${this.channelUrl}?channel=${encodeURIComponent(channel)}`,
+			);
 			this.source.onmessage = (e) => {
 				const push = JSON.parse(e.data) as ServerPush;
 				for (const cb of this.listeners) cb(push);
@@ -85,9 +92,13 @@ export class WebSocketTransport implements Transport {
 			this.pending.set(id, resolve);
 			const payload = JSON.stringify({ id, request: req });
 			if (socket.readyState === 1) socket.send(payload);
-			else socket.addEventListener("open", () => socket.send(payload), { once: true });
+			else
+				socket.addEventListener("open", () => socket.send(payload), {
+					once: true,
+				});
 			setTimeout(() => {
-				if (this.pending.delete(id)) reject(new Error("Kirewire socket timeout."));
+				if (this.pending.delete(id))
+					reject(new Error("Kirewire socket timeout."));
 			}, 30000);
 		});
 	}

@@ -1,6 +1,6 @@
 import type { Kire } from "kire";
-import type { RequestContext } from "./runtime/context";
 import { resolveMeta } from "./metadata";
+import type { RequestContext } from "./runtime/context";
 import { store } from "./runtime/store";
 
 /** Property/method names that may never be invoked as actions from the client. */
@@ -53,13 +53,19 @@ export abstract class LiveComponent {
 	}
 
 	/** Push effects to all clients subscribed to a channel (set by the runtime). */
-	$broadcast?: (channel: string, effects: import("./contracts").Effects) => void;
+	$broadcast?: (
+		channel: string,
+		effects: import("./contracts").Effects,
+	) => void;
 
 	/**
 	 * Render a Kire view with this component as the local scope. Wired to the
 	 * engine in Phase 3; throws if no engine is attached yet.
 	 */
-	view(path: string, extra: Record<string, unknown> = {}): string | Promise<string> {
+	view(
+		path: string,
+		extra: Record<string, unknown> = {},
+	): string | Promise<string> {
 		if (!this.$kire) {
 			throw new Error(
 				`Component "${this.$name}" has no Kire engine attached; cannot render "${path}".`,

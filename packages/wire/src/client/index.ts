@@ -2,18 +2,19 @@
  * Kirewire client runtime entry point. Bootstraps component discovery, directive
  * binding, and the transport, then exposes a small global API on `window.Kirewire`.
  */
-import { WireRuntime } from "./runtime";
-import { createDefaultDirectives, DirectiveRegistry } from "./directives";
-import { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
-import type { ServerPush, Transport } from "../contracts";
 
-export { WireRuntime } from "./runtime";
+import type { ServerPush, Transport } from "../contracts";
+import { createDefaultDirectives, type DirectiveRegistry } from "./directives";
+import { WireRuntime } from "./runtime";
+import { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
+
 export { ClientComponent } from "./component";
-export { DirectiveRegistry, createDefaultDirectives } from "./directives";
-export { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
-export { reactive, effect, computed, watch } from "./reactivity";
+export { createDefaultDirectives, DirectiveRegistry } from "./directives";
 export { morph } from "./morph";
-export { makeWire, evaluate } from "./wire";
+export { computed, effect, reactive, watch } from "./reactivity";
+export { WireRuntime } from "./runtime";
+export { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
+export { evaluate, makeWire } from "./wire";
 
 export interface StartOptions {
 	/** Update endpoint for the HTTP transport. */
@@ -37,7 +38,8 @@ export interface KirewireGlobal {
 
 /** Create a runtime, discover components, and begin handling interactions. */
 export function start(opts: StartOptions = {}): WireRuntime {
-	const transport: Transport = opts.transport ?? new HttpTransport(opts.url ?? "/_wire", opts.token);
+	const transport: Transport =
+		opts.transport ?? new HttpTransport(opts.url ?? "/_wire", opts.token);
 	const runtime = new WireRuntime({
 		transport,
 		directives: opts.directives ?? createDefaultDirectives(),

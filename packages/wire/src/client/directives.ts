@@ -1,7 +1,7 @@
 import type { ClientComponent } from "./component";
+import { effect } from "./reactivity";
 import type { WireRuntime } from "./runtime";
 import { evaluate, type Wire } from "./wire";
-import { effect } from "./reactivity";
 
 export interface DirectiveContext {
 	el: Element;
@@ -91,6 +91,14 @@ export function createDefaultDirectives(): DirectiveRegistry {
 	reg.register("@event", ({ el, value, expression, wire }) => {
 		el.addEventListener(value, (event) => {
 			if (value === "submit") event.preventDefault();
+			// wire:confirm on the same element gates the action behind a confirm().
+			const confirmMsg = el.getAttribute("wire:confirm");
+			if (
+				confirmMsg &&
+				typeof window !== "undefined" &&
+				!window.confirm(confirmMsg)
+			)
+				return;
 			// `wire:click="increment"` (bare method) evaluates to a function — call it.
 			// `wire:click="count++"` evaluates to a value and is already applied.
 			const result = evaluate(expression, wire, event);
@@ -99,10 +107,19 @@ export function createDefaultDirectives(): DirectiveRegistry {
 	});
 
 	// wire:model[.live|.blur|.lazy] — two-way binding.
-	reg.register("model", ({ el, modifiers, expression, component }) => {
+	reg.register("model", ({ el, modifiers, expression, component, wire }) => {
 		const live = modifiers.includes("live");
 		const input = el as HTMLInputElement;
 		const path = expression.trim();
+
+		// File inputs upload on change, then store the returned token(s).
+		if (input.type === "file") {
+			input.addEventListener("change", () => {
+				if (input.files && input.files.length)
+					void wire.$upload(path, input.files);
+			});
+			return;
+		}
 		const event = modifiers.includes("blur")
 			? "blur"
 			: modifiers.includes("lazy")
@@ -110,18 +127,27 @@ export function createDefaultDirectives(): DirectiveRegistry {
 				: "input";
 
 		const current = component.get(path);
-		if (current !== undefined && input.value !== String(current)) input.value = String(current);
+		if (current !== undefined && input.value !== String(current))
+			input.value = String(current);
 
 		input.addEventListener(event, () => {
 			const value =
-				input.type === "checkbox" ? input.checked : input.type === "number" ? Number(input.value) : input.value;
+				input.type === "checkbox"
+					? input.checked
+					: input.type === "number"
+						? Number(input.value)
+						: input.value;
 			component.set(path, value, live);
 		});
 
 		// Reflect server-driven changes back into the field.
 		effect(() => {
 			const next = component.get(path);
-			if (next !== undefined && document.activeElement !== input && input.value !== String(next)) {
+			if (
+				next !== undefined &&
+				document.activeElement !== input &&
+				input.value !== String(next)
+			) {
 				input.value = String(next);
 			}
 		});
@@ -134,7 +160,10 @@ export function createDefaultDirectives(): DirectiveRegistry {
 
 	// wire:poll[.2000ms] — periodic refresh.
 	reg.register("poll", ({ modifiers, expression, wire, cleanup }) => {
-		const ms = Number((modifiers.find((m) => m.endsWith("ms")) ?? "2000ms").replace("ms", "")) || 2000;
+		const ms =
+			Number(
+				(modifiers.find((m) => m.endsWith("ms")) ?? "2000ms").replace("ms", ""),
+			) || 2000;
 		const id = setInterval(() => {
 			if (expression) evaluate(expression, wire);
 			else void (wire as { $refresh(): unknown }).$refresh();
@@ -148,7 +177,10 @@ export function createDefaultDirectives(): DirectiveRegistry {
 		const initial = htmlEl.style.display;
 		htmlEl.style.display = "none";
 		const toggle = (e: Event) => {
-			const detail = (e as CustomEvent).detail as { id: string; loading: boolean };
+			const detail = (e as CustomEvent).detail as {
+				id: string;
+				loading: boolean;
+			};
 			if (detail.id !== component.id) return;
 			htmlEl.style.display = detail.loading ? initial || "" : "none";
 		};

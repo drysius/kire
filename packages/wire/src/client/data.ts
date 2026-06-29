@@ -17,17 +17,21 @@ function isTuple(v: unknown): v is [unknown, { s: string }] {
 }
 
 export function extract(value: Dehydrated): unknown {
-	if (isTuple(value)) return extract((value as [Dehydrated, unknown])[0] as Dehydrated);
+	if (isTuple(value))
+		return extract((value as [Dehydrated, unknown])[0] as Dehydrated);
 	if (Array.isArray(value)) return value.map((v) => extract(v));
 	if (value && typeof value === "object") {
 		const out: Record<string, unknown> = {};
-		for (const k of Object.keys(value)) out[k] = extract((value as Record<string, Dehydrated>)[k]!);
+		for (const k of Object.keys(value))
+			out[k] = extract((value as Record<string, Dehydrated>)[k]!);
 		return out;
 	}
 	return value;
 }
 
-export function extractData(data: Record<string, Dehydrated>): Record<string, unknown> {
+export function extractData(
+	data: Record<string, Dehydrated>,
+): Record<string, unknown> {
 	const out: Record<string, unknown> = {};
 	for (const k of Object.keys(data)) out[k] = extract(data[k]!);
 	return out;

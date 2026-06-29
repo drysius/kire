@@ -335,7 +335,8 @@ Framework adapters (express/elysia/koa/fivem) only translate native req/res into
 
 ## Implementation status
 
-Built in `packages/wire` (in-place rewrite), 44 tests passing, strict typecheck clean:
+Built in `packages/wire` (in-place rewrite), **54 wire tests passing**
+(160 incl. core), strict typecheck clean, server + Node-free client bundles build:
 
 - ✅ **Phase 1** — protocol (`contracts.ts`), synthesizers + registry + builtins,
   HMAC checksum, snapshot (de)hydrate, store, context, deep properties, pipeline.
@@ -350,9 +351,13 @@ Built in `packages/wire` (in-place rewrite), 44 tests passing, strict typecheck 
 - ✅ **Phase 5** — transports: `HttpTransport`, `SseTransport`, `WebSocketTransport`
   (client) + `Hub` broadcaster, `handleUpdate`/`nodeHttpAdapter`, `serveSse`,
   `serveWs` (server). `broadcastTo`/push verified in-process.
-- 🟡 **Phase 6** — `@lazy` and `@url` shipped as representative v1.1 features +
-  class/model synth via `SynthRegistry`. Remaining (file uploads, form objects,
-  pagination, entangle, Alpine adapter) are documented extension points for later.
+- ✅ **Phase 6** — `@lazy`, `@url`; `WireForm` (validate/reset); `paginate()`;
+  file uploads (`WireFile`, `MemoryFileStore`, `FileUploadSynth`/`Feature`,
+  `handleUpload`, client `$upload` + file-input `wire:model`); `modelSynth`/
+  `defineSynth` class serialization; `$entangle`; `wire:confirm`; framework
+  adapters (`createFetchHandler` Web-standard, `expressAdapter`); build script
+  (server ESM/CJS + Node-free browser client). Optional Alpine adapter left as a
+  thin future shim.
 
 ---
 

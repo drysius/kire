@@ -18,7 +18,7 @@ function bag(component: object): Map<string, unknown> {
 export const store = {
 	get<T = unknown>(component: object, key: string, fallback?: T): T {
 		const map = stores.get(component);
-		return (map?.has(key) ? (map.get(key) as T) : (fallback as T));
+		return map?.has(key) ? (map.get(key) as T) : (fallback as T);
 	},
 	set(component: object, key: string, value: unknown): void {
 		bag(component).set(key, value);

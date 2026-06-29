@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import { Kire } from "../../../core/src/kire";
 import { LiveComponent } from "../src/component";
-import { Kirewire } from "../src/kirewire";
+import type { Snapshot } from "../src/contracts";
 import { Component, prop } from "../src/decorators";
 import { kirewirePlugin } from "../src/kire/plugin";
-import type { Snapshot } from "../src/contracts";
+import { Kirewire } from "../src/kirewire";
 
 @Component("counter")
 class Counter extends LiveComponent {
@@ -36,7 +36,9 @@ function extractSnapshot(html: string): Snapshot {
 describe("kire SSR integration", () => {
 	test("@wire directive mounts and injects wire:* attributes into the root", async () => {
 		const { kire } = setup();
-		const html = (await kire.render(`<section>@wire("counter")</section>`)) as string;
+		const html = (await kire.render(
+			`<section>@wire("counter")</section>`,
+		)) as string;
 		expect(html).toContain('wire:name="counter"');
 		expect(html).toMatch(/wire:id="[0-9a-f-]{36}"/);
 		expect(html).toContain("wire:snapshot='");

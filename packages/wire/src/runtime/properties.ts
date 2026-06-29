@@ -22,7 +22,11 @@ export function getDeep(target: unknown, path: string): unknown {
  * needed. A numeric next-segment vivifies an array, otherwise an object. The
  * top-level property name is returned so callers can fire `updated<Prop>` hooks.
  */
-export function setDeep(target: Record<string, unknown>, path: string, value: unknown): string {
+export function setDeep(
+	target: Record<string, unknown>,
+	path: string,
+	value: unknown,
+): string {
 	const segments = path.split(".");
 	const root = segments[0]!;
 

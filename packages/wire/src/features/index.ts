@@ -1,18 +1,18 @@
 import { FeatureBus } from "./feature";
+import { LazyFeature } from "./lazy";
 import { LifecycleFeature } from "./lifecycle";
 import { LockedFeature } from "./locked";
-import { ValidationFeature } from "./validation";
 import { MagicFeature } from "./magic";
-import { LazyFeature } from "./lazy";
 import { UrlFeature } from "./url";
+import { ValidationFeature } from "./validation";
 
 export { Feature, FeatureBus, type Finisher } from "./feature";
+export { LazyFeature } from "./lazy";
 export { LifecycleFeature } from "./lifecycle";
 export { LockedFeature, LockedPropertyError } from "./locked";
-export { ValidationFeature, type Rule } from "./validation";
 export { MagicFeature } from "./magic";
-export { LazyFeature } from "./lazy";
 export { UrlFeature } from "./url";
+export { type Rule, ValidationFeature } from "./validation";
 
 /**
  * A feature bus preloaded with the v1 essential features. Order matters:

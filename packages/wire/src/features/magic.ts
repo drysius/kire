@@ -1,5 +1,5 @@
-import type { ComponentCall } from "../contracts";
 import type { LiveComponent } from "../component";
+import type { ComponentCall } from "../contracts";
 import { getDeep, setDeep } from "../runtime/properties";
 import { Feature } from "./feature";
 
@@ -10,7 +10,10 @@ import { Feature } from "./feature";
  * `$` prefix never blocks them.
  */
 export class MagicFeature extends Feature {
-	override call(c: LiveComponent, call: ComponentCall): { earlyReturn: unknown } | void {
+	override call(
+		c: LiveComponent,
+		call: ComponentCall,
+	): { earlyReturn: unknown } | void {
 		const target = c as unknown as Record<string, unknown>;
 		switch (call.method) {
 			case "$refresh":

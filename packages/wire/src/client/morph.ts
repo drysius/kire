@@ -42,7 +42,8 @@ const WIRE_MANAGED = new Set(["wire:id", "wire:name", "wire:snapshot"]);
 
 function patchAttributes(from: Element, to: Element): void {
 	for (const attr of Array.from(to.attributes)) {
-		if (from.getAttribute(attr.name) !== attr.value) from.setAttribute(attr.name, attr.value);
+		if (from.getAttribute(attr.name) !== attr.value)
+			from.setAttribute(attr.name, attr.value);
 	}
 	for (const attr of Array.from(from.attributes)) {
 		if (!to.hasAttribute(attr.name) && !WIRE_MANAGED.has(attr.name)) {
@@ -84,7 +85,12 @@ function patchChildren(from: Element, to: Element): void {
 				cursor = existing.nextSibling;
 				continue;
 			}
-			if (cursor && isElement(cursor) && cursor.tagName === next.tagName && !keyOf(next)) {
+			if (
+				cursor &&
+				isElement(cursor) &&
+				cursor.tagName === next.tagName &&
+				!keyOf(next)
+			) {
 				patchElement(cursor, next);
 				cursor = cursor.nextSibling;
 				continue;
@@ -94,7 +100,8 @@ function patchChildren(from: Element, to: Element): void {
 		}
 		// text / comment node
 		if (cursor && cursor.nodeType === next.nodeType) {
-			if (cursor.textContent !== next.textContent) cursor.textContent = next.textContent;
+			if (cursor.textContent !== next.textContent)
+				cursor.textContent = next.textContent;
 			cursor = cursor.nextSibling;
 		} else {
 			from.insertBefore(next.cloneNode(true), cursor);

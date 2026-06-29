@@ -1,8 +1,8 @@
 import type { Effects, Snapshot } from "../contracts";
 import { getDeep, setDeep } from "../runtime/properties";
-import { reactive } from "./reactivity";
 import { extractData } from "./data";
 import { morph } from "./morph";
+import { reactive } from "./reactivity";
 import type { WireRuntime } from "./runtime";
 
 /**
@@ -19,7 +19,11 @@ export class ClientComponent {
 	/** Property writes pending the next commit, keyed by dot-path. */
 	readonly updates: Record<string, unknown> = {};
 
-	constructor(el: Element, snapshot: Snapshot, private readonly runtime: WireRuntime) {
+	constructor(
+		el: Element,
+		snapshot: Snapshot,
+		private readonly runtime: WireRuntime,
+	) {
 		this.el = el;
 		this.snapshot = snapshot;
 		this.id = snapshot.memo.id;
@@ -54,7 +58,8 @@ export class ClientComponent {
 	applyResponse(snapshot: Snapshot, effects: Effects): void {
 		this.snapshot = snapshot;
 		const next = extractData(snapshot.data);
-		for (const k of Object.keys(next)) (this.ephemeral as Record<string, unknown>)[k] = next[k];
+		for (const k of Object.keys(next))
+			(this.ephemeral as Record<string, unknown>)[k] = next[k];
 
 		if (typeof effects.html === "string") {
 			this.el = morph(this.el, effects.html);
@@ -64,7 +69,10 @@ export class ClientComponent {
 		}
 		for (const d of effects.dispatches ?? []) this.runtime.dispatch(d, this);
 		for (const src of effects.scripts ?? []) this.runtime.runScript(src);
-		if (effects.url) this.runtime.updateUrl((effects.url as { query: Record<string, unknown> }).query);
+		if (effects.url)
+			this.runtime.updateUrl(
+				(effects.url as { query: Record<string, unknown> }).query,
+			);
 		if (effects.redirect) this.runtime.redirect(effects.redirect);
 	}
 }

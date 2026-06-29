@@ -1,6 +1,6 @@
 import type { Kire } from "kire";
 import type { UpdateRequest, UpdateResponse } from "../contracts";
-import { Kirewire, CorruptSnapshotError } from "../kirewire";
+import { CorruptSnapshotError, type Kirewire } from "../kirewire";
 
 export interface HttpResult {
 	status: number;
@@ -43,9 +43,15 @@ export async function handleUpdate(
 }
 
 /** A minimal Node `(req, res)` handler for the update endpoint. */
-export function nodeHttpAdapter(kirewire: Kirewire, engineFactory?: () => Kire<boolean>) {
+export function nodeHttpAdapter(
+	kirewire: Kirewire,
+	engineFactory?: () => Kire<boolean>,
+) {
 	return async (
-		req: { on(ev: string, cb: (chunk: unknown) => void): void; method?: string },
+		req: {
+			on(ev: string, cb: (chunk: unknown) => void): void;
+			method?: string;
+		},
 		res: {
 			statusCode: number;
 			setHeader(k: string, v: string): void;

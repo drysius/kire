@@ -10,20 +10,26 @@ type AnyCtor = abstract new (...args: any[]) => object;
 
 /** `@Component("name")` — register a component under a name. */
 export function Component(name: string) {
-	return function (value: AnyCtor, _ctx: ClassDecoratorContext): void {
+	return (value: AnyCtor, _ctx: ClassDecoratorContext): void => {
 		ownMeta(value as unknown as Function).name = name;
 	};
 }
 
 /** `@prop` — declare a reactive, client-writable property. */
-export function prop(_value: undefined, context: ClassFieldDecoratorContext): void {
+export function prop(
+	_value: undefined,
+	context: ClassFieldDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		ownMeta(this.constructor).props.add(String(context.name));
 	});
 }
 
 /** `@locked` — a property the client may never write. */
-export function locked(_value: undefined, context: ClassFieldDecoratorContext): void {
+export function locked(
+	_value: undefined,
+	context: ClassFieldDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		const meta = ownMeta(this.constructor);
 		meta.props.add(String(context.name));
@@ -32,14 +38,20 @@ export function locked(_value: undefined, context: ClassFieldDecoratorContext): 
 }
 
 /** `@computed` — expose a getter's value to the view (read-only). */
-export function computed(_value: unknown, context: ClassGetterDecoratorContext): void {
+export function computed(
+	_value: unknown,
+	context: ClassGetterDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		ownMeta(this.constructor).computed.add(String(context.name));
 	});
 }
 
 /** `@renderless` — a method that runs without triggering a re-render. */
-export function renderless(_value: unknown, context: ClassMethodDecoratorContext): void {
+export function renderless(
+	_value: unknown,
+	context: ClassMethodDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		ownMeta(this.constructor).renderless.add(String(context.name));
 	});
@@ -47,7 +59,7 @@ export function renderless(_value: unknown, context: ClassMethodDecoratorContext
 
 /** `@on("event")` — call this method when the named event is dispatched. */
 export function on(event: string) {
-	return function (_value: unknown, context: ClassMethodDecoratorContext): void {
+	return (_value: unknown, context: ClassMethodDecoratorContext): void => {
 		context.addInitializer(function (this: any) {
 			ownMeta(this.constructor).listeners.set(event, String(context.name));
 		});
@@ -56,7 +68,7 @@ export function on(event: string) {
 
 /** `@validate(rule)` — attach a validation rule/schema to a property. */
 export function validate(rule: unknown) {
-	return function (_value: undefined, context: ClassFieldDecoratorContext): void {
+	return (_value: undefined, context: ClassFieldDecoratorContext): void => {
 		context.addInitializer(function (this: any) {
 			const meta = ownMeta(this.constructor);
 			meta.props.add(String(context.name));
@@ -66,7 +78,10 @@ export function validate(rule: unknown) {
 }
 
 /** `@action` — explicitly allowlist a method as client-callable. */
-export function action(_value: unknown, context: ClassMethodDecoratorContext): void {
+export function action(
+	_value: unknown,
+	context: ClassMethodDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		ownMeta(this.constructor).actions.add(String(context.name));
 	});
@@ -78,7 +93,10 @@ export function lazy(value: AnyCtor, _ctx: ClassDecoratorContext): void {
 }
 
 /** `@url` — keep a property in sync with the page's URL query string. */
-export function url(_value: undefined, context: ClassFieldDecoratorContext): void {
+export function url(
+	_value: undefined,
+	context: ClassFieldDecoratorContext,
+): void {
 	context.addInitializer(function (this: any) {
 		const meta = ownMeta(this.constructor);
 		meta.props.add(String(context.name));

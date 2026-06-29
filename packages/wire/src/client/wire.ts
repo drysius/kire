@@ -29,6 +29,11 @@ export type Wire = Record<string, unknown> & {
 	$refresh(): Promise<unknown>;
 	$watch(path: string, cb: (v: unknown) => void): () => void;
 	$dispatch(event: string, ...params: unknown[]): void;
+	$entangle(
+		path: string,
+		live?: boolean,
+	): { get(): unknown; set(value: unknown): void };
+	$upload(path: string, files: FileList | File[]): Promise<void>;
 	readonly $id: string;
 	readonly $el: Element;
 };
@@ -42,13 +47,21 @@ export type Wire = Record<string, unknown> & {
 export function makeWire(component: ClientComponent, runtime: WireApi): Wire {
 	const handlers: Record<string, unknown> = {
 		$get: (path: string) => component.get(path),
-		$set: (path: string, value: unknown, live = true) => component.set(path, value, live),
-		$call: (method: string, ...params: unknown[]) => component.call(method, params),
+		$set: (path: string, value: unknown, live = true) =>
+			component.set(path, value, live),
+		$call: (method: string, ...params: unknown[]) =>
+			component.call(method, params),
 		$refresh: () => component.call("$refresh"),
 		$dispatch: (event: string, ...params: unknown[]) =>
 			runtime.dispatch({ event, params }, component),
 		$watch: (path: string, cb: (v: unknown) => void) =>
 			watch(() => component.get(path), cb),
+		$entangle: (path: string, live = false) => ({
+			get: () => component.get(path),
+			set: (value: unknown) => component.set(path, value, live),
+		}),
+		$upload: (path: string, files: FileList | File[]) =>
+			runtime.upload(component, path, files),
 		$id: component.id,
 		$el: () => component.el,
 	};
@@ -75,13 +88,25 @@ export function makeWire(component: ClientComponent, runtime: WireApi): Wire {
 
 /** Minimal runtime surface the `$wire` proxy needs. */
 export interface WireApi {
-	dispatch(d: { event: string; params: unknown[] }, from: ClientComponent): void;
+	dispatch(
+		d: { event: string; params: unknown[] },
+		from: ClientComponent,
+	): void;
+	upload(
+		component: ClientComponent,
+		path: string,
+		files: FileList | File[],
+	): Promise<void>;
 }
 
 /** Evaluate a directive expression with `$wire` and `$event` in scope. */
 export function evaluate(expr: string, wire: Wire, event?: Event): unknown {
 	// Function bodies are non-strict, so `with` is allowed and routes bare names
 	// through the $wire `has`/`get` traps.
-	const fn = new Function("$wire", "$event", `with($wire){ return (${expr}); }`);
+	const fn = new Function(
+		"$wire",
+		"$event",
+		`with($wire){ return (${expr}); }`,
+	);
 	return fn(wire, event);
 }

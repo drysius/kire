@@ -1,5 +1,5 @@
 import type { Dehydrated, SyntheticTuple } from "../contracts";
-import type { SynthChild, Synth } from "./synth";
+import type { Synth, SynthChild } from "./synth";
 
 /** A primitive needs no synthesis and travels bare. `-0` is normalized to `0`. */
 function isPrimitive(v: unknown): v is string | number | boolean | null {

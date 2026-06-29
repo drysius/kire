@@ -1,4 +1,9 @@
-import { PROTOCOL_VERSION, type Dehydrated, type Snapshot, type SnapshotMemo } from "../contracts";
+import {
+	type Dehydrated,
+	PROTOCOL_VERSION,
+	type Snapshot,
+	type SnapshotMemo,
+} from "../contracts";
 import type { SynthRegistry } from "../synth/registry";
 import { sign } from "./checksum";
 

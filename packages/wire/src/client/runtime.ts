@@ -1,7 +1,12 @@
-import { PROTOCOL_VERSION, type Dispatch, type Snapshot, type Transport } from "../contracts";
+import {
+	type Dispatch,
+	PROTOCOL_VERSION,
+	type Snapshot,
+	type Transport,
+} from "../contracts";
 import { ClientComponent } from "./component";
-import { makeWire, type Wire } from "./wire";
 import type { DirectiveRegistry } from "./directives";
+import { makeWire, type Wire } from "./wire";
 
 interface PendingCall {
 	method: string;
@@ -20,6 +25,8 @@ export interface WireRuntimeOptions {
 	directives: DirectiveRegistry;
 	/** Microtask buffer (ms) for batching synchronous interactions. */
 	buffer?: number;
+	/** Multipart upload endpoint for `wire:model` on file inputs. */
+	uploadUrl?: string;
 }
 
 /**
@@ -33,6 +40,7 @@ export class WireRuntime {
 	private readonly transport: Transport;
 	private readonly directives: DirectiveRegistry;
 	private readonly buffer: number;
+	private readonly uploadUrl: string;
 	private readonly pending = new Map<string, PendingEntry>();
 	private timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -40,6 +48,25 @@ export class WireRuntime {
 		this.transport = opts.transport;
 		this.directives = opts.directives;
 		this.buffer = opts.buffer ?? 5;
+		this.uploadUrl = opts.uploadUrl ?? "/_wire/upload";
+	}
+
+	/** Upload files for a `wire:model` file input, then set the property to the
+	 * returned token(s) so the next request resolves them server-side. */
+	async upload(
+		component: ClientComponent,
+		path: string,
+		files: FileList | File[],
+	): Promise<void> {
+		const list = Array.from(files as ArrayLike<File>);
+		if (list.length === 0) return;
+		const form = new FormData();
+		for (const file of list) form.append("files[]", file);
+		const res = await fetch(this.uploadUrl, { method: "POST", body: form });
+		if (!res.ok) throw new Error(`Upload failed (${res.status}).`);
+		const data = (await res.json()) as { files: Array<{ token: string }> };
+		const tokens = data.files.map((f) => f.token);
+		component.set(path, tokens.length === 1 ? tokens[0] : tokens, true);
 	}
 
 	/** Scan the document and mount every top-level component. */
@@ -94,7 +121,11 @@ export class WireRuntime {
 		this.schedule();
 	}
 
-	queueCall(component: ClientComponent, method: string, params: unknown[]): Promise<unknown> {
+	queueCall(
+		component: ClientComponent,
+		method: string,
+		params: unknown[],
+	): Promise<unknown> {
 		const entry = this.entry(component);
 		return new Promise((resolve, reject) => {
 			entry.calls.push({ method, params, resolve, reject });
@@ -159,7 +190,10 @@ export class WireRuntime {
 
 	// ── Effects ──────────────────────────────────────────────────────────────
 
-	dispatch(d: { event: string; params: unknown[]; to?: string; self?: boolean }, from?: ClientComponent): void {
+	dispatch(
+		d: { event: string; params: unknown[]; to?: string; self?: boolean },
+		from?: ClientComponent,
+	): void {
 		const dispatch = d as Dispatch;
 		for (const component of this.components.values()) {
 			if (dispatch.to && component.name !== dispatch.to) continue;
@@ -168,7 +202,11 @@ export class WireRuntime {
 			if (method) void component.call(method, dispatch.params);
 		}
 		if (typeof window !== "undefined") {
-			window.dispatchEvent(new CustomEvent(`kirewire:${dispatch.event}`, { detail: dispatch.params }));
+			window.dispatchEvent(
+				new CustomEvent(`kirewire:${dispatch.event}`, {
+					detail: dispatch.params,
+				}),
+			);
 		}
 	}
 
@@ -176,7 +214,9 @@ export class WireRuntime {
 		if (typeof window === "undefined") return;
 		for (const e of entries) {
 			window.dispatchEvent(
-				new CustomEvent("kirewire:loading", { detail: { id: e.component.id, loading } }),
+				new CustomEvent("kirewire:loading", {
+					detail: { id: e.component.id, loading },
+				}),
 			);
 		}
 	}

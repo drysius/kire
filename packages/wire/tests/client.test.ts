@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import { JSDOM } from "jsdom";
 import { Kire } from "../../../core/src/kire";
+import { createDefaultDirectives } from "../src/client/directives";
+import { WireRuntime } from "../src/client/runtime";
 import { LiveComponent } from "../src/component";
-import { Kirewire } from "../src/kirewire";
+import type { Transport, UpdateRequest } from "../src/contracts";
 import { Component, prop } from "../src/decorators";
 import { kirewirePlugin } from "../src/kire/plugin";
-import { WireRuntime } from "../src/client/runtime";
-import { createDefaultDirectives } from "../src/client/directives";
-import type { Transport, UpdateRequest } from "../src/contracts";
+import { Kirewire } from "../src/kirewire";
 
 @Component("counter")
 class Counter extends LiveComponent {

@@ -1,26 +1,27 @@
 import { randomUUID } from "node:crypto";
 import type { Kire } from "kire";
+import type { LiveComponent } from "./component";
 import type {
+	Broadcaster,
 	ComponentRequest,
 	ComponentResponse,
+	Effects,
 	Snapshot,
 	SnapshotMemo,
 	UpdateRequest,
 	UpdateResponse,
 } from "./contracts";
 import { PROTOCOL_VERSION } from "./contracts";
-import { LiveComponent } from "./component";
-import { ComponentRegistry, type ComponentClass } from "./registry";
-import { FeatureBus } from "./features/feature";
+import type { FeatureBus } from "./features/feature";
 import { createDefaultFeatures } from "./features/index";
-import type { Broadcaster, Effects } from "./contracts";
-import { RequestContext } from "./runtime/context";
-import { verify } from "./runtime/checksum";
-import { hydrateData, takeSnapshot } from "./runtime/snapshot";
-import { setDeep } from "./runtime/properties";
 import { resolveMeta } from "./metadata";
-import { SynthRegistry } from "./synth/registry";
+import { type ComponentClass, ComponentRegistry } from "./registry";
+import { verify } from "./runtime/checksum";
+import { RequestContext } from "./runtime/context";
+import { setDeep } from "./runtime/properties";
+import { hydrateData, takeSnapshot } from "./runtime/snapshot";
 import { createDefaultSynthRegistry } from "./synth/builtins";
+import type { SynthRegistry } from "./synth/registry";
 
 export interface KirewireOptions {
 	/** HMAC secret for snapshot checksums. Required; keep it stable per app. */
@@ -87,7 +88,8 @@ export class Kirewire {
 
 	/** Register a component class (name from `@Component`) or under an explicit name. */
 	component(ctorOrName: ComponentClass | string, ctor?: ComponentClass): this {
-		if (typeof ctorOrName === "string") this.registry.register(ctorOrName, ctor!);
+		if (typeof ctorOrName === "string")
+			this.registry.register(ctorOrName, ctor!);
 		else this.registry.registerClass(ctorOrName);
 		return this;
 	}
@@ -118,17 +120,28 @@ export class Kirewire {
 
 		// A feature (e.g. lazy loading) may supply placeholder HTML to skip render.
 		const html =
-			context.html !== undefined ? context.html : await this.renderComponent(instance, context);
-		const snapshot = this.dehydrate(instance, context, this.freshMemo(instance));
+			context.html !== undefined
+				? context.html
+				: await this.renderComponent(instance, context);
+		const snapshot = this.dehydrate(
+			instance,
+			context,
+			this.freshMemo(instance),
+		);
 		return { id: instance.$id, snapshot, html };
 	}
 
 	// ── Update (subsequent requests) ───────────────────────────────────────────
 
 	/** Run the full update pipeline for one component request. */
-	async update(req: ComponentRequest, engine?: Kire<boolean>): Promise<ComponentResponse> {
+	async update(
+		req: ComponentRequest,
+		engine?: Kire<boolean>,
+	): Promise<ComponentResponse> {
 		const snapshot: Snapshot =
-			typeof req.snapshot === "string" ? JSON.parse(req.snapshot) : req.snapshot;
+			typeof req.snapshot === "string"
+				? JSON.parse(req.snapshot)
+				: req.snapshot;
 
 		if (!verify(snapshot, this.secret)) throw new CorruptSnapshotError();
 
@@ -162,15 +175,20 @@ export class Kirewire {
 			if (early) {
 				ret = early.earlyReturn;
 			} else if (instance.isCallableAction(call.method)) {
-				const fn = (instance as unknown as Record<string, (...a: unknown[]) => unknown>)[
-					call.method
-				]!;
+				const fn = (
+					instance as unknown as Record<string, (...a: unknown[]) => unknown>
+				)[call.method]!;
 				ret = await fn.apply(instance, call.params);
 			} else {
-				throw new Error(`Method "${call.method}" is not callable on "${snapshot.memo.name}".`);
+				throw new Error(
+					`Method "${call.method}" is not callable on "${snapshot.memo.name}".`,
+				);
 			}
 			context.returns.push(ret);
-			if (call.meta?.renderless || resolveMeta(instance).renderless.has(call.method)) {
+			if (
+				call.meta?.renderless ||
+				resolveMeta(instance).renderless.has(call.method)
+			) {
 				context.skipRender = true;
 			}
 		}
@@ -181,14 +199,22 @@ export class Kirewire {
 		}
 
 		// 5. Dehydrate -> fresh signed snapshot + effects.
-		const memo = { ...snapshot.memo, ...this.freshMemo(instance) } as SnapshotMemo;
+		const memo = {
+			...snapshot.memo,
+			...this.freshMemo(instance),
+		} as SnapshotMemo;
 		const next = this.dehydrate(instance, context, memo);
 		return { id: instance.$id, snapshot: next, effects: context.finalize() };
 	}
 
 	/** Handle a batched request of many components in one round-trip. */
-	async handle(req: UpdateRequest, engine?: Kire<boolean>): Promise<UpdateResponse> {
-		const components = await Promise.all(req.components.map((c) => this.update(c, engine)));
+	async handle(
+		req: UpdateRequest,
+		engine?: Kire<boolean>,
+	): Promise<UpdateResponse> {
+		const components = await Promise.all(
+			req.components.map((c) => this.update(c, engine)),
+		);
 		return { v: PROTOCOL_VERSION, components };
 	}
 
@@ -228,13 +254,19 @@ export class Kirewire {
 	): Snapshot {
 		this.features.dehydrate(instance, context);
 		const fullMemo = { ...memo, ...context.memo } as SnapshotMemo;
-		return takeSnapshot(instance.getPublicState(), fullMemo, this.synth, this.secret);
+		return takeSnapshot(
+			instance.getPublicState(),
+			fullMemo,
+			this.synth,
+			this.secret,
+		);
 	}
 
 	private freshMemo(instance: LiveComponent): SnapshotMemo {
 		const meta = resolveMeta(instance);
 		const memo: SnapshotMemo = { id: instance.$id, name: instance.$name };
-		if (meta.listeners.size) memo.listeners = Object.fromEntries(meta.listeners);
+		if (meta.listeners.size)
+			memo.listeners = Object.fromEntries(meta.listeners);
 		return memo;
 	}
 }

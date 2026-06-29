@@ -1,6 +1,6 @@
 import type { Dehydrated } from "../contracts";
 import { SynthRegistry } from "./registry";
-import { Synth, type PartialMeta, type SynthChild } from "./synth";
+import { type PartialMeta, Synth, type SynthChild } from "./synth";
 
 /** Plain `{}` arrays. Recurses into elements so nested rich types survive. */
 class ArraySynth extends Synth<unknown[]> {
@@ -30,12 +30,19 @@ class ObjectSynth extends Synth<Record<string, unknown>> {
 		const proto = Object.getPrototypeOf(v);
 		return proto === Object.prototype || proto === null;
 	}
-	dehydrate(v: Record<string, unknown>, child: SynthChild): [Dehydrated, PartialMeta] {
+	dehydrate(
+		v: Record<string, unknown>,
+		child: SynthChild,
+	): [Dehydrated, PartialMeta] {
 		const out: Record<string, Dehydrated> = {};
 		for (const k of Object.keys(v)) out[k] = child.dehydrate(v[k]);
 		return [out, {}];
 	}
-	hydrate(data: Dehydrated, _m: unknown, child: SynthChild): Record<string, unknown> {
+	hydrate(
+		data: Dehydrated,
+		_m: unknown,
+		child: SynthChild,
+	): Record<string, unknown> {
 		const out: Record<string, unknown> = {};
 		const obj = data as Record<string, Dehydrated>;
 		for (const k of Object.keys(obj)) out[k] = child.hydrate(obj[k]!);
@@ -69,12 +76,20 @@ class MapSynth extends Synth<Map<unknown, unknown>> {
 	match(v: unknown): boolean {
 		return v instanceof Map;
 	}
-	dehydrate(v: Map<unknown, unknown>, child: SynthChild): [Dehydrated, PartialMeta] {
+	dehydrate(
+		v: Map<unknown, unknown>,
+		child: SynthChild,
+	): [Dehydrated, PartialMeta] {
 		const pairs: Dehydrated[] = [];
-		for (const [k, val] of v) pairs.push([child.dehydrate(k), child.dehydrate(val)]);
+		for (const [k, val] of v)
+			pairs.push([child.dehydrate(k), child.dehydrate(val)]);
 		return [pairs, {}];
 	}
-	hydrate(data: Dehydrated, _m: unknown, child: SynthChild): Map<unknown, unknown> {
+	hydrate(
+		data: Dehydrated,
+		_m: unknown,
+		child: SynthChild,
+	): Map<unknown, unknown> {
 		const map = new Map<unknown, unknown>();
 		for (const pair of data as Dehydrated[]) {
 			const [k, val] = pair as [Dehydrated, Dehydrated];

@@ -1,5 +1,5 @@
-import type { ComponentCall } from "../contracts";
 import type { LiveComponent } from "../component";
+import type { ComponentCall } from "../contracts";
 import type { RequestContext } from "../runtime/context";
 
 /** Post-phase callback returned by `update`/`call`/`render` hooks. */
@@ -18,7 +18,11 @@ export abstract class Feature {
 	boot?(component: LiveComponent): void;
 	mount?(component: LiveComponent, params: Record<string, unknown>): void;
 	hydrate?(component: LiveComponent, memo: Record<string, unknown>): void;
-	update?(component: LiveComponent, path: string, value: unknown): void | Finisher;
+	update?(
+		component: LiveComponent,
+		path: string,
+		value: unknown,
+	): void | Finisher;
 	call?(
 		component: LiveComponent,
 		call: ComponentCall,
@@ -64,7 +68,10 @@ export class FeatureBus {
 	}
 
 	/** Returns the first feature-supplied early return, if any. */
-	call(component: LiveComponent, call: ComponentCall): { earlyReturn: unknown } | undefined {
+	call(
+		component: LiveComponent,
+		call: ComponentCall,
+	): { earlyReturn: unknown } | undefined {
 		for (const f of this.active(component)) {
 			const r = f.call?.(component, call);
 			if (r) return r;

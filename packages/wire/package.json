@@ -16,6 +16,9 @@
 			"import": "./dist/client/index.js"
 		}
 	},
+	"scripts": {
+		"build": "bun run build.ts"
+	},
 	"dependencies": {
 		"kire": "workspace:../../core"
 	},

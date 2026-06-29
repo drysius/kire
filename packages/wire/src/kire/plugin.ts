@@ -35,7 +35,10 @@ function emitMount(api: any, nameExpr: string, paramsExpr: string): void {
  * `@kirewireScripts` client-runtime injector. The live `Kirewire` instance is
  * exposed to templates as the `__kirewire` global.
  */
-export function kirewirePlugin(kirewire: Kirewire, options: KirewirePluginOptions = {}) {
+export function kirewirePlugin(
+	kirewire: Kirewire,
+	options: KirewirePluginOptions = {},
+) {
 	return {
 		name: "kirewire",
 		load(kire: Kire<boolean>) {

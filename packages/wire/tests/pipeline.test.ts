@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { LiveComponent } from "../src/component";
-import { Kirewire, CorruptSnapshotError } from "../src/kirewire";
+import { CorruptSnapshotError, Kirewire } from "../src/kirewire";
 import { verify } from "../src/runtime/checksum";
 
 class Counter extends LiveComponent {
@@ -61,7 +61,11 @@ describe("update", () => {
 		const w = wire();
 		let snap = (await w.mount("counter", { step: 5 })).snapshot;
 		for (let i = 0; i < 3; i++) {
-			const res = await w.update({ snapshot: snap, updates: {}, calls: [{ method: "increment", params: [] }] });
+			const res = await w.update({
+				snapshot: snap,
+				updates: {},
+				calls: [{ method: "increment", params: [] }],
+			});
 			if ("skip" in res) throw new Error("unexpected skip");
 			snap = res.snapshot;
 		}
@@ -73,7 +77,11 @@ describe("update", () => {
 		const { snapshot } = await w.mount("counter");
 		snapshot.data.count = 999;
 		expect(
-			w.update({ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] }),
+			w.update({
+				snapshot,
+				updates: {},
+				calls: [{ method: "increment", params: [] }],
+			}),
 		).rejects.toBeInstanceOf(CorruptSnapshotError);
 	});
 
@@ -81,7 +89,11 @@ describe("update", () => {
 		const w = wire();
 		const { snapshot } = await w.mount("counter");
 		expect(
-			w.update({ snapshot, updates: {}, calls: [{ method: "getPublicState", params: [] }] }),
+			w.update({
+				snapshot,
+				updates: {},
+				calls: [{ method: "getPublicState", params: [] }],
+			}),
 		).rejects.toThrow();
 	});
 });
