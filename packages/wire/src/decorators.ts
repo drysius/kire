@@ -1,132 +1,87 @@
-import { Kind, type TSchema } from "@sinclair/typebox";
-import {
-	defineWireComponent,
-	defineWireVariable,
-	type WireVariableInput,
-	type WireVariableShapeRules,
-} from "./metadata";
+import { ownMeta } from "./metadata";
 
-type WireDecoratorInput =
-	| string
-	| {
-			name?: string;
-			live?: boolean;
-			page?: boolean;
-	  };
+/**
+ * Standard (TC39) decorators that declare reactive metadata on a component class.
+ * Field/method/getter decorators register their name through `addInitializer`
+ * (runs per instance, idempotent) so no `Symbol.metadata` runtime is required.
+ */
 
-function applyWireDefinition(
-	target: Function,
-	input: WireDecoratorInput | undefined,
-) {
-	defineWireComponent(target, input);
-}
+type AnyCtor = abstract new (...args: any[]) => object;
 
-function registerVariable(
-	target: Function | undefined | null,
-	propertyName: string,
-	input: WireVariableInput,
-) {
-	if (!target || typeof target !== "function") return;
-	const key = String(propertyName || "").trim();
-	if (!key) return;
-	defineWireVariable(target, key, input);
-}
-
-function isTypeBoxSchema(value: unknown): value is TSchema {
-	return (
-		!!value &&
-		typeof value === "object" &&
-		Kind in (value as Record<string, unknown>)
-	);
-}
-
-function normalizeShapeRules(
-	input?: WireVariableShapeRules | Array<WireVariableShapeRules>,
-): WireVariableShapeRules | undefined {
-	if (!input) return undefined;
-	const merged: WireVariableShapeRules = {};
-	const list = Array.isArray(input) ? input : [input];
-
-	for (let i = 0; i < list.length; i++) {
-		const chunk = list[i];
-		if (!chunk || typeof chunk !== "object") continue;
-		const entries = Object.entries(chunk);
-		for (let j = 0; j < entries.length; j++) {
-			const [path, rawRule] = entries[j]!;
-			const key = String(path || "").trim();
-			const rule = String(rawRule || "").trim();
-			if (!key || !rule) continue;
-			merged[key] = rule;
-		}
-	}
-
-	return Object.keys(merged).length > 0 ? merged : undefined;
-}
-
-export function Wire(input?: WireDecoratorInput) {
-	return (...args: any[]) => {
-		// Legacy decorators: @Wire()(class Target {})
-		if (args.length === 1 && typeof args[0] === "function") {
-			applyWireDefinition(args[0], input);
-			return args[0];
-		}
-
-		// Standard decorators: @Wire()(class Target {})
-		if (
-			args.length >= 2 &&
-			typeof args[0] === "function" &&
-			args[1] &&
-			typeof args[1] === "object" &&
-			args[1].kind === "class"
-		) {
-			const value = args[0] as Function;
-			applyWireDefinition(value, input);
-			return value;
-		}
+/** `@Component("name")` — register a component under a name. */
+export function Component(name: string) {
+	return function (value: AnyCtor, _ctx: ClassDecoratorContext): void {
+		ownMeta(value as unknown as Function).name = name;
 	};
 }
 
-export function Variable(
-	rules: string | TSchema = "any",
-	shape?: WireVariableShapeRules | Array<WireVariableShapeRules> | undefined,
-) {
-	const variableInput: WireVariableInput = isTypeBoxSchema(rules)
-		? {
-				rules: "any",
-				schema: rules,
-				shapeRules: normalizeShapeRules(shape),
-			}
-		: {
-				rules: String(rules || "").trim() || "any",
-				shapeRules: normalizeShapeRules(shape),
-			};
+/** `@prop` — declare a reactive, client-writable property. */
+export function prop(_value: undefined, context: ClassFieldDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		ownMeta(this.constructor).props.add(String(context.name));
+	});
+}
 
-	return (...args: any[]) => {
-		// Legacy decorators: @Variable() prop
-		if (
-			args.length >= 2 &&
-			typeof args[1] === "string" &&
-			args[0] &&
-			typeof args[0] === "object"
-		) {
-			const proto = args[0] as Record<string, any>;
-			registerVariable(proto.constructor, args[1], variableInput);
-			return;
-		}
+/** `@locked` — a property the client may never write. */
+export function locked(_value: undefined, context: ClassFieldDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		const meta = ownMeta(this.constructor);
+		meta.props.add(String(context.name));
+		meta.locked.add(String(context.name));
+	});
+}
 
-		// Standard decorators: @Variable() prop
-		if (
-			args.length >= 2 &&
-			args[1] &&
-			typeof args[1] === "object" &&
-			args[1].kind === "field"
-		) {
-			const context = args[1];
-			const name = String(context.name || "").trim();
-			context.addInitializer(function (this: any) {
-				registerVariable((this as any)?.constructor, name, variableInput);
-			});
-			return args[0];
-		}
+/** `@computed` — expose a getter's value to the view (read-only). */
+export function computed(_value: unknown, context: ClassGetterDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		ownMeta(this.constructor).computed.add(String(context.name));
+	});
+}
+
+/** `@renderless` — a method that runs without triggering a re-render. */
+export function renderless(_value: unknown, context: ClassMethodDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		ownMeta(this.constructor).renderless.add(String(context.name));
+	});
+}
+
+/** `@on("event")` — call this method when the named event is dispatched. */
+export function on(event: string) {
+	return function (_value: unknown, context: ClassMethodDecoratorContext): void {
+		context.addInitializer(function (this: any) {
+			ownMeta(this.constructor).listeners.set(event, String(context.name));
+		});
 	};
+}
+
+/** `@validate(rule)` — attach a validation rule/schema to a property. */
+export function validate(rule: unknown) {
+	return function (_value: undefined, context: ClassFieldDecoratorContext): void {
+		context.addInitializer(function (this: any) {
+			const meta = ownMeta(this.constructor);
+			meta.props.add(String(context.name));
+			meta.rules.set(String(context.name), rule);
+		});
+	};
+}
+
+/** `@action` — explicitly allowlist a method as client-callable. */
+export function action(_value: unknown, context: ClassMethodDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		ownMeta(this.constructor).actions.add(String(context.name));
+	});
+}
+
+/** `@lazy` — defer the component's first render until it intersects the viewport. */
+export function lazy(value: AnyCtor, _ctx: ClassDecoratorContext): void {
+	ownMeta(value as unknown as Function).lazy = true;
+}
+
+/** `@url` — keep a property in sync with the page's URL query string. */
+export function url(_value: undefined, context: ClassFieldDecoratorContext): void {
+	context.addInitializer(function (this: any) {
+		const meta = ownMeta(this.constructor);
+		meta.props.add(String(context.name));
+		meta.url.add(String(context.name));
+	});
 }
