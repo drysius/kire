@@ -1,12 +1,15 @@
 {
-	"name": "docs-wire-playground",
+	"name": "kire-docs",
 	"private": true,
+	"type": "module",
+	"imports": {
+		"#app/*": "./app/*"
+	},
 	"scripts": {
-		"dev": "bun run main.ts",
-		"start": "bun run main.ts",
-		"test": "bun test ./tests",
-		"test:e2e": "bun ../../tools/playwright.ts",
-		"test:e2e:install": "playwright install --with-deps chromium"
+		"dev": "bun run --watch main.ts",
+		"start": "NODE_ENV=production bun run main.ts",
+		"console": "bun run app/console/index.ts",
+		"test": "bun test ./tests"
 	},
 	"dependencies": {
 		"@elysiajs/static": "^1.4.7",

@@ -1,5 +1,0 @@
-@include('layouts.app', it)
-
-@define('content')
-    @wire('todo')
-@end

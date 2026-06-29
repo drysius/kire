@@ -1,0 +1,49 @@
+<header class="navbar sticky top-0 z-30 bg-base-100/80 backdrop-blur border-b border-base-content/10 px-4">
+	<div class="flex-none lg:hidden">
+		<label for="nav-drawer" class="btn btn-square btn-ghost" aria-label="Menu">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+		</label>
+	</div>
+	<div class="flex-1">
+		<a href="/" class="btn btn-ghost text-lg font-bold gap-2">
+			{{ app.name }}<span class="badge badge-primary badge-sm">v{{ app.version }}</span>
+		</a>
+	</div>
+	<div class="flex-none items-center gap-1">
+		<div class="relative hidden sm:block" id="search-box">
+			<input id="docs-search" type="search" placeholder="Search docs…" autocomplete="off"
+				class="input input-bordered input-sm w-44 md:w-64" />
+			<ul id="search-results" class="menu absolute right-0 mt-1 w-80 rounded-box bg-base-200 shadow-xl z-50 hidden max-h-96 overflow-auto"></ul>
+		</div>
+		<button class="btn btn-ghost btn-circle" onclick="toggleTheme()" aria-label="Toggle theme">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+		</button>
+		<a class="btn btn-ghost btn-circle" href="{{ app.repo }}" aria-label="GitHub">
+			<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.73.5.5 5.73.5 12a11.5 11.5 0 008 10.94c.58.1.79-.25.79-.56v-2c-3.26.71-3.95-1.57-3.95-1.57-.53-1.35-1.3-1.71-1.3-1.71-1.06-.73.08-.71.08-.71 1.17.08 1.79 1.2 1.79 1.2 1.04 1.79 2.73 1.27 3.4.97.1-.76.41-1.27.74-1.56-2.6-.3-5.34-1.3-5.34-5.78 0-1.28.46-2.32 1.2-3.14-.12-.3-.52-1.49.11-3.1 0 0 .98-.31 3.2 1.2a11.1 11.1 0 015.82 0c2.22-1.51 3.2-1.2 3.2-1.2.63 1.61.23 2.8.11 3.1.75.82 1.2 1.86 1.2 3.14 0 4.49-2.74 5.48-5.35 5.77.42.36.8 1.08.8 2.18v3.24c0 .31.21.67.8.56A11.5 11.5 0 0023.5 12C23.5 5.73 18.27.5 12 .5z" /></svg>
+		</a>
+	</div>
+</header>
+<script>
+	(() => {
+		const input = document.getElementById("docs-search");
+		const results = document.getElementById("search-results");
+		if (!input || input.dataset.bound) return;
+		input.dataset.bound = "1";
+		let timer;
+		const hide = () => results.classList.add("hidden");
+		input.addEventListener("input", () => {
+			clearTimeout(timer);
+			const q = input.value.trim();
+			if (!q) return hide();
+			timer = setTimeout(async () => {
+				const res = await fetch("/search?q=" + encodeURIComponent(q));
+				const items = await res.json();
+				results.innerHTML = items.length
+					? items.map((i) => '<li><a href="' + i.route + '"><div><div class="font-medium">' + i.title + '</div><div class="text-xs opacity-60">' + i.section + '</div></div></a></li>').join("")
+					: '<li class="menu-title">No results</li>';
+				results.classList.remove("hidden");
+			}, 150);
+		});
+		document.addEventListener("click", (e) => { if (!document.getElementById("search-box").contains(e.target)) hide(); });
+	})();
+</script>

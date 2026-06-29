@@ -1,0 +1,12 @@
+@include('layouts.app', it)
+@define('content')
+<div class="hero min-h-[50vh]">
+	<div class="hero-content text-center">
+		<div>
+			<h1 class="text-6xl font-bold text-primary">404</h1>
+			<p class="py-4 text-base-content/70">No documentation page at <code class="text-error">{{ route }}</code>.</p>
+			<a href="/" class="btn btn-primary">Back home</a>
+		</div>
+	</div>
+</div>
+@end

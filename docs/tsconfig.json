@@ -1,22 +1,19 @@
 {
 	"compilerOptions": {
-		// Environment setup & latest features
-		"lib": ["ESNext"],
+		"lib": ["ESNext", "DOM"],
 		"target": "ESNext",
 		"module": "esnext",
-		"jsx": "react-jsx",
 		"allowJs": true,
-		// Bundler mode
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
-		"verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": false,
 		"noEmit": true,
+		"strict": true,
 		"baseUrl": "./",
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
 		"paths": {
 			"@kirejs/*": ["../packages/*/src/index.ts"],
-			"kire": ["../core/src/index.ts"]
+			"kire": ["../core/src/index.ts"],
+			"#app/*": ["./app/*"]
 		}
 	}
 }

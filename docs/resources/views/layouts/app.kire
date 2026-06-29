@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en" data-theme="{{ docs?.theme?.light || 'winter' }}">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ title || app.name }} · {{ app.name }}</title>
+	<meta name="description" content="{{ description || app.description }}" />
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+	<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+	<style type="text/tailwindcss">
+		.prose :where(pre):not(:where([class~="not-prose"] *)) { @apply bg-base-300/70 border border-base-content/10 rounded-xl; }
+		.prose :where(code):not(:where(pre code)):not(:where([class~="not-prose"] *)) { @apply bg-base-300/70 px-1.5 py-0.5 rounded text-primary font-medium; }
+		.prose :where(code):not(:where(pre code))::before,
+		.prose :where(code):not(:where(pre code))::after { content: ""; }
+	</style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content antialiased">
+	<div class="drawer lg:drawer-open">
+		<input id="nav-drawer" type="checkbox" class="drawer-toggle" />
+		<div class="drawer-content flex flex-col min-h-screen">
+			@include('partials.navbar', it)
+			<main class="flex-1 w-full max-w-5xl mx-auto px-5 sm:px-8 py-8">
+				@defined('content')
+			</main>
+			<footer class="footer footer-center p-6 text-base-content/60 border-t border-base-content/10">
+				<aside>
+					{{ app.name }} v{{ app.version }} · built with Kire itself ·
+					<a class="link link-hover" href="{{ app.repo }}">GitHub</a>
+				</aside>
+			</footer>
+		</div>
+		@include('partials.sidebar', it)
+	</div>
+	<script>
+		(() => {
+			const KEY = "kire-theme", root = document.documentElement;
+			const dark = "{{ docs?.theme?.dark || 'night' }}", light = "{{ docs?.theme?.light || 'winter' }}";
+			const saved = localStorage.getItem(KEY);
+			if (saved) root.setAttribute("data-theme", saved);
+			window.toggleTheme = () => {
+				const next = root.getAttribute("data-theme") === dark ? light : dark;
+				root.setAttribute("data-theme", next);
+				localStorage.setItem(KEY, next);
+			};
+		})();
+	</script>
+</body>
+</html>

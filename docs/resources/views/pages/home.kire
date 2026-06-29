@@ -1,0 +1,31 @@
+@include('layouts.app', it)
+@define('content')
+<section class="hero rounded-3xl bg-gradient-to-br from-primary/10 via-base-100 to-secondary/10 border border-base-content/10">
+	<div class="hero-content text-center py-14">
+		<div class="max-w-2xl">
+			<span class="badge badge-primary badge-outline mb-4">Kire · Documentation</span>
+			<h1 class="text-4xl sm:text-5xl font-bold leading-tight">{{ app.tagline }}</h1>
+			<p class="mt-4 text-base-content/70">{{ app.description }}</p>
+			<div class="mt-6 flex flex-wrap gap-3 justify-center">
+				<a href="/docs/kire/getting-started" class="btn btn-primary">Get started</a>
+				<a href="{{ app.repo }}" class="btn btn-outline">GitHub</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+<div class="mt-10 grid gap-5 sm:grid-cols-2">
+	@for(group of nav)
+		<div class="card bg-base-200/60 border border-base-content/10 hover:border-primary/40 transition">
+			<div class="card-body">
+				<h2 class="card-title text-base">{{ group.section }}</h2>
+				<ul class="menu menu-sm px-0">
+					@for(item of group.items)
+						<li><a href="{{ item.route }}">{{ item.title }}</a></li>
+					@end
+				</ul>
+			</div>
+		</div>
+	@end
+</div>
+@end
