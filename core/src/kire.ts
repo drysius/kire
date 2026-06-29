@@ -807,8 +807,14 @@ export class Kire<Asyncronos extends boolean = true> {
 
 		if (this.$production && cached) return cached.fn!;
 
-		if (!this.$production && !source && this.$platform.exists(resolved)) {
-			const mtime = this.$platform.stat(resolved).mtimeMs;
+		// Stat the backing file at most once per call (was previously done twice:
+		// for cache validation and again to stamp entry.time).
+		const mtime =
+			!source && this.$platform.exists(resolved)
+				? this.$platform.stat(resolved).mtimeMs
+				: undefined;
+
+		if (!this.$production && mtime !== undefined) {
 			if (cached && cached.time === mtime) return cached.fn!;
 		} else if (source && cached) {
 			return cached.fn!;
@@ -823,9 +829,7 @@ export class Kire<Asyncronos extends boolean = true> {
 		try {
 			const entry = this.compile(content, resolved, [], isDependency);
 
-			if (!source && this.$platform.exists(resolved)) {
-				entry.time = this.$platform.stat(resolved).mtimeMs;
-			}
+			if (mtime !== undefined) entry.time = mtime;
 
 			this.$cache.files.set(resolved, entry);
 			if (this.$cache.files.size > this.$max_renders * 2) {

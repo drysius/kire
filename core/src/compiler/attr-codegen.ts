@@ -17,6 +17,9 @@ import type { JsScanner } from "./js-scanner";
 export class AttrCodegen {
 	usesEscape = false;
 	readonly mixedAttrIdents = new Set<string>();
+	// Reused across parseHtmlAttrCode calls instead of allocating a new RegExp
+	// each time (this method runs many times per template compile).
+	private readonly interpRx = new RegExp(INTERPOLATION_GLOBAL_REGEX.source, "g");
 
 	constructor(
 		private scanner: JsScanner,
@@ -89,7 +92,8 @@ export class AttrCodegen {
 		this.usesEscape = true;
 		let out = "";
 		let lastIndex = 0;
-		const rx = new RegExp(INTERPOLATION_GLOBAL_REGEX.source, "g");
+		const rx = this.interpRx;
+		rx.lastIndex = 0;
 		let match: RegExpExecArray | null;
 
 		while ((match = rx.exec(val)) !== null) {
