@@ -5,12 +5,14 @@
 
 import type { ServerPush, Transport } from "../contracts";
 import { createDefaultDirectives, type DirectiveRegistry } from "./directives";
+import { setupNavigate } from "./navigate";
 import { WireRuntime } from "./runtime";
 import { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
 
 export { ClientComponent } from "./component";
 export { createDefaultDirectives, DirectiveRegistry } from "./directives";
 export { morph } from "./morph";
+export { setupNavigate } from "./navigate";
 export { computed, effect, reactive, watch } from "./reactivity";
 export { WireRuntime } from "./runtime";
 export { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
@@ -27,6 +29,8 @@ export interface StartOptions {
 	directives?: DirectiveRegistry;
 	/** Subscribe to a server-push channel on start (SSE/WebSocket transports). */
 	channel?: string;
+	/** Enable `wire:navigate` SPA link navigation. Default true. */
+	navigate?: boolean;
 }
 
 /** Public global API. */
@@ -47,6 +51,7 @@ export function start(opts: StartOptions = {}): WireRuntime {
 
 	const boot = () => {
 		runtime.start();
+		if (opts.navigate !== false) setupNavigate(runtime);
 		if (opts.channel && transport.subscribe) {
 			transport.subscribe(opts.channel, (push: ServerPush) => {
 				const target = push.to ? runtime.components.get(push.to) : undefined;

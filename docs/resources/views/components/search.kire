@@ -1,0 +1,13 @@
+<div class="card bg-base-200 border border-base-content/10 w-full max-w-md not-prose">
+	<div class="card-body gap-3">
+		<input wire:model.live="query" placeholder="Filter fruits…" class="input input-bordered w-full" />
+		<div class="flex flex-wrap gap-2">
+			@for(fruit of results)
+				<span class="badge badge-lg badge-outline">{{ fruit }}</span>
+			@end
+		</div>
+		@if(results.length === 0)
+			<p class="text-sm opacity-50">No matches for "{{ query }}".</p>
+		@end
+	</div>
+</div>

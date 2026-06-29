@@ -1,7 +1,7 @@
 <div class="drawer-side z-40">
 	<label for="nav-drawer" class="drawer-overlay" aria-label="Close menu"></label>
 	<aside class="w-72 min-h-full bg-base-200 border-r border-base-content/10 px-4 py-6">
-		<a href="/" class="flex items-center gap-2 px-2 mb-6">
+		<a href="/" wire:navigate class="flex items-center gap-2 px-2 mb-6">
 			<span class="text-lg font-bold">{{ app.name }}</span>
 			<span class="badge badge-sm badge-primary badge-outline">docs</span>
 		</a>
@@ -10,7 +10,7 @@
 				<p class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-base-content/50">{{ group.section }}</p>
 				<ul class="menu menu-sm gap-0.5 w-full">
 					@for(item of group.items)
-						<li><a href="{{ item.route }}" class="truncate">{{ item.title }}</a></li>
+						<li><a href="{{ item.route }}" wire:navigate class="truncate">{{ item.title }}</a></li>
 					@end
 				</ul>
 			</div>

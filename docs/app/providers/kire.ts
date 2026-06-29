@@ -1,8 +1,10 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import KireMarkdown from "@kirejs/markdown";
+import { kirewirePlugin } from "@kirejs/wire";
 import { Kire } from "kire";
 import { isProd } from "#app/config";
+import { wire } from "#app/wire";
 
 const PACKAGE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const VIEWS_ROOT = path.resolve(PACKAGE_ROOT, "resources/views");
@@ -20,6 +22,10 @@ export function kire(): Kire<boolean> {
 		extension: "kire",
 		production: isProd(),
 	});
-	engine.plugin(KireMarkdown, { codeBlockClass: "kire-code not-prose" });
+	// No wrapper classes: emit clean <pre><code class="language-x"> and let the
+	// Tailwind typography (prose) plugin style them. The md only structures content.
+	engine.plugin(KireMarkdown, {});
+	// Kirewire SSR integration for the live playground demos.
+	engine.plugin(kirewirePlugin(wire, { scriptUrl: "/public/kirewire.js" }));
 	return engine;
 }

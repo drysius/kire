@@ -110,6 +110,12 @@ export function navGroups(): NavGroup[] {
 		if (!group) groups.set(page.section, (group = { section: page.section, items: [] }));
 		group.items.push({ route: page.route, title: page.title, description: page.description });
 	}
+	// The live playground is a dedicated page (not markdown); surface it in nav.
+	groups.get("Kirewire")?.items.push({
+		route: "/docs/wire/playground",
+		title: "Live Playground",
+		description: "Interactive Kirewire components running in the browser.",
+	});
 	return [...groups.values()];
 }
 

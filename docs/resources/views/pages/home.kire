@@ -7,7 +7,7 @@
 			<h1 class="text-4xl sm:text-5xl font-bold leading-tight">{{ app.tagline }}</h1>
 			<p class="mt-4 text-base-content/70">{{ app.description }}</p>
 			<div class="mt-6 flex flex-wrap gap-3 justify-center">
-				<a href="/docs/kire/getting-started" class="btn btn-primary">Get started</a>
+				<a href="/docs/kire/getting-started" wire:navigate class="btn btn-primary">Get started</a>
 				<a href="{{ app.repo }}" class="btn btn-outline">GitHub</a>
 			</div>
 		</div>
@@ -21,7 +21,7 @@
 				<h2 class="card-title text-base">{{ group.section }}</h2>
 				<ul class="menu menu-sm px-0">
 					@for(item of group.items)
-						<li><a href="{{ item.route }}">{{ item.title }}</a></li>
+						<li><a wire:navigate href="{{ item.route }}">{{ item.title }}</a></li>
 					@end
 				</ul>
 			</div>

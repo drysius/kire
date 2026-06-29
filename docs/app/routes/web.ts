@@ -6,6 +6,7 @@ import type { Elysia } from "elysia";
  */
 const controllers: Array<() => Promise<{ default: Elysia }>> = [
 	() => import("#app/http/controllers/home"),
+	() => import("#app/http/controllers/wire"),
 	() => import("#app/http/controllers/docs"),
 ];
 

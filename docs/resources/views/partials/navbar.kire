@@ -5,7 +5,7 @@
 		</label>
 	</div>
 	<div class="flex-1">
-		<a href="/" class="btn btn-ghost text-lg font-bold gap-2">
+		<a href="/" wire:navigate class="btn btn-ghost text-lg font-bold gap-2">
 			{{ app.name }}<span class="badge badge-primary badge-sm">v{{ app.version }}</span>
 		</a>
 	</div>
@@ -39,7 +39,7 @@
 				const res = await fetch("/search?q=" + encodeURIComponent(q));
 				const items = await res.json();
 				results.innerHTML = items.length
-					? items.map((i) => '<li><a href="' + i.route + '"><div><div class="font-medium">' + i.title + '</div><div class="text-xs opacity-60">' + i.section + '</div></div></a></li>').join("")
+					? items.map((i) => '<li><a wire:navigate href="' + i.route + '"><div><div class="font-medium">' + i.title + '</div><div class="text-xs opacity-60">' + i.section + '</div></div></a></li>').join("")
 					: '<li class="menu-title">No results</li>';
 				results.classList.remove("hidden");
 			}, 150);

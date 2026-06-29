@@ -1,0 +1,13 @@
+<div class="card bg-base-200 border border-base-content/10 w-full max-w-xs not-prose">
+	<div class="card-body items-center gap-4">
+		<div class="text-5xl font-bold tabular-nums text-primary">{{ count }}</div>
+		<div class="join">
+			<button wire:click="decrement" class="btn join-item">−</button>
+			<button wire:click="reset" class="btn btn-ghost join-item">reset</button>
+			<button wire:click="increment" class="btn btn-primary join-item">+</button>
+		</div>
+		<label class="text-xs opacity-60 flex items-center gap-2">
+			step <input type="number" wire:model.live="step" class="input input-bordered input-xs w-16" />
+		</label>
+	</div>
+</div>

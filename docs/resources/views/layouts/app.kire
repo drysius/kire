@@ -6,7 +6,9 @@
 	<title>{{ title || app.name }} · {{ app.name }}</title>
 	<meta name="description" content="{{ description || app.description }}" />
 	<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+	<link href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" rel="stylesheet" />
 	<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+	<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
 	<style>
 		/* Style prose code blocks with DaisyUI CSS variables (not @apply, which
 		   doesn't know DaisyUI's color names under the Tailwind Play CDN). */
@@ -24,6 +26,8 @@
 		}
 		.prose :where(code):not(:where(pre code))::before,
 		.prose :where(code):not(:where(pre code))::after { content: ""; }
+		/* Let the prose <pre> background show through highlight.js tokens. */
+		.prose :where(pre) .hljs, .prose :where(pre code.hljs) { background: transparent; padding: 0; color: inherit; }
 	</style>
 </head>
 <body class="min-h-screen bg-base-100 text-base-content antialiased">
@@ -31,7 +35,7 @@
 		<input id="nav-drawer" type="checkbox" class="drawer-toggle" />
 		<div class="drawer-content flex flex-col min-h-screen">
 			@include('partials.navbar', it)
-			<main class="flex-1 w-full max-w-5xl mx-auto px-5 sm:px-8 py-8">
+			<main id="docs-main" class="flex-1 w-full px-6 lg:px-12 py-8">
 				@defined('content')
 			</main>
 			<footer class="footer footer-center p-6 text-base-content/60 border-t border-base-content/10">
@@ -56,5 +60,20 @@
 			};
 		})();
 	</script>
+	<script>
+		(() => {
+			const highlight = () => {
+				if (!window.hljs) return;
+				document.querySelectorAll("pre code").forEach((block) => {
+					if (!block.dataset.hl) { window.hljs.highlightElement(block); block.dataset.hl = "1"; }
+				});
+			};
+			const ready = () => highlight();
+			if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+			else ready();
+			document.addEventListener("kirewire:navigated", highlight);
+		})();
+	</script>
+	<script type="module" src="/public/kirewire.js"></script>
 </body>
 </html>

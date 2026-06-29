@@ -1,0 +1,37 @@
+@include('layouts.app', it)
+@define('content')
+<div class="text-sm breadcrumbs text-base-content/60 mb-4">
+	<ul>
+		<li><a wire:navigate href="/">Home</a></li>
+		<li>Kirewire</li>
+		<li class="text-base-content">Live Playground</li>
+	</ul>
+</div>
+
+<div class="prose lg:prose-lg max-w-3xl mb-8">
+	<h1>Live Playground</h1>
+	<p class="lead">These components run for real — state lives on the server, the
+	browser sends actions over <code>/_wire</code> and morphs the returned HTML. No
+	page reloads. View source in <code>app/wire/components</code>.</p>
+</div>
+
+<div class="grid gap-8 lg:grid-cols-2 max-w-5xl">
+	<section>
+		<h2 class="text-lg font-semibold mb-3">Counter</h2>
+		<p class="text-sm opacity-60 mb-3">Actions, arguments, and <code>wire:model.live</code> on the step.</p>
+		@wire("demo-counter")
+	</section>
+
+	<section>
+		<h2 class="text-lg font-semibold mb-3">Search / filter</h2>
+		<p class="text-sm opacity-60 mb-3">A computed result list re-rendered on every keystroke.</p>
+		@wire("demo-search")
+	</section>
+
+	<section class="lg:col-span-2">
+		<h2 class="text-lg font-semibold mb-3">Todo list</h2>
+		<p class="text-sm opacity-60 mb-3">Collections, <code>wire:submit</code>, <code>wire:key</code>, keyed list morphing.</p>
+		@wire("demo-todo")
+	</section>
+</div>
+@end
