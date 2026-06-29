@@ -90,7 +90,7 @@ export default (kire: Kire<any>) => {
 	                if (!$slots.default) $slots.default = $kire_response;
 	                $kire_response = _oldRes${id};
 	                const _oldProps${id} = $props;
-	                $props = Object.assign(Object.create($globals), _oldProps${id}, ${locals}, { slots: $slots });
+	                $props = { ..._oldProps${id}, ...(${locals}), slots: $slots };
 	                
 	                const res${id} = ${depId}($props);
 	                ${dep.meta.async ? `$kire_response += await res${id};` : `$kire_response += res${id};`}
