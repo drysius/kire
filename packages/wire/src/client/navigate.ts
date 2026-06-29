@@ -1,4 +1,4 @@
-import { morph } from "./morph";
+import { morphInner } from "./morph";
 import type { WireRuntime } from "./runtime";
 
 /**
@@ -25,7 +25,7 @@ export function setupNavigate(runtime: WireRuntime): void {
 			const next = new DOMParser().parseFromString(html, "text/html");
 			document.title = next.title;
 			runtime.components.clear();
-			morph(document.body, next.body.outerHTML);
+			morphInner(document.body, next.body.innerHTML);
 			if (push) history.pushState({ kirewireNavigate: true }, "", url);
 			window.scrollTo(0, 0);
 			runtime.start();
@@ -35,11 +35,15 @@ export function setupNavigate(runtime: WireRuntime): void {
 		}
 	}
 
-	// Event delegation — survives body morphs, no per-link rebinding.
+	// Event delegation — survives body morphs, no per-link rebinding. Use a plain
+	// `a` selector + hasAttribute rather than `a[wire\:navigate]`: a colon-escaped
+	// attribute selector is rejected by some selector engines/browsers.
 	document.addEventListener("click", (event) => {
-		if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) return;
-		const link = (event.target as Element).closest?.("a[wire\\:navigate]") as HTMLAnchorElement | null;
-		if (!link) return;
+		if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+			return;
+		}
+		const link = (event.target as Element).closest?.("a") as HTMLAnchorElement | null;
+		if (!link || !link.hasAttribute("wire:navigate")) return;
 		const href = link.getAttribute("href");
 		if (!href || href.startsWith("#") || /^[a-z]+:\/\//i.test(href) || link.target === "_blank") {
 			return;

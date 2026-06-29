@@ -26,6 +26,17 @@ export function morph(from: Element, html: string): Element {
 	return from;
 }
 
+/**
+ * Morph the *children* of `from` to match `innerHtml`. Use this for container
+ * elements like `<body>` whose tag can't appear inside a `<template>` (the HTML
+ * parser strips `<body>`/`<html>`/`<head>`), which would break {@link morph}.
+ */
+export function morphInner(from: Element, innerHtml: string): void {
+	const template = from.ownerDocument.createElement("template");
+	template.innerHTML = innerHtml;
+	patchChildren(from, template.content);
+}
+
 function patchElement(from: Element, to: Element): void {
 	if (from.tagName !== to.tagName) {
 		from.replaceWith(to.cloneNode(true));
@@ -64,7 +75,7 @@ function patchAttributes(from: Element, to: Element): void {
 	}
 }
 
-function patchChildren(from: Element, to: Element): void {
+function patchChildren(from: Element, to: ParentNode): void {
 	const toChildren = Array.from(to.childNodes);
 	const keyedFrom = new Map<string, Element>();
 	for (const child of Array.from(from.childNodes)) {
