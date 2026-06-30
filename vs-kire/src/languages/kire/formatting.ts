@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { directiveOpensBlock } from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
+import { formatCode } from "../../utils/formatCode";
 
 type LineType =
 	| "html-opening"
@@ -376,16 +377,21 @@ export class FeatureFormatting
 		docEol: string,
 		forceLeadingNewline: boolean,
 	): Promise<string> {
-		void languageId;
-		void options;
-
 		const rawLf = raw.replace(/\r\n/g, "\n");
 
 		const hadLeadingEol = forceLeadingNewline || /^\s*\n/.test(rawLf);
 
 		const hadTrailingEol = rawLf.endsWith("\n");
 
-		const core = this.stripCommonIndent(this.trimEmptyEdges(rawLf));
+		let core = this.stripCommonIndent(this.trimEmptyEdges(rawLf));
+
+		// Format the fragment with Prettier; fall back to plain re-indentation when
+		// it can't parse (mid-edit syntax error).
+		const pretty = await formatCode(core, languageId, {
+			tabWidth: options.tabSize,
+			useTabs: !options.insertSpaces,
+		});
+		if (pretty !== null) core = pretty;
 
 		const formattedLf = core.replace(/\r\n/g, "\n").replace(/\n+$/, "");
 
