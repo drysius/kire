@@ -80,7 +80,10 @@ export function readHotServerUrl(
 	const { hotFilePath } = resolveRuntimePaths(options);
 	if (!existsSync(hotFilePath)) return null;
 	const raw = readFileSync(hotFilePath, "utf8").trim();
-	return raw ? raw.replace(/\/+$/, "") : null;
+	// Only accept a well-formed http(s) origin — never let a stray newline or junk
+	// in the hot file flow into an HTML attribute.
+	if (!raw || !/^https?:\/\/[\w.\-:[\]]+$/.test(raw)) return null;
+	return raw.replace(/\/+$/, "");
 }
 
 export function writeHotFile(hotFilePath: string, devServerUrl: string): void {
@@ -104,7 +107,12 @@ function readManifest(manifestPath: string): ViteManifest {
 	}
 
 	const content = readFileSync(absolute, "utf8");
-	const parsed = JSON.parse(content) as ViteManifest;
+	let parsed: ViteManifest;
+	try {
+		parsed = JSON.parse(content) as ViteManifest;
+	} catch (error) {
+		throw new Error(`[kire-vite] Malformed manifest JSON at ${absolute}: ${error}`);
+	}
 	manifestCache.set(absolute, { mtimeMs: stats.mtimeMs, data: parsed });
 	return parsed;
 }
@@ -204,12 +212,25 @@ function collectChunk(
 	}
 }
 
+/** Escape a value for safe interpolation into a double-quoted HTML attribute. */
+function escapeAttr(value: string): string {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/"/g, "&quot;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;");
+}
+
 function toPublicUrl(
 	file: string,
 	buildDirectory: string,
 	assetUrl?: string,
 ): string {
 	const normalizedFile = normalizeEntry(file);
+	// Reject directory traversal / absolute escapes from a poisoned manifest.
+	if (normalizedFile.includes("..") || normalizedFile.startsWith("/")) {
+		throw new Error(`[kire-vite] Invalid asset path: ${file}`);
+	}
 	const normalizedBuild = trimSlashes(buildDirectory);
 	const joined = normalizedBuild
 		? `${normalizedBuild}/${normalizedFile}`
@@ -223,11 +244,11 @@ function toPublicUrl(
 function renderDevTags(devServerUrl: string, entries: string[]): string {
 	const base = devServerUrl.replace(/\/+$/, "");
 	const tags: string[] = [
-		`<script type="module" src="${base}/@vite/client"></script>`,
+		`<script type="module" src="${escapeAttr(base)}/@vite/client"></script>`,
 	];
 
 	for (const entry of entries) {
-		const src = `${base}/${entry}`;
+		const src = escapeAttr(`${base}/${entry}`);
 		if (isCssFile(entry)) {
 			tags.push(`<link rel="stylesheet" href="${src}" />`);
 			continue;
@@ -279,19 +300,19 @@ function renderManifestTags(
 	const tags: string[] = [];
 	for (const style of bucket.styles) {
 		tags.push(
-			`<link rel="stylesheet" href="${toPublicUrl(style, buildDirectory, options.assetUrl)}" />`,
+			`<link rel="stylesheet" href="${escapeAttr(toPublicUrl(style, buildDirectory, options.assetUrl))}" />`,
 		);
 	}
 
 	for (const preload of bucket.modulePreloads) {
 		tags.push(
-			`<link rel="modulepreload" href="${toPublicUrl(preload, buildDirectory, options.assetUrl)}" />`,
+			`<link rel="modulepreload" href="${escapeAttr(toPublicUrl(preload, buildDirectory, options.assetUrl))}" />`,
 		);
 	}
 
 	for (const script of bucket.scripts) {
 		tags.push(
-			`<script type="module" src="${toPublicUrl(script, buildDirectory, options.assetUrl)}"></script>`,
+			`<script type="module" src="${escapeAttr(toPublicUrl(script, buildDirectory, options.assetUrl))}"></script>`,
 		);
 	}
 

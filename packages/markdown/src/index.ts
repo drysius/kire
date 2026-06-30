@@ -164,6 +164,12 @@ function resolveMarkdownPath(kire: Kire<any>, path: string): string {
 	return legacy;
 }
 
+/** Remove a leading YAML frontmatter block so it isn't rendered as content. */
+function stripFrontmatter(content: string): string {
+	const match = /^﻿?---\r?\n[\s\S]*?\r?\n---\r?\n?/.exec(content);
+	return match ? content.slice(match[0].length) : content;
+}
+
 function protectKireSyntaxInCode(html: string): string {
 	const chunks: string[] = [];
 	const tokenPrefix = "__KIRE_MD_CHUNK_";
@@ -206,7 +212,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, opts) => {
 
 	kire.mdrender = async (content: string, locals: Record<string, any> = {}) => {
 		const html = protectKireSyntaxInCode(
-			decorateCodeBlocks(await marked.parse(content), opts),
+			decorateCodeBlocks(await marked.parse(stripFrontmatter(content)), opts),
 		);
 		return (await kire.render(html, locals)) as any;
 	};
@@ -222,7 +228,7 @@ export const KireMarkdown = kirePlugin<MarkdownOptions>({}, (kire, opts) => {
 			const resolved = resolveMarkdownPath(kire, path);
 			const content = kire.readFile(resolved);
 			const htmlTemplate = protectKireSyntaxInCode(
-				decorateCodeBlocks(await marked.parse(content), opts),
+				decorateCodeBlocks(await marked.parse(stripFrontmatter(content)), opts),
 			);
 			const entry = kire.compile(htmlTemplate, resolved);
 

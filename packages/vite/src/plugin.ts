@@ -56,6 +56,10 @@ function resolveDevServerUrl(
 	if (!host || host === true || host === "0.0.0.0" || host === "::") {
 		host = "localhost";
 	}
+	// Wrap bare IPv6 addresses in brackets so the URL is valid (http://[::1]:5173).
+	if (typeof host === "string" && host.includes(":") && !host.startsWith("[")) {
+		host = `[${host}]`;
+	}
 	const port =
 		typeof address === "object" && address && "port" in address
 			? address.port

@@ -1,5 +1,15 @@
 import type { RouteManager } from "./Route";
 
+/** Escape a value for safe text/attribute interpolation. */
+function escapeHtml(value: string): string {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
 export class HtmlManager {
 	constructor(private route?: RouteManager) {}
 
@@ -12,7 +22,7 @@ export class HtmlManager {
 			.map(([key, value]) => {
 				if (value === true) return key;
 				if (value === false || value === null || value === undefined) return "";
-				return `${key}="${String(value).replace(/"/g, "&quot;")}"`;
+				return `${key}="${escapeHtml(String(value))}"`;
 			})
 			.filter(Boolean)
 			.join(" ");
@@ -37,11 +47,11 @@ export class HtmlManager {
 	}
 
 	favicon(href: string) {
-		return `<link rel="shortcut icon" href="${this.url(href)}">`;
+		return `<link rel="shortcut icon" href="${escapeHtml(this.url(href))}">`;
 	}
 
 	link(href: string, text: string, attributes: Record<string, any> = {}) {
-		return `<a href="${this.url(href)}" ${this.attributes(attributes)}>${text}</a>`;
+		return `<a href="${escapeHtml(this.url(href))}" ${this.attributes(attributes)}>${escapeHtml(text)}</a>`;
 	}
 
 	image(src: string, alt: string = "", attributes: Record<string, any> = {}) {
