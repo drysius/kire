@@ -49,6 +49,7 @@ export function kirewirePlugin(
 				name: "wire",
 				signature: ["name:string", "params:object"],
 				description: "Mount a Kirewire reactive component.",
+				example: `@wire("counter", { start: 0 })`,
 				onCall: (api: any) => {
 					const nameExpr = api.getArgument(0);
 					const paramsExpr = api.getArgument(1) || "{}";
@@ -62,6 +63,7 @@ export function kirewirePlugin(
 					name: `${prefix}:*`,
 					void: true,
 					description: `Mount a Kirewire component (<${prefix}:name />).`,
+					example: `<${prefix}:counter :start="0" />`,
 					onCall: (api: any) => {
 						const name = api.wildcard ?? "";
 						emitMount(api, JSON.stringify(name), paramsFromAttributes(api));
@@ -74,6 +76,7 @@ export function kirewirePlugin(
 			kire.directive({
 				name: "kirewireScripts",
 				description: "Inject the Kirewire client runtime script tag.",
+				example: "@kirewireScripts",
 				onCall: (api: any) => {
 					api.append(`<script src="${scriptUrl}" defer></script>`);
 				},
