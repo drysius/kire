@@ -1,58 +1,66 @@
-# @kirejs/wire
+# @kirejs/wire — Kirewire
 
-`@kirejs/wire` adds a reactive component runtime to Kire.
+Server-driven reactive components for [Kire](../../core). Components live on the
+server; the browser sends actions and morphs returned HTML. Built-in signal
+reactivity (no Alpine dependency) and first-class SSE/WebSocket transport.
 
-It is the package behind:
+See [`../../REACTIVE-DESIGN.md`](../../REACTIVE-DESIGN.md) for the full architecture.
 
-- `@wire(...)`
-- `@kirewire()`
-- `<wire:... />`
-- `<kirewire:... />`
-- `<livewire:... />`
-- `wire:*` attributes such as `wire:model`, `wire:click`, `wire:poll`, and `wire:navigate`
-- server/client hydration for interactive components
-- adapters for HTTP, SSE, sockets, Express, Koa, Elysia, FiveM, and vanilla runtimes
+## Define a component
 
-## What It Adds
+```ts
+import { LiveComponent, Component, prop, locked, computed, on } from "@kirejs/wire";
 
-- component registration and lifecycle
-- public state hydration through `wire:id` and `wire:state`
-- attribute-driven actions, polling, navigation, loading states, intersection observers, uploads, collections, and broadcast channels
-- typed runtime access through `$wire`
-- schema docs for `wire:*` attributes consumed by `KIRE IntelliSense`
+@Component("counter")
+export class Counter extends LiveComponent {
+  @prop count = 0;
+  @locked @prop userId!: string;
 
-## Typical Usage
+  mount(p: { userId: string }) { this.userId = p.userId; }
+  increment() { this.count++; }
+  @computed get doubled() { return this.count * 2; }
+  @on("reset") reset() { this.count = 0; }
+
+  render() { return this.view("components.counter"); }
+}
+```
+
+## Server wiring
 
 ```ts
 import { Kire } from "kire";
-import { KirewirePlugin } from "@kirejs/wire";
-import { HttpAdapter } from "@kirejs/wire";
+import { Kirewire, kirewirePlugin, handleUpdate, Hub } from "@kirejs/wire";
 
-const kire = new Kire({ root: "views" }).plugin(
-	new KirewirePlugin({
-		secret: "dev-secret",
-		adapter: new HttpAdapter({
-			route: "/_wire",
-		}),
-	}),
-);
+const hub = new Hub();
+const wire = new Kirewire({ secret: process.env.APP_SECRET!, broadcaster: hub });
+wire.component(Counter);
+
+const kire = new Kire({ root: "views" });
+kire.plugin(kirewirePlugin(wire, { scriptUrl: "/kirewire.js" }));
+
+// Render a page (SSR): `@wire("counter", { userId })` / `<wire:counter :user-id="id" />`
+// Update endpoint:
+app.post("/_wire", async (req, res) => {
+  const { status, body } = await handleUpdate(wire, req.body, kire.fork());
+  res.status(status).json(body);
+});
 ```
 
-```kire
-@kirewire()
+## Client
 
-@wire("chat-room", { roomId: room.id })
-
-<wire:chat-room room-id="{{ room.id }}" />
-<livewire:chat-room room-id="{{ room.id }}" />
-
-<a href="/dashboard" wire:navigate>Dashboard</a>
-<input wire:model.live="search" />
-<button wire:click="save">Save</button>
+```html
+<script type="module">
+  import { start } from "@kirejs/wire/client";
+  start({ url: "/_wire" });          // HTTP
+  // start({ transport: new WebSocketTransport("wss://…"), channel: "room:42" });
+</script>
 ```
 
-This package ships a `kire.schema.js` file plus element and attribute documentation so the VS Code extension can explain both the custom mount tags and the `wire:*` directives/modifiers.
+Directives: `wire:click`, `wire:submit`, `wire:model[.live|.blur|.lazy]`,
+`wire:init`, `wire:poll[.Nms]`, `wire:loading`, `wire:ignore`, `wire:key`.
 
-## License
+## Security
 
-MIT
+HMAC-signed snapshots (tamper-rejected with 419), method gating (`_`/`$`/reserved
+blocked, `@action` allowlist), `@locked` mass-assignment protection, `@validate`
+rules, and a synth allowlist for class hydration.

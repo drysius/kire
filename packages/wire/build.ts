@@ -1,120 +1,56 @@
-import { existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { $ } from "bun";
+/**
+ * Build the wire package: server bundles (ESM + CJS) and a standalone browser
+ * client bundle. The client must not pull in any Node built-ins — the build
+ * fails loudly if it does. Run with `bun run packages/wire/build.ts`.
+ */
+import { rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const outDir = join(import.meta.dir, "dist/client");
-const esmDir = join(import.meta.dir, "dist/esm");
-const esmMethodsDir = join(esmDir, "methods");
-const esmAdaptersDir = join(esmDir, "adapters");
-const cjsDir = join(import.meta.dir, "dist/cjs");
-const cjsMethodsDir = join(cjsDir, "methods");
-const cjsAdaptersDir = join(cjsDir, "adapters");
-const distDir = join(import.meta.dir, "dist");
+const dir = dirname(fileURLToPath(import.meta.url));
+const root = `${dir}/`;
+const at = (p: string) => join(dir, p);
 
-function ensureDir(dir: string) {
-	if (!existsSync(dir)) {
-		mkdirSync(dir, { recursive: true });
+await rm(at("dist"), { recursive: true, force: true });
+
+async function bundle(label: string, opts: Parameters<typeof Bun.build>[0]) {
+	const result = await Bun.build(opts);
+	if (!result.success) {
+		console.error(`✗ ${label} failed`);
+		for (const log of result.logs) console.error(log);
+		process.exit(1);
 	}
+	console.log(`✓ ${label}`);
 }
 
-ensureDir(outDir);
-ensureDir(esmDir);
-ensureDir(esmMethodsDir);
-ensureDir(esmAdaptersDir);
-ensureDir(cjsDir);
-ensureDir(cjsMethodsDir);
-ensureDir(cjsAdaptersDir);
-ensureDir(distDir);
+// Server (depends on `kire` and node built-ins, kept external)
+await bundle("server esm", {
+	entrypoints: [`${root}src/index.ts`],
+	outdir: `${root}dist/esm`,
+	target: "node",
+	format: "esm",
+	external: ["kire"],
+});
+await bundle("server cjs", {
+	entrypoints: [`${root}src/index.ts`],
+	outdir: `${root}dist/cjs`,
+	target: "node",
+	format: "cjs",
+	external: ["kire"],
+});
 
-async function buildServerEntry(
-	entry: string,
-	outfile: string,
-	format: "esm" | "cjs",
-	label: string,
-) {
-	const result =
-		await $`bun build ${entry} --outfile ${outfile} --format ${format} --target node --packages external`;
-	if (result.exitCode !== 0) {
-		throw new Error(`${label} build failed.`);
-	}
-}
+// Client (browser; must be Node-free)
+await bundle("client", {
+	entrypoints: [`${root}src/client/index.ts`],
+	outdir: `${root}dist/client`,
+	target: "browser",
+	format: "esm",
+	minify: true,
+});
 
-console.log("[wire] Building web client...");
-
-try {
-	const clientResult =
-		await $`bun build ./web/index.ts --outdir ${outDir} --minify --sourcemap=external --target browser`;
-	if (clientResult.exitCode !== 0) {
-		throw new Error("Wire client build failed.");
-	}
-
-	const generatedClientFile = join(outDir, "index.js");
-	const targetClientFile = join(outDir, "wire.js");
-	if (existsSync(generatedClientFile)) {
-		renameSync(generatedClientFile, targetClientFile);
-		if (existsSync(`${generatedClientFile}.map`)) {
-			renameSync(`${generatedClientFile}.map`, `${targetClientFile}.map`);
-		}
-	}
-
-	await buildServerEntry(
-		"./src/index.ts",
-		join(esmDir, "index.js"),
-		"esm",
-		"Wire server ESM",
-	);
-	await buildServerEntry(
-		"./src/methods/index.ts",
-		join(esmMethodsDir, "index.js"),
-		"esm",
-		"Wire methods ESM",
-	);
-	await buildServerEntry(
-		"./src/adapters/index.ts",
-		join(esmAdaptersDir, "index.js"),
-		"esm",
-		"Wire adapters ESM",
-	);
-
-	await buildServerEntry(
-		"./src/index.ts",
-		join(cjsDir, "index.js"),
-		"cjs",
-		"Wire server CJS",
-	);
-	await buildServerEntry(
-		"./src/methods/index.ts",
-		join(cjsMethodsDir, "index.js"),
-		"cjs",
-		"Wire methods CJS",
-	);
-	await buildServerEntry(
-		"./src/adapters/index.ts",
-		join(cjsAdaptersDir, "index.js"),
-		"cjs",
-		"Wire adapters CJS",
-	);
-
-	const fivemClientFile = join(distDir, "fivem-client.js");
-	const fivemClientResult =
-		await $`bun build ./fivem/client.ts --outfile ${fivemClientFile} --target bun`;
-	if (fivemClientResult.exitCode !== 0) {
-		throw new Error("Wire FiveM client build failed.");
-	}
-
-	writeFileSync(
-		join(esmDir, "package.json"),
-		JSON.stringify({ type: "module" }),
-	);
-	writeFileSync(
-		join(cjsDir, "package.json"),
-		JSON.stringify({ type: "commonjs" }),
-	);
-
-	console.log(
-		"[wire] Build complete: client, server, methods, adapters, fivem-client.",
-	);
-} catch (error) {
-	console.error("[wire] Build error:", error);
+const clientCode = await Bun.file(`${root}dist/client/index.js`).text();
+if (/\bnode:|require\(["']node:/.test(clientCode)) {
+	console.error("✗ client bundle contains Node imports");
 	process.exit(1);
 }
+console.log("✓ client bundle is Node-free");

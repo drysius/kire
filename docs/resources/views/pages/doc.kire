@@ -1,0 +1,33 @@
+@include('layouts.app', it)
+@define('content')
+<div class="text-sm breadcrumbs text-base-content/60 mb-4">
+	<ul>
+		<li><a wire:navigate href="/">Home</a></li>
+		<li>{{ page.section }}</li>
+		<li class="text-base-content">{{ page.title }}</li>
+	</ul>
+</div>
+
+<article class="prose lg:prose-lg max-w-3xl prose-headings:scroll-mt-20 prose-a:text-primary prose-pre:bg-base-300/70 prose-pre:border prose-pre:border-base-content/10">
+	{{{ content }}}
+</article>
+
+<nav class="mt-12 grid gap-3 sm:grid-cols-2 max-w-3xl border-t border-base-content/10 pt-6">
+	@if(neighbors.prev)
+		<a wire:navigate href="{{ neighbors.prev.route }}" class="card bg-base-200/60 border border-base-content/10 hover:border-primary/40 transition">
+			<div class="card-body py-4">
+				<span class="text-xs opacity-60">← Previous</span>
+				<span class="font-medium">{{ neighbors.prev.title }}</span>
+			</div>
+		</a>
+	@end
+	@if(neighbors.next)
+		<a wire:navigate href="{{ neighbors.next.route }}" class="card bg-base-200/60 border border-base-content/10 hover:border-primary/40 transition sm:text-right sm:col-start-2">
+			<div class="card-body py-4">
+				<span class="text-xs opacity-60">Next →</span>
+				<span class="font-medium">{{ neighbors.next.title }}</span>
+			</div>
+		</a>
+	@end
+</nav>
+@end

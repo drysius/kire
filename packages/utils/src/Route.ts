@@ -111,6 +111,8 @@ export class RouteManager {
 			const char = pattern[index]!;
 
 			if (char === "*") {
+				// Route patterns are route names, not filesystem paths — `*` spans
+				// segments by design (Laravel-style `route()->is("admin/*")`).
 				regex += ".*";
 				index++;
 				continue;

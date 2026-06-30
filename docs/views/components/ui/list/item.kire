@@ -1,3 +1,0 @@
-<li class="px-4 py-4 hover:bg-gray-50 transition-colors">
-    @yield('default')
-</li>

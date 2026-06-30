@@ -1,91 +1,64 @@
-import {
-	createVanillaWireAdapter,
-	type VanillaWireAdapterOptions,
-} from "./vanilla";
+import type { Kire } from "kire";
+import { type FileStore, handleUpload } from "../features/file-upload";
+import type { Kirewire } from "../kirewire";
+import { handleUpdate } from "../server/http";
+import type { Hub } from "../server/hub";
+import { SSE_HEADERS, serveSse } from "../server/sse";
 
-function pathnameFromUrl(rawUrl: string): string {
-	try {
-		return new URL(rawUrl, "http://localhost").pathname;
-	} catch {
-		const raw = String(rawUrl || "").trim();
-		if (!raw) return "/";
-		const idx = raw.indexOf("?");
-		return idx >= 0 ? raw.slice(0, idx) || "/" : raw;
-	}
+export interface ExpressAdapterOptions {
+	path?: string;
+	uploadPath?: string;
+	ssePath?: string;
+	store?: FileStore;
+	hub?: Hub;
+	engineFactory?: () => Kire<boolean>;
 }
 
-function writeExpressResult(res: any, output: any) {
-	const status = Number(output?.status || 200);
-	const headers = (output?.headers || {}) as Record<string, string>;
+/**
+ * Register Kirewire routes on an Express-style app. Expects `express.json()` for
+ * the update body and a multipart middleware (e.g. multer `.any()`) populating
+ * `req.files` for uploads. Loosely typed to avoid an Express dependency.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: framework objects are external
+export function expressAdapter(
+	app: any,
+	kirewire: Kirewire,
+	options: ExpressAdapterOptions = {},
+) {
+	const path = options.path ?? "/_wire";
+	const uploadPath = options.uploadPath ?? "/_wire/upload";
+	const ssePath = options.ssePath ?? "/_wire/sse";
 
-	if (typeof res.status === "function") {
-		res.status(status);
-	} else {
-		res.statusCode = status;
+	app.post(path, async (req: any, res: any) => {
+		const result = await handleUpdate(
+			kirewire,
+			req.body,
+			options.engineFactory?.(),
+		);
+		res.status(result.status).json(result.body);
+	});
+
+	if (options.store) {
+		const store = options.store;
+		app.post(uploadPath, async (req: any, res: any) => {
+			const files = (req.files ?? []).map((f: any) => ({
+				name: f.originalname ?? f.name,
+				type: f.mimetype ?? f.type,
+				data: f.buffer ?? f.data,
+			}));
+			res.json({ files: await handleUpload(store, files) });
+		});
 	}
 
-	const headerEntries = Object.entries(headers);
-	for (let i = 0; i < headerEntries.length; i++) {
-		const [name, value] = headerEntries[i]!;
-		if (typeof res.setHeader === "function") {
-			res.setHeader(name, value as any);
-		} else if (typeof res.set === "function") {
-			res.set(name, value as any);
-		}
-	}
-
-	const payload = output?.result;
-	if (payload && typeof payload.pipe === "function") {
-		payload.pipe(res);
-		return;
-	}
-
-	if (typeof res.send === "function") {
-		res.send(payload);
-		return;
-	}
-
-	if (payload === undefined || payload === null) {
-		res.end();
-		return;
-	}
-
-	res.end(typeof payload === "string" ? payload : JSON.stringify(payload));
-}
-
-export function ExpressPlugin(options: VanillaWireAdapterOptions) {
-	const adapter = createVanillaWireAdapter(options);
-
-	return async function kirewireExpressMiddleware(
-		req: any,
-		res: any,
-		next?: (error?: any) => void,
-	) {
-		const rawUrl = String(req?.originalUrl || req?.url || "");
-		const path = pathnameFromUrl(rawUrl);
-		if (!path.startsWith(adapter.route)) {
-			if (typeof next === "function") next();
-			return;
-		}
-
-		try {
-			const output = await adapter.handle({
-				request: req,
-				method: String(req?.method || "GET"),
-				url: rawUrl,
-				body: req?.body,
-				signal: req?.signal,
+	if (options.hub) {
+		const hub = options.hub;
+		app.get(ssePath, (req: any, res: any) => {
+			res.writeHead(200, SSE_HEADERS);
+			const unsubscribe = serveSse(hub, String(req.query?.channel ?? ""), {
+				write: (frame) => res.write(frame),
+				onClose: (cb) => req.on("close", cb),
 			});
-			writeExpressResult(res, output);
-		} catch (error) {
-			if (typeof next === "function") {
-				next(error);
-				return;
-			}
-			res.statusCode = 500;
-			res.end(
-				JSON.stringify({ error: String((error as any)?.message || error) }),
-			);
-		}
-	};
+			req.on("close", unsubscribe);
+		});
+	}
 }

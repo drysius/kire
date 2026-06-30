@@ -2,6 +2,39 @@ import { createHash } from "node:crypto";
 import { kirePlugin } from "kire";
 import type { KireAsset, KireAssetsOptions } from "./types";
 
+/** Reject SSRF-prone targets: non-http(s), loopback, private, and link-local hosts. */
+function isSafeRemoteUrl(raw: string): boolean {
+	let url: URL;
+	try {
+		url = new URL(raw);
+	} catch {
+		return false;
+	}
+	if (url.protocol !== "http:" && url.protocol !== "https:") return false;
+	const host = url.hostname.toLowerCase();
+	if (host === "localhost" || host === "0.0.0.0" || host === "::1" || host.endsWith(".local")) {
+		return false;
+	}
+	const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+	if (ipv4) {
+		const a = Number(ipv4[1]);
+		const b = Number(ipv4[2]);
+		if (
+			a === 0 ||
+			a === 127 ||
+			a === 10 ||
+			(a === 172 && b >= 16 && b <= 31) ||
+			(a === 192 && b === 168) ||
+			(a === 169 && b === 254)
+		) {
+			return false;
+		}
+	}
+	// IPv6 loopback / unique-local / link-local
+	if (host.startsWith("fe80") || host.startsWith("fc") || host.startsWith("fd")) return false;
+	return true;
+}
+
 export const KireAssets = kirePlugin<KireAssetsOptions>(
 	{
 		prefix: "_kire",
@@ -99,9 +132,22 @@ export const KireAssets = kirePlugin<KireAssetsOptions>(
 			let content = "";
 			try {
 				if (path.startsWith("http://") || path.startsWith("https://")) {
-					const res = await fetch(path);
-					if (res.ok) content = await res.text();
-					else console.warn(`[KireAssets] Failed to fetch SVG: ${path}`);
+					// SSRF guard: reject private/loopback/link-local targets and
+					// bound the request with a timeout so it can't hang on a slow or
+					// internal host.
+					if (!isSafeRemoteUrl(path)) {
+						console.warn(`[KireAssets] Blocked unsafe SVG URL: ${path}`);
+						return null;
+					}
+					const controller = new AbortController();
+					const timer = setTimeout(() => controller.abort(), 5000);
+					try {
+						const res = await fetch(path, { signal: controller.signal });
+						if (res.ok) content = await res.text();
+						else console.warn(`[KireAssets] Failed to fetch SVG: ${path}`);
+					} finally {
+						clearTimeout(timer);
+					}
 				} else {
 					content = kire.readFile(kire.resolvePath(path));
 				}

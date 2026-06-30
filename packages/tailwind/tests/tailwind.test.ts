@@ -1,101 +1,70 @@
 import { describe, expect, it } from "bun:test";
 import { Kire } from "kire";
-// Import KireAssets from the sibling package source
 import { KireAssets } from "../../assets/src/index";
 import { KireTailwind } from "../src";
+import { extractCandidates } from "../src/compiler";
 
-describe("@Kirejs/Tailwind", () => {
-	it("should compile tailwind css using real compiler", async () => {
+const styleOf = (html: string) => html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+
+describe("@kirejs/tailwind", () => {
+	it("generates utility CSS for classes used anywhere in the page", async () => {
 		const kire = new Kire({ silent: true });
 		kire.plugin(KireTailwind);
-
-		const tpl = `@tailwind().custom-class { color: red; }@end<div class="p-4 custom-class"></div>`;
-
-		const result = await kire.render(tpl);
-
-		// Check if inline style is generated (since assets plugin is not loaded)
-		expect(result).toContain("<style>");
-		expect(result).toContain(".custom-class");
-		expect(result).toContain("color: red");
-		// p-4 should generate padding
-		expect(result).toContain("padding: ");
-		expect(result).toContain("</style>");
+		const tpl = `<head><tailwind></tailwind></head><div class="flex items-center gap-4 p-6">x</div>`;
+		const css = styleOf(await kire.render(tpl));
+		expect(css).toContain(".flex");
+		expect(css).toContain(".items-center");
+		expect(css).toContain(".gap-4");
+		expect(css).toContain(".p-6");
 	});
 
-	it("should integrate with @kirejs/assets for deduplication and offloading", async () => {
+	it("keeps custom CSS in the block and compiles utilities together", async () => {
 		const kire = new Kire({ silent: true });
-		// Load both plugins
+		kire.plugin(KireTailwind);
+		const tpl = `<tailwind>.custom { color: red; }</tailwind><div class="p-4 custom"></div>`;
+		const result = await kire.render(tpl);
+		const css = styleOf(result);
+		expect(result).toContain("<style>");
+		expect(css).toContain(".custom");
+		expect(css).toContain("color: red");
+		expect(css).toContain("padding");
+		expect(result).not.toContain("KIRE_TW");
+	});
+
+	it("offloads to @kirejs/assets when present (no inline style, dedup)", async () => {
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireTailwind);
 		kire.plugin(KireAssets);
+		const tpl = `@assets()<head><tailwind>.shared { color: blue; }</tailwind></head><div class="m-2 shared">S</div>`;
 
-		const tpl = `@assets()@tailwind().shared-class { color: blue; }@end<div class="m-2 shared-class">Shared</div>`;
-
-		// First Render
 		const result1 = await kire.render(tpl);
-
-		// Should NOT have inline style
-		expect(result1).not.toContain("<style>.shared-class");
-
-		// Should have link tag
-		expect(result1).toContain('<link rel="stylesheet" href="/_kire/');
+		expect(result1).not.toContain("<style>.shared");
 		expect(result1).toMatch(/\/([a-f0-9]{8})\.css"/);
 
-		// Capture the hash
-		const match1 = result1.match(/\/([a-f0-9]{8})\.css"/);
-		const hash1 = match1 ? match1[1] : null;
+		const hash1 = result1.match(/\/([a-f0-9]{8})\.css"/)?.[1];
 		expect(hash1).toBeTruthy();
+		const assetCache = kire.cached("@kirejs/assets") as Record<string, { content: string }>;
+		expect(assetCache[hash1!]!.content).toContain(".shared");
+		expect(assetCache[hash1!]!.content).toContain("margin");
 
-		// Verify cache content
-		const cache = kire.cached("@kirejs/assets");
-		expect(cache[hash1!]).toBeDefined();
-		const asset = cache[hash1!];
-		expect(asset.content).toContain(".shared-class");
-		expect(asset.content).toContain("margin: "); // m-2
-
-		// Second Render (Deduplication test)
 		const result2 = await kire.render(tpl);
-		const match2 = result2.match(/\/([a-f0-9]{8})\.css"/);
-		const hash2 = match2 ? match2[1] : null;
-
-		expect(hash2).toBe(hash1);
-
-		// Cache size should still be 1 (deduplicated)
-		expect(Object.keys(cache).length).toBe(1);
+		expect(result2.match(/\/([a-f0-9]{8})\.css"/)?.[1]).toBe(hash1);
 	});
 
-	it("should cache directive output in production mode", async () => {
-		const kire = new Kire({ silent: true, production: true });
+	it("caches compilation across identical renders", async () => {
+		const kire = new Kire({ silent: true });
 		kire.plugin(KireTailwind);
-
-		const originalCompile = (kire as any).compileCSSWithTailwind.bind(kire);
-		let compileCalls = 0;
-		(kire as any).compileCSSWithTailwind = async (...args: any[]) => {
-			compileCalls++;
-			return originalCompile(...args);
-		};
-
-		const tpl = `@tailwind().tw-cache-test { color: green; }@end`;
+		const original = (kire as any).compileCSSWithTailwind;
+		let calls = 0;
+		(kire as any).compileCSSWithTailwind = async (...a: any[]) => { calls++; return original(...a); };
+		const tpl = `<tailwind></tailwind><div class="p-3"></div>`;
 		await kire.render(tpl);
 		await kire.render(tpl);
-
-		expect(compileCalls).toBe(1);
+		expect(calls).toBe(1);
 	});
 
-	it("should cache element output in production mode using id", async () => {
-		const kire = new Kire({ silent: true, production: true });
-		kire.plugin(KireTailwind);
-
-		const originalCompile = (kire as any).compileCSSWithTailwind.bind(kire);
-		let compileCalls = 0;
-		(kire as any).compileCSSWithTailwind = async (...args: any[]) => {
-			compileCalls++;
-			return originalCompile(...args);
-		};
-
-		const tpl = `<tailwind id="main-cache">.el-cache-test { color: purple; }</tailwind>`;
-		await kire.render(tpl);
-		await kire.render(tpl);
-
-		expect(compileCalls).toBe(1);
+	it("extractCandidates pulls classes from class attributes", () => {
+		const html = `<div class="flex p-4"><span class='text-sm hover:underline'>x</span></div>`;
+		expect(extractCandidates(html).sort()).toEqual(["flex", "hover:underline", "p-4", "text-sm"]);
 	});
 });

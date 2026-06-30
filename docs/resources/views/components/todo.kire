@@ -1,0 +1,26 @@
+<div class="card bg-base-200 border border-base-content/10 w-full max-w-md not-prose">
+	<div class="card-body gap-3">
+		<form wire:submit="add" class="join w-full">
+			<input wire:model="draft" placeholder="Add a task…" class="input input-bordered join-item flex-1" />
+			<button class="btn btn-primary join-item">Add</button>
+		</form>
+		<ul class="flex flex-col gap-1">
+			@for(item of items)
+				<li wire:key="{{ item.id }}" class="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-base-300/50">
+					<input type="checkbox" wire:click="toggle({{ item.id }})" @checked(item.done) class="checkbox checkbox-sm" />
+					<span class="flex-1 {{ item.done ? 'line-through opacity-50' : '' }}">{{ item.text }}</span>
+					<button wire:click="remove({{ item.id }})" class="btn btn-ghost btn-xs">✕</button>
+				</li>
+			@end
+		</ul>
+		@if(items.length === 0)
+			<p class="text-sm opacity-50 text-center py-2">No tasks yet.</p>
+		@end
+		@if(items.length > 0)
+			<div class="flex justify-between items-center text-xs opacity-60">
+				<span>{{ items.length }} item(s)</span>
+				<button wire:click="clearDone" class="btn btn-ghost btn-xs">Clear done</button>
+			</div>
+		@end
+	</div>
+</div>

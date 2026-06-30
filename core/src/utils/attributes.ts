@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html";
 import { NullProtoObj } from "./regex";
 
 export class Attributes {
@@ -58,7 +59,7 @@ export class Attributes {
 			.map(([key, value]) => {
 				if (value === true) return key;
 				if (value === false || value === null || value === undefined) return "";
-				return `${key}="${String(value).replace(/"/g, "&quot;")}"`;
+				return `${key}="${escapeHtml(String(value))}"`;
 			})
 			.filter(Boolean)
 			.join(" ");

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en" data-theme="{{ docs?.theme?.light || 'winter' }}">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>{{ title || app.name }} · {{ app.name }}</title>
+	<meta name="description" content="{{ description || app.description }}" />
+	<link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.23/dist/full.min.css" rel="stylesheet" type="text/css" />
+	<link href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" rel="stylesheet" />
+	<script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+	<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+	<style>
+		/* Style prose code blocks with DaisyUI CSS variables (not @apply, which
+		   doesn't know DaisyUI's color names under the Tailwind Play CDN). */
+		.prose :where(pre):not(:where([class~="not-prose"] *)) {
+			background-color: hsl(var(--b3) / 0.7);
+			border: 1px solid hsl(var(--bc) / 0.1);
+			border-radius: 0.75rem;
+		}
+		.prose :where(code):not(:where(pre code)):not(:where([class~="not-prose"] *)) {
+			background-color: hsl(var(--b3) / 0.7);
+			padding: 0.125rem 0.375rem;
+			border-radius: 0.375rem;
+			color: hsl(var(--p));
+			font-weight: 500;
+		}
+		.prose :where(code):not(:where(pre code))::before,
+		.prose :where(code):not(:where(pre code))::after { content: ""; }
+		/* Let the prose <pre> background show through highlight.js tokens. */
+		.prose :where(pre) .hljs, .prose :where(pre code.hljs) { background: transparent; padding: 0; color: inherit; }
+	</style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content antialiased">
+	<div class="drawer lg:drawer-open">
+		<input id="nav-drawer" type="checkbox" class="drawer-toggle" />
+		<div class="drawer-content flex flex-col min-h-screen">
+			@include('partials.navbar', it)
+			<main id="docs-main" class="flex-1 w-full px-6 lg:px-12 py-8">
+				@defined('content')
+			</main>
+			<footer class="footer footer-center p-6 text-base-content/60 border-t border-base-content/10">
+				<aside>
+					{{ app.name }} v{{ app.version }} · built with Kire itself ·
+					<a class="link link-hover" href="{{ app.repo }}">GitHub</a>
+				</aside>
+			</footer>
+		</div>
+		@include('partials.sidebar', it)
+	</div>
+	<script>
+		(() => {
+			const KEY = "kire-theme", root = document.documentElement;
+			const dark = "{{ docs?.theme?.dark || 'night' }}", light = "{{ docs?.theme?.light || 'winter' }}";
+			const saved = localStorage.getItem(KEY);
+			if (saved) root.setAttribute("data-theme", saved);
+			window.toggleTheme = () => {
+				const next = root.getAttribute("data-theme") === dark ? light : dark;
+				root.setAttribute("data-theme", next);
+				localStorage.setItem(KEY, next);
+			};
+		})();
+	</script>
+	<script>
+		(() => {
+			const highlight = () => {
+				if (!window.hljs) return;
+				document.querySelectorAll("pre code").forEach((block) => {
+					if (!block.dataset.hl) { window.hljs.highlightElement(block); block.dataset.hl = "1"; }
+				});
+			};
+			const ready = () => highlight();
+			if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
+			else ready();
+			document.addEventListener("kirewire:navigated", highlight);
+		})();
+	</script>
+	<script type="module" src="/public/kirewire.js"></script>
+</body>
+</html>
