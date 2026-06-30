@@ -15,7 +15,7 @@ export { morph } from "./morph";
 export { setupNavigate } from "./navigate";
 export { computed, effect, reactive, watch } from "./reactivity";
 export { WireRuntime } from "./runtime";
-export { HttpTransport, SseTransport, WebSocketTransport } from "./transport";
+export { FiveMTransport, HttpTransport, SseTransport, WebSocketTransport } from "./transport";
 export { evaluate, makeWire } from "./wire";
 
 export interface StartOptions {

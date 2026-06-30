@@ -109,3 +109,44 @@ export class WebSocketTransport implements Transport {
 		return () => this.listeners.delete(onPush);
 	}
 }
+
+/**
+ * FiveM NUI transport. Sends updates to the resource's client script via a NUI
+ * `fetch("https://<resource>/<callback>")` and receives server pushes through the
+ * `window` `message` event (delivered by `SendNuiMessage`). Pair with the
+ * server-side `createFiveMHandler` / `FiveMBroadcaster`.
+ */
+export class FiveMTransport implements Transport {
+	private readonly listeners = new Set<(p: ServerPush) => void>();
+	private bound = false;
+
+	constructor(
+		private readonly resource: string = (globalThis as { GetParentResourceName?: () => string })
+			.GetParentResourceName?.() ?? "nui",
+		private readonly callback = "_wire",
+	) {}
+
+	async send(req: UpdateRequest): Promise<UpdateResponse> {
+		const res = await fetch(`https://${this.resource}/${this.callback}`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json; charset=UTF-8" },
+			body: JSON.stringify(req),
+		});
+		if (!res.ok) throw new Error(`Kirewire NUI request failed (${res.status}).`);
+		return (await res.json()) as UpdateResponse;
+	}
+
+	subscribe(_channel: string, onPush: (p: ServerPush) => void): () => void {
+		this.listeners.add(onPush);
+		if (!this.bound) {
+			this.bound = true;
+			window.addEventListener("message", (event: MessageEvent) => {
+				const data = event.data as { type?: string; push?: ServerPush };
+				if (data && data.type === "kirewire:push" && data.push) {
+					for (const cb of this.listeners) cb(data.push);
+				}
+			});
+		}
+		return () => this.listeners.delete(onPush);
+	}
+}

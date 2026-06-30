@@ -84,6 +84,9 @@ export {
 	serveWs,
 	type WsConnection,
 	type WsOptions,
+	createFiveMHandler,
+	FiveMBroadcaster,
+	type NuiCallback,
 } from "./server/index";
 export { createDefaultSynthRegistry } from "./synth/builtins";
 export { defineSynth, modelSynth } from "./synth/class";
