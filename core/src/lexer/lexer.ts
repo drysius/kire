@@ -1,5 +1,5 @@
 import type { Kire } from "../kire";
-import type { Node } from "../types";
+import type { LexerError, Node } from "../types";
 import {
 	ATTR_NAME_BREAK_REGEX,
 	DIRECTIVE_NAME_REGEX,
@@ -15,16 +15,62 @@ import { Cursor } from "./cursor";
 export class Lexer extends Cursor {
 	private stack: Node[] = [];
 	private root: Node[] = [];
+	/** Structural problems found during the last parse(); parsing is lenient. */
+	public errors: LexerError[] = [];
 
-	constructor(template: string, private kire: Kire<any>) {
-		super(template);
+	constructor(
+		template: string,
+		private kire: Kire<any>,
+		baseOffset = 0,
+		baseLine = 1,
+		baseColumn = 1,
+		/** Inside a raw element (<script>, <style>): keep directives and
+		 * interpolations, but never interpret `<` as HTML markup. */
+		private rawMode = false,
+	) {
+		super(template, baseOffset, baseLine, baseColumn);
 	}
 
 	public parse(): Node[] {
 		this.reset();
 		this.stack = [];
 		this.root = [];
+		this.errors = [];
 
+		this.parseBody();
+
+		for (const open of this.stack) {
+			const label =
+				open.type === "directive" ? `@${open.name}` : `<${open.tagName}>`;
+			// loc.offset is already absolute; reportError adds baseOffset itself
+			const start = (open.loc?.offset ?? 0) - this.baseOffset;
+			this.reportError(
+				`${label} is not closed`,
+				start,
+				start + label.length,
+				open.loc,
+			);
+		}
+
+		return this.root;
+	}
+
+	private reportError(
+		message: string,
+		start: number,
+		end: number,
+		loc?: { line: number; column: number },
+	): void {
+		this.errors.push({
+			message,
+			start: this.baseOffset + start,
+			end: this.baseOffset + end,
+			line: loc?.line ?? this.line,
+			column: loc?.column ?? this.column,
+		});
+	}
+
+	private parseBody(): void {
 		while (!this.done) {
 			const char = this.char();
 
@@ -41,14 +87,14 @@ export class Lexer extends Cursor {
 
 			if (char === "<") {
 				if (this.checkJavascript()) continue;
-				if (this.checkElement()) continue;
-				if (this.checkClosingTag()) continue;
+				if (!this.rawMode) {
+					if (this.checkElement()) continue;
+					if (this.checkClosingTag()) continue;
+				}
 			}
 
 			this.parseText();
 		}
-
-		return this.root;
 	}
 
 	// ── Node helpers ─────────────────────────────────────────────────────────
@@ -63,6 +109,37 @@ export class Lexer extends Cursor {
 		}
 	}
 
+	/**
+	 * Closes the stack entry at `index`. Anything opened above it is closed
+	 * implicitly (the engine tolerates it), so each such node is reported.
+	 */
+	private closeStackAt(index: number): void {
+		const registered = this.kire.$directives.records;
+		for (let i = this.stack.length - 1; i > index; i--) {
+			const open = this.stack[i]!;
+			// Chained branches (@else after @if) are closed together with their
+			// root by design; they are not "unclosed".
+			const below = this.stack[i - 1]!;
+			if (
+				open.type === "directive" &&
+				below.type === "directive" &&
+				registered[open.name!]?.relatedTo?.includes(below.name!)
+			) {
+				continue;
+			}
+			const label =
+				open.type === "directive" ? `@${open.name}` : `<${open.tagName}>`;
+			const start = (open.loc?.offset ?? 0) - this.baseOffset;
+			this.reportError(
+				`${label} is not closed`,
+				start,
+				start + label.length,
+				open.loc,
+			);
+		}
+		this.stack.splice(index);
+	}
+
 	private popStack(name: string | null): void {
 		if (this.stack.length === 0) return;
 		if (!name) {
@@ -72,7 +149,7 @@ export class Lexer extends Cursor {
 		for (let i = this.stack.length - 1; i >= 0; i--) {
 			const n = this.stack[i]!;
 			if (n.name === name || n.tagName === name) {
-				this.stack.splice(i);
+				this.closeStackAt(i);
 				break;
 			}
 		}
@@ -180,7 +257,7 @@ export class Lexer extends Cursor {
 							break;
 						}
 					}
-					this.stack.splice(rootIdx);
+					this.closeStackAt(rootIdx);
 					this.advance(rawName.length + 1);
 					return true;
 				}
@@ -224,6 +301,18 @@ export class Lexer extends Cursor {
 		if (!matchedName) {
 			// Not a registered directive — keep as literal if it's not a template expression
 			if (this.char(1) === "{") return false;
+			if (rawName === "end" || /^end[A-Za-z]/.test(rawName)) {
+				// A closer that matched nothing on the stack (see step 1)
+				const hasOpenDirective = this.stack.some((n) => n.type === "directive");
+				this.reportError(
+					hasOpenDirective
+						? `@${rawName} does not close the current block`
+						: `@${rawName} has no matching opening directive`,
+					this.cursor,
+					this.cursor + rawName.length + 1,
+					loc,
+				);
+			}
 			this.advance(rawName.length + 1);
 			this.addNode({ type: "directive", name: rawName, args: [], children: [], loc });
 			return true;
@@ -266,7 +355,9 @@ export class Lexer extends Cursor {
 				if (!rootNode.related) rootNode.related = [];
 				rootNode.related.push(node);
 
-				while (this.stack[this.stack.length - 1] !== rootNode) this.stack.pop();
+				// A branch closes whatever the previous branch left open (e.g. a
+				// <div> opened inside @if and never closed before @else).
+				this.closeStackAt(rootIdx + 1);
 
 				if (
 					def.children === true ||
@@ -352,10 +443,16 @@ export class Lexer extends Cursor {
 			const endIdx = this.template.indexOf(closeTag, this.cursor);
 			if (endIdx !== -1) {
 				const content = this.slice(this.cursor, endIdx);
-				const innerParser = new Lexer(content, this.kire);
-				(innerParser as any).line = this.line;
-				(innerParser as any).column = this.column;
+				const innerParser = new Lexer(
+					content,
+					this.kire,
+					this.baseOffset + this.cursor,
+					this.line,
+					this.column,
+					true,
+				);
 				node.children = innerParser.parse();
+				this.errors.push(...innerParser.errors);
 				this.addNode(node);
 				this.advance(content.length + closeTag.length);
 				return true;
@@ -393,6 +490,18 @@ export class Lexer extends Cursor {
 
 		const isLetter = /^[a-zA-Z]/.test(tagName);
 		if (!isLetter && !this.kire.$elementsPattern.test(tagName)) return false;
+
+		const hasOpen = this.stack.some(
+			(n) => n.type === "element" && n.tagName === tagName,
+		);
+		if (!hasOpen) {
+			this.reportError(
+				`</${tagName}> has no matching opening tag`,
+				this.cursor,
+				this.cursor + match[0]!.length,
+				this.getLoc(),
+			);
+		}
 
 		this.popStack(tagName);
 		this.advance(match[0]!.length);

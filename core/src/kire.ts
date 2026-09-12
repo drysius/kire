@@ -19,6 +19,7 @@ import type {
 	KireSchemaObject,
 	KireTplFunction,
 	Node,
+	ParseResult,
 	TypeDefinition,
 } from "./types";
 import { platform as browserPlatform } from "./utils/browser";
@@ -709,6 +710,17 @@ export class Kire<Asyncronos extends boolean = true> {
 
 	public parse(content: string): Node[] {
 		return new Lexer(content, this).parse();
+	}
+
+	/**
+	 * Parses and also returns the structural problems the lexer tolerated
+	 * (unclosed blocks, orphan closers). Used by tooling such as the VS Code
+	 * extension so diagnostics come from the same parser that renders.
+	 */
+	public parseDetailed(content: string): ParseResult {
+		const lexer = new Lexer(content, this);
+		const nodes = lexer.parse();
+		return { nodes, errors: lexer.errors };
 	}
 
 	public compile(

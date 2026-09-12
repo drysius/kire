@@ -4,6 +4,7 @@ import {
 	directiveOpensBlock,
 } from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
+import { getStructuralProblems } from "../../core/engineParse";
 import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
 import { isHtmlVoidElement } from "../../utils/html";
@@ -100,8 +101,29 @@ export class KireDiagnosticProvider {
 		const diagnostics: vscode.Diagnostic[] = [];
 		const text = document.getText();
 
-		this.validateDirectives(document, text, diagnostics);
-		this.validateHtmlTags(document, text, diagnostics);
+		// Prefer the engine's own lexer for block/tag structure; the regex
+		// validators are only a fallback for runtimes without parseDetailed.
+		const structural = getStructuralProblems(text);
+		if (structural) {
+			for (const problem of structural) {
+				diagnostics.push(
+					new vscode.Diagnostic(
+						new vscode.Range(
+							document.positionAt(problem.start),
+							document.positionAt(problem.end),
+						),
+						problem.message,
+						problem.severity === "error"
+							? vscode.DiagnosticSeverity.Error
+							: vscode.DiagnosticSeverity.Warning,
+					),
+				);
+			}
+			this.validateDirectives(document, text, diagnostics, false);
+		} else {
+			this.validateDirectives(document, text, diagnostics, true);
+			this.validateHtmlTags(document, text, diagnostics);
+		}
 		this.validateInterpolations(document, text, diagnostics);
 		diagnostics.push(
 			...this.htmlDiagnosticProvider.createAttributeDiagnostics(document),
@@ -110,10 +132,15 @@ export class KireDiagnosticProvider {
 		this.diagnosticCollection.set(document.uri, diagnostics);
 	}
 
+	/**
+	 * @param structural when false, only the "allowed parent" rule is checked
+	 * (block balance already came from the engine lexer).
+	 */
 	private validateDirectives(
 		document: vscode.TextDocument,
 		text: string,
 		diagnostics: vscode.Diagnostic[],
+		structural: boolean,
 	) {
 		const state = kireStore.getState();
 		const calls = scanDirectives(text);
@@ -128,7 +155,7 @@ export class KireDiagnosticProvider {
 
 			if (call.name === "end") {
 				if (stack.length === 0) {
-					diagnostics.push(
+					if (structural) diagnostics.push(
 						new vscode.Diagnostic(
 							range,
 							"Unexpected @end without an opening directive block",
@@ -145,7 +172,7 @@ export class KireDiagnosticProvider {
 				const target = call.name.slice(3);
 				const top = stack[stack.length - 1];
 				if (!top) {
-					diagnostics.push(
+					if (structural) diagnostics.push(
 						new vscode.Diagnostic(
 							range,
 							`Unexpected @${call.name} without an opening @${target}`,
@@ -155,7 +182,7 @@ export class KireDiagnosticProvider {
 					continue;
 				}
 				if (top.name !== target) {
-					diagnostics.push(
+					if (structural) diagnostics.push(
 						new vscode.Diagnostic(
 							range,
 							`@${call.name} closes @${target}, but current block is @${top.name}`,
@@ -196,6 +223,7 @@ export class KireDiagnosticProvider {
 			}
 		}
 
+		if (!structural) return;
 		for (const unclosed of stack) {
 			diagnostics.push(
 				new vscode.Diagnostic(

@@ -344,5 +344,22 @@ export interface Node {
 	loc?: {
 		line: number;
 		column: number;
+		/** Absolute character offset of the node start in the source. */
+		offset?: number;
 	};
+}
+
+/** Structural problem found while lexing (the AST is still produced). */
+export interface LexerError {
+	message: string;
+	/** Absolute character offset range in the source. */
+	start: number;
+	end: number;
+	line: number;
+	column: number;
+}
+
+export interface ParseResult {
+	nodes: Node[];
+	errors: LexerError[];
 }
