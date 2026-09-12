@@ -44,6 +44,19 @@ export async function activate(context: vscode.ExtensionContext) {
 		context.subscriptions.push(watcher);
 	}
 
+	// Schemas from the workspace are only executed once the user trusts it.
+	const onTrust = (vscode.workspace as any).onDidGrantWorkspaceTrust as
+		| vscode.Event<void>
+		| undefined;
+	if (onTrust) {
+		context.subscriptions.push(
+			onTrust(() => {
+				kireLog("info", "Workspace trust granted; reloading schemas.");
+				void loadSchemas();
+			}),
+		);
+	}
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand("kire.reloadSchemas", async () => {
 			kireLog("info", "Manual schema reload requested.");

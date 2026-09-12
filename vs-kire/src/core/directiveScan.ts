@@ -116,11 +116,50 @@ function splitArgs(content: string, offset: number): DirectiveArgSpan[] {
 	return args;
 }
 
+const RAW_BLOCK_OPENERS: Array<{ open: RegExp; close: string }> = [
+	{ open: /^<style\b[^>]*>/i, close: "</style>" },
+	{ open: /^<script\b[^>]*>/i, close: "</script>" },
+];
+
+/**
+ * Returns the index right after a region that must not be scanned for
+ * directives (HTML comments, Kire comments, <style> and <script> bodies),
+ * or -1 when `i` is not at the start of such a region.
+ */
+function skipNonDirectiveRegion(text: string, i: number): number {
+	if (text.startsWith("<!--", i)) {
+		const end = text.indexOf("-->", i + 4);
+		return end === -1 ? text.length : end + 3;
+	}
+	if (text.startsWith("{{--", i)) {
+		const end = text.indexOf("--}}", i + 4);
+		return end === -1 ? text.length : end + 4;
+	}
+	if (text[i] === "<") {
+		for (const { open, close } of RAW_BLOCK_OPENERS) {
+			const m = open.exec(text.slice(i, i + 512));
+			if (!m) continue;
+			const bodyStart = i + m[0].length;
+			const end = text.toLowerCase().indexOf(close, bodyStart);
+			return end === -1 ? text.length : end + close.length;
+		}
+	}
+	return -1;
+}
+
 export function scanDirectives(text: string): DirectiveCall[] {
 	const calls: DirectiveCall[] = [];
 
 	for (let i = 0; i < text.length; i++) {
-		if (text[i] !== "@") continue;
+		const ch = text[i];
+		if (ch === "<" || ch === "{") {
+			const skipTo = skipNonDirectiveRegion(text, i);
+			if (skipTo !== -1) {
+				i = skipTo - 1;
+				continue;
+			}
+		}
+		if (ch !== "@") continue;
 		if (text[i + 1] === "@") {
 			i++;
 			continue;

@@ -1,30 +1,20 @@
 import * as vscode from "vscode";
-import { directiveOpensBlock } from "../../core/directiveLogic";
+import {
+	directiveAllowsStandalone,
+	directiveOpensBlock,
+} from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireLog } from "../../core/log";
 import { kireStore } from "../../core/store";
+import { isHtmlVoidElement } from "../../utils/html";
 import { HtmlDiagnosticProvider } from "../html/diagnostic";
 
-const HTML_VOID = new Set([
-	"area",
-	"base",
-	"br",
-	"col",
-	"embed",
-	"hr",
-	"img",
-	"input",
-	"link",
-	"meta",
-	"param",
-	"source",
-	"track",
-	"wbr",
-]);
+const VALIDATE_DEBOUNCE_MS = 150;
 
 export class KireDiagnosticProvider {
 	private diagnosticCollection: vscode.DiagnosticCollection;
 	private htmlDiagnosticProvider: HtmlDiagnosticProvider;
+	private pendingValidations = new Map<string, NodeJS.Timeout>();
 
 	constructor() {
 		this.diagnosticCollection =
@@ -33,21 +23,36 @@ export class KireDiagnosticProvider {
 	}
 
 	dispose() {
+		for (const timer of this.pendingValidations.values()) clearTimeout(timer);
+		this.pendingValidations.clear();
 		this.diagnosticCollection.dispose();
 	}
 
 	register(_context: vscode.ExtensionContext): vscode.Disposable {
 		const disposables: vscode.Disposable[] = [];
 		disposables.push(this.diagnosticCollection);
+		disposables.push({ dispose: () => this.dispose() });
 		let refreshTimer: NodeJS.Timeout | undefined;
 
+		const isKireDocument = (document: vscode.TextDocument) =>
+			document.languageId === "kire" || document.fileName.endsWith(".kire");
+
 		const updateDiagnostics = (document: vscode.TextDocument) => {
-			if (
-				document.languageId === "kire" ||
-				document.fileName.endsWith(".kire")
-			) {
-				void this.validateDocument(document);
-			}
+			if (isKireDocument(document)) void this.validateDocument(document);
+		};
+		// Typing triggers a change per keystroke; coalesce them per document.
+		const scheduleUpdate = (document: vscode.TextDocument) => {
+			if (!isKireDocument(document)) return;
+			const key = document.uri.toString();
+			const existing = this.pendingValidations.get(key);
+			if (existing) clearTimeout(existing);
+			this.pendingValidations.set(
+				key,
+				setTimeout(() => {
+					this.pendingValidations.delete(key);
+					void this.validateDocument(document);
+				}, VALIDATE_DEBOUNCE_MS),
+			);
 		};
 		const refreshOpenDocuments = () => {
 			for (const document of vscode.workspace.textDocuments) {
@@ -57,12 +62,16 @@ export class KireDiagnosticProvider {
 
 		disposables.push(
 			vscode.workspace.onDidChangeTextDocument((e) =>
-				updateDiagnostics(e.document),
+				scheduleUpdate(e.document),
 			),
 			vscode.workspace.onDidOpenTextDocument(updateDiagnostics),
-			vscode.workspace.onDidCloseTextDocument((doc) =>
-				this.diagnosticCollection.delete(doc.uri),
-			),
+			vscode.workspace.onDidCloseTextDocument((doc) => {
+				const key = doc.uri.toString();
+				const pending = this.pendingValidations.get(key);
+				if (pending) clearTimeout(pending);
+				this.pendingValidations.delete(key);
+				this.diagnosticCollection.delete(doc.uri);
+			}),
 		);
 		disposables.push({
 			dispose: kireStore.subscribe((state, previousState) => {
@@ -110,7 +119,8 @@ export class KireDiagnosticProvider {
 		const calls = scanDirectives(text);
 		const stack: Array<{ name: string; start: number; end: number }> = [];
 
-		for (const call of calls) {
+		for (let index = 0; index < calls.length; index++) {
+			const call = calls[index]!;
 			const range = new vscode.Range(
 				document.positionAt(call.start),
 				document.positionAt(call.end),
@@ -162,7 +172,10 @@ export class KireDiagnosticProvider {
 			const current = stack[stack.length - 1];
 
 			if (allowedParents.length > 0) {
-				if (!current || !allowedParents.includes(current.name)) {
+				const isBranch = !!current && allowedParents.includes(current.name);
+				if (isBranch) continue;
+				// e.g. `@empty(items) ... @end` is valid outside a loop
+				if (!directiveAllowsStandalone(call.name)) {
 					diagnostics.push(
 						new vscode.Diagnostic(
 							range,
@@ -170,11 +183,11 @@ export class KireDiagnosticProvider {
 							vscode.DiagnosticSeverity.Error,
 						),
 					);
+					continue;
 				}
-				continue;
 			}
 
-			if (directiveOpensBlock(text, call)) {
+			if (directiveOpensBlock(text, call, calls.slice(index + 1))) {
 				stack.push({
 					name: call.name,
 					start: call.start,
@@ -213,7 +226,7 @@ export class KireDiagnosticProvider {
 			const isKireElement = state.elements.has(tag);
 			const isVoid = isKireElement
 				? !!state.elements.get(tag)?.void
-				: HTML_VOID.has(tag.toLowerCase());
+				: isHtmlVoidElement(tag);
 
 			if (!closing && !selfClosing && !isVoid) {
 				stack.push({

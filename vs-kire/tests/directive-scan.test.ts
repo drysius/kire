@@ -24,3 +24,18 @@ describe("scanDirectives", () => {
 		expect(directive?.args[1]?.value).toBe("true");
 	});
 });
+
+describe("scanDirectives regions", () => {
+	it("ignores at-rules inside <style> and code inside <script>", () => {
+		const text =
+			"<style>@media (max-width: 600px) { a { color: red } }</style>\n" +
+			"<script>const x = '@foo(1)';</script>\n@if(a)@end";
+		expect(scanDirectives(text).map((c) => c.name)).toEqual(["if", "end"]);
+	});
+
+	it("ignores HTML and Kire comments", () => {
+		const text = "<!-- @if(x) -->{{-- @for(i of a) --}}@else";
+		expect(scanDirectives(text).map((c) => c.name)).toEqual(["else"]);
+	});
+
+});

@@ -567,7 +567,10 @@ export class KireTsDocumentProvider
 			if (directive.name === "interface") continue;
 
 			const def = directiveDefs.get(directive.name);
-			const signature = Array.isArray(def?.signature) ? def.signature : [];
+			// Unknown "@name(...)" tokens are literal text for the engine (e.g.
+			// `@tailwind(base)`); type-checking their args only produces noise.
+			if (!def) continue;
+			const signature = Array.isArray(def.signature) ? def.signature : [];
 			for (let i = 0; i < directive.args.length; i++) {
 				if (
 					(directive.name === "const" || directive.name === "let") &&

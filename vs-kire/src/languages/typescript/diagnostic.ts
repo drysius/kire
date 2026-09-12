@@ -1,9 +1,12 @@
 import * as vscode from "vscode";
 import { KIRE_TS_SCHEME, provider } from "./utils";
 
+const REFRESH_DEBOUNCE_MS = 200;
+
 export class TypescriptDiagnosticProvider {
 	private collection: vscode.DiagnosticCollection;
 	private disposables: vscode.Disposable[] = [];
+	private pendingRefreshes = new Map<string, NodeJS.Timeout>();
 
 	constructor() {
 		this.collection = vscode.languages.createDiagnosticCollection("kire-ts");
@@ -16,11 +19,12 @@ export class TypescriptDiagnosticProvider {
 				this.refreshForDocument(doc),
 			),
 			vscode.workspace.onDidChangeTextDocument((e) =>
-				this.refreshForDocument(e.document),
+				this.scheduleRefresh(e.document),
 			),
-			vscode.workspace.onDidCloseTextDocument((doc) =>
-				this.collection.delete(doc.uri),
-			),
+			vscode.workspace.onDidCloseTextDocument((doc) => {
+				this.cancelRefresh(doc);
+				this.collection.delete(doc.uri);
+			}),
 		);
 
 		vscode.workspace.textDocuments.forEach((doc) =>
@@ -28,9 +32,33 @@ export class TypescriptDiagnosticProvider {
 		);
 	}
 
+	private isKireDocument(document: vscode.TextDocument) {
+		return document.languageId === "kire" || document.fileName.endsWith(".kire");
+	}
+
+	private cancelRefresh(document: vscode.TextDocument) {
+		const key = document.uri.toString();
+		const pending = this.pendingRefreshes.get(key);
+		if (pending) clearTimeout(pending);
+		this.pendingRefreshes.delete(key);
+	}
+
+	// Rebuilding the virtual TS document and asking the TS server for
+	// diagnostics on every keystroke is expensive; coalesce per document.
+	private scheduleRefresh(document: vscode.TextDocument) {
+		if (!this.isKireDocument(document)) return;
+		this.cancelRefresh(document);
+		this.pendingRefreshes.set(
+			document.uri.toString(),
+			setTimeout(() => {
+				this.pendingRefreshes.delete(document.uri.toString());
+				void this.refreshForDocument(document);
+			}, REFRESH_DEBOUNCE_MS),
+		);
+	}
+
 	private async refreshForDocument(document: vscode.TextDocument) {
-		if (document.languageId !== "kire" && !document.fileName.endsWith(".kire"))
-			return;
+		if (!this.isKireDocument(document)) return;
 		const { virtualUri } = provider.update(document);
 		try {
 			await vscode.commands.executeCommand(
@@ -93,6 +121,8 @@ export class TypescriptDiagnosticProvider {
 	}
 
 	dispose() {
+		for (const timer of this.pendingRefreshes.values()) clearTimeout(timer);
+		this.pendingRefreshes.clear();
 		this.collection.dispose();
 		for (const disposable of this.disposables) {
 			disposable.dispose();

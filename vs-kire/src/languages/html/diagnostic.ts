@@ -1,26 +1,10 @@
 import * as vscode from "vscode";
 import { kireStore } from "../../core/store";
 import { extractTagAttributes } from "../../utils/embedded";
+import { HTML_VOID_ELEMENTS } from "../../utils/html";
 
 export class HtmlDiagnosticProvider {
-	public static readonly htmlVoidElements = new Set([
-		"area",
-		"base",
-		"br",
-		"col",
-		"embed",
-		"hr",
-		"img",
-		"input",
-		"link",
-		"meta",
-		"param",
-		"source",
-		"track",
-		"wbr",
-		"command",
-		"keygen",
-	]);
+	public static readonly htmlVoidElements = HTML_VOID_ELEMENTS;
 
 	createDiagnostics(document: vscode.TextDocument): vscode.Diagnostic[] {
 		const diagnostics: vscode.Diagnostic[] = [];

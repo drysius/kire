@@ -14,22 +14,6 @@ function normalizeCloseByTokens(value: unknown): string[] {
 	return [];
 }
 
-function findUnescapedDirective(source: string, directiveName: string): number {
-	const token = `@${directiveName}`;
-	let index = source.indexOf(token);
-
-	while (index !== -1) {
-		const prev = index > 0 ? source[index - 1] : "";
-		const next = source[index + token.length] || "";
-		if (prev !== "@" && !/[A-Za-z0-9_]/.test(next)) {
-			return index;
-		}
-		index = source.indexOf(token, index + token.length);
-	}
-
-	return -1;
-}
-
 export function isDirectiveCloseToken(name: string): boolean {
 	return name === "end" || name.startsWith("end");
 }
@@ -43,19 +27,53 @@ export function getDirectiveCloseTokens(name: string): string[] {
 	return Array.from(tokens);
 }
 
+/**
+ * A chained directive (one with allowed parents, like @empty after @for) may
+ * also be used standalone when it declares its own explicit closer
+ * (`@empty(expr) ... @endempty`). Mirrors the core lexer, which only treats
+ * such a directive as a branch when it appears inside a matching parent.
+ */
+export function directiveAllowsStandalone(name: string): boolean {
+	const def = kireStore.getState().directives.get(name);
+	return normalizeCloseByTokens(def?.closeBy).includes(`end${name}`);
+}
+
+/**
+ * Decides whether a `children: "auto"` directive owns a block. Walks the
+ * directive calls that follow it, tracking nesting depth, so an `@end` that
+ * belongs to a later, unrelated block does not turn this call into a block.
+ * Mirrors `Lexer.hasExplicitDirectiveEnd` in core.
+ */
 export function directiveOpensBlock(
 	text: string,
 	call: DirectiveCall,
+	callsAfter?: DirectiveCall[],
 ): boolean {
-	const def = kireStore.getState().directives.get(call.name);
+	const state = kireStore.getState();
+	const def = state.directives.get(call.name);
 	if (!def?.children) return false;
 	if (def.children === true) return true;
 
-	const rest = text.slice(Math.min(call.end + 1, text.length));
-	for (const token of getDirectiveCloseTokens(call.name)) {
-		if (findUnescapedDirective(rest, token) !== -1) {
-			return true;
+	const closers = new Set(getDirectiveCloseTokens(call.name));
+	const following =
+		callsAfter ?? scanDirectives(text).filter((c) => c.start > call.start);
+
+	let depth = 0;
+	for (const next of following) {
+		const token = next.name;
+		if (depth === 0 && closers.has(token)) return true;
+
+		if (isDirectiveCloseToken(token)) {
+			if (depth > 0) depth--;
+			else return false; // closes something opened before us
+			continue;
 		}
+
+		const nextDef = state.directives.get(token);
+		if (!nextDef) continue;
+		// Chained branches (@else, @case, ...) share their parent's block
+		if ((state.parentDirectives.get(token) || []).length > 0) continue;
+		if (nextDef.children === true) depth++;
 	}
 	return false;
 }
@@ -98,7 +116,8 @@ export function getDirectiveContextStack(
 	const state = kireStore.getState();
 	const calls = scanDirectives(text);
 
-	for (const call of calls) {
+	for (let index = 0; index < calls.length; index++) {
+		const call = calls[index]!;
 		if (call.start >= offset) break;
 
 		if (isDirectiveCloseToken(call.name)) {
@@ -113,12 +132,13 @@ export function getDirectiveContextStack(
 			continue;
 		}
 
-		if (!directiveOpensBlock(text, call)) continue;
+		if (!directiveOpensBlock(text, call, calls.slice(index + 1))) continue;
 
 		const allowedParents = state.parentDirectives.get(call.name) || [];
 		if (allowedParents.length > 0) {
 			const current = stack[stack.length - 1];
-			if (!current || !allowedParents.includes(current)) continue;
+			const isBranch = !!current && allowedParents.includes(current);
+			if (!isBranch && !directiveAllowsStandalone(call.name)) continue;
 		}
 
 		stack.push(call.name);

@@ -10,6 +10,21 @@ const runtimeRequire = createRequire(import.meta.url);
 
 type KireCtor = new (options?: any) => any;
 
+// ESM modules can never be unloaded, so the `import()` fallback (used when
+// `require` rejects a schema file) must only re-import when the file actually
+// changed; otherwise every "reload schemas" would leak one module instance.
+const esmSchemaModuleCache = new Map<string, { mtimeMs: number; mod: any }>();
+
+/**
+ * Loading schemas means executing code from the workspace (the project's own
+ * `kire` package and every `kire.schema.js`). Only do that in trusted
+ * workspaces; untrusted ones fall back to the bundled runtime's built-ins.
+ */
+function isWorkspaceTrusted(): boolean {
+	const trusted = (vscode.workspace as { isTrusted?: boolean }).isTrusted;
+	return trusted !== false;
+}
+
 function tryLoadKireFromBase(basePath: string): KireCtor | null {
 	try {
 		const requireFromBase = createRequire(basePath);
@@ -38,6 +53,18 @@ async function tryLoadBundledKire(): Promise<KireCtor | null> {
 }
 
 async function resolveKireConstructor(): Promise<KireCtor> {
+	if (!isWorkspaceTrusted()) {
+		const bundled = await tryLoadBundledKire();
+		if (bundled) {
+			kireLog(
+				"info",
+				"Workspace is not trusted; using bundled Kire runtime only.",
+			);
+			return bundled;
+		}
+		throw new Error("Unable to resolve the bundled Kire runtime.");
+	}
+
 	const folders = vscode.workspace.workspaceFolders || [];
 	for (const folder of folders) {
 		const kireCtor = tryLoadKireFromBase(
@@ -484,12 +511,19 @@ async function loadSchemaModule(
 			delete runtimeRequire.cache[resolved];
 			mod = runtimeRequire(modulePath);
 		} catch (_requireError) {
-			const moduleUrl = pathToFileURL(modulePath);
+			let mtimeMs = 0;
 			try {
-				const stat = statSync(modulePath);
-				moduleUrl.searchParams.set("t", String(Math.floor(stat.mtimeMs)));
+				mtimeMs = Math.floor(statSync(modulePath).mtimeMs);
 			} catch {}
-			mod = await import(moduleUrl.href);
+			const cached = esmSchemaModuleCache.get(modulePath);
+			if (cached && cached.mtimeMs === mtimeMs) {
+				mod = cached.mod;
+			} else {
+				const moduleUrl = pathToFileURL(modulePath);
+				moduleUrl.searchParams.set("t", String(mtimeMs));
+				mod = await import(moduleUrl.href);
+				esmSchemaModuleCache.set(modulePath, { mtimeMs, mod });
+			}
 		}
 		const schema = (mod?.default ?? mod) as
 			| Partial<KireSchemaDefinition>
@@ -608,6 +642,15 @@ export async function loadSchemas(): Promise<void> {
 	}
 
 	try {
+		if (!isWorkspaceTrusted()) {
+			kireLog(
+				"info",
+				"Workspace is not trusted; skipping kire.schema.js modules.",
+			);
+			kireStore.getState().applyKireSchema(collected as any);
+			return;
+		}
+
 		const config = vscode.workspace.getConfiguration("kire");
 		const scanNodeModules = config.get<boolean>(
 			"schema.scanNodeModules",

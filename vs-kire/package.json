@@ -23,6 +23,12 @@
 	"activationEvents": [
 		"onLanguage:kire"
 	],
+	"capabilities": {
+		"untrustedWorkspaces": {
+			"supported": "limited",
+			"description": "In untrusted workspaces the extension does not execute the project's kire package or kire.schema.js files; only the built-in directives and elements are available."
+		}
+	},
 	"dependencies": {
 		"prettier": "^3.9.3",
 		"vscode-html-languageservice": "^5.5.1",

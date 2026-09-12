@@ -3,6 +3,7 @@ import { directiveOpensBlock } from "../../core/directiveLogic";
 import { scanDirectives } from "../../core/directiveScan";
 import { kireStore } from "../../core/store";
 import { formatCode } from "../../utils/formatCode";
+import { isHtmlVoidElement } from "../../utils/html";
 
 type LineType =
 	| "html-opening"
@@ -487,23 +488,7 @@ export class FeatureFormatting
 	}
 
 	private isVoidHtmlTag(tag: string): boolean {
-		const voidTags = new Set([
-			"area",
-			"base",
-			"br",
-			"col",
-			"embed",
-			"hr",
-			"img",
-			"input",
-			"link",
-			"meta",
-			"param",
-			"source",
-			"track",
-			"wbr",
-		]);
-		return voidTags.has(tag);
+		return isHtmlVoidElement(tag);
 	}
 
 	private extractDirectiveName(line: string): string {

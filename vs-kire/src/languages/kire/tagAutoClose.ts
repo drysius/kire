@@ -1,22 +1,6 @@
 import * as vscode from "vscode";
 import { kireStore } from "../../core/store";
-
-const htmlVoidElements = new Set([
-	"area",
-	"base",
-	"br",
-	"col",
-	"embed",
-	"hr",
-	"img",
-	"input",
-	"link",
-	"meta",
-	"param",
-	"source",
-	"track",
-	"wbr",
-]);
+import { isHtmlVoidElement } from "../../utils/html";
 
 export class TagAutoCloseProvider {
 	private disposable: vscode.Disposable;
@@ -40,9 +24,13 @@ export class TagAutoCloseProvider {
 		if (change?.text !== ">") return;
 
 		const document = event.document;
-		// Only active for kire or html
-		if (document.languageId !== "kire" && document.languageId !== "html")
-			return;
+		// Only Kire templates. Plain HTML files are auto-closed by VS Code's
+		// built-in HTML support; handling them here would insert the tag twice.
+		const isKire =
+			document.languageId === "kire" ||
+			document.fileName.endsWith(".kire") ||
+			document.fileName.endsWith(".kire.html");
+		if (!isKire) return;
 
 		const selection = new vscode.Selection(
 			change.range.start.translate(0, 1),
@@ -72,7 +60,7 @@ export class TagAutoCloseProvider {
 		if (!tagName) return;
 
 		// Check if void
-		if (htmlVoidElements.has(tagName.toLowerCase())) return;
+		if (isHtmlVoidElement(tagName)) return;
 
 		// Check Kire elements definition
 		const kireElement = kireStore.getState().elements.get(tagName);
