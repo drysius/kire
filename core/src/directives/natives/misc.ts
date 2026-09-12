@@ -21,9 +21,11 @@ export default (kire: Kire<any>) => {
 		example: `@once\n  <script src="/app.js"></script>\n@end`,
 		onCall: (api) => {
 			const id = api.uid("once");
-			api.write(`if (!$globals['~once']) $globals['~once'] = new Set();`);
-			api.write(`if (!$globals['~once'].has('${id}')) { 
-                $globals['~once'].add('${id}');`);
+			// `this` is a per-render call context (see Kire.run), so the set lives
+			// for one render only and is shared with includes/components.
+			api.write(`if (!this['~once']) this['~once'] = new Set();`);
+			api.write(`if (!this['~once'].has('${id}')) {
+                this['~once'].add('${id}');`);
 			api.renderChildren();
 			api.write(`}`);
 		},

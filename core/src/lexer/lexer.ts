@@ -3,6 +3,7 @@ import type { Node } from "../types";
 import {
 	ATTR_NAME_BREAK_REGEX,
 	DIRECTIVE_NAME_REGEX,
+	HTML_VOID_TAGS,
 	NullProtoObj,
 	TAG_CLOSE_REGEX,
 	TAG_OPEN_REGEX,
@@ -143,6 +144,8 @@ export class Lexer extends Cursor {
 		if (this.stack.length > 0) {
 			for (let i = this.stack.length - 1; i >= 0; i--) {
 				const node = this.stack[i]!;
+				// Elements are closed by their own closing tag, never by @end
+				if (node.type !== "directive") continue;
 				const def = registered[node.name!];
 				let shouldPop = false;
 
@@ -160,7 +163,24 @@ export class Lexer extends Cursor {
 				}
 
 				if (shouldPop) {
-					this.stack.splice(i);
+					// Chained branches (@else, @case, ...) sit on the stack above their
+					// chain root. A generic closer (@end, @endif) closes the whole
+					// chain; an explicit branch closer (@endcase) closes only the branch.
+					let rootIdx = i;
+					const closesBranchOnly = rawName === `end${node.name}`;
+					while (!closesBranchOnly && rootIdx > 0) {
+						const branchDef = registered[this.stack[rootIdx]!.name!];
+						const below = this.stack[rootIdx - 1]!;
+						if (
+							below.type === "directive" &&
+							branchDef?.relatedTo?.includes(below.name!)
+						) {
+							rootIdx--;
+						} else {
+							break;
+						}
+					}
+					this.stack.splice(rootIdx);
 					this.advance(rawName.length + 1);
 					return true;
 				}
@@ -298,7 +318,7 @@ export class Lexer extends Cursor {
 			tagName,
 			attributes,
 			attributeMeta,
-			void: selfClosing,
+			void: selfClosing || HTML_VOID_TAGS.has(tagName.toLowerCase()),
 			children: [],
 			loc,
 		};
@@ -539,32 +559,43 @@ export class Lexer extends Cursor {
 		}
 	}
 
+	/**
+	 * Decides whether a `children: "auto"` directive at `fromCursor` owns a block.
+	 * Walks the remaining directive tokens tracking nesting depth, so an `@end`
+	 * that belongs to a later, unrelated block does not turn this directive into
+	 * a block by accident.
+	 */
 	private hasExplicitDirectiveEnd(name: string, fromCursor: number): boolean {
-		const def = this.kire.getDirective(name);
-		if (!def?.closeBy) {
-			const rest = this.slice(fromCursor);
-			return (
-				this.findUnescapedDirective(rest, `end${name}`) !== -1 ||
-				this.findUnescapedDirective(rest, "end") !== -1
-			);
+		const registered = this.kire.$directives.records;
+		const def = registered[name];
+		const closers = new Set<string>([`end${name}`, "end"]);
+		if (def?.closeBy) {
+			const closeBy = Array.isArray(def.closeBy) ? def.closeBy : [def.closeBy];
+			for (const token of closeBy) closers.add(token);
 		}
-		const closeBy = Array.isArray(def.closeBy) ? def.closeBy : [def.closeBy];
+
 		const rest = this.slice(fromCursor);
-		for (const token of closeBy) {
-			if (this.findUnescapedDirective(rest, token) !== -1) return true;
+		const rx = /@([a-zA-Z0-9_\-.:]+)/g;
+		let depth = 0;
+		let m: RegExpExecArray | null;
+		while ((m = rx.exec(rest)) !== null) {
+			if (m.index > 0 && rest[m.index - 1] === "@") continue; // escaped @@
+			const token = m[1]!;
+
+			if (depth === 0 && closers.has(token)) return true;
+
+			if (token.startsWith("end")) {
+				if (depth > 0) depth--;
+				else return false; // closes something opened before us
+				continue;
+			}
+
+			const tokenDef = registered[token];
+			if (!tokenDef) continue;
+			// Chained branches (@else, @case, ...) share their parent's block
+			if (tokenDef.relatedTo && tokenDef.relatedTo.length > 0) continue;
+			if (tokenDef.children === true) depth++;
 		}
 		return false;
-	}
-
-	private findUnescapedDirective(source: string, directiveName: string): number {
-		const token = `@${directiveName}`;
-		let idx = source.indexOf(token);
-		while (idx !== -1) {
-			const prev = idx > 0 ? source[idx - 1] : "";
-			const next = source[idx + token.length] || "";
-			if (prev !== "@" && !/[A-Za-z0-9_]/.test(next)) return idx;
-			idx = source.indexOf(token, idx + token.length);
-		}
-		return -1;
 	}
 }

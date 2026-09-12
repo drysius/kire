@@ -189,7 +189,7 @@ describe("Kire Core (Bun)", () => {
 			'<img src="{{ await Promise.resolve(\'ok\') }}">',
 			{ Promise },
 		);
-		expect(result).toBe('<img src="ok"></img>');
+		expect(result).toBe('<img src="ok">');
 	});
 
 	test("use_global: true (default) — props win, unknown identifiers fall back to globalThis", async () => {

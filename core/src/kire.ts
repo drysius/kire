@@ -111,7 +111,6 @@ export function defineSchema(
  * Handles configuration, compilation, and rendering of templates.
  */
 export class Kire<Asyncronos extends boolean = true> {
-	public __valor = "";
 	/**
 	 * The Root Engine Instance (Source of Truth).
 	 */
@@ -833,9 +832,12 @@ export class Kire<Asyncronos extends boolean = true> {
 
 			this.$cache.files.set(resolved, entry);
 			if (this.$cache.files.size > this.$max_renders * 2) {
-				const first = this.$cache.files.keys().next().value;
-				if (first && first !== this["~render-symbol"])
-					this.$cache.files.delete(first);
+				// Evict the oldest file entry, skipping the inline-render bucket.
+				for (const key of this.$cache.files.keys()) {
+					if (key === this["~render-symbol"]) continue;
+					this.$cache.files.delete(key);
+					break;
+				}
 			}
 			return entry.fn!;
 		} finally {
@@ -852,17 +854,22 @@ export class Kire<Asyncronos extends boolean = true> {
 			let effectiveProps = locals;
 
 			if (this["~parent"]) {
-				effectiveProps = Object.assign(Object.create(this.$props), locals);
+				// Copy fork props as own properties: @include/@component spread
+				// $props, which would drop anything inherited via prototype.
+				effectiveProps = Object.assign(new NullProtoObj(), this.$props, locals);
 			}
 
-			// Per-call globals: create a temporary context object that shadows $globals
-			// without mutating the Kire instance. Arrow-fn deps close over `this` from
-			// the main template function, so they also see the merged globals.
-			const callContext = globals
-				? Object.assign(Object.create(this), {
-						$globals: Object.assign(Object.create(this.$globals), globals),
-					})
-				: this;
+			// Per-render call context: shadows $globals for this call without
+			// mutating the Kire instance and gives directives like @once a place
+			// to keep per-render state. Arrow-fn deps close over `this` from the
+			// main template function, so they share the same context.
+			const callContext = Object.create(this);
+			if (globals) {
+				callContext.$globals = Object.assign(
+					Object.create(this.$globals),
+					globals,
+				);
+			}
 
 			const result = template.call(callContext, effectiveProps);
 

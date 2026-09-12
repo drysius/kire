@@ -115,7 +115,7 @@ describe("Kire Directives & Elements", () => {
 		});
 
 		expect(enabled).toContain(" required ");
-		expect(disabled).toBe("<input></input>");
+		expect(disabled).toBe("<input>");
 	});
 
 	test("boolean attribute helpers should match Blade-style semantics", async () => {
@@ -140,7 +140,7 @@ describe("Kire Directives & Elements", () => {
 		expect(enabled).toContain(" disabled ");
 		expect(enabled).toContain(" readonly ");
 		expect(enabled).toContain(" checked ");
-		expect(disabled).toBe("<input></input>");
+		expect(disabled).toBe("<input>");
 	});
 
 	test("dependencies with nested x-* should compile without forcing a NullProtoObj alias", async () => {

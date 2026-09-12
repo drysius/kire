@@ -14,6 +14,24 @@ export const TAG_CLOSE_REGEX = /^<\/([a-zA-Z0-9_\-:.]+)>/;
 export const ATTR_NAME_BREAK_REGEX = /\s|=|>|\/|\(/;
 export const WHITESPACE_REGEX = /\s/;
 
+// HTML void elements: never have children and never need a closing tag.
+export const HTML_VOID_TAGS = new Set([
+	"area",
+	"base",
+	"br",
+	"col",
+	"embed",
+	"hr",
+	"img",
+	"input",
+	"link",
+	"meta",
+	"param",
+	"source",
+	"track",
+	"wbr",
+]);
+
 // Directive Parsing (@name)
 export const DIRECTIVE_NAME_REGEX = /^@([a-zA-Z0-9_\-.:]+)/;
 
