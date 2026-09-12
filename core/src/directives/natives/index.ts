@@ -13,7 +13,7 @@ export default (kire: Kire) => {
 			"Built-in directives and control-flow primitives shipped with the Kire runtime.",
 		author: "Drysius",
 		repository: "https://github.com/drysius/kire",
-		version: "0.1.2",
+		version: "0.1.3",
 	});
 
 	ifDirectives(kire);

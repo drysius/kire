@@ -5,7 +5,7 @@ export default (kire: Kire) => {
 		name: "kire",
 		description: "Core Kire runtime types and template globals.",
 		author: "Drysius",
-		version: "0.1.2",
+		version: "0.1.3",
 		repository: "https://github.com/drysius/kire",
 	});
 
