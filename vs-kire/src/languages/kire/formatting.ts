@@ -1,20 +1,6 @@
 import * as vscode from "vscode";
-import { directiveOpensBlock } from "../../core/directiveLogic";
-import { scanDirectives } from "../../core/directiveScan";
-import { kireStore } from "../../core/store";
 import { formatCode } from "../../utils/formatCode";
-import { isHtmlVoidElement } from "../../utils/html";
-
-type LineType =
-	| "html-opening"
-	| "html-closing"
-	| "html-self-closing"
-	| "html-single-line"
-	| "directive-opener"
-	| "directive-middle"
-	| "directive-end"
-	| "comment"
-	| "text";
+import { computeLineIndentLevels, getLineStarts } from "./indentation";
 
 type EmbeddedLanguage = "javascript" | "typescript" | "css";
 type EmbeddedKind = "html-script" | "html-style" | "kire-js";
@@ -48,18 +34,11 @@ export class FeatureFormatting
 			: "\t";
 		const docEol = document.eol === vscode.EndOfLine.CRLF ? "\r\n" : "\n";
 
-		const state = kireStore.getState();
-		const directives = state.directives;
-		const parentDirectives = state.parentDirectives;
 		const text = document.getText();
-		const directiveCalls = scanDirectives(text);
-		const directiveCallsByLine = new Map<number, typeof directiveCalls>();
-		for (const call of directiveCalls) {
-			const line = document.positionAt(call.start).line;
-			const current = directiveCallsByLine.get(line) || [];
-			current.push(call);
-			directiveCallsByLine.set(line, current);
-		}
+		// Indentation level per line, computed from every structural token on
+		// the line (tags and block directives), so mixed lines such as
+		// `<li>@if(x)</li>` are handled by their real nesting effect.
+		const levels = computeLineIndentLevels(text, getLineStarts(text));
 
 		const embeddedBlocks = this.collectEmbeddedBlocks(document);
 
@@ -70,18 +49,16 @@ export class FeatureFormatting
 			blocksByOpenLine.set(b.openLine, arr);
 		}
 
-		let indentLevel = 0;
-
 		for (let i = 0; i < document.lineCount; i++) {
 			const originalLine = document.lineAt(i).text;
 			const trimmed = originalLine.trim();
+			const expectedIndent = indentUnit.repeat(levels[i] ?? 0);
 
-			const expectedIndentNow = indentUnit.repeat(indentLevel);
 			const blocksHere = blocksByOpenLine.get(i);
 			if (blocksHere) {
 				for (const b of blocksHere) {
-					b.openIndent = expectedIndentNow;
-					b.baseIndent = expectedIndentNow + indentUnit;
+					b.openIndent = expectedIndent;
+					b.baseIndent = expectedIndent + indentUnit;
 				}
 			}
 
@@ -94,39 +71,10 @@ export class FeatureFormatting
 				continue;
 			}
 
-			const lineType = this.getLineType(trimmed, parentDirectives);
-
-			if (lineType === "html-closing" || lineType === "directive-end") {
-				indentLevel = Math.max(0, indentLevel - 1);
-			}
-			if (lineType === "directive-middle") {
-				indentLevel = Math.max(0, indentLevel - 1);
-			}
-
-			const expectedIndent = indentUnit.repeat(indentLevel);
 			const currentIndent = this.getLeadingWhitespace(originalLine);
 			if (currentIndent !== expectedIndent) {
 				edits.push(this.replaceIndent(i, currentIndent.length, expectedIndent));
 			}
-
-			if (lineType === "html-opening") indentLevel++;
-
-			if (lineType === "directive-opener") {
-				const name = this.extractDirectiveName(trimmed);
-				const call = (directiveCallsByLine.get(i) || []).find(
-					(entry) =>
-						entry.name === name &&
-						document.positionAt(entry.start).character ===
-							originalLine.length - trimmed.length,
-				);
-				const opensBlock = call
-					? directiveOpensBlock(text, call)
-					: directives.get(name)?.children === true;
-
-				if (opensBlock) indentLevel++;
-			}
-
-			if (lineType === "directive-middle") indentLevel++;
 		}
 
 		for (const b of embeddedBlocks) {
@@ -429,80 +377,9 @@ export class FeatureFormatting
 		return lines.map((l) => (l.length >= min ? l.slice(min) : "")).join("\n");
 	}
 
-	private getLineType(
-		line: string,
-		parentDirectives: Map<string, string[]>,
-	): LineType {
-		if (line.startsWith("<!--")) return "comment";
-
-		if (line.startsWith("@")) {
-			if (line.startsWith("@end")) return "directive-end";
-
-			const name = this.extractDirectiveName(line);
-			const parents = parentDirectives.get(name);
-			if (parents && parents.length > 0) return "directive-middle";
-
-			return "directive-opener";
-		}
-
-		if (line.startsWith("<")) {
-			return this.classifyHtmlLine(line);
-		}
-
-		return "text";
-	}
-
-	private classifyHtmlLine(line: string): LineType {
-		const t = line.trim();
-
-		if (t.startsWith("</")) return "html-closing";
-
-		if (/^<!doctype\b/i.test(t)) return "html-self-closing";
-		if (/^<!(?!--)/.test(t)) return "html-self-closing";
-		if (/^<\?/.test(t)) return "html-self-closing";
-
-		const tag = this.getHtmlTagName(t);
-		if (!tag) return "text";
-
-		// Only treat as self-closing when the outer tag itself ends with '/>'.
-		if (/^<\s*[a-zA-Z][a-zA-Z0-9:-]*\b[^>]*\/>\s*$/i.test(t))
-			return "html-self-closing";
-		if (this.isVoidHtmlTag(tag)) return "html-self-closing";
-
-		if (this.isSingleLineHtmlElement(t, tag)) return "html-single-line";
-
-		return "html-opening";
-	}
-
-	private getHtmlTagName(line: string): string | null {
-		const match = line.match(/^<\s*([a-zA-Z][a-zA-Z0-9:-]*)\b/);
-		return match ? (match[1] as string).toLowerCase() : null;
-	}
-
-	private isSingleLineHtmlElement(line: string, tag: string): boolean {
-		const re = new RegExp(
-			`^<\\s*${this.escapeRegExp(tag)}\\b[^>]*>[\\s\\S]*<\\/\\s*${this.escapeRegExp(tag)}\\s*>\\s*$`,
-			"i",
-		);
-		return re.test(line);
-	}
-
-	private isVoidHtmlTag(tag: string): boolean {
-		return isHtmlVoidElement(tag);
-	}
-
-	private extractDirectiveName(line: string): string {
-		const match = line.match(/^@([a-zA-Z0-9_]+)/);
-		return match ? (match[1] as string) : "";
-	}
-
 	private getLeadingWhitespace(line: string): string {
 		const m = line.match(/^\s*/);
 		return m ? m[0] : "";
-	}
-
-	private escapeRegExp(s: string): string {
-		return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 	}
 
 	private replaceIndent(

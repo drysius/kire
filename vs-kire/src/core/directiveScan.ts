@@ -122,11 +122,12 @@ const RAW_BLOCK_OPENERS: Array<{ open: RegExp; close: string }> = [
 ];
 
 /**
- * Returns the index right after a region that must not be scanned for
- * directives (HTML comments, Kire comments, <style> and <script> bodies),
- * or -1 when `i` is not at the start of such a region.
+ * Returns the index right after a region that is opaque to the template
+ * structure (HTML/Kire comments, `<?js ?>` blocks, `{{ }}` interpolations,
+ * <style> and <script> bodies), or -1 when `i` is not at the start of one.
+ * The engine lexer treats these the same way: no directives or tags inside.
  */
-function skipNonDirectiveRegion(text: string, i: number): number {
+export function skipOpaqueRegion(text: string, i: number): number {
 	if (text.startsWith("<!--", i)) {
 		const end = text.indexOf("-->", i + 4);
 		return end === -1 ? text.length : end + 3;
@@ -134,6 +135,14 @@ function skipNonDirectiveRegion(text: string, i: number): number {
 	if (text.startsWith("{{--", i)) {
 		const end = text.indexOf("--}}", i + 4);
 		return end === -1 ? text.length : end + 4;
+	}
+	if (text.startsWith("{{", i)) {
+		const end = text.indexOf("}}", i + 2);
+		return end === -1 ? text.length : end + 2;
+	}
+	if (text.startsWith("<?js", i)) {
+		const end = text.indexOf("?>", i + 4);
+		return end === -1 ? text.length : end + 2;
 	}
 	if (text[i] === "<") {
 		for (const { open, close } of RAW_BLOCK_OPENERS) {
@@ -153,7 +162,7 @@ export function scanDirectives(text: string): DirectiveCall[] {
 	for (let i = 0; i < text.length; i++) {
 		const ch = text[i];
 		if (ch === "<" || ch === "{") {
-			const skipTo = skipNonDirectiveRegion(text, i);
+			const skipTo = skipOpaqueRegion(text, i);
 			if (skipTo !== -1) {
 				i = skipTo - 1;
 				continue;
