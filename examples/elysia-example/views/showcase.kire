@@ -1,0 +1,36 @@
+@component("layout", { title: "Showcase — Elysia + Kire" })
+	@section("content")
+		<div class="space-y-6">
+			<section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+				<h2 class="text-lg font-bold">Loops &amp; conditionals</h2>
+				<div class="mt-3 flex flex-wrap gap-2">
+					@foreach(tags as tag)
+						<span class="rounded-full bg-indigo-50 px-3 py-1 text-sm font-medium text-indigo-700">#{{ tag }}</span>
+					@endforeach
+				</div>
+				<p class="mt-4 text-sm text-slate-600">
+					@if(user)
+						Signed in as <strong>{{ user.name }}</strong>.
+					@else
+						You are browsing as a guest.
+					@endif
+				</p>
+			</section>
+
+			<section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+				<h2 class="text-lg font-bold">Data as JSON</h2>
+				<pre class="mt-3 overflow-x-auto rounded-lg bg-slate-900 p-4 text-xs text-slate-100">{{ userJson }}</pre>
+			</section>
+
+			<section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+				<h2 class="text-lg font-bold">Live component viewer</h2>
+				<p class="mt-1 text-sm text-slate-600">The same <code class="rounded bg-slate-100 px-1">@wire("counter")</code> component, embedded inline:</p>
+				<div class="mt-4 rounded-xl bg-slate-50 p-6 ring-1 ring-slate-200">
+					@wire("counter")
+				</div>
+			</section>
+		</div>
+
+		@kirewireScripts
+	@endsection
+@endcomponent

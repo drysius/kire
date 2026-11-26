@@ -4,6 +4,8 @@ import type { Kirewire } from "../kirewire";
 export interface KirewirePluginOptions {
 	/** URL of the client runtime bundle injected by `@kirewireScripts`. */
 	scriptUrl?: string;
+	/** Update endpoint the client posts to (default `/_wire`). */
+	path?: string;
 }
 
 /** Build a `{ key: expr }` params object literal from element attributes. */
@@ -71,14 +73,18 @@ export function kirewirePlugin(
 				});
 			}
 
-			// @kirewireScripts — inject the client runtime once.
+			// @kirewireScripts — inject the client runtime once. `data-kirewire-url`
+			// tells the auto-boot bundle which endpoint to post updates to.
 			const scriptUrl = options.scriptUrl ?? "/kirewire.js";
+			const updatePath = options.path ?? "/_wire";
 			kire.directive({
 				name: "kirewireScripts",
 				description: "Inject the Kirewire client runtime script tag.",
 				example: "@kirewireScripts",
 				onCall: (api: any) => {
-					api.append(`<script src="${scriptUrl}" defer></script>`);
+					api.append(
+						`<script src="${scriptUrl}" data-kirewire-url="${updatePath}" defer></script>`,
+					);
 				},
 			});
 		},

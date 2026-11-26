@@ -16,17 +16,22 @@ app.use(express.json()); // required for the Kirewire update endpoint
 app.use(
 	kireExpress({
 		views: join(import.meta.dirname, "views"),
-		globals: { features: ["Blade-style syntax", "components", "dotted paths"] },
 		wire: { instance: wire },
 	}),
 );
 
-// Classic EJS/Eta-style view engine:
+const user = { name: "Ada Lovelace", role: "admin" };
+
 app.get("/", (_req, res) => res.render("home", { title: "Express + Kire" }));
-// Dotted view path helper:
 app.get("/about", (_req, res) => res.view("pages.about"));
-// Reactive Kirewire page:
 app.get("/counter", (_req, res) => res.view("counter"));
+app.get("/showcase", (_req, res) =>
+	res.view("showcase", {
+		tags: ["kire", "express", "ssr", "reactive"],
+		user,
+		userJson: JSON.stringify(user, null, 2),
+	}),
+);
 
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => console.log(`Express + Kire on http://localhost:${port}`));

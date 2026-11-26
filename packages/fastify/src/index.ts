@@ -155,11 +155,6 @@ function setupWire(app: any, engine: Kire<boolean>, wire: any): void {
 function resolveClientScript(wire: any): string | null {
 	if (wire.clientScript) return wire.clientScript;
 	try {
-		return require.resolve("@kirejs/wire/client");
-	} catch {
-		/* fall through to deriving it from the package root */
-	}
-	try {
 		const nodePath = require("node:path");
 		const { existsSync } = require("node:fs");
 		const main = require.resolve("@kirejs/wire").replace(/\\/g, "/");
@@ -171,7 +166,8 @@ function resolveClientScript(wire: any): string | null {
 		const pkgDir = marker
 			? main.slice(0, main.indexOf(marker))
 			: nodePath.dirname(main);
-		const candidate = nodePath.join(pkgDir, "dist", "client", "index.js");
+		// The standalone auto-boot IIFE (not the ESM library index.js).
+		const candidate = nodePath.join(pkgDir, "dist", "client", "auto.js");
 		return existsSync(candidate) ? candidate : null;
 	} catch {
 		return null;

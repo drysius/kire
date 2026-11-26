@@ -210,16 +210,11 @@ function requireWire(pkg: string): any {
 
 /**
  * The local file to serve as the Kirewire client runtime: the explicit
- * `clientScript`, or the built `@kirejs/wire/client` bundle when resolvable.
+ * `clientScript`, or the built auto-boot bundle from `@kirejs/wire`.
  */
 // biome-ignore lint/suspicious/noExplicitAny: Wire option object is external
 function resolveClientScript(wire: any): string | null {
 	if (wire.clientScript) return wire.clientScript;
-	try {
-		return require.resolve("@kirejs/wire/client");
-	} catch {
-		/* fall through to deriving it from the package root */
-	}
 	try {
 		const nodePath = require("node:path");
 		const { existsSync } = require("node:fs");
@@ -232,7 +227,8 @@ function resolveClientScript(wire: any): string | null {
 		const pkgDir = marker
 			? main.slice(0, main.indexOf(marker))
 			: nodePath.dirname(main);
-		const candidate = nodePath.join(pkgDir, "dist", "client", "index.js");
+		// The standalone auto-boot IIFE (not the ESM library index.js).
+		const candidate = nodePath.join(pkgDir, "dist", "client", "auto.js");
 		return existsSync(candidate) ? candidate : null;
 	} catch {
 		return null;

@@ -1,10 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 	<head>
 		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<title>{{ title }}</title>
+		<script src="https://cdn.tailwindcss.com"></script>
 	</head>
-	<body>
-		@yield("content")
+	<body class="min-h-full bg-slate-50 text-slate-800 antialiased">
+		<header class="border-b border-slate-200 bg-white">
+			<nav class="mx-auto flex max-w-3xl items-center gap-6 px-6 py-4">
+				<a href="/" class="font-bold text-indigo-600">Kire × Express</a>
+				<a href="/" class="text-sm hover:text-indigo-600">Home</a>
+				<a href="/about" class="text-sm hover:text-indigo-600">About</a>
+				<a href="/counter" class="text-sm hover:text-indigo-600">Counter</a>
+				<a href="/showcase" class="text-sm hover:text-indigo-600">Showcase</a>
+			</nav>
+		</header>
+		<main class="mx-auto max-w-3xl px-6 py-10">
+			@yield("content")
+		</main>
 	</body>
 </html>

@@ -2,6 +2,8 @@
 
 Minimal Elysia app using [`@kirejs/elysia`](../../packages/elysia).
 
+Serves `/`, `/about`, `/counter` (reactive Kirewire) and `/showcase` (directive demos + a live component viewer), styled with Tailwind via CDN.
+
 ```bash
 bun run main.ts
 # open http://localhost:3000

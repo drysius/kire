@@ -48,6 +48,16 @@ await bundle("client", {
 	minify: true,
 });
 
+// Auto-boot client (standalone IIFE for a classic <script> tag; calls start()).
+await bundle("client auto", {
+	entrypoints: [`${root}src/client/auto.ts`],
+	outdir: `${root}dist/client`,
+	naming: "auto.js",
+	target: "browser",
+	format: "iife",
+	minify: true,
+});
+
 const clientCode = await Bun.file(`${root}dist/client/index.js`).text();
 if (/\bnode:|require\(["']node:/.test(clientCode)) {
 	console.error("✗ client bundle contains Node imports");

@@ -14,14 +14,22 @@ const app = Fastify();
 app.register(
 	kireFastify({
 		views: join(import.meta.dirname, "views"),
-		globals: { features: ["Blade-style syntax", "components", "dotted paths"] },
 		wire: { instance: wire },
 	}),
 );
 
+const user = { name: "Ada Lovelace", role: "admin" };
+
 app.get("/", (_req, reply) => reply.view("home", { title: "Fastify + Kire" }));
 app.get("/about", (_req, reply) => reply.view("pages.about"));
 app.get("/counter", (_req, reply) => reply.view("counter"));
+app.get("/showcase", (_req, reply) =>
+	reply.view("showcase", {
+		tags: ["kire", "fastify", "ssr", "reactive"],
+		user,
+		userJson: JSON.stringify(user, null, 2),
+	}),
+);
 
 const port = Number(process.env.PORT) || 3000;
 app.listen({ port }).then((addr) => console.log(`Fastify + Kire on ${addr}`));
