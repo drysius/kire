@@ -72,6 +72,8 @@ describe("kire SSR integration", () => {
 	test("@kirewireScripts injects the runtime script tag", async () => {
 		const { kire } = setup();
 		const html = (await kire.render(`@kirewireScripts`)) as string;
-		expect(html).toContain('<script src="/kirewire.js" defer></script>');
+		expect(html).toContain('<script src="/kirewire.js"');
+		expect(html).toContain('data-kirewire-url="/_wire"');
+		expect(html).toContain("defer></script>");
 	});
 });
