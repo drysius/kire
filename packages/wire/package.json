@@ -1,7 +1,7 @@
 {
 	"name": "@kirejs/wire",
 	"description": "Kirewire — server-driven reactive components for Kire (signals client, SSE/WebSocket transport).",
-	"version": "0.2.2",
+	"version": "0.2.3",
 	"type": "module",
 	"repository": {
 		"type": "git",
@@ -22,7 +22,8 @@
 		}
 	},
 	"scripts": {
-		"build": "bun run build.ts"
+		"build": "bun run build.ts",
+		"prebuild": "bun run build.ts"
 	},
 	"dependencies": {
 		"kire": "workspace:../../core"

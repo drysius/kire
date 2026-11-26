@@ -6,8 +6,8 @@
 		"build": "bun build server.js --outfile dist/server.js --target node && bun build nui-boot.js --outfile nui/client.js --target browser --format esm"
 	},
 	"dependencies": {
-		"@kirejs/fivem": "^0.2.0",
-		"@kirejs/wire": "^0.2.0",
-		"kire": "^0.2.0"
+		"@kirejs/fivem": "0.0.0-develop",
+		"@kirejs/wire": "0.0.0-develop",
+		"kire": "0.0.0-develop"
 	}
 }

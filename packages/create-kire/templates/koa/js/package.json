@@ -8,10 +8,10 @@
 	},
 	"dependencies": {
 		"@koa/router": "^13.0.0",
-		"@kirejs/koa": "^0.2.0",
-		"@kirejs/wire": "^0.2.0",
+		"@kirejs/koa": "0.0.0-develop",
+		"@kirejs/wire": "0.0.0-develop",
 		"koa": "^2.15.0",
 		"koa-bodyparser": "^4.4.1",
-		"kire": "^0.2.0"
+		"kire": "0.0.0-develop"
 	}
 }

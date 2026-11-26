@@ -205,9 +205,38 @@ class Builder {
 			await cp(`${pkg.path}/templates`, `${pkg.publishPath}/templates`, {
 				recursive: true,
 			});
+			await this.stampTemplateVersions(pkg);
 		}
 		await this.copyMetaFiles(pkg);
 		await this.generatePackageJson(pkg);
+	}
+
+	// Template package.json files pin `kire`/`@kirejs/*` to the placeholder
+	// `0.0.0-develop`; stamp the version being published so scaffolded apps
+	// always install matching versions (no manual bump drift).
+	private async stampTemplateVersions(pkg: PackageInfo): Promise<void> {
+		const version = `^${pkg.version}`;
+		const files = await glob(`${pkg.publishPath}/templates/**/package.json`);
+		let count = 0;
+		for (const file of files) {
+			const json = JSON.parse(await Bun.file(file).text());
+			for (const field of [
+				"dependencies",
+				"devDependencies",
+				"peerDependencies",
+			]) {
+				const deps = json[field];
+				if (!deps) continue;
+				for (const name of Object.keys(deps)) {
+					if (deps[name] === "0.0.0-develop") {
+						deps[name] = version;
+						count++;
+					}
+				}
+			}
+			await writeFile(file, `${JSON.stringify(json, null, "\t")}\n`);
+		}
+		console.log(`   Stamped ${count} template deps → ${version}`);
 	}
 
 	public async build(): Promise<void> {

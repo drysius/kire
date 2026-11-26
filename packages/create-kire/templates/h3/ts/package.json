@@ -7,10 +7,10 @@
 		"start": "tsx main.ts"
 	},
 	"dependencies": {
-		"@kirejs/h3": "^0.2.0",
-		"@kirejs/wire": "^0.2.0",
+		"@kirejs/h3": "0.0.0-develop",
+		"@kirejs/wire": "0.0.0-develop",
 		"h3": "^2.0.0",
-		"kire": "^0.2.0"
+		"kire": "0.0.0-develop"
 	},
 	"devDependencies": {
 		"@types/node": "^22.0.0",

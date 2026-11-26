@@ -7,9 +7,9 @@
 		"start": "node main.js"
 	},
 	"dependencies": {
-		"@kirejs/express": "^0.2.0",
-		"@kirejs/wire": "^0.2.0",
+		"@kirejs/express": "0.0.0-develop",
+		"@kirejs/wire": "0.0.0-develop",
 		"express": "^5.0.0",
-		"kire": "^0.2.0"
+		"kire": "0.0.0-develop"
 	}
 }
