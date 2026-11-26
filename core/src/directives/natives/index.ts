@@ -1,5 +1,6 @@
 import type { Kire } from "../../kire";
 import attrDirectives from "./attributes";
+import bladeDirectives from "./blade";
 import checkDirectives from "./checks";
 import ifDirectives from "./if";
 import loopDirectives from "./loop";
@@ -22,4 +23,5 @@ export default (kire: Kire) => {
 	attrDirectives(kire);
 	switchDirectives(kire);
 	miscDirectives(kire);
+	bladeDirectives(kire);
 };

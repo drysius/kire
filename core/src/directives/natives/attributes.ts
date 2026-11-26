@@ -42,6 +42,10 @@ export default (kire: Kire) => {
                 };
                 const $walk = ($value) => {
                     if (!$value) return;
+                    if (typeof $value === "object" && typeof $value.toHtml === "function") {
+                        $kire_response += $value.toHtml();
+                        return;
+                    }
                     if (typeof $value === "string") {
                         $append($value, true);
                         return;

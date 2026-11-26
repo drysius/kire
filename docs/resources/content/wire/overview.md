@@ -18,7 +18,7 @@ in the spirit of Laravel Livewire — but re-architected for TypeScript:
   and morphs it into the DOM. No virtual DOM, no client routing.
 - **No Alpine dependency.** Kirewire ships its own tiny signal reactivity.
 - **Transport is first-class.** HTTP, Server-Sent Events, and WebSocket are all
-  supported, with real server→client push (`broadcastTo`).
+  supported, with real server→client push (`$broadcast`).
 
 ## Mental model
 

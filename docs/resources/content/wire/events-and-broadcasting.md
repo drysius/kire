@@ -1,7 +1,7 @@
 ---
 route: "/docs/wire/events-and-broadcasting"
 title: "Events & Broadcasting"
-description: "Dispatch events between components with $dispatch and @on, and push updates from the server to many clients with broadcastTo over SSE/WebSocket."
+description: "Dispatch events between components with $dispatch and @on, and push updates from the server to many clients with $broadcast over SSE/WebSocket."
 tags: ["wire", "events", "dispatch", "broadcast", "realtime"]
 section: "Kirewire"
 order: 6
@@ -46,7 +46,7 @@ plain `addEventListener`.
 ## Broadcasting (server push)
 
 Events above are request-scoped. To push to **other** connected clients in real
-time — live dashboards, notifications, collaborative UIs — use `broadcastTo`. It
+time — live dashboards, notifications, collaborative UIs — use `$broadcast`. It
 delivers over the active push transport (SSE or WebSocket).
 
 Wire up a `Hub` as the broadcaster:

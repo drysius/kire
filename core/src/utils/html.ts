@@ -12,6 +12,10 @@ export function escapeHtml(unsafe: any): string {
 	if (unsafe === null || unsafe === undefined) return "";
 	const type = typeof unsafe;
 	if (type === "number" || type === "boolean") return String(unsafe);
+	// Htmlable values (e.g. the attribute bag) render their own, already-safe HTML.
+	if (type === "object" && typeof unsafe.toHtml === "function") {
+		return unsafe.toHtml();
+	}
 	const s: string = type === "string" ? unsafe : String(unsafe);
 
 	// "Needs escaping?" check — the dominant cost of escaping in practice, since

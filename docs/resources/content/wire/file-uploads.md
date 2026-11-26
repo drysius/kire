@@ -38,8 +38,9 @@ wire.synth.register(new FileUploadSynth(store));
 wire.features.register(new FileUploadFeature(store));
 ```
 
-The `createFetchHandler({ store })` / `expressAdapter({ store })` adapters expose
-the multipart upload route for you. Or call `handleUpload(store, files)` directly.
+The `createFetchHandler(wire, { store })` / `expressAdapter(app, wire, { store })`
+adapters expose the multipart upload route for you. Or call
+`handleUpload(store, files)` directly.
 
 ## Using the file in an action
 

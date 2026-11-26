@@ -1,36 +1,54 @@
 # CLAUDE.md — Kire
 
+> This file is the canonical source of truth for how the Kire monorepo is laid out and how its
+> pieces fit together. Other agent guides (e.g. `GEMINI.md`) defer to it. Keep it in sync with the
+> code — if you restructure a package, update the relevant table here in the same change.
+
 ## Project
 
-Kire is a compile-to-JavaScript template engine inspired by Laravel Blade. Templates compile to optimized JS functions. Kirewire (packages/wire) adds server-driven reactive components (like Livewire).
+Kire is a compile-to-JavaScript template engine inspired by Laravel Blade. Templates compile to optimized JS functions. Kirewire (`packages/wire`) adds server-driven reactive components (like Livewire).
 
 **Monorepo layout:**
 ```
-core/          → core engine (lexer, compiler, runtime, directives, elements)
+core/            → core engine (lexer, compiler, runtime, directives, elements)
 packages/
-  wire/        → reactive component layer (server + client)
-  vite/        → Vite plugin for Kire
-benchmark/     → engine benchmarks
-docs/          → documentation site (uses Kire itself)
-vs-kire/       → VS Code extension
-tools/         → build & publish scripts
+  wire/          → Kirewire: server-driven reactive components (server + client)
+  vite/          → Vite plugin for Kire (.kire files, HMR, Laravel-style @vite manifest)
+  assets/        → asset management plugin
+  auth/          → authentication directives
+  iconify/       → Iconify icon integration
+  markdown/      → Markdown rendering plugin
+  tailwind/      → Tailwind integration
+  utils/         → Laravel-like template helpers (Str, Arr, Html, Route, MessageBag)
+  i18n/          → localization plugin (@lang, @choice, __())
+benchmark/       → engine benchmarks
+docs/            → documentation site (built with Kire + Kirewire); content in docs/resources/content
+vs-kire/         → VS Code extension
+tools/           → build, publish, benchmark, llms & install scripts
 ```
 
-**Package manager:** Bun  
-**Linter/formatter:** Biome (tabs, strict TS)  
+**Package manager:** Bun
+**Linter/formatter:** Biome (tabs, strict TS)
 **Module:** ESNext, bundler resolution
+**Published scope:** `@kirejs/*` (core is the bare `kire` package)
 
 ---
 
 ## Commands
 
 ```bash
-bun test                          # all tests
+bun test                          # all unit tests (Bun test runner)
 bun test core/tests               # core tests only
+bun test packages/wire/tests      # wire tests only
 bun run tools/playwright.ts       # E2E browser tests
 bun run tools/build.ts            # build all packages → publish/
 bun run tools/publish.ts          # publish packages
+bun run tools/llms.ts  (bun llms) # regenerate llms.txt context files
+bun run check                     # Biome check across the workspace
 ```
+
+> Note: `packages/wire/tests/client.test.ts` requires `jsdom` (declared in `packages/wire/package.json`).
+> Run `bun install` if that test errors with "Cannot find package 'jsdom'".
 
 ---
 
@@ -49,17 +67,41 @@ Templates are cached by filepath after first compile.
 
 ### Key Files (`core/src/`)
 
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| `kire.ts` | Main `Kire` class — config, plugin loading, compile, render, fork, cache |
-| `lexer.ts` | Tokenizes template text → AST nodes (text, interpolation, directive, element, comment) |
-| `compiler.ts` | AST → JS code string; tracks dependencies, async, source maps |
+| `kire.ts` | Main `Kire` class — config, plugin loading, `parse`, `compile`, `render`, `view`, `fork`, cache |
+| `lexer/` | Tokenizer → AST. `lexer.ts` (main), `cursor.ts` (scanning), `balance.ts` (bracket/brace balancing) |
+| `compiler/` | AST → JS code string. `compiler.ts` (main), `attr-codegen.ts` (attribute codegen), `js-scanner.ts` (string/comment stripping + `await` detection) |
 | `runtime.ts` | `createKireFunction()` — wraps compiled function with metadata |
 | `types.ts` | All type definitions |
-| `public.ts` | Public export surface |
-| `directives/` | Native directives (`@if`, `@for`, `@unless`, `@switch`, `@layout`, `@component`, `@import`, etc.) |
+| `public.ts` | Shared public export surface (Node + Browser) |
+| `browser.ts` | Browser entrypoint |
+| `type-declare.ts` | Registers built-in type metadata for tooling |
+| `directives/` | Native directives, grouped (see below) |
 | `elements/natives.ts` | Native elements (`<style>`, `<script>`, `<kire:*>`) |
-| `utils/` | HTML escaping, path resolution, source maps, error rendering, regex, attributes |
+| `utils/` | HTML escaping, path resolution, source maps, errors, attributes, regex, registry, scoped vars, base64, node helpers |
+
+### Directives (`core/src/directives/`)
+
+Registered by the `KireDirectives` plugin (`directives/index.ts`, `name: "@kirejs/core"`):
+
+| File | Directives |
+|---|---|
+| `layout.ts` | `@define`, `@defined`, `@stack`, `@push`, `@prepend`, `@pushOnce`, `@prependOnce` |
+| `natives/if.ts` | `@if`, `@elseif`, `@else`, `@unless` |
+| `natives/checks.ts` | `@isset`, `@empty` |
+| `natives/loop.ts` | `@for`, `@each`, `@foreach` (Blade `as` syntax + `key => value`), `@forelse`, `@while`, `@break`, `@continue` (exposes `$loop`, `index`) |
+| `natives/switch.ts` | `@switch`, `@case`, `@default` |
+| `natives/attributes.ts` | `@attr`, `@attrs`, `@class`, `@style`, plus boolean helpers `@checked`, `@selected`, `@disabled`, `@readonly`, `@required` |
+| `natives/misc.ts` | `@once`, `@error`, `@csrf`, `@method`, `@const`, `@let`, `@interface` (type-only, for tooling) |
+| `natives/blade.ts` | `@json`, `@dump`, `@dd`, `@env`, `@production`, `@inject` (from `$globals.services`), `@session` (from `$globals.session`, exposes `$value`) |
+| `import.ts` | `@include`, `@includeIf`, `@includeWhen`, `@includeUnless`, `@includeFirst` |
+| `component.ts` | `@component`, `@slot`, `@yield`, `@section`, `@show`, `@layout`, `@extends` |
+| `props.ts` | `@props` (declare props + defaults, rest flow into `$attributes`), `@aware` (inherit props from parent scope); registers the `$attributes` bag provider |
+
+Echo: `{{ expr }}` (escaped), `{{{ expr }}}` / `{!! expr !!}` (raw, unescaped), `@{{ … }}` / `@{!! … !!}` (literal), `{{-- … --}}` (comment). `@verbatim … @endverbatim` emits its body literally (lexer-level, no inner processing).
+
+`elements/natives.ts` registers element forms: raw `<style>` / `<script>`, the control-flow `<kire:*>` elements (`kire:if`, `kire:elseif`, `kire:else`, `kire:for`, `kire:empty`, `kire:switch`, `kire:case`, `kire:default`), and `<kire:*>` aliases for the directives above (e.g. `kire:include`, `kire:component`, `kire:layout`, `kire:extends`, `kire:slot`, `kire:section`, `kire:yield`, `kire:define`, `kire:stack`, `kire:push`, `kire:unless`, `kire:isset`).
 
 ### Kire Class Conventions
 
@@ -94,107 +136,117 @@ kire.attribute({ name, type, ... })   // schema-only attribute
 kire.$global(name, value)              // global variable for all templates
 kire.type({ variable, type, tstype }) // type metadata for tooling
 kire.existVar(pattern, callback)       // variable detection hook
-kire.on(callback)                      // lifecycle hook
 kire.onFork(callback)                  // fork lifecycle hook
 ```
 
 ### Async Detection
 
-`compiler.ts` strips string literals and comments before scanning for `await` keyword — prevents false positives from `await` in template text.
+`compiler/js-scanner.ts` strips string literals and comments before scanning for the `await` keyword — prevents false positives from `await` in template text.
 
 ---
 
 ## packages/wire (Kirewire)
 
-Server-driven reactive components. Server holds state; client handles DOM updates via HTTP/SSE/WebSocket.
+Server-driven reactive components. The server holds state; the client applies DOM updates over HTTP/SSE/WebSocket.
 
 ### Data Flow
 
 ```
-Browser: wire:click → POST /_wire
-Server: Kirewire.handleRequest() → Component.method() → re-render view
-Server: ComponentState { id, html, effects, revision } → Browser
+Browser: wire:click → POST /_kirewire (snapshot + call)
+Server: Kirewire pipeline → hydrate component → run action/method → re-render view
+Server: response { snapshot, html, effects } → Browser
 Browser: morph DOM, run effects, sync wire:model values
 ```
 
 ### Key Files (`packages/wire/src/`)
 
-| File | Purpose |
+| Path | Purpose |
 |---|---|
-| `component.ts` | `Component` base class — `view()`, `$set()`, validation, error handling |
-| `kirewire.ts` | `Kirewire` orchestrator — components, sessions, routes, adapters |
-| `decorators.ts` | `@Wire()` and `@Variable()` class decorators; TypeBox schema support |
-| `adapter.ts` | Abstract `Adapter` base for transport (HTTP, SSE, Socket, FiveM) |
-| `adapters/` | Framework adapters: Express, Koa, Elysia, FiveM; protocol adapters: HTTP, SSE, Socket |
-| `contracts.ts` | `ActionRequest`, `ComponentState`, `EffectPacket`, `AdapterTransport` |
-| `event-controller.ts` | High-performance event bus: `on()`, `emit()`, `emitSync()` |
-| `metadata.ts` | Reflection helpers, `WireVariableDefinition`, metadata decorators |
-| `validation/rule.ts` | Rule-based validation (string rules or TypeBox schemas) |
-| `features/file-upload.ts` | `WireUpload`, `WireFile` — multi-file upload with validation |
-| `features/wire-broadcast.ts` | Broadcast to multiple component instances |
-| `web/kirewire.ts` | Client runtime (Alpine.js integration) |
+| `kirewire.ts` | `Kirewire` orchestrator — registers components, wires transports |
+| `component.ts` | `LiveComponent` base class — `view()`, `render()`, `$dispatch*`, public-state serialization |
+| `decorators.ts` | Class/member decorators: `@Component`, `@prop`, `@locked`, `@computed`, `@renderless`, `@on`, `@validate`, `@action`, `@lazy`, `@url` |
+| `metadata.ts` | Reflection helpers (`resolveMeta`, `ownMeta`), `ComponentMeta` |
+| `contracts.ts` | Wire-protocol contracts (snapshots, effects, action requests) |
+| `registry.ts` | `ComponentRegistry` — name → component class |
+| `kire/plugin.ts` | `kirewirePlugin` — registers `@wire`, `<wire:*>`/`<kirewire:*>`/`<livewire:*>`, `@kirewireScripts` |
+| `adapters/` | Framework adapters: `express.ts`, `fetch.ts` (Web Fetch) |
+| `server/` | Transports & request handling: `http.ts`, `sse.ts`, `ws.ts`, `fivem.ts`, `hub.ts` |
+| `client/` | Browser runtime: `wire.ts`, `component.ts`, `reactivity.ts`, `morph.ts`, `navigate.ts`, `transport.ts`, `directives.ts`, `data.ts`, `runtime.ts` |
+| `runtime/` | Server runtime: `context.ts` (RequestContext), `snapshot.ts` (hydrate/dehydrate), `properties.ts` (`getDeep`/`setDeep`), `checksum.ts` (`sign`/`verify`), `store.ts` |
+| `synth/` | Property (de)hydration synths: `synth.ts`, `class.ts`, `registry.ts`, `builtins.ts` |
+| `features/` | `file-upload.ts`, `form.ts`, `validation.ts`, `pagination.ts`, `lazy.ts`, `lifecycle.ts`, `locked.ts`, `magic.ts`, `url.ts`, `feature.ts` |
 
 ### Component API
 
 ```ts
-class MyComponent extends Component {
-  // Declare reactive properties with @Variable()
-  @Variable() count = 0;
+@Component("counter")
+class Counter extends LiveComponent {
+  // public props are reactive state; public methods are callable actions
+  count = 0;
 
-  // Declare component with @Wire()
-  // Methods become callable actions from the browser
+  @computed get double() { return this.count * 2; }
 
-  async increment() {
-    this.count++;
-  }
+  increment() { this.count++; }
 }
 ```
 
 ```ts
-class Component {
-  $live: boolean;              // client-first mode
-  $id: string;                 // unique instance ID
-  $kire: Kire;                 // engine reference
-  view(view, data): Promise<string>;  // render template
-  $set(property, value): void;        // update property (dot notation supported)
+abstract class LiveComponent {
+  $id: string;                 // unique instance id (set by runtime)
+  $name: string;               // registered component name
+  $kire?: Kire;                // request-scoped engine (a fork)
+  $context?: RequestContext;   // active request context
+  render(): string | Promise<string>;              // default renders view($name)
+  view(path, extra?): string | Promise<string>;    // render a Kire view with this scope
+  $dispatch(event, ...params): void;                // queue a client event
+  $dispatchTo(name, event, ...params): void;        // target a component by name
+  $dispatchSelf(event, ...params): void;            // back to this component
 }
 ```
 
+> Reserved (never callable as actions): `constructor`, `render`, `view`, `mount`, `boot`, `booted`,
+> `getPublicState`, `hydrated`, `dehydrating`, plus any `$`/`_`-prefixed member.
+
 ### Wire Client Directives
 
-- `wire:click`, `wire:submit`, `wire:input` — trigger server action
-- `wire:model` — two-way data binding
-- `wire:loading`, `wire:target` — loading state
-- `wire:key` — keyed list items
+`wire:click`, `wire:submit`, `wire:change`, `wire:keydown`, `wire:model` (and `wire:model.live`), `wire:poll`, `wire:loading`, `wire:init`, `wire:confirm`, `wire:snapshot`.
 
 ### Wire Kire Directives/Elements
 
-- `@wire(name, locals?)` — mount component (directive)
-- `<wire:*>`, `<kirewire:*>`, `<livewire:*>` — mount component (element)
-- `@kirewire()` — inject client runtime script
+- `@wire(name, locals?)` — mount a component (directive)
+- `<wire:*>`, `<kirewire:*>`, `<livewire:*>` — mount a component (element, `void`)
+- `@kirewireScripts` — inject the client runtime script (default `/kirewire.js`)
 
 ---
 
-## packages/vite
+## Other packages
 
-Vite plugin for Kire. Registered in `packages/vite/src/index.ts`.
-
-Handles `.kire` files: transforms them through the Kire compiler, HMR on template change.
+| Package | Purpose | Notable src |
+|---|---|---|
+| `packages/vite` | Vite plugin for `.kire` files (transform, HMR) + Laravel-style manifest & `@vite` helper | `plugin.ts`, `kire-plugin.ts`, `manifest.ts` |
+| `packages/assets` | Asset management plugin (dev server + manifest) | `plugin.ts`, `server.ts` |
+| `packages/auth` | Authentication directives | `plugin.ts` |
+| `packages/iconify` | Iconify icon integration | `plugin.ts`, `api.ts` |
+| `packages/markdown` | Markdown rendering plugin | `index.ts` |
+| `packages/tailwind` | Tailwind integration (compile/runtime/loader) | `compiler.ts`, `runtime.ts`, `loader.ts` |
+| `packages/utils` | Laravel-like template helpers | `Str.ts`, `Arr.ts`, `Html.ts`, `Route.ts`, `MessageBag.ts` |
+| `packages/i18n` | Localization: `@lang`, `@choice`, `__()`/`trans()`/`trans_choice()` with placeholders & Laravel-style pluralization | `plugin.ts`, `translator.ts` |
 
 ---
 
 ## Build
 
-`tools/build.ts` flow:
-1. Clean `publish/` and stray `.d.ts` in `src/`
-2. For each package: `tsc --emitDeclarationOnly` → `esbuild` (CJS + ESM)
-3. Build standalone browser bundle: `core/dist/browser/kire.js` (validates no Node imports)
+`tools/build.ts` flow, per package:
+1. Clean stray outputs.
+2. `tsc --emitDeclarationOnly` → `dist/types`.
+3. `bun build src/index.ts` → `dist/esm` (ESM) and `dist/cjs` (CJS), each with its own `package.json` `type`, into `publish/<pkg>/`.
+4. Packages with a `prebuild` script get their `dist` copied into `publish/`.
 
 ---
 
 ## Testing
 
-- Unit tests: `bun test` (uses Bun's built-in test runner)
+- Unit tests: `bun test` (Bun's built-in test runner)
 - E2E: `bun run tools/playwright.ts`
 - Core tests in `core/tests/`
 - Wire tests in `packages/wire/tests/`
@@ -230,7 +282,7 @@ Read the generated JS. Check:
 - Does the dep function (`_dep0`) have its own `const $escape = this.$escape` if it uses interpolations in attributes?
 - Are template-literal expressions correctly generated?
 
-If the compiled code is wrong, the bug is in `compiler.ts`. Fix only that.
+If the compiled code is wrong, the bug is in `compiler/`. Fix only that.
 
 ### Step 3 — Write a targeted test
 
@@ -248,7 +300,9 @@ Do not write speculative code changes. Do not implement fixes before understandi
 
 1. **Fork isolation:** `kire.fork()` for per-request context; safe to share parent cache.
 2. **Proxy `$files`:** Virtual filesystem via Proxy; checks parent fork → cache → disk.
-3. **Fast element matcher:** All element names compiled into single regex via `createFastMatcher()`.
+3. **Fast element matcher:** All element names compiled into a single regex via `createFastMatcher()`.
 4. **`isDependency` / `scope` hooks:** Directives declare variables they introduce → powers VS Code intellisense.
 5. **Metadata-driven tooling:** Every directive/element carries schema metadata → no separate docs system needed.
-6. **`~` private / `$` public convention:** Consistent across `kire.ts` — never access `~` fields from outside class.
+6. **`~` private / `$` public convention:** Consistent across `kire.ts` — never access `~` fields from outside the class.
+7. **Wire serialization boundary:** On `LiveComponent`, public non-prefixed properties are reactive state; `$`/`_`-prefixed members are framework-internal and never serialized or exposed as actions.
+8. **Wire synths:** Non-primitive component state is (de)hydrated through the `synth/` registry rather than raw JSON.

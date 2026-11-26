@@ -141,4 +141,34 @@ export default (kire: Kire<any>) => {
 		example: `@section("content")\n  <p>Hello</p>\n@end`,
 		onCall: (api) => kire.getDirective("slot")?.onCall(api),
 	});
+
+	// @show(name) ... @endshow — output a named slot provided by the caller, or
+	// the inline block as the default. Blade-style "define a section with default
+	// content that children may override" (the Kire slot model makes @parent and
+	// @overwrite unnecessary, since slots are provided wholesale by the caller).
+	kire.directive({
+		name: "show",
+		signature: ["name:string"],
+		children: true,
+		closeBy: ["endshow", "end"],
+		description:
+			"Outputs a named slot from the caller, or the inline default block when the slot is absent.",
+		example: `@show("sidebar")\n  <nav>Default nav</nav>\n@endshow`,
+		onCall: (api) => {
+			const nameExpr = normalizeSlotNameExpression(
+				api.getArgument(0) || api.getAttribute("name"),
+			);
+			const id = api.uid("show");
+			api.write(`{
+                const _slotName${id} = ${nameExpr};
+                const _provided${id} = ($props.slots && $props.slots[_slotName${id}]);
+                if (_provided${id} !== undefined && _provided${id} !== null) {
+                    $kire_response += _provided${id};
+                } else {`);
+			api.renderChildren();
+			api.write(`
+                }
+            }`);
+		},
+	});
 };

@@ -657,7 +657,8 @@ export default (kire: Kire<any>) => {
 			// explicitly via `$props['x'] ?? $globals['x']` from the closure scope.
 			// This preserves parent-prop inheritance while cutting the per-instance
 			// allocation cost roughly in half.
-			const spreadProps = `{ ..._oldProps${id}${propsStr ? `, ${propsStr}` : ""}${hasChildren ? ", slots: $slots" : ""} }`;
+			const attrsBag = `this.createAttributes({${propsStr}})`;
+			const spreadProps = `{ ..._oldProps${id}${propsStr ? `, ${propsStr}` : ""}, "$attributes": ${attrsBag}${hasChildren ? ", slots: $slots" : ""} }`;
 			api.write(`
 	                ${hasChildren ? `$kire_response = _oldRes${id};` : ""}
 	                const _oldProps${id} = $props;

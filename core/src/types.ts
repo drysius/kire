@@ -75,6 +75,7 @@ export interface KireRuntime {
 	KireError: any;
 	renderErrorHtml: any;
 	createKireFunction: any;
+	createAttributes: any;
 }
 
 export interface KireCacheEntry {

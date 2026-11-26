@@ -77,14 +77,12 @@ export default (kire: Kire<any>) => {
                     : (_r${id} && typeof _r${id} === "object" ? Object.keys(_r${id}) : []);
                 const _len${id} = _it${id}.length;
                 ${hasEmptyBranch ? `if (_len${id} > 0) {` : ""}
-                    let ${id} = 0;
-                    while (${id} < _len${id}) {
+                    for (let ${id} = 0; ${id} < _len${id}; ${id}++) {
                         let ${finalAs} = _it${id}[${id}];
                         ${shouldExposeIndex ? `let ${finalIndex} = ${id};` : ""}
                         ${shouldExposeLoop ? `let $loop = { index: ${id}, first: ${id} === 0, last: ${id} === _len${id} - 1, length: _len${id} };` : ""}`);
 			api.renderChildren();
 			api.write(`
-                        ${id}++;
                     }
                 ${hasEmptyBranch ? `}` : ""}`);
 			if (hasEmptyBranch) {
@@ -118,6 +116,161 @@ export default (kire: Kire<any>) => {
 		onCall: (api) => {
 			const forDir = kire.getDirective("for");
 			if (forDir) forDir.onCall(api);
+		},
+	});
+
+	// ── Blade-style loops: @foreach / @forelse ──────────────────────────────
+	// `@foreach(collection as item)` or `@foreach(collection as key => value)`.
+	// Unlike @for (which uses `item of source`), the source comes first and the
+	// target(s) come after `as`, matching Laravel Blade.
+	const parseForeach = (raw: string) => {
+		const m = raw.match(/^\s*(.+?)\s+as\s+(.+?)\s*$/);
+		if (!m) return null;
+		const source = m[1]!.trim();
+		const target = m[2]!.trim();
+		const kv = target.match(/^(.+?)\s*=>\s*(.+)$/);
+		if (kv) {
+			return { source, key: kv[1]!.trim(), value: kv[2]!.trim() };
+		}
+		return { source, key: null as string | null, value: target };
+	};
+
+	const emitForeach = (api: any) => {
+		const raw = api.getArgument(0) ?? api.getAttribute("expr") ?? "";
+		const parsed = parseForeach(raw);
+		if (!parsed) {
+			// Fall back to @for semantics if the author used `of/in`.
+			const forDir = kire.getDirective("for");
+			if (forDir) forDir.onCall(api);
+			return;
+		}
+		const { source, key, value } = parsed;
+		const id = api.uid("fe");
+		const relatedNodes = api.node.related || [];
+		const hasEmptyBranch = relatedNodes.some((n: any) => n?.name === "empty");
+
+		const exposeKey = key
+			? true
+			: api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
+		const exposeLoop =
+			api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
+
+		api.write(`{
+            const _src${id} = ${source};
+            const _arr${id} = Array.isArray(_src${id});
+            const _keys${id} = _arr${id}
+                ? null
+                : (_src${id} && typeof _src${id} === "object" ? Object.keys(_src${id}) : []);
+            const _len${id} = _arr${id} ? _src${id}.length : (_keys${id} ? _keys${id}.length : 0);
+            ${hasEmptyBranch ? `if (_len${id} > 0) {` : ""}
+                for (let _i${id} = 0; _i${id} < _len${id}; _i${id}++) {
+                    const _k${id} = _arr${id} ? _i${id} : _keys${id}[_i${id}];
+                    let ${value} = _src${id}[_k${id}];
+                    ${key ? `let ${key} = _k${id};` : ""}
+                    ${exposeLoop ? `let $loop = { index: _i${id}, first: _i${id} === 0, last: _i${id} === _len${id} - 1, length: _len${id} };` : ""}`);
+		api.renderChildren();
+		api.write(`
+                }
+            ${hasEmptyBranch ? `}` : ""}`);
+		if (hasEmptyBranch) {
+			api.write(` else {`);
+			api.renderChildren(relatedNodes);
+			api.write(`}`);
+		}
+		api.write(`
+        }`);
+	};
+
+	const foreachDeclares = [
+		{
+			fromArg: 0,
+			pattern: "$source as $value",
+			capture: "value",
+			type: "any",
+		},
+		{
+			fromArg: 0,
+			pattern: "$source as $key => $value",
+			capture: ["key", "value"],
+			type: "any",
+		},
+		{ name: "$loop", type: "any" },
+	];
+
+	const foreachScope = (args: any[]) => {
+		const parsed = parseForeach(args[0] || "");
+		if (!parsed) return ["item", "$loop"];
+		return parsed.key
+			? [parsed.key, parsed.value, "$loop"]
+			: [parsed.value, "$loop"];
+	};
+
+	kire.directive({
+		name: `foreach`,
+		signature: [`expr:any`],
+		declares: foreachDeclares,
+		children: true,
+		closeBy: [`endforeach`, `end`],
+		description:
+			"Blade-style loop over a collection: `@foreach(users as user)` or `@foreach(obj as key => value)`.",
+		example: `@foreach(users as user)\n  <li>{{ user.name }}</li>\n@endforeach`,
+		scope: foreachScope,
+		onCall: emitForeach,
+	});
+
+	kire.directive({
+		name: `forelse`,
+		signature: [`expr:any`],
+		declares: foreachDeclares,
+		children: true,
+		closeBy: [`endforelse`, `end`],
+		description:
+			"Blade-style loop with an @empty fallback branch for empty collections.",
+		example: `@forelse(users as user)\n  <li>{{ user.name }}</li>\n@empty\n  <li>None</li>\n@endforelse`,
+		scope: foreachScope,
+		onCall: emitForeach,
+	});
+
+	// ── @while ───────────────────────────────────────────────────────────────
+	kire.directive({
+		name: `while`,
+		signature: [`cond:any`],
+		children: true,
+		closeBy: [`endwhile`, `end`],
+		description: "Repeats the block while the condition evaluates truthy.",
+		example: `@while(hasMore())\n  <p>loop</p>\n@endwhile`,
+		onCall: (api) => {
+			const cond = api.getArgument(0) ?? api.getAttribute("cond");
+			api.write(`while (${cond}) {`);
+			api.renderChildren();
+			api.write(`}`);
+		},
+	});
+
+	// ── @break / @continue (optionally conditional) ───────────────────────────
+	kire.directive({
+		name: `break`,
+		signature: [`cond:any`],
+		children: false,
+		description:
+			"Breaks out of the nearest loop, optionally only when a condition is truthy.",
+		example: `@break\n@break(loop.index > 3)`,
+		onCall: (api) => {
+			const cond = api.getArgument(0);
+			api.write(cond ? `if (${cond}) break;` : `break;`);
+		},
+	});
+
+	kire.directive({
+		name: `continue`,
+		signature: [`cond:any`],
+		children: false,
+		description:
+			"Skips to the next loop iteration, optionally only when a condition is truthy.",
+		example: `@continue\n@continue(loop.first)`,
+		onCall: (api) => {
+			const cond = api.getArgument(0);
+			api.write(cond ? `if (${cond}) continue;` : `continue;`);
 		},
 	});
 };

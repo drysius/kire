@@ -122,6 +122,52 @@ Kire lets you pass props in a few useful forms.
 
 Use `:` when the prop should stay a JavaScript expression instead of becoming a literal string.
 
+## Declaring props with `@props`
+
+Inside a component, `@props` declares the attributes it accepts (with optional defaults). Any attribute **not** declared as a prop stays in the `$attributes` bag, so it can be forwarded to a root element.
+
+```kire
+@props({ type: "info", dismissible: false })
+
+<div class="alert alert-{{ type }}" @attrs($attributes)>
+  {{ slots.default }}
+</div>
+```
+
+```kire
+<!-- caller -->
+<x-alert type="error" id="main" data-role="status">Boom</x-alert>
+<!-- renders: <div class="alert alert-error" id="main" data-role="status">Boom</div> -->
+```
+
+- Declared props (`type`) are consumed and removed from `$attributes`.
+- Undeclared attributes (`id`, `data-role`) pass through via `@attrs($attributes)`.
+- Pass an array for props without defaults: `@props(["label", "size"])`.
+
+### The `$attributes` bag
+
+`$attributes` is always available inside a component (an empty bag when rendered without a caller). Spread it onto an element with `@attrs($attributes)`, and shape it with chainable helpers:
+
+```kire
+<button @attrs($attributes.merge({ class: "btn", type: "button" }))>
+  {{ slots.default }}
+</button>
+```
+
+| Helper | Purpose |
+|---|---|
+| `$attributes.merge({ … })` | Apply defaults; `class`/`style` are concatenated, others only fill when absent |
+| `$attributes.class([...])` | Compute/merge the `class` attribute (string, array, or `{ name: condition }`) |
+| `$attributes.style([...])` | Compute/merge the `style` attribute |
+| `$attributes.only([...])` / `.except([...])` | A new bag with/without the given attributes |
+| `$attributes.has("x")` / `.get("x", def)` / `.filled("x")` | Inspect attributes |
+
+You can also render the bag directly with `{{ $attributes }}` (it renders as HTML, unescaped).
+
+### `@aware`
+
+`@aware({ color: "red" })` declares props whose values are inherited from the parent component scope when not provided on the element — useful for deeply nested component families. (In Kire's model parent props already flow down, so `@aware` mainly adds defaults and documents intent.)
+
 ## Slot element forms
 
 All of these are valid:

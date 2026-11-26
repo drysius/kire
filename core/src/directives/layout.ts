@@ -141,4 +141,68 @@ export default (kire: Kire<any>) => {
             }`);
 		},
 	});
+
+	// Shared emitter for @push / @prepend / @pushOnce / @prependOnce.
+	const emitStackWrite = (
+		api: any,
+		{ prepend, once }: { prepend: boolean; once: boolean },
+	) => {
+		const id = api.uid("stkw");
+		const name = normalizeStackNameLiteral(
+			api.getArgument(0) || api.getAttribute("name"),
+		);
+		const nameCode = JSON.stringify(name);
+		// For *Once, a stable compile-time key dedupes identical pushes per render.
+		const onceKey = JSON.stringify(`${name}::${id}`);
+		const op = prepend ? "unshift" : "push";
+		api.write(`{
+            if (!__kire_stack[${nameCode}]) __kire_stack[${nameCode}] = [];`);
+		if (once) {
+			api.write(`
+            if (!__kire_stack['__once']) __kire_stack['__once'] = new this.NullProtoObj();
+            if (!__kire_stack['__once'][${onceKey}]) {
+                __kire_stack['__once'][${onceKey}] = true;`);
+		}
+		api.write(`
+            const __kire_${id} = $kire_response; $kire_response = "";`);
+		api.renderChildren();
+		api.write(`
+            __kire_stack[${nameCode}].${op}($kire_response);
+            $kire_response = __kire_${id};`);
+		if (once) api.write(`}`);
+		api.write(`}`);
+	};
+
+	kire.directive({
+		name: `prepend`,
+		signature: [`name:string`],
+		children: true,
+		description:
+			"Prepends the current block to the front of a named stack (rendered by @stack).",
+		example: `@prepend("scripts")\n  <script src="/first.js"></script>\n@endprepend`,
+		closeBy: [`endprepend`, `end`],
+		onCall: (api) => emitStackWrite(api, { prepend: true, once: false }),
+	});
+
+	kire.directive({
+		name: `pushOnce`,
+		signature: [`name:string`],
+		children: true,
+		description:
+			"Appends the block to a named stack only once per render cycle.",
+		example: `@pushOnce("scripts")\n  <script src="/app.js"></script>\n@endPushOnce`,
+		closeBy: [`endPushOnce`, `endpushonce`, `end`],
+		onCall: (api) => emitStackWrite(api, { prepend: false, once: true }),
+	});
+
+	kire.directive({
+		name: `prependOnce`,
+		signature: [`name:string`],
+		children: true,
+		description:
+			"Prepends the block to a named stack only once per render cycle.",
+		example: `@prependOnce("scripts")\n  <script src="/first.js"></script>\n@endPrependOnce`,
+		closeBy: [`endPrependOnce`, `endprependonce`, `end`],
+		onCall: (api) => emitStackWrite(api, { prepend: true, once: true }),
+	});
 };

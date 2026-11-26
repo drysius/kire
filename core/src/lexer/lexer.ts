@@ -79,9 +79,14 @@ export class Lexer extends Cursor {
 				if (this.checkInterpolation()) continue;
 			}
 
+			if (char === "{" && this.char(1) === "!" && this.char(2) === "!") {
+				if (this.checkRawInterpolation()) continue;
+			}
+
 			if (char === "@") {
 				if (this.checkEscapedInterpolation()) continue;
 				if (this.checkEscaped("@")) continue;
+				if (this.checkVerbatim()) continue;
 				if (this.checkDirective()) continue;
 			}
 
@@ -163,6 +168,11 @@ export class Lexer extends Cursor {
 			this.advance(4);
 			return true;
 		}
+		if (this.startsWith("@{!!")) {
+			this.addNode({ type: "text", content: "{!!", loc: this.getLoc() });
+			this.advance(4);
+			return true;
+		}
 		if (this.startsWith("@{{")) {
 			this.addNode({ type: "text", content: "{{", loc: this.getLoc() });
 			this.advance(3);
@@ -204,6 +214,41 @@ export class Lexer extends Cursor {
 			return true;
 		}
 		return false;
+	}
+
+	// Blade-compatible unescaped echo: `{!! expr !!}` (alias of `{{{ expr }}}`).
+	private checkRawInterpolation(): boolean {
+		const loc = this.getLoc();
+		const open = "{!!";
+		const close = "!!}";
+		const end = findInterpolationEnd(
+			this.template,
+			this.cursor + open.length,
+			close,
+		);
+		if (end !== -1) {
+			const content = this.slice(this.cursor + open.length, end).trim();
+			this.addNode({ type: "interpolation", content, raw: true, loc });
+			this.advance(end + close.length - this.cursor);
+			return true;
+		}
+		return false;
+	}
+
+	// @verbatim ... @endverbatim — emit the inner content literally, without
+	// processing interpolations or directives inside it.
+	private checkVerbatim(): boolean {
+		if (!this.startsWith("@verbatim")) return false;
+		const openLen = "@verbatim".length;
+		const endIdx = this.template.indexOf("@endverbatim", this.cursor + openLen);
+		const loc = this.getLoc();
+		if (endIdx === -1) return false;
+		let content = this.slice(this.cursor + openLen, endIdx);
+		// Drop a single leading/trailing newline adjacent to the tags, like Blade.
+		content = content.replace(/^\r?\n/, "").replace(/\r?\n[\t ]*$/, "");
+		if (content) this.addNode({ type: "text", content, loc });
+		this.advance(endIdx + "@endverbatim".length - this.cursor);
+		return true;
 	}
 
 	// ── Directives ────────────────────────────────────────────────────────────

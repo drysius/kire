@@ -23,6 +23,7 @@ import type {
 	TypeDefinition,
 } from "./types";
 import { platform as browserPlatform } from "./utils/browser";
+import { createAttributes } from "./utils/attributes-bag";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { escapeHtml } from "./utils/html";
 import {
@@ -283,6 +284,9 @@ export class Kire<Asyncronos extends boolean = true> {
 	public get renderErrorHtml() {
 		return this.$runtime.renderErrorHtml;
 	}
+	public get createAttributes() {
+		return this.$runtime.createAttributes;
+	}
 
 	public "~render-symbol" = Symbol.for("~templates");
 
@@ -351,6 +355,7 @@ export class Kire<Asyncronos extends boolean = true> {
 		run.KireError = KireError;
 		run.renderErrorHtml = renderErrorHtml;
 		run.createKireFunction = createKireFunction;
+		run.createAttributes = createAttributes;
 
 		const plat = this["~store"].platform;
 		Object.assign(plat, getDefaultKirePlatform(), options.platform || {});

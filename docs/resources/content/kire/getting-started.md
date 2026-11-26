@@ -96,7 +96,7 @@ const kire = new Kire({ strict_directives: true });
 
 When enabled, an identifier that is missing from both props and globals falls back
 to `globalThis` (so built-ins and environment globals resolve without being
-declared). Default is `false`.
+declared). Default is `true`.
 
 ```ts
 const kire = new Kire({ use_global: true });

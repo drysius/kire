@@ -30,11 +30,27 @@ Raw output (no HTML escaping).
 <div>{{{ trustedHtml }}}</div>
 ```
 
-### `@{{ expression }}`
-Escapes interpolation syntax itself (prints `{{ ... }}` literally).
+### `{!! expression !!}`
+Raw output (no HTML escaping) — a Blade-compatible alias of `{{{ ... }}}`.
+
+```kire
+<div>{!! trustedHtml !!}</div>
+```
+
+### `@{{ expression }}` / `@{!! expression !!}`
+Escapes the interpolation syntax itself (prints `{{ ... }}` / `{!! ... !!}` literally).
 
 ```kire
 <p>@{{ user.name }}</p>
+```
+
+### `@verbatim ... @endverbatim`
+Emits the inner content literally, without processing interpolations or directives — handy for client-side templating syntax.
+
+```kire
+@verbatim
+  <span>{{ thisIsNotParsedByKire }}</span>
+@endverbatim
 ```
 
 ## Control Flow
@@ -136,6 +152,52 @@ When referenced, Kire exposes:
 ### `@each(...)`
 Alias of `@for` (same behavior).
 
+### `@foreach(collection as item) ... @endforeach`
+Blade-style loop. Unlike `@for` (which uses `item of source`), the collection comes first. Supports `key => value` over objects.
+
+```kire
+@foreach(users as user)
+  <li>{{ user.name }}</li>
+@endforeach
+
+@foreach(settings as key => value)
+  <li>{{ key }}: {{ value }}</li>
+@endforeach
+```
+
+`$loop` (`index`, `first`, `last`, `length`) is exposed when referenced.
+
+### `@forelse(collection as item) ... @empty ... @endforelse`
+Like `@foreach`, with an `@empty` fallback branch for empty collections.
+
+```kire
+@forelse(users as user)
+  <li>{{ user.name }}</li>
+@empty
+  <li>No users</li>
+@endforelse
+```
+
+### `@while(condition) ... @endwhile`
+Repeats the block while the condition is truthy.
+
+```kire
+@while(hasMore())
+  <p>…</p>
+@endwhile
+```
+
+### `@break` / `@continue`
+Loop control, optionally conditional: `@break(cond)` / `@continue(cond)`.
+
+```kire
+@foreach(items as item)
+  @continue(item.hidden)
+  @break(loop.last)
+  <li>{{ item.label }}</li>
+@endforeach
+```
+
 ## Composition
 
 ### `@include(path, locals?)`
@@ -144,6 +206,21 @@ Renders another template with merged local context.
 ```kire
 @include("partials.card", { title: "Demo" })
 ```
+
+### Conditional includes
+- `@includeIf(path, locals?)` — include only if the view exists (silent otherwise).
+- `@includeWhen(condition, path, locals?)` — include when the condition is truthy.
+- `@includeUnless(condition, path, locals?)` — include when the condition is falsy.
+- `@includeFirst([pathA, pathB], locals?)` — include the first view in the list that exists.
+
+```kire
+@includeIf("partials.sidebar")
+@includeWhen(user.isAdmin, "partials.admin")
+@includeUnless(user, "partials.guest")
+@includeFirst(["custom.alert", "partials.alert"], { type: "info" })
+```
+
+> Existence is resolved at compile time via the platform's filesystem.
 
 ### `@component(path, locals?) ... @endcomponent`
 Renders another template and allows slot content.
@@ -178,6 +255,27 @@ Reads slot content in the target component/layout.
 ### `@section(...)`
 Alias for `@slot(...)`.
 
+### `@show(name) ... @endshow`
+Outputs a named slot provided by the caller, or the inline block as the default when the slot is absent. Useful in layouts for overridable default content.
+
+```kire
+<aside>
+  @show("sidebar")
+    <nav>Default navigation</nav>
+  @endshow
+</aside>
+```
+
+> Kire's slot model provides slots wholesale from the caller, so Blade's `@parent` and `@overwrite` are not needed.
+
+### `@props(objectOrArray)` and `@aware(objectOrArray)`
+Declare a component's accepted props with optional defaults. Undeclared attributes remain in the `$attributes` bag for forwarding. See [Components and Slots](/docs/kire/components-and-slots) for details.
+
+```kire
+@props({ type: "info", dismissible: false })
+<div class="alert alert-{{ type }}" @attrs($attributes)>{{ slots.default }}</div>
+```
+
 ## Reusable Content Blocks
 
 ### `@define(name) ... @enddefine`
@@ -204,6 +302,20 @@ Useful for collecting scripts/styles and rendering later.
 @push("scripts")
   <script src="/b.js"></script>
 @endpush
+```
+
+### `@prepend(name) ... @endprepend`
+Like `@push`, but adds the block to the **front** of the stack.
+
+### `@pushOnce(name) ... @endPushOnce` and `@prependOnce(name) ... @endPrependOnce`
+Append/prepend to a stack only once per render cycle (dedupes repeated pushes, e.g. inside a loop or a shared component).
+
+```kire
+@foreach(widgets as widget)
+  @pushOnce("scripts")
+    <script src="/widget.js"></script>
+  @endPushOnce
+@endforeach
 ```
 
 ## Attribute Helpers
@@ -296,6 +408,59 @@ Inject local JavaScript declarations in template body.
 
 ### `@interface(typeOrShape, global?)`
 Type-only directive for tooling/intellisense; no runtime output.
+
+## Debugging and Environment
+
+### `@json(expr)`
+Outputs a value as a JSON string — ideal for embedding data into a `<script>` block.
+
+```kire
+<script>window.__DATA__ = @json(user)</script>
+```
+
+### `@dump(expr)` and `@dd(expr)`
+`@dump` outputs a formatted debug block; `@dd` ("dump and die") does the same and stops rendering the rest of the template.
+
+```kire
+@dump(user)
+@dd(order)
+```
+
+### `@env(name) ... @endenv` and `@production ... @endproduction`
+Render a block only in matching environments. `@env` accepts a single name or an array, and reads the current environment from `$globals.env`.
+
+```kire
+@env("local")
+  <p>Dev tools</p>
+@endenv
+
+@env(["staging", "production"])
+  <script src="/analytics.js"></script>
+@endenv
+
+@production
+  <script src="/analytics.js"></script>
+@endproduction
+```
+
+Set the environment via a global: `kire.$global("env", "production")`.
+
+### `@inject(name, "ServiceKey")`
+Binds a value from `$globals.services[key]` to a local variable (Kire has no service container, so services live on globals).
+
+```kire
+@inject(metrics, "MetricsService")
+<p>{{ metrics.activeUsers }}</p>
+```
+
+### `@session("key") ... @endsession`
+Renders the block when `$globals.session[key]` is set, exposing it as `$value`.
+
+```kire
+@session("status")
+  <div class="alert">{{ $value }}</div>
+@endsession
+```
 
 ## Unknown Directives and Strict Mode
 
