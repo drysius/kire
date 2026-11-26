@@ -7,6 +7,8 @@ on:
   pull_request:
     branches:
       - main
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -53,3 +55,55 @@ jobs:
           name: kire-extension
           path: ./vs-kire/*.vsix
           retention-days: 5
+
+  publish:
+    name: Publish Extension
+    runs-on: ubuntu-latest
+    # Only on a published GitHub Release (so day-to-day pushes just build).
+    if: github.event_name == 'release'
+    needs: build
+
+    # `id-token: write` lets vsce use Marketplace Trusted Publishing (OIDC) —
+    # no PAT/secret needed. Match this file name + repo in the Marketplace policy.
+    permissions:
+      contents: read
+      id-token: write
+
+    # Open VSX has no trusted publishing yet, so it still uses a token (optional).
+    env:
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+
+    defaults:
+      run:
+        working-directory: ./vs-kire
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Dependencies
+        run: bun install
+
+      - name: Build Extension Bundle
+        run: bun run bundle
+
+      # Visual Studio Marketplace via Trusted Publishing (OIDC) — no secret.
+      # Requires a Trusted Publishing policy on the `Kire` publisher pointing at
+      # this repo + workflow file (vscode.yaml).
+      - name: Publish to VS Code Marketplace
+        run: npx @vscode/vsce@latest publish --no-dependencies
+
+      # Open VSX (VSCodium, Cursor, Windsurf, …). Optional; requires OVSX_PAT.
+      - name: Publish to Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        run: npx ovsx publish --no-dependencies -p "$OVSX_PAT"
