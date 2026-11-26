@@ -21,6 +21,9 @@ packages/
   tailwind/      → Tailwind integration
   utils/         → Laravel-like template helpers (Str, Arr, Html, Route, MessageBag)
   i18n/          → localization plugin (@lang, @choice, __())
+  express/       → Express integration (view engine + res.view + Kirewire setup)
+  fastify/       → Fastify integration (reply.view + Kirewire setup)
+  elysia/        → Elysia integration (context.view + Kirewire setup)
 benchmark/       → engine benchmarks
 docs/            → documentation site (built with Kire + Kirewire); content in docs/resources/content
 vs-kire/         → VS Code extension
@@ -233,6 +236,13 @@ abstract class LiveComponent {
 | `packages/tailwind` | Tailwind integration (compile/runtime/loader) | `compiler.ts`, `runtime.ts`, `loader.ts` |
 | `packages/utils` | Laravel-like template helpers | `Str.ts`, `Arr.ts`, `Html.ts`, `Route.ts`, `MessageBag.ts` |
 | `packages/i18n` | Localization: `@lang`, `@choice`, `__()`/`trans()`/`trans_choice()` with placeholders & Laravel-style pluralization | `plugin.ts`, `translator.ts` |
+| `packages/express` | Express integration: `kireExpress(opts)` middleware or `kireExpress(app, opts)` — Kire as view engine + typed `res.view(dotted, data)` | `index.ts`, `engine.ts` |
+| `packages/fastify` | Fastify integration: `kireFastify(opts)` plugin or `kireFastify(app, opts)` — typed `reply.view(dotted, data)` | `index.ts` |
+| `packages/elysia` | Elysia integration: `kireElysia(opts)` plugin — context `view(dotted, data)` + `kire` | `index.ts` |
+
+Integration packages share a shape: `{ views, extension?, production?, engine?, plugins?, globals?, wire? }`.
+- Express/Fastify each accept two call styles: `(options)` returning a middleware/plugin (`app.use(...)` / `app.register(...)`), or `(app, options)` returning the engine. Both add a **typed** `res.view`/`reply.view` (module augmentation on `Express.Response` / `FastifyReply`); Elysia infers `view` on its context.
+- `wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer): it loads `kirewirePlugin`, mounts the update endpoint, and auto-serves the client runtime (resolved from `@kirejs/wire/client`, or `clientScript`).
 
 ---
 

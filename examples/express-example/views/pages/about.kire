@@ -1,0 +1,7 @@
+@component("layout", { title: "About" })
+	@section("content")
+		<h1>About</h1>
+		<p>This page is resolved from a dotted view path: <code>pages.about</code>.</p>
+		<a href="/">Home</a>
+	@endsection
+@endcomponent

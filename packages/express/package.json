@@ -1,0 +1,45 @@
+{
+	"name": "@kirejs/express",
+	"description": "Express integration for Kire — view engine, res.view() and one-line Kirewire setup.",
+	"version": "0.1.0",
+	"main": "dist/cjs/index.cjs",
+	"module": "dist/esm/index.js",
+	"types": "dist/types/index.d.ts",
+	"typings": "dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/esm/index.js",
+			"require": "./dist/cjs/index.cjs"
+		}
+	},
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"keywords": [
+		"express",
+		"kire",
+		"view-engine",
+		"ssr",
+		"typescript"
+	],
+	"author": "drysius",
+	"license": "MIT",
+	"dependencies": {
+		"kire": "workspace:../../core"
+	},
+	"peerDependencies": {
+		"@kirejs/wire": "workspace:*",
+		"express": "^4 || ^5"
+	},
+	"peerDependenciesMeta": {
+		"@kirejs/wire": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@kirejs/wire": "workspace:*"
+	}
+}

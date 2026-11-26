@@ -1,0 +1,11 @@
+{
+	"name": "example-elysia",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"start": "bun run main.ts"
+	},
+	"dependencies": {
+		"elysia": "^1"
+	}
+}

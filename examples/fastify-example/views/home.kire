@@ -1,0 +1,12 @@
+@component("layout", { title: "Fastify + Kire" })
+	@section("content")
+		<h1>{{ title }}</h1>
+		<p>Rendered by Kire through Fastify.</p>
+		<ul>
+			@foreach(features as feature)
+				<li>{{ feature }}</li>
+			@endforeach
+		</ul>
+		<a href="/about">About</a>
+	@endsection
+@endcomponent
