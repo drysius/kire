@@ -1,7 +1,29 @@
+import { getDeep } from "../runtime/properties";
 import type { ClientComponent } from "./component";
+import { extractData } from "./data";
 import { effect } from "./reactivity";
 import type { WireRuntime } from "./runtime";
 import { evaluate, type Wire } from "./wire";
+
+/**
+ * Whether a component has uncommitted local changes. Compares the reactive
+ * `ephemeral` state against the last server snapshot; reading the ephemeral
+ * values inside an `effect` makes the check reactive. When `paths` is given,
+ * only those properties are considered (used by `wire:target`).
+ */
+function isDirty(component: ClientComponent, paths: string[]): boolean {
+	const canonical = extractData(component.snapshot.data) as Record<
+		string,
+		unknown
+	>;
+	const keys = paths.length ? paths : Object.keys(component.ephemeral as object);
+	for (const key of keys) {
+		const current = getDeep(component.ephemeral, key);
+		const base = getDeep(canonical, key);
+		if (JSON.stringify(current) !== JSON.stringify(base)) return true;
+	}
+	return false;
+}
 
 export interface DirectiveContext {
 	el: Element;
@@ -185,6 +207,51 @@ export function createDefaultDirectives(): DirectiveRegistry {
 			htmlEl.style.display = detail.loading ? initial || "" : "none";
 		};
 		window.addEventListener("kirewire:loading", toggle);
+	});
+
+	// wire:dirty[.class][.remove] — reflect uncommitted local changes.
+	// Default: show the element only while dirty. With `.class`, toggle the
+	// classes named in the attribute value instead (`.remove` inverts them).
+	// `wire:target="a, b"` scopes dirtiness to specific properties.
+	reg.register("dirty", ({ el, modifiers, expression, component }) => {
+		const htmlEl = el as HTMLElement;
+		const paths = (el.getAttribute("wire:target") || "")
+			.split(",")
+			.map((s) => s.trim())
+			.filter(Boolean);
+		const useClass = modifiers.includes("class");
+		const invert = modifiers.includes("remove");
+		const classNames = expression.trim().split(/\s+/).filter(Boolean);
+		const initial = htmlEl.style.display;
+		if (!useClass) htmlEl.style.display = "none";
+
+		effect(() => {
+			const dirty = isDirty(component, paths);
+			if (useClass) {
+				const on = invert ? !dirty : dirty;
+				for (const c of classNames) htmlEl.classList.toggle(c, on);
+			} else {
+				htmlEl.style.display = dirty ? initial || "" : "none";
+			}
+		});
+	});
+
+	// wire:offline — show the element only while the browser is offline.
+	reg.register("offline", ({ el, cleanup }) => {
+		const htmlEl = el as HTMLElement;
+		const initial = htmlEl.style.display;
+		const sync = () => {
+			const offline =
+				typeof navigator !== "undefined" && navigator.onLine === false;
+			htmlEl.style.display = offline ? initial || "" : "none";
+		};
+		sync();
+		window.addEventListener("online", sync);
+		window.addEventListener("offline", sync);
+		cleanup(() => {
+			window.removeEventListener("online", sync);
+			window.removeEventListener("offline", sync);
+		});
 	});
 
 	return reg;

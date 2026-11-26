@@ -209,7 +209,9 @@ abstract class LiveComponent {
 
 ### Wire Client Directives
 
-`wire:click`, `wire:submit`, `wire:change`, `wire:keydown`, `wire:model` (and `wire:model.live`), `wire:poll`, `wire:loading`, `wire:init`, `wire:confirm`, `wire:snapshot`.
+`wire:click`, `wire:submit`, `wire:change`, `wire:keydown`, `wire:model` (and `wire:model.live/.blur/.lazy`), `wire:poll`, `wire:loading`, `wire:init`, `wire:confirm`, `wire:snapshot`, `wire:dirty` (+ `wire:target`, `.class`/`.remove` modifiers), `wire:offline`, `wire:ignore`, `wire:key`, `wire:navigate`.
+
+> Not yet ported from Livewire: `wire:transition`, `wire:stream`, `wire:replace` (these touch the morph/transport core and need dedicated E2E work).
 
 ### Wire Kire Directives/Elements
 
