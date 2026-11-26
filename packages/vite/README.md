@@ -37,3 +37,5 @@ The package registers directive documentation so `KIRE IntelliSense` can describ
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

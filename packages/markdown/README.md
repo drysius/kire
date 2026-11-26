@@ -31,3 +31,5 @@ The plugin registers directive metadata used by `KIRE IntelliSense`, including e
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

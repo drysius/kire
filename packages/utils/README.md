@@ -39,3 +39,5 @@ The directive metadata exposed here is also what `KIRE IntelliSense` can use to 
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

@@ -38,3 +38,5 @@ The package registers metadata for the directives and elements it adds, which is
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

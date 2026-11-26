@@ -2,14 +2,17 @@
 	"name": "kire-koa-app",
 	"private": true,
 	"type": "module",
-	"scripts": { "dev": "tsx watch main.ts", "start": "tsx main.ts" },
+	"scripts": {
+		"dev": "tsx watch main.ts",
+		"start": "tsx main.ts"
+	},
 	"dependencies": {
 		"@koa/router": "^13.0.0",
-		"@kirejs/koa": "^0.1.0",
+		"@kirejs/koa": "^0.2.0",
 		"@kirejs/wire": "^0.2.0",
 		"koa": "^2.15.0",
 		"koa-bodyparser": "^4.4.1",
-		"kire": "^0.1.0"
+		"kire": "^0.2.0"
 	},
 	"devDependencies": {
 		"@types/koa": "^2.15.0",

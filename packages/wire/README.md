@@ -64,3 +64,5 @@ Directives: `wire:click`, `wire:submit`, `wire:model[.live|.blur|.lazy]`,
 HMAC-signed snapshots (tamper-rejected with 419), method gating (`_`/`$`/reserved
 blocked, `@action` allowlist), `@locked` mass-assignment protection, `@validate`
 rules, and a synth allowlist for class hydration.
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

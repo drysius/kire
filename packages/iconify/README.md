@@ -29,3 +29,5 @@ The directive and element docs are part of the package metadata, so `KIRE Intell
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

@@ -2,11 +2,14 @@
 	"name": "kire-elysia-app",
 	"private": true,
 	"type": "module",
-	"scripts": { "dev": "bun --watch main.js", "start": "bun main.js" },
+	"scripts": {
+		"dev": "bun --watch main.js",
+		"start": "bun main.js"
+	},
 	"dependencies": {
-		"@kirejs/elysia": "^0.1.0",
+		"@kirejs/elysia": "^0.2.0",
 		"@kirejs/wire": "^0.2.0",
 		"elysia": "^1.0.0",
-		"kire": "^0.1.0"
+		"kire": "^0.2.0"
 	}
 }

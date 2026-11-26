@@ -1,17 +1,26 @@
 {
 	"name": "create-kire",
 	"description": "Scaffold a new Kire app — pick a framework template and TypeScript or JavaScript.",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"type": "module",
 	"bin": {
 		"create-kire": "dist/index.js"
 	},
-	"files": ["dist", "templates"],
+	"files": [
+		"dist",
+		"templates"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/drysius/kire.git"
 	},
-	"keywords": ["kire", "scaffold", "create", "starter", "template"],
+	"keywords": [
+		"kire",
+		"scaffold",
+		"create",
+		"starter",
+		"template"
+	],
 	"author": "drysius",
 	"license": "MIT",
 	"scripts": {

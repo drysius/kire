@@ -83,3 +83,8 @@ The repository is still authored and reviewed as a normal codebase, but those to
 ## License
 
 MIT
+
+## For AI agents
+
+Each package ships an `AGENT.md` with a focused, package-specific guide. The
+repository root `CLAUDE.md` describes the overall architecture and conventions.

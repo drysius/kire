@@ -33,3 +33,5 @@ Descriptions and examples for the directive and element are registered in the pl
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

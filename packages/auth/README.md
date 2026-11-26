@@ -39,3 +39,5 @@ The package attaches descriptions, examples, and declarations to its directives 
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

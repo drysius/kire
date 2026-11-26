@@ -79,3 +79,5 @@ bun test core/tests
 ## License
 
 MIT
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.

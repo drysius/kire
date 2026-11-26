@@ -45,3 +45,5 @@ Drop a folder under `templates/<id>/` with a `meta.json` (`{ title, description 
 a `shared/` directory (copied verbatim — put `views/`, `README.md`, `gitignore`
 there) and `ts/` and/or `js/` directories (copied over `shared/`). The CLI
 discovers it automatically.
+
+> **AI agents:** see [AGENT.md](./AGENT.md) for a focused guide.
