@@ -193,6 +193,23 @@ class Builder {
 		await writeFile(destJsonPath, JSON.stringify(content, null, 2));
 	}
 
+	// create-kire ships a CLI `bin` (dist/index.js) and the `templates/` folder.
+	private async buildCreateKire(pkg: PackageInfo): Promise<void> {
+		console.log(`🔨 Building create-kire CLI...`);
+		await $`bun run build`.cwd(pkg.path);
+		await mkdir(pkg.publishPath, { recursive: true });
+		await cp(`${pkg.path}/dist`, `${pkg.publishPath}/dist`, {
+			recursive: true,
+		});
+		if (existsSync(`${pkg.path}/templates`)) {
+			await cp(`${pkg.path}/templates`, `${pkg.publishPath}/templates`, {
+				recursive: true,
+			});
+		}
+		await this.copyMetaFiles(pkg);
+		await this.generatePackageJson(pkg);
+	}
+
 	public async build(): Promise<void> {
 		await this.cleanPublishDirectory();
 
@@ -201,6 +218,12 @@ class Builder {
 		for (const pkg of packages) {
 			console.log(`
 🏗️  Processing ${pkg.name}...`);
+			// create-kire is a CLI (bin + templates), not a library — build it with
+			// its own bundler and ship the templates verbatim.
+			if (pkg.name === "create-kire") {
+				await this.buildCreateKire(pkg);
+				continue;
+			}
 			await this.runPrebuild(pkg);
 			await this.generateTypes(pkg);
 			await this.buildBundles(pkg);
