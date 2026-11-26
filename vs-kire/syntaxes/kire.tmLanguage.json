@@ -29,6 +29,9 @@
 			"include": "#interpolations-raw"
 		},
 		{
+			"include": "#interpolations-bang"
+		},
+		{
 			"include": "#interpolations"
 		},
 		{
@@ -61,6 +64,9 @@
 					"patterns": [
 						{
 							"include": "#interpolations-raw"
+						},
+						{
+							"include": "#interpolations-bang"
 						},
 						{
 							"include": "#interpolations"
@@ -403,6 +409,23 @@
 				"0": { "name": "punctuation.section.embedded.begin.kire" }
 			},
 			"end": "\\}\\}\\}",
+			"endCaptures": {
+				"0": { "name": "punctuation.section.embedded.end.kire" }
+			},
+			"name": "meta.embedded.expression.raw.kire",
+			"contentName": "source.js",
+			"patterns": [
+				{
+					"include": "source.js"
+				}
+			]
+		},
+		"interpolations-bang": {
+			"begin": "\\{!!",
+			"beginCaptures": {
+				"0": { "name": "punctuation.section.embedded.begin.kire" }
+			},
+			"end": "!!\\}",
 			"endCaptures": {
 				"0": { "name": "punctuation.section.embedded.end.kire" }
 			},
