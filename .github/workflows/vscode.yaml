@@ -59,8 +59,9 @@ jobs:
   publish:
     name: Publish Extension
     runs-on: ubuntu-latest
-    # Only on a published GitHub Release (so day-to-day pushes just build).
-    if: github.event_name == 'release'
+    # On a published GitHub Release, or a manual run (workflow_dispatch) — so
+    # day-to-day pushes/PRs just build.
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     needs: build
 
     # `id-token: write` lets vsce use Marketplace Trusted Publishing (OIDC) —
@@ -101,7 +102,7 @@ jobs:
       # Requires a Trusted Publishing policy on the `Kire` publisher pointing at
       # this repo + workflow file (vscode.yaml).
       - name: Publish to VS Code Marketplace
-        run: npx @vscode/vsce@latest publish --no-dependencies
+        run: npx @vscode/vsce@latest publish --no-dependencies --oidc
 
       # Open VSX (VSCodium, Cursor, Windsurf, …). Optional; requires OVSX_PAT.
       - name: Publish to Open VSX
