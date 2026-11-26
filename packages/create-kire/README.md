@@ -14,11 +14,18 @@ npx create-kire my-app
 ## Non-interactive
 
 ```bash
-npx create-kire my-app --template express --ts
-npx create-kire my-app -t hono --js
+npx create-kire my-app --template express --ts --ai claude
+npx create-kire my-app -t hono --js --ai none
 ```
 
-Flags: `--template <id>` / `-t`, `--ts` / `--js` (or `--language <ts|js>`).
+Flags: `--template <id>` / `-t`, `--ts` / `--js` (or `--language <ts|js>`),
+`--ai <claude|codex|cursor|gemini|copilot|none>`.
+
+## AI instructions file
+
+The CLI asks which AI assistant you use and drops a matching instructions file
+into the project (`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `GEMINI.md`, or
+`.github/copilot-instructions.md`) describing the Kire/Kirewire conventions.
 
 ## Templates
 
