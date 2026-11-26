@@ -51,6 +51,21 @@ class Publisher {
 				`${this.PUBLISH} Successfully published ${pkg.name}@${pkgJson.version}`,
 			);
 		} catch (error) {
+			// Idempotent: a version already on the registry isn't a failure — skip it
+			// so re-runs after a partial publish can finish the remaining packages.
+			const out = `${(error as { stderr?: unknown })?.stderr ?? ""}${
+				(error as { message?: unknown })?.message ?? ""
+			}`;
+			if (
+				/EPUBLISHCONFLICT|cannot publish over|previously published versions/i.test(
+					out,
+				)
+			) {
+				console.log(
+					`${this.PUBLISH} ${pkg.name} is already published at this version — skipping.`,
+				);
+				return;
+			}
 			console.error(`${this.PUBLISH} Failed to publish ${pkg.name}:`, error);
 			throw error;
 		}

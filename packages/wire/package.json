@@ -3,6 +3,11 @@
 	"description": "Kirewire — server-driven reactive components for Kire (signals client, SSE/WebSocket transport).",
 	"version": "0.2.2",
 	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git",
+		"directory": "packages/wire"
+	},
 	"main": "dist/cjs/index.js",
 	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",
