@@ -24,7 +24,7 @@
 
 			<section class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
 				<h2 class="text-lg font-bold">Live component viewer</h2>
-				<p class="mt-1 text-sm text-slate-600">The same <code class="rounded bg-slate-100 px-1">@wire("counter")</code> component, embedded inline:</p>
+				<p class="mt-1 text-sm text-slate-600">The same <code class="rounded bg-slate-100 px-1">@@wire("counter")</code> component, embedded inline:</p>
 				<div class="mt-4 rounded-xl bg-slate-50 p-6 ring-1 ring-slate-200">
 					@wire("counter")
 				</div>
