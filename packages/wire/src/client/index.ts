@@ -15,7 +15,12 @@ export { morph } from "./morph";
 export { setupNavigate } from "./navigate";
 export { computed, effect, reactive, watch } from "./reactivity";
 export { WireRuntime } from "./runtime";
-export { FiveMTransport, HttpTransport, SseTransport, WebSocketTransport } from "./transport";
+export {
+	FiveMTransport,
+	HttpTransport,
+	SseTransport,
+	WebSocketTransport,
+} from "./transport";
 export { evaluate, makeWire } from "./wire";
 
 export interface StartOptions {
@@ -31,6 +36,13 @@ export interface StartOptions {
 	channel?: string;
 	/** Enable `wire:navigate` SPA link navigation. Default true. */
 	navigate?: boolean;
+	/**
+	 * Integrate with Alpine.js: after each server-driven morph, re-run
+	 * `Alpine.initTree(el)` so Alpine directives in the new HTML initialize.
+	 * Defaults to auto-detect (`window.Alpine`). Wrap persistent Alpine islands
+	 * in `wire:ignore` so the morph leaves their state intact.
+	 */
+	alpine?: boolean;
 }
 
 /** Public global API. */
@@ -52,6 +64,7 @@ export function start(opts: StartOptions = {}): WireRuntime {
 	const boot = () => {
 		runtime.start();
 		if (opts.navigate !== false) setupNavigate(runtime);
+		setupAlpine(opts.alpine);
 		if (opts.channel && transport.subscribe) {
 			transport.subscribe(opts.channel, (push: ServerPush) => {
 				const target = push.to ? runtime.components.get(push.to) : undefined;
@@ -78,4 +91,22 @@ export function start(opts: StartOptions = {}): WireRuntime {
 	}
 
 	return runtime;
+}
+
+/**
+ * Wire Kirewire's morphs into Alpine.js. After each component re-render,
+ * `Alpine.initTree()` runs on the morphed subtree so Alpine directives in the
+ * server-rendered HTML are initialized. Enabled when `alpine` is true, or by
+ * default when `window.Alpine` is present.
+ */
+function setupAlpine(enabled?: boolean): void {
+	if (typeof window === "undefined") return;
+	// biome-ignore lint/suspicious/noExplicitAny: Alpine is an optional global
+	const w = window as any;
+	const use = enabled ?? !!w.Alpine;
+	if (!use) return;
+	window.addEventListener("kirewire:morphed", (event) => {
+		const el = (event as CustomEvent).detail?.el as Element | undefined;
+		if (el && w.Alpine?.initTree) w.Alpine.initTree(el);
+	});
 }

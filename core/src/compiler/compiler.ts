@@ -1,4 +1,5 @@
 import type { Kire } from "../kire";
+import { parseArgs } from "../lexer/balance";
 import type { CompilerApi, Node } from "../types";
 import { escapeHtml } from "../utils/html";
 import {
@@ -9,7 +10,6 @@ import {
 	WILDCARD_CHAR_REGEX,
 } from "../utils/regex";
 import { SourceMapGenerator } from "../utils/source-map";
-import { parseArgs } from "../lexer/balance";
 import { AttrCodegen } from "./attr-codegen";
 import { JsScanner } from "./js-scanner";
 
@@ -143,15 +143,21 @@ export class Compiler {
 
 		// Prune declarations — only emit what the body/footer actually references
 		const bodyFooterSource = `${this.body.join("\n")}\n${this.footer.join("\n")}`;
-		const bodyFooterNormalized = this.scanner.normalizeForScan(bodyFooterSource);
+		const bodyFooterNormalized =
+			this.scanner.normalizeForScan(bodyFooterSource);
 
-		if (this.scanner.isIdentifierReferenced(bodyFooterNormalized, "NullProtoObj")) {
+		if (
+			this.scanner.isIdentifierReferenced(bodyFooterNormalized, "NullProtoObj")
+		) {
 			this.header.push(`const NullProtoObj = this.NullProtoObj;`);
 		}
 
 		for (const declaration of identifierDeclarations) {
 			if (
-				this.scanner.isIdentifierReferenced(bodyFooterNormalized, declaration.id) ||
+				this.scanner.isIdentifierReferenced(
+					bodyFooterNormalized,
+					declaration.id,
+				) ||
 				this.attrCodegen.mixedAttrIdents.has(declaration.id)
 			) {
 				this.header.push(declaration.line);
@@ -211,28 +217,33 @@ export class Compiler {
 		decls: Set<string>,
 		visited: Set<string>,
 	): void {
-		const scanIdents = (c: string) => this.scanner.collectIdentifiers(c, idents);
+		const scanIdents = (c: string) =>
+			this.scanner.collectIdentifiers(c, idents);
 
 		for (const n of nodes) {
-			if (n.type === "interpolation" || n.type === "js") scanIdents(n.content || "");
+			if (n.type === "interpolation" || n.type === "js")
+				scanIdents(n.content || "");
 			if (n.args) n.args.forEach((a) => typeof a === "string" && scanIdents(a));
 			if (n.type === "js" && n.content) {
 				this.scanner.collectDeclaredVars(n.content, decls);
 			}
 
 			if (n.type === "directive") {
-				if (n.name === "defined" || n.name === "define") idents.add("__kire_defines");
+				if (n.name === "defined" || n.name === "define")
+					idents.add("__kire_defines");
 				if (n.name === "stack" || n.name === "push") idents.add("__kire_stack");
 
 				const def = this.kire.getDirective(n.name!);
 				if (def) {
 					if (def.isDependency) {
 						const paths = def.isDependency(n.args || [], n.attributes);
-						for (const path of paths) this.analyzeDepPath(path, idents, decls, visited);
+						for (const path of paths)
+							this.analyzeDepPath(path, idents, decls, visited);
 					}
 					if (def.scope) {
 						const vars = def.scope(n.args || [], n.attributes);
-						for (const v of vars) this.scanner.collectBindingsFromPattern(v, decls);
+						for (const v of vars)
+							this.scanner.collectBindingsFromPattern(v, decls);
 					}
 					if (def.exposes) {
 						for (const v of def.exposes) decls.add(v);
@@ -248,7 +259,9 @@ export class Compiler {
 						typeof d.name === "string" &&
 						(d.name === n.tagName ||
 							(d.name.includes("*") &&
-								n.tagName?.match(new RegExp(`^${d.name.replace("*", "(.*)")}$`))))
+								n.tagName?.match(
+									new RegExp(`^${d.name.replace("*", "(.*)")}$`),
+								)))
 					) {
 						def = d;
 						break;
@@ -263,16 +276,19 @@ export class Compiler {
 						typeof n.tagName === "string" && n.tagName.startsWith("kire:")
 							? n.tagName.slice("kire:".length)
 							: "";
-					if (alias === "defined" || alias === "define") idents.add("__kire_defines");
+					if (alias === "defined" || alias === "define")
+						idents.add("__kire_defines");
 					if (alias === "stack" || alias === "push") idents.add("__kire_stack");
 
 					if (def.isDependency) {
 						const paths = def.isDependency(n.args || [], n.attributes);
-						for (const path of paths) this.analyzeDepPath(path, idents, decls, visited);
+						for (const path of paths)
+							this.analyzeDepPath(path, idents, decls, visited);
 					}
 					if (def.scope) {
 						const vars = def.scope(n.args || [], n.attributes);
-						for (const v of vars) this.scanner.collectBindingsFromPattern(v, decls);
+						for (const v of vars)
+							this.scanner.collectBindingsFromPattern(v, decls);
 					}
 				}
 
@@ -285,8 +301,13 @@ export class Compiler {
 								? def.attributes.find((entry: any) => {
 										if (!entry?.name) return false;
 										if (entry.name === key) return true;
-										if (typeof entry.name === "string" && entry.name.includes("*")) {
-											return new RegExp(`^${entry.name.replace("*", ".*")}$`).test(key);
+										if (
+											typeof entry.name === "string" &&
+											entry.name.includes("*")
+										) {
+											return new RegExp(
+												`^${entry.name.replace("*", ".*")}$`,
+											).test(key);
 										}
 										return false;
 									})
@@ -299,7 +320,8 @@ export class Compiler {
 							const isJs =
 								key.startsWith(":") ||
 								attrTypes.some(
-									(t: string) => t === "javascript" || t === "js" || t === "any",
+									(t: string) =>
+										t === "javascript" || t === "js" || t === "any",
 								);
 
 							if (isJs) {
@@ -396,7 +418,11 @@ export class Compiler {
 					} else {
 						this.flushText();
 						if (!this.kire.$production && n.loc) {
-							this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+							this.mappings.push({
+								bodyIndex: this.body.length,
+								node: n,
+								col: 0,
+							});
 							this.body.push(`// kire-line: ${n.loc.line}`);
 						}
 						this.body.push(`$kire_response += ${expr};`);
@@ -462,11 +488,18 @@ export class Compiler {
 		for (const m of this.kire.$elementMatchers) {
 			const def = m.def;
 			if (typeof def.name === "string") {
-				if (def.name === t) { matcher = m; break; }
+				if (def.name === t) {
+					matcher = m;
+					break;
+				}
 				if (WILDCARD_CHAR_REGEX.test(def.name)) {
 					const p = def.name.replace("*", "(.*)");
 					const m2 = t.match(new RegExp(`^${p}$`));
-					if (m2) { n.wildcard = m2[1]; matcher = m; break; }
+					if (m2) {
+						n.wildcard = m2[1];
+						matcher = m;
+						break;
+					}
 				}
 			} else if (def.name instanceof RegExp && def.name.test(t)) {
 				matcher = m;
@@ -480,11 +513,15 @@ export class Compiler {
 			if (n.attributes) {
 				for (const [key, val] of Object.entries(n.attributes)) {
 					if (key.startsWith("@")) {
-						this.flushText();
 						const dirDef = this.kire.getDirective(key.slice(1));
 						if (dirDef) {
+							this.flushText();
 							if (!this.kire.$production) {
-								this.mappings.push({ bodyIndex: this.body.length, node: n, col: 0 });
+								this.mappings.push({
+									bodyIndex: this.body.length,
+									node: n,
+									col: 0,
+								});
 								if (n.loc) this.body.push(`// kire-line: ${n.loc.line}`);
 							}
 							dirDef.onCall(
@@ -498,6 +535,18 @@ export class Compiler {
 									dirDef,
 								),
 							);
+						} else if (val === "" || val === true) {
+							// Unknown `@name` with no value → keep it as a literal
+							// attribute (e.g. Alpine.js `@click.away`); don't consume it.
+							this.textBuffer += ` ${key}`;
+						} else if (INTERPOLATION_START_REGEX.test(String(val))) {
+							this.textBuffer += ` ${key}="`;
+							this.emitExpr(this.attrCodegen.parseHtmlAttrCode(String(val)));
+							this.textBuffer += '"';
+						} else {
+							// Unknown `@name="expr"` → pass through verbatim so client
+							// frameworks like Alpine.js receive `@click="…"` untouched.
+							this.textBuffer += ` ${key}="${escapeHtml(val)}"`;
 						}
 					} else if (INTERPOLATION_START_REGEX.test(val)) {
 						this.textBuffer += ` ${key}="`;
@@ -527,17 +576,29 @@ export class Compiler {
 
 	// ── Compiler API ──────────────────────────────────────────────────────────
 
-	private createCompilerApi(node: Node, _definition: any, _isExistVar = false): any {
+	private createCompilerApi(
+		node: Node,
+		_definition: any,
+		_isExistVar = false,
+	): any {
 		const self = this;
 		const api: any = {
 			kire: this.kire,
 			node,
 			editable: true,
 			isDependency: this._isDependency,
-			get fullBody() { return self.fullBody; },
-			get allIdentifiers() { return self.allIdentifiers; },
-			get wildcard() { return node.wildcard; },
-			get children() { return node.children; },
+			get fullBody() {
+				return self.fullBody;
+			},
+			get allIdentifiers() {
+				return self.allIdentifiers;
+			},
+			get wildcard() {
+				return node.wildcard;
+			},
+			get children() {
+				return node.children;
+			},
 
 			prologue: (js: string) => {
 				if (this.scanner.containsAwait(js)) this.markAsync();
@@ -614,7 +675,9 @@ export class Compiler {
 				if (node.type === "directive" && node.args) {
 					for (const arg of node.args) {
 						if (typeof arg !== "string") continue;
-						const m = arg.match(/^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*([\s\S]+)$/);
+						const m = arg.match(
+							/^\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\s*:\s*([\s\S]+)$/,
+						);
 						if (m && m[1] === n) return this.attrCodegen.parseAttrCode(m[2]!);
 					}
 				}
@@ -671,7 +734,11 @@ export class Compiler {
 
 		const scanGenerated = () => {
 			const raw =
-				this.header.join("\n") + "\n" + this.body.join("\n") + "\n" + this.footer.join("\n");
+				this.header.join("\n") +
+				"\n" +
+				this.body.join("\n") +
+				"\n" +
+				this.footer.join("\n");
 			this.scanner.collectIdentifiers(raw, activeIdentifiers);
 		};
 
@@ -690,7 +757,10 @@ export class Compiler {
 					if (!isUsed && entry.name instanceof RegExp) {
 						for (const id of activeIdentifiers) {
 							entry.name.lastIndex = 0;
-							if (entry.name.test(id)) { isUsed = true; break; }
+							if (entry.name.test(id)) {
+								isUsed = true;
+								break;
+							}
 						}
 						entry.name.lastIndex = 0;
 					}
@@ -708,7 +778,11 @@ export class Compiler {
 
 						entry.callback?.(
 							this.createCompilerApi(
-								{ type: "directive", name: "existVar", loc: { line: 0, column: 0 } } as any,
+								{
+									type: "directive",
+									name: "existVar",
+									loc: { line: 0, column: 0 },
+								} as any,
 								{},
 								true,
 							),

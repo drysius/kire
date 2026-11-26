@@ -66,6 +66,12 @@ export class ClientComponent {
 			// Keep the DOM's snapshot current for re-scans/debugging.
 			this.el.setAttribute("wire:snapshot", JSON.stringify(snapshot));
 			this.runtime.bind(this);
+			// Let integrations (e.g. Alpine.js) re-initialize the morphed subtree.
+			if (typeof window !== "undefined") {
+				window.dispatchEvent(
+					new CustomEvent("kirewire:morphed", { detail: { el: this.el } }),
+				);
+			}
 		}
 		for (const d of effects.dispatches ?? []) this.runtime.dispatch(d, this);
 		for (const src of effects.scripts ?? []) this.runtime.runScript(src);
