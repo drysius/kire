@@ -41,3 +41,11 @@ app.use(kireExpress({ views: "views", wire: { instance: wire } }));
 
 In your layout, `@kirewireScripts` injects the client `<script>` and
 `@wire("counter")` mounts a component.
+
+This example includes a reactive counter at **`/counter`** (see `counter.ts` and
+`views/counter.kire`). The client runtime is auto-served at `/kirewire.js`; in
+this monorepo, build it once with:
+
+```bash
+bun run packages/wire/build.ts
+```

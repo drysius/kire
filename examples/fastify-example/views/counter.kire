@@ -1,0 +1,12 @@
+@component("layout", { title: "Counter — Fastify + Kire" })
+	@section("content")
+		<h1>Reactive counter</h1>
+		<p>Server-driven reactivity with Kirewire over Fastify.</p>
+
+		@wire("counter")
+
+		<p><a href="/">Home</a></p>
+
+		@kirewireScripts
+	@endsection
+@endcomponent

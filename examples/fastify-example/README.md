@@ -30,4 +30,7 @@ wire.component(Counter);
 app.register(kireFastify({ views: "views", wire: { instance: wire } }));
 ```
 
-The update endpoint is mounted and the client runtime is auto-served.
+The update endpoint is mounted and the client runtime is auto-served. This
+example includes a reactive counter at **`/counter`** (`counter.ts` +
+`views/counter.kire`); build the client bundle once with
+`bun run packages/wire/build.ts`.

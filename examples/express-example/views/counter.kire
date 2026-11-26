@@ -1,0 +1,14 @@
+@component("layout", { title: "Counter — Express + Kire" })
+	@section("content")
+		<h1>Reactive counter</h1>
+		<p>Server-driven reactivity with Kirewire. Clicks hit the server and the
+		DOM is morphed in place.</p>
+
+		@wire("counter")
+
+		<p><a href="/">Home</a></p>
+
+		{{-- Injects the Kirewire client runtime (served at /kirewire.js). --}}
+		@kirewireScripts
+	@endsection
+@endcomponent
