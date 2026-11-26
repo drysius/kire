@@ -1,0 +1,15 @@
+{
+	"name": "kire-express-app",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "node --watch main.js",
+		"start": "node main.js"
+	},
+	"dependencies": {
+		"@kirejs/express": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"express": "^5.0.0",
+		"kire": "^0.1.0"
+	}
+}

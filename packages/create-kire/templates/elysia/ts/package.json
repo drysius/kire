@@ -1,0 +1,13 @@
+{
+	"name": "kire-elysia-app",
+	"private": true,
+	"type": "module",
+	"scripts": { "dev": "bun --watch main.ts", "start": "bun main.ts" },
+	"dependencies": {
+		"@kirejs/elysia": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"elysia": "^1.0.0",
+		"kire": "^0.1.0"
+	},
+	"devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0" }
+}

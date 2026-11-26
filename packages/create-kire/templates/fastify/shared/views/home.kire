@@ -1,0 +1,16 @@
+@component("layout", { title: "Fastify + Kire" })
+	@section("content")
+		<section class="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+			<h1 class="text-3xl font-bold tracking-tight">{{ title }}</h1>
+			<p class="mt-2 text-slate-600">
+				A tiny app rendered by Kire through Fastify. Templates, components and
+				server-driven reactivity work out of the box.
+			</p>
+
+			<div class="mt-6 flex gap-3">
+				<a href="/counter" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">Live counter →</a>
+				<a href="/showcase" class="rounded-lg px-4 py-2 text-sm font-semibold text-indigo-600 ring-1 ring-indigo-200 hover:bg-indigo-50">Directive showcase</a>
+			</div>
+		</section>
+	@endsection
+@endcomponent

@@ -1,0 +1,12 @@
+{
+	"name": "kire-fastify-app",
+	"private": true,
+	"type": "module",
+	"scripts": { "dev": "node --watch main.js", "start": "node main.js" },
+	"dependencies": {
+		"@kirejs/fastify": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"fastify": "^5.0.0",
+		"kire": "^0.1.0"
+	}
+}

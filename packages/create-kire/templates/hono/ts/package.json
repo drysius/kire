@@ -1,0 +1,14 @@
+{
+	"name": "kire-hono-app",
+	"private": true,
+	"type": "module",
+	"scripts": { "dev": "tsx watch main.ts", "start": "tsx main.ts" },
+	"dependencies": {
+		"@hono/node-server": "^1.13.0",
+		"@kirejs/hono": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"hono": "^4.0.0",
+		"kire": "^0.1.0"
+	},
+	"devDependencies": { "@types/node": "^22.0.0", "tsx": "^4.0.0", "typescript": "^5.6.0" }
+}

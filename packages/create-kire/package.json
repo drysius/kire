@@ -1,0 +1,25 @@
+{
+	"name": "create-kire",
+	"description": "Scaffold a new Kire app — pick a framework template and TypeScript or JavaScript.",
+	"version": "0.1.0",
+	"type": "module",
+	"bin": {
+		"create-kire": "dist/index.js"
+	},
+	"files": ["dist", "templates"],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"keywords": ["kire", "scaffold", "create", "starter", "template"],
+	"author": "drysius",
+	"license": "MIT",
+	"scripts": {
+		"build": "bun build src/index.ts --outfile dist/index.js --target node --format esm",
+		"dev": "bun src/index.ts"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.11.0",
+		"picocolors": "^1.1.1"
+	}
+}

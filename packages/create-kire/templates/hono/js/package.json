@@ -1,0 +1,13 @@
+{
+	"name": "kire-hono-app",
+	"private": true,
+	"type": "module",
+	"scripts": { "dev": "node --watch main.js", "start": "node main.js" },
+	"dependencies": {
+		"@hono/node-server": "^1.13.0",
+		"@kirejs/hono": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"hono": "^4.0.0",
+		"kire": "^0.1.0"
+	}
+}
