@@ -56,8 +56,18 @@ app.post("/_wire", async (req, res) => {
 </script>
 ```
 
-Directives: `wire:click`, `wire:submit`, `wire:model[.live|.blur|.lazy]`,
-`wire:init`, `wire:poll[.Nms]`, `wire:loading`, `wire:ignore`, `wire:key`.
+Directives: `wire:click`, `wire:submit`, `wire:change`, `wire:keydown`,
+`wire:model[.live|.blur|.lazy]`, `wire:init`, `wire:poll[.Nms]`, `wire:loading`,
+`wire:dirty` (+ `wire:target`, `.class`/`.remove`), `wire:offline`,
+`wire:confirm`, `wire:ignore`, `wire:key`, `wire:navigate`.
+
+## Alpine.js interop
+
+Kirewire has its own signal reactivity and needs no Alpine, but the two work
+together: pass `start({ alpine })` (default: auto-detect `window.Alpine`) and
+`Alpine.initTree` re-runs on each server-driven morph. Wrap persistent Alpine
+islands in `wire:ignore` so the morph leaves their state intact. In `.kire`
+views, Alpine's `@click`/`:class` shorthands pass through untouched.
 
 ## Security
 
