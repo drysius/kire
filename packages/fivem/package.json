@@ -1,7 +1,7 @@
 {
 	"name": "@kirejs/fivem",
 	"description": "FiveM (NUI) integration for Kire + Kirewire — render NUI pages and handle updates via RegisterNuiCallback.",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"main": "dist/cjs/index.cjs",
 	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",

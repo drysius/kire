@@ -1,7 +1,7 @@
 {
 	"name": "create-kire",
 	"description": "Scaffold a new Kire app — pick a framework template and TypeScript or JavaScript.",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"type": "module",
 	"bin": {
 		"create-kire": "dist/index.js"
