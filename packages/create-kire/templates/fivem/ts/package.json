@@ -1,0 +1,14 @@
+{
+	"name": "kire-fivem-resource",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "bun build server.ts --outfile dist/server.js --target node && bun build nui-boot.ts --outfile nui/client.js --target browser --format esm"
+	},
+	"dependencies": {
+		"@kirejs/fivem": "^0.1.0",
+		"@kirejs/wire": "^0.2.0",
+		"kire": "^0.1.0"
+	},
+	"devDependencies": { "@types/node": "^22.0.0", "typescript": "^5.6.0" }
+}

@@ -1,0 +1,9 @@
+<div class="min-h-screen bg-slate-900/80 p-8 text-slate-100">
+	<div class="mx-auto max-w-md rounded-2xl bg-slate-800 p-6 ring-1 ring-white/10">
+		<h1 class="text-xl font-bold">Kire × FiveM</h1>
+		<p class="mt-1 text-sm text-slate-400">Server-driven reactivity inside NUI.</p>
+		<div class="mt-6 rounded-xl bg-slate-900 p-6">
+			@wire("counter")
+		</div>
+	</div>
+</div>

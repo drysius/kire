@@ -535,13 +535,13 @@ export class Compiler {
 									dirDef,
 								),
 							);
-						} else if (val === "" || val === true) {
+						} else if (!val) {
 							// Unknown `@name` with no value → keep it as a literal
 							// attribute (e.g. Alpine.js `@click.away`); don't consume it.
 							this.textBuffer += ` ${key}`;
-						} else if (INTERPOLATION_START_REGEX.test(String(val))) {
+						} else if (INTERPOLATION_START_REGEX.test(val)) {
 							this.textBuffer += ` ${key}="`;
-							this.emitExpr(this.attrCodegen.parseHtmlAttrCode(String(val)));
+							this.emitExpr(this.attrCodegen.parseHtmlAttrCode(val));
 							this.textBuffer += '"';
 						} else {
 							// Unknown `@name="expr"` → pass through verbatim so client

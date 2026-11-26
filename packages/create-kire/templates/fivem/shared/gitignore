@@ -1,0 +1,4 @@
+node_modules
+dist
+nui/client.js
+*.log
