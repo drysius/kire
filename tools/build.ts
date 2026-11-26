@@ -56,7 +56,8 @@ class Builder {
 				baseUrl: ".",
 				skipLibCheck: true,
 				paths: {
-					"*": ["node_modules/*"],
+					// No catch-all `*` mapping: it shadows @types resolution and makes
+					// `declare module "koa"` etc. resolve to the untyped JS entry.
 				},
 			},
 			include: ["src/**/*"],
@@ -70,14 +71,17 @@ class Builder {
 			);
 			// @ts-expect-error
 			tempConfig.compilerOptions.paths.kire = [coreTypesPath];
-			// @ts-expect-error
+			// @ts-expect-error — resolve @kirejs/* to the built declaration files
+			// (not source), so dependents don't pull another package's source into
+			// their own declaration build (TS6059). Requires the dependency to be
+			// built first — see the package sort in tools/utils.ts.
 			tempConfig.compilerOptions.paths["@kirejs/*"] = [
-				`${relativeRoot}/packages/*/src/index.ts`,
+				`${relativeRoot}/publish/packages/*/dist/types/index.d.ts`,
 			];
 		} else {
 			// @ts-expect-error
 			tempConfig.compilerOptions.paths["@kirejs/*"] = [
-				`${relativeRoot}/packages/*/src/index.ts`,
+				`${relativeRoot}/publish/packages/*/dist/types/index.d.ts`,
 			];
 		}
 

@@ -1,3 +1,6 @@
+// Anchors `fastify` in the program so the module augmentation below resolves
+// (both for consumers and the declaration build).
+import type {} from "fastify";
 import { Kire } from "kire";
 import type { KireFastifyOptions } from "./types";
 

@@ -1,4 +1,5 @@
-import type { KireContext } from "kire";
+/** The render context/locals passed to auth callbacks. */
+export type KireContext = Record<string, unknown>;
 
 export interface AuthOptions {
 	/**

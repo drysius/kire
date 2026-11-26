@@ -75,10 +75,14 @@ export async function getPackages(
 		});
 	}
 
-	// Sort: 'kire' (core) first
+	// Sort so dependencies build first: core (`kire`), then `@kirejs/wire`
+	// (every integration package depends on it), then the rest alphabetically.
+	const rank = (name: string) =>
+		name === "kire" ? 0 : name === "@kirejs/wire" ? 1 : 2;
 	const sortedPackages = Array.from(packages.values()).sort((a, b) => {
-		if (a.name === "kire") return -1;
-		if (b.name === "kire") return 1;
+		const ra = rank(a.name);
+		const rb = rank(b.name);
+		if (ra !== rb) return ra - rb;
 		return a.name.localeCompare(b.name);
 	});
 

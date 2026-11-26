@@ -12,7 +12,12 @@ function isSafeRemoteUrl(raw: string): boolean {
 	}
 	if (url.protocol !== "http:" && url.protocol !== "https:") return false;
 	const host = url.hostname.toLowerCase();
-	if (host === "localhost" || host === "0.0.0.0" || host === "::1" || host.endsWith(".local")) {
+	if (
+		host === "localhost" ||
+		host === "0.0.0.0" ||
+		host === "::1" ||
+		host.endsWith(".local")
+	) {
 		return false;
 	}
 	const ipv4 = host.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
@@ -31,7 +36,8 @@ function isSafeRemoteUrl(raw: string): boolean {
 		}
 	}
 	// IPv6 loopback / unique-local / link-local
-	if (host.startsWith("fe80") || host.startsWith("fc") || host.startsWith("fd")) return false;
+	if (host.startsWith("fe80") || host.startsWith("fc") || host.startsWith("fd"))
+		return false;
 	return true;
 }
 

@@ -13,7 +13,7 @@ function getAssetFromPath(
 	const hash = match[1];
 	const ext = match[2] as "js" | "css" | "mjs" | "svg";
 
-	const cache = kire.cached<KireAsset>("@kirejs/assets");
+	const cache = kire.cached("@kirejs/assets") as Record<string, KireAsset>;
 	const asset = cache[hash!];
 	if (asset && asset.type === ext) {
 		return { content: asset.content, type: ext };
