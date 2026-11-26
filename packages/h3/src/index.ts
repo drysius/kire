@@ -152,7 +152,9 @@ function resolveClientScript(wire: WireIntegration): string | null {
 	try {
 		const nodePath = require("node:path");
 		const { existsSync } = require("node:fs");
-		const main = require.resolve("@kirejs/wire").replace(/\\/g, "/");
+		const main = require
+			.resolve(["@kirejs", "wire"].join("/"))
+			.replace(/\\/g, "/");
 		const marker = main.includes("/dist/")
 			? "/dist/"
 			: main.includes("/src/")

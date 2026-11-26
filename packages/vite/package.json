@@ -1,7 +1,7 @@
 {
 	"name": "@kirejs/vite",
 	"description": "Vite integration for Kire with Laravel-style manifest + @vite helper.",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"main": "dist/cjs/index.cjs",
 	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",

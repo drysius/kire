@@ -1,7 +1,7 @@
 {
 	"name": "@kirejs/hono",
 	"description": "Hono integration for Kire — c.var.view() and one-line Kirewire setup.",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"main": "dist/cjs/index.cjs",
 	"module": "dist/esm/index.js",
 	"types": "dist/types/index.d.ts",
