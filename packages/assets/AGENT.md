@@ -10,7 +10,9 @@ Asset management plugin for Kire.
 
 ```ts
 import KireAssets from "@kirejs/assets";
-kire.plugin(KireAssets, { /* options */ });
+kire.plugin(KireAssets, {
+	/* options */
+});
 ```
 
 ## Conventions

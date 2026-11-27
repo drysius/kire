@@ -27,6 +27,7 @@
 		"check": "bun run biome:check"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "2.6.9",
 		"@eslint/js": "^9.39.2",
 		"@types/bun": "latest",
 		"@types/express": "^5.0.6",

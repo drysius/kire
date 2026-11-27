@@ -10,7 +10,9 @@ Iconify icon integration for Kire (@icon, <iconify/>).
 
 ```ts
 import KireIconify from "@kirejs/iconify";
-kire.plugin(KireIconify, { /* options */ });
+kire.plugin(KireIconify, {
+	/* options */
+});
 ```
 
 ## Conventions

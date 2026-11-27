@@ -2,9 +2,9 @@ name: Linux Tests
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: read
@@ -14,18 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v1
-      with:
-        bun-version: latest
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
 
-    - name: Install Dependencies
-      run: bun run install:all
+      - name: Install Dependencies
+        run: bun run install:all
 
-    - name: Build Kire Packages
-      run: bun run build
+      - name: Build Kire Packages
+        run: bun run build
 
-    - name: Run Tests
-      run: bun test
+      - name: Run Tests
+        run: bun test

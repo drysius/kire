@@ -10,7 +10,9 @@ Tailwind integration for Kire (<tailwind>, @tailwind).
 
 ```ts
 import KireTailwind from "@kirejs/tailwind";
-kire.plugin(KireTailwind, { /* options */ });
+kire.plugin(KireTailwind, {
+	/* options */
+});
 ```
 
 ## Conventions
