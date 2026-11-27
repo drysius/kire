@@ -35,7 +35,8 @@ export class JsScanner {
 
 			const prevRaw = normalized[match.index - 1];
 			const nextRaw = normalized[match.index + id.length];
-			if (this.isIdentPartChar(prevRaw) || this.isIdentPartChar(nextRaw)) continue;
+			if (this.isIdentPartChar(prevRaw) || this.isIdentPartChar(nextRaw))
+				continue;
 
 			const prev = this.prevNonWhitespace(normalized, match.index - 1);
 			if (prev === ".") continue;
@@ -55,7 +56,10 @@ export class JsScanner {
 
 		while (i < len) {
 			const ch = normalized[i]!;
-			if (!this.isIdentStartChar(ch)) { i++; continue; }
+			if (!this.isIdentStartChar(ch)) {
+				i++;
+				continue;
+			}
 
 			let j = i + 1;
 			while (j < len && this.isIdentPartChar(normalized[j])) j++;
@@ -85,7 +89,10 @@ export class JsScanner {
 			if (!this.isIdentPartChar(before) && !this.isIdentPartChar(after)) {
 				const prev = this.prevNonWhitespace(source, index - 1);
 				if (prev !== ".") {
-					const next = this.nextNonWhitespace(source, index + identifier.length);
+					const next = this.nextNonWhitespace(
+						source,
+						index + identifier.length,
+					);
 					if (!(next === ":" && (prev === "{" || prev === ","))) return true;
 				}
 			}
@@ -118,22 +125,35 @@ export class JsScanner {
 			const next = code[i + 1];
 
 			if (inLineComment) {
-				if (ch === "\n" || ch === "\r") { inLineComment = false; out += ch; }
-				else out += " ";
+				if (ch === "\n" || ch === "\r") {
+					inLineComment = false;
+					out += ch;
+				} else out += " ";
 				i++;
 				continue;
 			}
 
 			if (inBlockComment) {
-				if (ch === "*" && next === "/") { inBlockComment = false; out += "  "; i += 2; }
-				else { out += ch === "\n" || ch === "\r" ? ch : " "; i++; }
+				if (ch === "*" && next === "/") {
+					inBlockComment = false;
+					out += "  ";
+					i += 2;
+				} else {
+					out += ch === "\n" || ch === "\r" ? ch : " ";
+					i++;
+				}
 				continue;
 			}
 
 			if (inSingle) {
 				if (ch === "\\") {
 					out += " ";
-					if (i + 1 < len) { out += code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " "; i += 2; continue; }
+					if (i + 1 < len) {
+						out +=
+							code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " ";
+						i += 2;
+						continue;
+					}
 					i++;
 				} else {
 					if (ch === "'") inSingle = false;
@@ -146,7 +166,12 @@ export class JsScanner {
 			if (inDouble) {
 				if (ch === "\\") {
 					out += " ";
-					if (i + 1 < len) { out += code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " "; i += 2; continue; }
+					if (i + 1 < len) {
+						out +=
+							code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " ";
+						i += 2;
+						continue;
+					}
 					i++;
 				} else {
 					if (ch === '"') inDouble = false;
@@ -159,7 +184,12 @@ export class JsScanner {
 			if (inTemplate) {
 				if (ch === "\\") {
 					out += " ";
-					if (i + 1 < len) { out += code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " "; i += 2; continue; }
+					if (i + 1 < len) {
+						out +=
+							code[i + 1] === "\n" || code[i + 1] === "\r" ? code[i + 1] : " ";
+						i += 2;
+						continue;
+					}
 					i++;
 				} else {
 					if (ch === "`") inTemplate = false;
@@ -176,13 +206,26 @@ export class JsScanner {
 					i += i + 1 < len ? 2 : 1;
 					continue;
 				}
-				if (!inRegexCharClass && ch === "[") { inRegexCharClass = true; out += " "; i++; continue; }
-				if (inRegexCharClass && ch === "]") { inRegexCharClass = false; out += " "; i++; continue; }
+				if (!inRegexCharClass && ch === "[") {
+					inRegexCharClass = true;
+					out += " ";
+					i++;
+					continue;
+				}
+				if (inRegexCharClass && ch === "]") {
+					inRegexCharClass = false;
+					out += " ";
+					i++;
+					continue;
+				}
 				if (!inRegexCharClass && ch === "/") {
 					inRegex = false;
 					out += " ";
 					i++;
-					while (i < len && /[a-zA-Z]/.test(code[i]!)) { out += " "; i++; }
+					while (i < len && /[a-zA-Z]/.test(code[i]!)) {
+						out += " ";
+						i++;
+					}
 					continue;
 				}
 				out += ch === "\n" || ch === "\r" ? ch : " ";
@@ -190,9 +233,24 @@ export class JsScanner {
 				continue;
 			}
 
-			if (ch === "/" && next === "/") { inLineComment = true; out += "  "; i += 2; continue; }
-			if (ch === "/" && next === "*") { inBlockComment = true; out += "  "; i += 2; continue; }
-			if (ch === "/" && next !== "/" && next !== "*" && this.looksLikeRegexStart(code, i)) {
+			if (ch === "/" && next === "/") {
+				inLineComment = true;
+				out += "  ";
+				i += 2;
+				continue;
+			}
+			if (ch === "/" && next === "*") {
+				inBlockComment = true;
+				out += "  ";
+				i += 2;
+				continue;
+			}
+			if (
+				ch === "/" &&
+				next !== "/" &&
+				next !== "*" &&
+				this.looksLikeRegexStart(code, i)
+			) {
 				inRegex = true;
 				inRegexCharClass = false;
 				out += " ";
@@ -200,9 +258,24 @@ export class JsScanner {
 				continue;
 			}
 
-			if (ch === "'") { inSingle = true; out += " "; i++; continue; }
-			if (ch === '"') { inDouble = true; out += " "; i++; continue; }
-			if (ch === "`") { inTemplate = true; out += " "; i++; continue; }
+			if (ch === "'") {
+				inSingle = true;
+				out += " ";
+				i++;
+				continue;
+			}
+			if (ch === '"') {
+				inDouble = true;
+				out += " ";
+				i++;
+				continue;
+			}
+			if (ch === "`") {
+				inTemplate = true;
+				out += " ";
+				i++;
+				continue;
+			}
 
 			out += ch;
 			i++;
@@ -272,7 +345,13 @@ export class JsScanner {
 		const prev = this.prevNonWhitespace(source, slashIndex - 1);
 		if (!prev) return true;
 		if (/[([{:;,=!?&|+\-*%^~<>]/.test(prev)) return true;
-		if (prev === ")" || prev === "]" || prev === "}" || prev === "'" || prev === '"')
+		if (
+			prev === ")" ||
+			prev === "]" ||
+			prev === "}" ||
+			prev === "'" ||
+			prev === '"'
+		)
 			return false;
 
 		let j = slashIndex - 1;
@@ -296,7 +375,9 @@ export class JsScanner {
 	}
 
 	private splitDeclaratorBinding(segment: string): string {
-		let dPar = 0, dBra = 0, dCur = 0;
+		let dPar = 0,
+			dBra = 0,
+			dCur = 0;
 		for (let i = 0; i < segment.length; i++) {
 			const ch = segment[i]!;
 			if (ch === "(") dPar++;
@@ -312,7 +393,8 @@ export class JsScanner {
 
 			if (ch === " " || ch === "\t") {
 				const rest = segment.slice(i);
-				if (/^(?:\s+)(?:in|of)(?:\s+)/.test(rest)) return segment.slice(0, i).trim();
+				if (/^(?:\s+)(?:in|of)(?:\s+)/.test(rest))
+					return segment.slice(0, i).trim();
 			}
 		}
 		return segment.trim();
@@ -325,7 +407,9 @@ export class JsScanner {
 		decls: Set<string>,
 	): number {
 		let i = start;
-		let dPar = 0, dBra = 0, dCur = 0;
+		let dPar = 0,
+			dBra = 0,
+			dCur = 0;
 		let declaratorStart = i;
 		let stopped = false;
 
@@ -335,7 +419,11 @@ export class JsScanner {
 			else if (ch === ")") {
 				if (dPar === 0 && dBra === 0 && dCur === 0) {
 					const seg = normalized.slice(declaratorStart, i).trim();
-					if (seg) this.collectBindingsFromPattern(this.splitDeclaratorBinding(seg), decls);
+					if (seg)
+						this.collectBindingsFromPattern(
+							this.splitDeclaratorBinding(seg),
+							decls,
+						);
 					i++;
 					stopped = true;
 					break;
@@ -349,11 +437,19 @@ export class JsScanner {
 			if (dPar === 0 && dBra === 0 && dCur === 0) {
 				if (ch === ",") {
 					const seg = normalized.slice(declaratorStart, i).trim();
-					if (seg) this.collectBindingsFromPattern(this.splitDeclaratorBinding(seg), decls);
+					if (seg)
+						this.collectBindingsFromPattern(
+							this.splitDeclaratorBinding(seg),
+							decls,
+						);
 					declaratorStart = i + 1;
 				} else if (ch === ";") {
 					const seg = normalized.slice(declaratorStart, i).trim();
-					if (seg) this.collectBindingsFromPattern(this.splitDeclaratorBinding(seg), decls);
+					if (seg)
+						this.collectBindingsFromPattern(
+							this.splitDeclaratorBinding(seg),
+							decls,
+						);
 					i++;
 					stopped = true;
 					break;
@@ -361,7 +457,11 @@ export class JsScanner {
 					const prev = this.prevNonWhitespace(normalized, i - 1);
 					if (prev !== ",") {
 						const seg = normalized.slice(declaratorStart, i).trim();
-						if (seg) this.collectBindingsFromPattern(this.splitDeclaratorBinding(seg), decls);
+						if (seg)
+							this.collectBindingsFromPattern(
+								this.splitDeclaratorBinding(seg),
+								decls,
+							);
 						i++;
 						stopped = true;
 						break;
@@ -373,7 +473,11 @@ export class JsScanner {
 
 		if (!stopped && declaratorStart < len) {
 			const seg = normalized.slice(declaratorStart).trim();
-			if (seg) this.collectBindingsFromPattern(this.splitDeclaratorBinding(seg), decls);
+			if (seg)
+				this.collectBindingsFromPattern(
+					this.splitDeclaratorBinding(seg),
+					decls,
+				);
 			i = len;
 		}
 

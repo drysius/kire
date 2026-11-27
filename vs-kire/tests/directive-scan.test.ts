@@ -37,5 +37,4 @@ describe("scanDirectives regions", () => {
 		const text = "<!-- @if(x) -->{{-- @for(i of a) --}}@else";
 		expect(scanDirectives(text).map((c) => c.name)).toEqual(["else"]);
 	});
-
 });

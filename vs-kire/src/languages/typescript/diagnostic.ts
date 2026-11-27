@@ -33,7 +33,9 @@ export class TypescriptDiagnosticProvider {
 	}
 
 	private isKireDocument(document: vscode.TextDocument) {
-		return document.languageId === "kire" || document.fileName.endsWith(".kire");
+		return (
+			document.languageId === "kire" || document.fileName.endsWith(".kire")
+		);
 	}
 
 	private cancelRefresh(document: vscode.TextDocument) {

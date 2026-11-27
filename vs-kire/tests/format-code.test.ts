@@ -16,7 +16,9 @@ describe("formatCode", () => {
 		expect(out).toContain("margin: 0;");
 	});
 	it("honors tabWidth/useTabs", async () => {
-		const out = await formatCode("function f(){return 1}", "javascript", { useTabs: true });
+		const out = await formatCode("function f(){return 1}", "javascript", {
+			useTabs: true,
+		});
 		expect(out).toContain("\treturn 1;");
 	});
 	it("returns null on syntax error (caller falls back)", async () => {

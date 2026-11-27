@@ -46,7 +46,9 @@ function tryLoadKireFromBase(basePath: string): ResolvedKire | null {
 function resolveKireVersion(requireFromBase: NodeRequire): string {
 	try {
 		const pkgPath = requireFromBase.resolve("kire/package.json");
-		const pkg = JSON.parse(runtimeRequire("node:fs").readFileSync(pkgPath, "utf8"));
+		const pkg = JSON.parse(
+			runtimeRequire("node:fs").readFileSync(pkgPath, "utf8"),
+		);
 		if (typeof pkg?.version === "string") return pkg.version;
 	} catch {}
 	return "0.0.0";

@@ -16,7 +16,9 @@ function isDirty(component: ClientComponent, paths: string[]): boolean {
 		string,
 		unknown
 	>;
-	const keys = paths.length ? paths : Object.keys(component.ephemeral as object);
+	const keys = paths.length
+		? paths
+		: Object.keys(component.ephemeral as object);
 	for (const key of keys) {
 		const current = getDeep(component.ephemeral, key);
 		const base = getDeep(canonical, key);

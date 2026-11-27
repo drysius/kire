@@ -435,8 +435,8 @@ describe("Kire Directives & Elements", () => {
 		const page = '@layout("layouts.app")<p>Hello</p>@endlayout';
 		const result = await k.render(page);
 
-		expect(result).toContain('/themes/my-theme/app.css');
-		expect(result).toContain('<p>Hello</p>');
+		expect(result).toContain("/themes/my-theme/app.css");
+		expect(result).toContain("<p>Hello</p>");
 	});
 
 	test("@layout: $global used inside layout attribute value resolves from fork globals", async () => {
@@ -455,7 +455,7 @@ describe("Kire Directives & Elements", () => {
 		const page = '@layout("layouts.app")<span>content</span>@endlayout';
 		const result = await fork.render(page);
 
-		expect(result).toContain('/assets/light/app.css');
+		expect(result).toContain("/assets/light/app.css");
 	});
 	test("@layout: request global from fork should be available inside nested @include locals", async () => {
 		const parent = new Kire({ production: true, silent: true });
@@ -470,9 +470,10 @@ describe("Kire Directives & Elements", () => {
 		const fork = parent.fork();
 		fork.$global("request", { url: "/settings" });
 
-		const result = await fork.render("@layout('layouts.app', it)Body@endlayout");
+		const result = await fork.render(
+			"@layout('layouts.app', it)Body@endlayout",
+		);
 		expect(result).toContain("<span>off</span>");
 		expect(result).toContain("<main>Body</main>");
 	});
-
 });

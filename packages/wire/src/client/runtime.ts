@@ -3,6 +3,7 @@ import {
 	PROTOCOL_VERSION,
 	type Snapshot,
 	type Transport,
+	type UpdateResponse,
 } from "../contracts";
 import { ClientComponent } from "./component";
 import type { DirectiveRegistry } from "./directives";
@@ -164,7 +165,7 @@ export class WireRuntime {
 		};
 
 		this.emitLoading(entries, true);
-		let response;
+		let response: UpdateResponse;
 		try {
 			response = await this.transport.send(request);
 		} catch (error) {

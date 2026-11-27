@@ -120,6 +120,7 @@ export function processSvgAttributes(
 		rebuilt += ` class="${escapeAttrValue(classVal)}"`;
 		attrs.delete("class");
 	}
-	for (const [key, value] of attrs) rebuilt += ` ${key}="${escapeAttrValue(value)}"`;
+	for (const [key, value] of attrs)
+		rebuilt += ` ${key}="${escapeAttrValue(value)}"`;
 	return rebuilt + rest;
 }

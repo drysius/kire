@@ -63,8 +63,8 @@ export function collectStructuralTokens(text: string): StructuralToken[] {
 			// A branch closer that exactly names the branch closes only it.
 			const closesBranchOnly =
 				call.name === `end${directiveStack[matchIndex]}` &&
-				(state.parentDirectives.get(directiveStack[matchIndex]!) || [])
-					.length > 0 &&
+				(state.parentDirectives.get(directiveStack[matchIndex]!) || []).length >
+					0 &&
 				matchIndex > 0;
 			let rootIndex = matchIndex;
 			if (!closesBranchOnly) {
@@ -137,9 +137,19 @@ export function collectStructuralTokens(text: string): StructuralToken[] {
 		const tagName = m[2]!;
 		const selfClosing = m[4] === "/";
 		if (closing) {
-			tokens.push({ kind: "close", offset: i, length: m[0].length, label: `</${tagName}>` });
+			tokens.push({
+				kind: "close",
+				offset: i,
+				length: m[0].length,
+				label: `</${tagName}>`,
+			});
 		} else if (!selfClosing && !isVoidTag(tagName)) {
-			tokens.push({ kind: "open", offset: i, length: m[0].length, label: `<${tagName}>` });
+			tokens.push({
+				kind: "open",
+				offset: i,
+				length: m[0].length,
+				label: `<${tagName}>`,
+			});
 		}
 		i += m[0].length - 1;
 	}

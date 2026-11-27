@@ -91,7 +91,10 @@ export function kireElysia(options: KireElysiaOptions): Elysia {
 			const hub = ws.hub ?? new wirePkg.Hub();
 			// Bridge Elysia's event-based ws lifecycle to serveWs's callback model:
 			// stash each connection's registered handlers keyed by the raw socket.
-			const conns = new Map<any, { msg?: (d: string) => void; close?: () => void }>();
+			const conns = new Map<
+				any,
+				{ msg?: (d: string) => void; close?: () => void }
+			>();
 			const key = (socket: any) => socket.raw ?? socket;
 			app = app.ws(wsPath as string, {
 				open(socket: any) {

@@ -19,7 +19,10 @@ export class AttrCodegen {
 	readonly mixedAttrIdents = new Set<string>();
 	// Reused across parseHtmlAttrCode calls instead of allocating a new RegExp
 	// each time (this method runs many times per template compile).
-	private readonly interpRx = new RegExp(INTERPOLATION_GLOBAL_REGEX.source, "g");
+	private readonly interpRx = new RegExp(
+		INTERPOLATION_GLOBAL_REGEX.source,
+		"g",
+	);
 
 	constructor(
 		private scanner: JsScanner,
@@ -36,10 +39,7 @@ export class AttrCodegen {
 	esc(str: string): string {
 		return (
 			"`" +
-			str
-				.replace(/\\/g, "\\\\")
-				.replace(/`/g, "\\`")
-				.replace(/\$/g, "\\$") +
+			str.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$/g, "\\$") +
 			"`"
 		);
 	}
@@ -71,7 +71,7 @@ export class AttrCodegen {
 			this.collectExpressionIdents(expr);
 			return `\${$escape(${expr})}`;
 		});
-		return "`" + res + "`";
+		return `\`${res}\``;
 	}
 
 	/**
@@ -110,7 +110,7 @@ export class AttrCodegen {
 		const tail = val.slice(lastIndex);
 		if (tail) out += this.escapeChunk(escapeHtml(tail));
 
-		return "`" + out + "`";
+		return `\`${out}\``;
 	}
 
 	// ── Private ───────────────────────────────────────────────────────────────

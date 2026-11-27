@@ -155,13 +155,14 @@ export class KireDiagnosticProvider {
 
 			if (call.name === "end") {
 				if (stack.length === 0) {
-					if (structural) diagnostics.push(
-						new vscode.Diagnostic(
-							range,
-							"Unexpected @end without an opening directive block",
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
+					if (structural)
+						diagnostics.push(
+							new vscode.Diagnostic(
+								range,
+								"Unexpected @end without an opening directive block",
+								vscode.DiagnosticSeverity.Error,
+							),
+						);
 				} else {
 					stack.pop();
 				}
@@ -172,23 +173,25 @@ export class KireDiagnosticProvider {
 				const target = call.name.slice(3);
 				const top = stack[stack.length - 1];
 				if (!top) {
-					if (structural) diagnostics.push(
-						new vscode.Diagnostic(
-							range,
-							`Unexpected @${call.name} without an opening @${target}`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
+					if (structural)
+						diagnostics.push(
+							new vscode.Diagnostic(
+								range,
+								`Unexpected @${call.name} without an opening @${target}`,
+								vscode.DiagnosticSeverity.Error,
+							),
+						);
 					continue;
 				}
 				if (top.name !== target) {
-					if (structural) diagnostics.push(
-						new vscode.Diagnostic(
-							range,
-							`@${call.name} closes @${target}, but current block is @${top.name}`,
-							vscode.DiagnosticSeverity.Error,
-						),
-					);
+					if (structural)
+						diagnostics.push(
+							new vscode.Diagnostic(
+								range,
+								`@${call.name} closes @${target}, but current block is @${top.name}`,
+								vscode.DiagnosticSeverity.Error,
+							),
+						);
 					continue;
 				}
 				stack.pop();

@@ -4,7 +4,8 @@ import { KireAssets } from "../../assets/src/index";
 import { KireTailwind } from "../src";
 import { extractCandidates } from "../src/compiler";
 
-const styleOf = (html: string) => html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
+const styleOf = (html: string) =>
+	html.match(/<style>([\s\S]*?)<\/style>/)?.[1] ?? "";
 
 describe("@kirejs/tailwind", () => {
 	it("generates utility CSS for classes used anywhere in the page", async () => {
@@ -43,7 +44,10 @@ describe("@kirejs/tailwind", () => {
 
 		const hash1 = result1.match(/\/([a-f0-9]{8})\.css"/)?.[1];
 		expect(hash1).toBeTruthy();
-		const assetCache = kire.cached("@kirejs/assets") as Record<string, { content: string }>;
+		const assetCache = kire.cached("@kirejs/assets") as Record<
+			string,
+			{ content: string }
+		>;
 		expect(assetCache[hash1!]!.content).toContain(".shared");
 		expect(assetCache[hash1!]!.content).toContain("margin");
 
@@ -56,7 +60,10 @@ describe("@kirejs/tailwind", () => {
 		kire.plugin(KireTailwind);
 		const original = (kire as any).compileCSSWithTailwind;
 		let calls = 0;
-		(kire as any).compileCSSWithTailwind = async (...a: any[]) => { calls++; return original(...a); };
+		(kire as any).compileCSSWithTailwind = async (...a: any[]) => {
+			calls++;
+			return original(...a);
+		};
 		const tpl = `<tailwind></tailwind><div class="p-3"></div>`;
 		await kire.render(tpl);
 		await kire.render(tpl);
@@ -65,6 +72,11 @@ describe("@kirejs/tailwind", () => {
 
 	it("extractCandidates pulls classes from class attributes", () => {
 		const html = `<div class="flex p-4"><span class='text-sm hover:underline'>x</span></div>`;
-		expect(extractCandidates(html).sort()).toEqual(["flex", "hover:underline", "p-4", "text-sm"]);
+		expect(extractCandidates(html).sort()).toEqual([
+			"flex",
+			"hover:underline",
+			"p-4",
+			"text-sm",
+		]);
 	});
 });

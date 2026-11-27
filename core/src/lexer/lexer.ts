@@ -9,7 +9,11 @@ import {
 	TAG_OPEN_REGEX,
 	WHITESPACE_REGEX,
 } from "../utils/regex";
-import { extractBracketedContent, findInterpolationEnd, parseArgs } from "./balance";
+import {
+	extractBracketedContent,
+	findInterpolationEnd,
+	parseArgs,
+} from "./balance";
 import { Cursor } from "./cursor";
 
 export class Lexer extends Cursor {
@@ -206,7 +210,11 @@ export class Lexer extends Cursor {
 		const isRaw = this.startsWith("{{{");
 		const open = isRaw ? "{{{" : "{{";
 		const close = isRaw ? "}}}" : "}}";
-		const end = findInterpolationEnd(this.template, this.cursor + open.length, close);
+		const end = findInterpolationEnd(
+			this.template,
+			this.cursor + open.length,
+			close,
+		);
 		if (end !== -1) {
 			const content = this.slice(this.cursor + open.length, end).trim();
 			this.addNode({ type: "interpolation", content, raw: isRaw, loc });
@@ -272,14 +280,19 @@ export class Lexer extends Cursor {
 				let shouldPop = false;
 
 				if (def?.closeBy) {
-					const closeBy = Array.isArray(def.closeBy) ? def.closeBy : [def.closeBy];
+					const closeBy = Array.isArray(def.closeBy)
+						? def.closeBy
+						: [def.closeBy];
 					if (closeBy.includes(rawName)) shouldPop = true;
 				}
 
 				if (!shouldPop) {
 					if (rawName === "end") {
 						shouldPop = true;
-					} else if (node.type === "directive" && rawName === `end${node.name}`) {
+					} else if (
+						node.type === "directive" &&
+						rawName === `end${node.name}`
+					) {
 						shouldPop = true;
 					}
 				}
@@ -359,7 +372,13 @@ export class Lexer extends Cursor {
 				);
 			}
 			this.advance(rawName.length + 1);
-			this.addNode({ type: "directive", name: rawName, args: [], children: [], loc });
+			this.addNode({
+				type: "directive",
+				name: rawName,
+				args: [],
+				children: [],
+				loc,
+			});
 			return true;
 		}
 
@@ -406,7 +425,8 @@ export class Lexer extends Cursor {
 
 				if (
 					def.children === true ||
-					(def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor))
+					(def.children === "auto" &&
+						this.hasExplicitDirectiveEnd(name, this.cursor))
 				) {
 					this.stack.push(node);
 				}
@@ -417,7 +437,8 @@ export class Lexer extends Cursor {
 		this.addNode(node);
 		if (
 			def.children === true ||
-			(def.children === "auto" && this.hasExplicitDirectiveEnd(name, this.cursor))
+			(def.children === "auto" &&
+				this.hasExplicitDirectiveEnd(name, this.cursor))
 		) {
 			this.stack.push(node);
 		}
@@ -437,7 +458,8 @@ export class Lexer extends Cursor {
 		if (!isLetter && !this.kire.$elementsPattern.test(tagName)) return false;
 
 		this.advance(match[0]!.length);
-		const { attrs: attributes, meta: attributeMeta } = this.parseAttributesState();
+		const { attrs: attributes, meta: attributeMeta } =
+			this.parseAttributesState();
 
 		while (!this.done && WHITESPACE_REGEX.test(this.char())) this.advance(1);
 
@@ -508,7 +530,11 @@ export class Lexer extends Cursor {
 		const current = this.stack[this.stack.length - 1];
 		const siblings = current ? current.children || [] : this.root;
 		let lastIdx = siblings.length - 1;
-		while (lastIdx >= 0 && siblings[lastIdx]!.type === "text" && !siblings[lastIdx]!.content?.trim()) {
+		while (
+			lastIdx >= 0 &&
+			siblings[lastIdx]!.type === "text" &&
+			!siblings[lastIdx]!.content?.trim()
+		) {
 			lastIdx--;
 		}
 		const lastSibling = siblings[lastIdx];
@@ -560,7 +586,8 @@ export class Lexer extends Cursor {
 		meta: Record<string, { quoted: boolean; quote?: '"' | "'" }>;
 	} {
 		const attrs: Record<string, string> = new NullProtoObj();
-		const meta: Record<string, { quoted: boolean; quote?: '"' | "'" }> = new NullProtoObj();
+		const meta: Record<string, { quoted: boolean; quote?: '"' | "'" }> =
+			new NullProtoObj();
 
 		while (!this.done) {
 			while (!this.done && WHITESPACE_REGEX.test(this.char())) this.advance(1);
@@ -580,7 +607,12 @@ export class Lexer extends Cursor {
 			let quote: '"' | "'" | undefined;
 
 			if (this.char() === "(") {
-				const res = extractBracketedContent(this.template, this.cursor, "(", ")");
+				const res = extractBracketedContent(
+					this.template,
+					this.cursor,
+					"(",
+					")",
+				);
 				if (res) {
 					value = res.content;
 					this.advance(res.fullLength);
@@ -661,7 +693,13 @@ export class Lexer extends Cursor {
 				else if (c === "}") dCur--;
 			}
 
-			if (!inQ && dPar === 0 && dBra === 0 && dCur === 0 && (WHITESPACE_REGEX.test(c) || c === ">" || c === "/"))
+			if (
+				!inQ &&
+				dPar === 0 &&
+				dBra === 0 &&
+				dCur === 0 &&
+				(WHITESPACE_REGEX.test(c) || c === ">" || c === "/")
+			)
 				break;
 
 			val += c;
@@ -704,7 +742,11 @@ export class Lexer extends Cursor {
 		}
 
 		if (end > this.cursor) {
-			this.addNode({ type: "text", content: this.slice(this.cursor, end), loc });
+			this.addNode({
+				type: "text",
+				content: this.slice(this.cursor, end),
+				loc,
+			});
 			this.advance(end - this.cursor);
 		} else {
 			// Consume one character to avoid an infinite loop on unmatched input

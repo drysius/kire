@@ -22,8 +22,8 @@ import type {
 	ParseResult,
 	TypeDefinition,
 } from "./types";
-import { platform as browserPlatform } from "./utils/browser";
 import { createAttributes } from "./utils/attributes-bag";
+import { platform as browserPlatform } from "./utils/browser";
 import { KireError, renderErrorHtml } from "./utils/error";
 import { escapeHtml } from "./utils/html";
 import {

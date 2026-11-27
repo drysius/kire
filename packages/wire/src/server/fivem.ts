@@ -24,7 +24,10 @@ import type { Kirewire } from "../kirewire";
  */
 
 /** Signature of a FiveM `RegisterNuiCallback` handler. */
-export type NuiCallback = (data: unknown, cb: (response: unknown) => void) => void;
+export type NuiCallback = (
+	data: unknown,
+	cb: (response: unknown) => void,
+) => void;
 
 /**
  * Build a `RegisterNuiCallback` handler that runs the Kirewire update pipeline and

@@ -11,7 +11,10 @@ export interface TranslatorConfig {
 }
 
 /** Resolve a (possibly dotted) key within a locale's translation tree. */
-function lookup(tree: TranslationTree | undefined, key: string): string | undefined {
+function lookup(
+	tree: TranslationTree | undefined,
+	key: string,
+): string | undefined {
 	if (!tree) return undefined;
 	if (typeof tree[key] === "string") return tree[key] as string;
 	let node: string | TranslationTree | undefined = tree;

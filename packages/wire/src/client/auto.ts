@@ -22,8 +22,7 @@ function currentScript(): HTMLScriptElement | null {
 /** Resolve a path (or absolute ws/http URL) to a ws(s):// URL on the page origin. */
 function toWsUrl(pathOrUrl: string): string {
 	if (/^wss?:\/\//.test(pathOrUrl)) return pathOrUrl;
-	if (/^https?:\/\//.test(pathOrUrl))
-		return pathOrUrl.replace(/^http/, "ws");
+	if (/^https?:\/\//.test(pathOrUrl)) return pathOrUrl.replace(/^http/, "ws");
 	const proto = location.protocol === "https:" ? "wss:" : "ws:";
 	const path = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
 	return `${proto}//${location.host}${path}`;

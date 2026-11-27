@@ -68,8 +68,7 @@ export default (kire: Kire<any>) => {
 		name: `production`,
 		children: true,
 		closeBy: [`endproduction`, `end`],
-		description:
-			"Renders the block only when `$globals.env === 'production'`.",
+		description: "Renders the block only when `$globals.env === 'production'`.",
 		example: `@production\n  <script src="/analytics.js"></script>\n@endproduction`,
 		onCall: (api) => {
 			api.write(`if ($globals.env === 'production') {`);
@@ -93,7 +92,11 @@ export default (kire: Kire<any>) => {
 			return name ? [name] : [];
 		},
 		onCall: (api) => {
-			const name = (api.getArgument(0) ?? api.getAttribute("name") ?? "").trim();
+			const name = (
+				api.getArgument(0) ??
+				api.getAttribute("name") ??
+				""
+			).trim();
 			const service = api.getArgument(1) ?? api.getAttribute("service");
 			if (!name || !service) return;
 			api.write(

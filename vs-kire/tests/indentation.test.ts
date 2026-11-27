@@ -28,7 +28,10 @@ describe("indentation levels", () => {
 				{ name: "include", children: false },
 				{ name: "defined", children: "auto" },
 			],
-			elements: [{ name: "kire:if", void: false }, { name: "x-icon", void: true }],
+			elements: [
+				{ name: "kire:if", void: false },
+				{ name: "x-icon", void: true },
+			],
 		} as any);
 	});
 
@@ -80,18 +83,30 @@ describe("indentation levels", () => {
 		// Lines inside <script> are re-indented by the embedded formatter, so
 		// only the surrounding lines matter here.
 		const levels = levelsOf(text);
-		expect([levels[0], levels[1], levels[3], levels[4], levels[5], levels[6], levels[7]]).toEqual([
-			0, 1, 1, 1, 1, 1, 0,
-		]);
+		expect([
+			levels[0],
+			levels[1],
+			levels[3],
+			levels[4],
+			levels[5],
+			levels[6],
+			levels[7],
+		]).toEqual([0, 1, 1, 1, 1, 1, 0]);
 	});
 
 	it("treats @empty as a branch inside @for and as a block outside", () => {
-		const inside = ["@for(i of xs)", "<li>a</li>", "@empty", "<p>none</p>", "@end"].join(
-			"\n",
-		);
+		const inside = [
+			"@for(i of xs)",
+			"<li>a</li>",
+			"@empty",
+			"<p>none</p>",
+			"@end",
+		].join("\n");
 		expect(levelsOf(inside)).toEqual([0, 1, 0, 1, 0]);
 
-		const outside = ["@empty(xs)", "<p>none</p>", "@endempty", "<hr>"].join("\n");
+		const outside = ["@empty(xs)", "<p>none</p>", "@endempty", "<hr>"].join(
+			"\n",
+		);
 		expect(levelsOf(outside)).toEqual([0, 1, 0, 0]);
 	});
 
@@ -112,7 +127,9 @@ describe("indentation levels", () => {
 	});
 
 	it("does not indent after an auto directive that has no closer", () => {
-		const text = ['@defined("x")', "<p>fb</p>", "@if(a)", "Y", "@end"].join("\n");
+		const text = ['@defined("x")', "<p>fb</p>", "@if(a)", "Y", "@end"].join(
+			"\n",
+		);
 		expect(levelsOf(text)).toEqual([0, 0, 0, 1, 0]);
 	});
 

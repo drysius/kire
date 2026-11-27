@@ -47,7 +47,10 @@ function syncSchemaDirectivesIntoEngine(engine: EngineLike): void {
 	}
 	syncedRevision = state.revision;
 	if (added > 0) {
-		kireLog("debug", `Registered ${added} schema-only directive stub(s) in engine.`);
+		kireLog(
+			"debug",
+			`Registered ${added} schema-only directive stub(s) in engine.`,
+		);
 	}
 }
 
@@ -57,7 +60,9 @@ function syncSchemaDirectivesIntoEngine(engine: EngineLike): void {
  * when no engine with `parseDetailed` is loaded (older runtime), in which
  * case callers fall back to the regex-based validators.
  */
-export function getStructuralProblems(text: string): StructuralProblem[] | null {
+export function getStructuralProblems(
+	text: string,
+): StructuralProblem[] | null {
 	const engine = kireStore.getState().engine as EngineLike | null;
 	if (!engine || typeof engine.parseDetailed !== "function") return null;
 

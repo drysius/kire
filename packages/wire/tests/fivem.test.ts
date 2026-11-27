@@ -1,10 +1,10 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { FiveMTransport } from "../src/client/transport";
 import { LiveComponent } from "../src/component";
+import type { ServerPush } from "../src/contracts";
 import { Component, prop } from "../src/decorators";
 import { Kirewire } from "../src/kirewire";
 import { createFiveMHandler, FiveMBroadcaster } from "../src/server/fivem";
-import { FiveMTransport } from "../src/client/transport";
-import type { ServerPush } from "../src/contracts";
 
 @Component("counter")
 class Counter extends LiveComponent {
@@ -29,21 +29,34 @@ describe("FiveM server bridge", () => {
 		const { snapshot } = await wire.mount("counter");
 		const handler = createFiveMHandler(wire);
 
-		const response = await new Promise<{ components: Array<{ snapshot: { data: { count: number } } }> }>(
-			(resolve) => {
-				handler(
-					{ v: 1, components: [{ snapshot, updates: {}, calls: [{ method: "increment", params: [] }] }] },
-					(res) => resolve(res as never),
-				);
-			},
-		);
+		const response = await new Promise<{
+			components: Array<{ snapshot: { data: { count: number } } }>;
+		}>((resolve) => {
+			handler(
+				{
+					v: 1,
+					components: [
+						{
+							snapshot,
+							updates: {},
+							calls: [{ method: "increment", params: [] }],
+						},
+					],
+				},
+				(res) => resolve(res as never),
+			);
+		});
 		expect(response.components[0]!.snapshot.data.count).toBe(1);
 	});
 
 	test("FiveMBroadcaster pushes a SendNuiMessage frame", () => {
 		const sent: string[] = [];
 		const hub = new FiveMBroadcaster((json) => sent.push(json));
-		hub.publish({ v: 1, channel: "room:1", effects: { html: "x" } } satisfies ServerPush);
+		hub.publish({
+			v: 1,
+			channel: "room:1",
+			effects: { html: "x" },
+		} satisfies ServerPush);
 		expect(sent).toHaveLength(1);
 		const frame = JSON.parse(sent[0]!);
 		expect(frame.type).toBe("kirewire:push");
@@ -66,10 +79,17 @@ describe("FiveM client transport", () => {
 
 	test("send POSTs to the NUI resource URL and returns the JSON response", async () => {
 		const calls: Array<{ url: string; body: unknown }> = [];
-		(globalThis as Record<string, unknown>).GetParentResourceName = () => "my-resource";
-		(globalThis as Record<string, unknown>).fetch = async (url: string, init: { body: string }) => {
+		(globalThis as Record<string, unknown>).GetParentResourceName = () =>
+			"my-resource";
+		(globalThis as Record<string, unknown>).fetch = async (
+			url: string,
+			init: { body: string },
+		) => {
 			calls.push({ url, body: JSON.parse(init.body) });
-			return { ok: true, json: async () => ({ v: 1, components: [] }) } as never;
+			return {
+				ok: true,
+				json: async () => ({ v: 1, components: [] }),
+			} as never;
 		};
 
 		const transport = new FiveMTransport();

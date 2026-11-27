@@ -111,7 +111,9 @@ function readManifest(manifestPath: string): ViteManifest {
 	try {
 		parsed = JSON.parse(content) as ViteManifest;
 	} catch (error) {
-		throw new Error(`[kire-vite] Malformed manifest JSON at ${absolute}: ${error}`);
+		throw new Error(
+			`[kire-vite] Malformed manifest JSON at ${absolute}: ${error}`,
+		);
 	}
 	manifestCache.set(absolute, { mtimeMs: stats.mtimeMs, data: parsed });
 	return parsed;

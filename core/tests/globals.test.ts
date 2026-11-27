@@ -14,11 +14,7 @@ describe("Globals Access", () => {
 		const k = new Kire();
 
 		// Simulate what a web framework does: pass request-scoped globals per call
-		const result = await k.render(
-			"User: {{ user }}",
-			{},
-			{ user: "admin" },
-		);
+		const result = await k.render("User: {{ user }}", {}, { user: "admin" });
 		expect(result).toBe("User: admin");
 	});
 
@@ -39,7 +35,11 @@ describe("Globals Access", () => {
 		const r1 = await k.render("{{ name }}", {}, { name: "per-call" });
 		expect(r1).toBe("per-call");
 
-		const r2 = await k.render("{{ name }}", { name: "local" }, { name: "per-call" });
+		const r2 = await k.render(
+			"{{ name }}",
+			{ name: "local" },
+			{ name: "per-call" },
+		);
 		expect(r2).toBe("local");
 
 		const r3 = await k.render("{{ name }}", {});
@@ -47,7 +47,9 @@ describe("Globals Access", () => {
 	});
 
 	test("this.$globals accessible inside included deps", async () => {
-		const k = new Kire({ root: "C:/Users/danie/Documents/GitHub/kire/core/tests" });
+		const k = new Kire({
+			root: "C:/Users/danie/Documents/GitHub/kire/core/tests",
+		});
 		k.$global("appName", "Kire");
 
 		// Simulate accessing a global that's set on the engine

@@ -149,9 +149,6 @@ export default (kire: Kire<any>) => {
 		const relatedNodes = api.node.related || [];
 		const hasEmptyBranch = relatedNodes.some((n: any) => n?.name === "empty");
 
-		const exposeKey = key
-			? true
-			: api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
 		const exposeLoop =
 			api.fullBody.includes("$loop") || api.allIdentifiers.has("$loop");
 

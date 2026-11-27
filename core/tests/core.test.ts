@@ -32,7 +32,9 @@ describe("Kire Core (Bun)", () => {
 		const result = await k.render('<a href="{{ url }}">Link</a>', {
 			url: 'javascript:alert(1)" onmouseover="x',
 		});
-		expect(result).toContain('href="javascript:alert(1)&quot; onmouseover=&quot;x"');
+		expect(result).toContain(
+			'href="javascript:alert(1)&quot; onmouseover=&quot;x"',
+		);
 		expect(result).not.toContain(' onmouseover="x"');
 	});
 
@@ -186,7 +188,7 @@ describe("Kire Core (Bun)", () => {
 	test("should mark template async when await is used inside HTML attributes", async () => {
 		const asyncKire = new Kire({ production: true, async: true, silent: true });
 		const result = await asyncKire.render(
-			'<img src="{{ await Promise.resolve(\'ok\') }}">',
+			"<img src=\"{{ await Promise.resolve('ok') }}\">",
 			{ Promise },
 		);
 		expect(result).toBe('<img src="ok">');
@@ -264,10 +266,9 @@ describe("Kire Core (Bun)", () => {
 		expect(r1).toBe('<div class="admin">hi</div>');
 
 		// Mixed interpolation
-		const r2 = await k.render(
-			'<my-box class="box-{{ role }}">hi</my-box>',
-			{ role: "admin" },
-		);
+		const r2 = await k.render('<my-box class="box-{{ role }}">hi</my-box>', {
+			role: "admin",
+		});
 		expect(r2).toBe('<div class="box-admin">hi</div>');
 	});
 

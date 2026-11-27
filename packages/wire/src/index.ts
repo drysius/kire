@@ -73,9 +73,12 @@ export { store } from "./runtime/store";
 
 // Server transport (HTTP / SSE / WebSocket + broadcast hub)
 export {
+	createFiveMHandler,
+	FiveMBroadcaster,
 	type HttpResult,
 	Hub,
 	handleUpdate,
+	type NuiCallback,
 	nodeHttpAdapter,
 	type PushSubscriber,
 	SSE_HEADERS,
@@ -84,9 +87,6 @@ export {
 	serveWs,
 	type WsConnection,
 	type WsOptions,
-	createFiveMHandler,
-	FiveMBroadcaster,
-	type NuiCallback,
 } from "./server/index";
 export { createDefaultSynthRegistry } from "./synth/builtins";
 export { defineSynth, modelSynth } from "./synth/class";

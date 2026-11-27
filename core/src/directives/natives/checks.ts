@@ -24,7 +24,14 @@ export default (kire: Kire<any>) => {
 		signature: [`expr:any`],
 		children: true,
 		relatedTo: [`for`, `each`, `foreach`, `forelse`],
-		closeBy: [`endempty`, `endfor`, `endeach`, `endforeach`, `endforelse`, `end`],
+		closeBy: [
+			`endempty`,
+			`endfor`,
+			`endeach`,
+			`endforeach`,
+			`endforelse`,
+			`end`,
+		],
 		description:
 			"Fallback branch for empty collections or falsy values, often used alongside @for or @each.",
 		example: `@empty(items)\n  <p>No items</p>\n@end`,

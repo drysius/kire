@@ -121,8 +121,9 @@ export class FiveMTransport implements Transport {
 	private bound = false;
 
 	constructor(
-		private readonly resource: string = (globalThis as { GetParentResourceName?: () => string })
-			.GetParentResourceName?.() ?? "nui",
+		private readonly resource: string = (
+			globalThis as { GetParentResourceName?: () => string }
+		).GetParentResourceName?.() ?? "nui",
 		private readonly callback = "_wire",
 	) {}
 
@@ -132,7 +133,8 @@ export class FiveMTransport implements Transport {
 			headers: { "Content-Type": "application/json; charset=UTF-8" },
 			body: JSON.stringify(req),
 		});
-		if (!res.ok) throw new Error(`Kirewire NUI request failed (${res.status}).`);
+		if (!res.ok)
+			throw new Error(`Kirewire NUI request failed (${res.status}).`);
 		return (await res.json()) as UpdateResponse;
 	}
 

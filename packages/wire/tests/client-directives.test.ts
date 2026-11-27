@@ -108,7 +108,9 @@ describe("wire:dirty / wire:target / wire:offline (JSDOM)", () => {
 
 		// Only the email-targeted indicator reacts; the name-targeted one stays hidden.
 		expect(disp(document.querySelector(".dirty-name")!)).toBe("none");
-		expect(document.querySelector(".dirty-cls")!.classList.contains("is-dirty")).toBe(true);
+		expect(
+			document.querySelector(".dirty-cls")!.classList.contains("is-dirty"),
+		).toBe(true);
 	});
 
 	test("wire:offline reflects navigator.onLine via online/offline events", async () => {

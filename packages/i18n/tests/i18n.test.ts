@@ -23,14 +23,21 @@ const makeKire = () => {
 
 describe("@kirejs/i18n — directives", () => {
 	test("@lang outputs a translation with replacements", async () => {
-		expect((await makeKire().render('@lang("messages.welcome", { name: "Ana" })')).trim()).toBe(
-			"Olá, Ana!",
-		);
+		expect(
+			(
+				await makeKire().render('@lang("messages.welcome", { name: "Ana" })')
+			).trim(),
+		).toBe("Olá, Ana!");
 	});
 
 	test("__() helper works in interpolation", async () => {
 		expect(
-			(await makeKire().render('{{ __("messages.welcome", { name: user }) }}', { user: "Bob" })).trim(),
+			(
+				await makeKire().render(
+					'{{ __("messages.welcome", { name: user }) }}',
+					{ user: "Bob" },
+				)
+			).trim(),
 		).toBe("Olá, Bob!");
 	});
 
@@ -42,14 +49,24 @@ describe("@kirejs/i18n — directives", () => {
 
 	test("@choice pluralizes by count and exposes :count", async () => {
 		const k = makeKire();
-		expect((await k.render('@choice("messages.items", 0)')).trim()).toBe("nenhum item");
-		expect((await k.render('@choice("messages.items", 1)')).trim()).toBe("um item");
-		expect((await k.render('@choice("messages.items", 5)')).trim()).toBe("5 itens");
+		expect((await k.render('@choice("messages.items", 0)')).trim()).toBe(
+			"nenhum item",
+		);
+		expect((await k.render('@choice("messages.items", 1)')).trim()).toBe(
+			"um item",
+		);
+		expect((await k.render('@choice("messages.items", 5)')).trim()).toBe(
+			"5 itens",
+		);
 	});
 
 	test("@lang escapes HTML in replacements", async () => {
 		expect(
-			(await makeKire().render('@lang("messages.welcome", { name: raw })', { raw: "<b>x</b>" })).trim(),
+			(
+				await makeKire().render('@lang("messages.welcome", { name: raw })', {
+					raw: "<b>x</b>",
+				})
+			).trim(),
 		).toBe("Olá, &lt;b&gt;x&lt;/b&gt;!");
 	});
 });
@@ -64,7 +81,12 @@ describe("@kirejs/i18n — translator unit", () => {
 		const t = createTranslator({
 			locale: "en",
 			fallback: "en",
-			translations: { en: { greeting: "Hi :name", apples: "{1} :count apple|[2,*] :count apples" } },
+			translations: {
+				en: {
+					greeting: "Hi :name",
+					apples: "{1} :count apple|[2,*] :count apples",
+				},
+			},
 		});
 		expect(t.trans("greeting", { name: "Jo" })).toBe("Hi Jo");
 		expect(t.choice("apples", 1)).toBe("1 apple");

@@ -163,7 +163,11 @@ function resolveWs(wire: any): {
  * given, so the caller leaves the client on HTTP.
  */
 // biome-ignore lint/suspicious/noExplicitAny: Wire objects are external
-function attachNodeWs(wirePkg: any, instance: any, ws: NonNullable<ReturnType<typeof resolveWs>>): boolean {
+function attachNodeWs(
+	wirePkg: any,
+	instance: any,
+	ws: NonNullable<ReturnType<typeof resolveWs>>,
+): boolean {
 	if (!ws.server) {
 		console.warn(
 			"[@kirejs/h3] wire.ws is enabled but no `server` was provided; " +

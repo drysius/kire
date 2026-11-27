@@ -38,11 +38,10 @@ export const KireI18n = kirePlugin<I18nOptions>(
 			example: `@lang("messages.welcome", { name: user.name })`,
 			onCall: (api) => {
 				const key = api.getArgument(0) ?? api.getAttribute("key");
-				const repl = api.getArgument(1) ?? api.getAttribute("replacements") ?? "{}";
+				const repl =
+					api.getArgument(1) ?? api.getAttribute("replacements") ?? "{}";
 				if (!key) return;
-				api.write(
-					`$kire_response += $escape($globals.__(${key}, ${repl}));`,
-				);
+				api.write(`$kire_response += $escape($globals.__(${key}, ${repl}));`);
 			},
 		});
 
@@ -57,7 +56,8 @@ export const KireI18n = kirePlugin<I18nOptions>(
 			onCall: (api) => {
 				const key = api.getArgument(0) ?? api.getAttribute("key");
 				const count = api.getArgument(1) ?? api.getAttribute("count") ?? "0";
-				const repl = api.getArgument(2) ?? api.getAttribute("replacements") ?? "{}";
+				const repl =
+					api.getArgument(2) ?? api.getAttribute("replacements") ?? "{}";
 				if (!key) return;
 				api.write(
 					`$kire_response += $escape($globals.trans_choice(${key}, ${count}, ${repl}));`,

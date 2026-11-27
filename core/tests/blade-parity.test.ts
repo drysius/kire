@@ -198,7 +198,7 @@ describe("Blade parity — @verbatim", () => {
 describe("Blade parity — include family", () => {
 	const root = join(tmpdir(), `kire-parity-inc-${Date.now()}`);
 	const view = (
-		name: string,
+		_name: string,
 		body: string,
 		locals: Record<string, unknown> = {},
 	) => {

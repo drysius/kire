@@ -15,7 +15,9 @@ export function setupNavigate(runtime: WireRuntime): void {
 
 	async function go(url: string, push: boolean): Promise<void> {
 		const mine = ++token;
-		document.dispatchEvent(new CustomEvent("kirewire:navigating", { detail: { url } }));
+		document.dispatchEvent(
+			new CustomEvent("kirewire:navigating", { detail: { url } }),
+		);
 		try {
 			const res = await fetch(url, { headers: { "x-kirewire-navigate": "1" } });
 			if (!res.ok) throw new Error(`navigate ${res.status}`);
@@ -29,7 +31,9 @@ export function setupNavigate(runtime: WireRuntime): void {
 			if (push) history.pushState({ kirewireNavigate: true }, "", url);
 			window.scrollTo(0, 0);
 			runtime.start();
-			document.dispatchEvent(new CustomEvent("kirewire:navigated", { detail: { url } }));
+			document.dispatchEvent(
+				new CustomEvent("kirewire:navigated", { detail: { url } }),
+			);
 		} catch {
 			window.location.href = url; // hard fallback
 		}
@@ -39,13 +43,26 @@ export function setupNavigate(runtime: WireRuntime): void {
 	// `a` selector + hasAttribute rather than `a[wire\:navigate]`: a colon-escaped
 	// attribute selector is rejected by some selector engines/browsers.
 	document.addEventListener("click", (event) => {
-		if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+		if (
+			event.defaultPrevented ||
+			event.button !== 0 ||
+			event.metaKey ||
+			event.ctrlKey ||
+			event.shiftKey
+		) {
 			return;
 		}
-		const link = (event.target as Element).closest?.("a") as HTMLAnchorElement | null;
+		const link = (event.target as Element).closest?.(
+			"a",
+		) as HTMLAnchorElement | null;
 		if (!link || !link.hasAttribute("wire:navigate")) return;
 		const href = link.getAttribute("href");
-		if (!href || href.startsWith("#") || /^[a-z]+:\/\//i.test(href) || link.target === "_blank") {
+		if (
+			!href ||
+			href.startsWith("#") ||
+			/^[a-z]+:\/\//i.test(href) ||
+			link.target === "_blank"
+		) {
 			return;
 		}
 		event.preventDefault();

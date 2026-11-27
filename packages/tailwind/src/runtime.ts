@@ -26,7 +26,10 @@ export interface RenderTailwindContext {
 	) => Promise<string>;
 	/** When present, compiled CSS is offloaded to the assets pipeline. */
 	assets?: AssetsRuntime | null;
-	assetCache?: Record<string, { hash: string; content: string; type: string }> | null;
+	assetCache?: Record<
+		string,
+		{ hash: string; content: string; type: string }
+	> | null;
 }
 
 const MAX_CACHE_ENTRIES = 200;
@@ -51,7 +54,8 @@ export async function renderTailwindBlocks(
 	let out = html;
 	for (const block of blocks) {
 		let css = block.css;
-		if (!css.includes('@import "tailwindcss"')) css = `@import "tailwindcss";\n${css}`;
+		if (!css.includes('@import "tailwindcss"'))
+			css = `@import "tailwindcss";\n${css}`;
 
 		const key = `${css} ${candidateKey}`;
 		let compiled = ctx.store.get(key);
@@ -66,11 +70,15 @@ export async function renderTailwindBlocks(
 
 		if (ctx.assets && ctx.assetCache && compiled) {
 			const hash = createHash("md5").update(compiled).digest("hex").slice(0, 8);
-			if (!ctx.assetCache[hash]) ctx.assetCache[hash] = { hash, content: compiled, type: "css" };
+			if (!ctx.assetCache[hash])
+				ctx.assetCache[hash] = { hash, content: compiled, type: "css" };
 			if (ctx.assets.styles.indexOf(hash) === -1) ctx.assets.styles.push(hash);
 			out = out.replace(block.marker, "");
 		} else {
-			out = out.replace(block.marker, compiled ? `<style>${compiled}</style>` : "");
+			out = out.replace(
+				block.marker,
+				compiled ? `<style>${compiled}</style>` : "",
+			);
 		}
 	}
 	return out;

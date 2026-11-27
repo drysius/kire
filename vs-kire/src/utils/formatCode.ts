@@ -12,7 +12,10 @@ export interface FormatOptions {
 	printWidth?: number;
 }
 
-function parserFor(language: FormatLanguage): { parser: string; plugins: unknown[] } {
+function parserFor(language: FormatLanguage): {
+	parser: string;
+	plugins: unknown[];
+} {
 	switch (language) {
 		case "typescript":
 			return { parser: "typescript", plugins: [typescript, estree] };

@@ -23,9 +23,9 @@ describe("Lexer regressions", () => {
 	test("@end after a chained branch closes the whole chain", () => {
 		const kire2 = new Kire({ async: false, silent: true });
 		expect(kire2.render(`@if(a)A@elseB@end C`, { a: false })).toBe("B C");
-		expect(kire2.render(`@if(a)A@elseif(b)B@elseC@endif D`, { a: false, b: true })).toBe(
-			"B D",
-		);
+		expect(
+			kire2.render(`@if(a)A@elseif(b)B@elseC@endif D`, { a: false, b: true }),
+		).toBe("B D");
 		expect(
 			kire2.render(`@switch(v)@case(1)one@default other@end|`, { v: 2 }),
 		).toBe(" other|");
