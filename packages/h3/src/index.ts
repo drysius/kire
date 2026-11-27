@@ -99,8 +99,15 @@ function prepareInlineWire(engine: Kire<boolean>, wire: WireIntegration) {
 	const wirePkg = requireWire();
 	const wirePath = wire.path ?? "/_wire";
 	const scriptUrl = wire.scriptUrl ?? "/kirewire.js";
+	const ws = resolveWs(wire);
+	const wsActive = ws ? attachNodeWs(wirePkg, wire.instance, ws) : false;
 	engine.plugin(
-		wirePkg.kirewirePlugin(wire.instance, { scriptUrl, path: wirePath }),
+		wirePkg.kirewirePlugin(wire.instance, {
+			scriptUrl,
+			path: wirePath,
+			wsPath: wsActive ? ws!.path : undefined,
+			channel: wsActive ? ws!.channel : undefined,
+		}),
 	);
 	const clientScript = resolveClientScript(wire);
 
@@ -130,6 +137,65 @@ function prepareInlineWire(engine: Kire<boolean>, wire: WireIntegration) {
 
 		return null;
 	};
+}
+
+/** Normalize `wire.ws` into concrete settings, or null when disabled. */
+// biome-ignore lint/suspicious/noExplicitAny: Wire option object is external
+function resolveWs(wire: any): {
+	path: string;
+	channel?: string;
+	server?: any;
+	hub?: any;
+} | null {
+	if (!wire.ws) return null;
+	const ws = wire.ws === true ? {} : wire.ws;
+	return {
+		path: ws.path ?? "/_wire/ws",
+		channel: ws.channel,
+		server: ws.server,
+		hub: ws.hub,
+	};
+}
+
+/**
+ * Attach the Kirewire WebSocket transport to a Node `http.Server` using the `ws`
+ * package. Returns true when wired; false (with a warning) when no server was
+ * given, so the caller leaves the client on HTTP.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: Wire objects are external
+function attachNodeWs(wirePkg: any, instance: any, ws: NonNullable<ReturnType<typeof resolveWs>>): boolean {
+	if (!ws.server) {
+		console.warn(
+			"[@kirejs/h3] wire.ws is enabled but no `server` was provided; " +
+				"pass the http.Server (e.g. from app.listen or http.createServer(app)). " +
+				"Falling back to the HTTP transport.",
+		);
+		return false;
+	}
+	let WebSocketServer: any;
+	try {
+		({ WebSocketServer } = require("ws"));
+	} catch {
+		throw new Error(
+			"@kirejs/h3: wire.ws requires the `ws` package to be installed.",
+		);
+	}
+	const hub = ws.hub ?? new wirePkg.Hub();
+	const wss = new WebSocketServer({ server: ws.server, path: ws.path });
+	wss.on("connection", (socket: any) => {
+		wirePkg.serveWs(
+			instance,
+			hub,
+			{
+				send: (data: string) => socket.send(data),
+				onMessage: (cb: (d: string) => void) =>
+					socket.on("message", (d: any) => cb(d.toString())),
+				onClose: (cb: () => void) => socket.on("close", cb),
+			},
+			{ channel: ws.channel },
+		);
+	});
+	return true;
 }
 
 /** Require `@kirejs/wire`, with a clear error when it is not installed. */

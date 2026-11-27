@@ -279,6 +279,21 @@ reactive components, running on **${template.title}**.
   \`@kirewireScripts\`. Two-way binding via \`wire:model\`.
 - Render a view from a component with \`this.view("name", data)\`.
 
+## Reference — read \`llms.txt\`, not \`node_modules\` source
+
+Every Kire package ships a single \`llms.txt\` at its install root: the whole
+package source flattened into one file, meant for you. When you need to know how
+a package actually works (an API, a directive, a component option), read that
+file instead of crawling \`node_modules\` tree-by-tree:
+
+- Core engine: \`node_modules/kire/llms.txt\`
+- Kirewire: \`node_modules/@kirejs/wire/llms.txt\`
+- Any other module: \`node_modules/@kirejs/<name>/llms.txt\`
+  (e.g. \`@kirejs/express\`, \`@kirejs/utils\`, \`@kirejs/i18n\`, \`@kirejs/vite\`).
+
+Prefer these over opening individual \`.js\`/\`.d.ts\` files — they are the
+authoritative, complete source for each package in one read.
+
 ## Commands
 
 - Install: \`npm install\` (or \`bun install\`).

@@ -1,0 +1,4 @@
+{
+	"title": "Bun",
+	"description": "Native Bun.serve + Kire with view() and Kirewire reactivity (native WebSocket)"
+}

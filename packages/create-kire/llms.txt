@@ -1,0 +1,36 @@
+# create-kire — scaffolding CLI
+
+> `npm create kire` scaffolds a Kire + Kirewire starter app for a chosen framework in TypeScript or JavaScript.
+
+The CLI (`@clack/prompts` based) asks for a project name, a template (framework), a language (TS/JS, only asked if the template ships both) and an AI assistant, then copies the template into `./<name>` and writes an AI instructions file. Every prompt can be skipped with a flag; anything not supplied by a flag (or supplied with an invalid value) is prompted for interactively. Prompts default to name `my-kire-app` and language `ts`. After scaffolding it prints next steps: `cd <name>`, `bun install` (or npm), `bun run dev`.
+
+## Concepts
+
+- **Templates** — discovered at runtime from a `templates/` dir next to the built file (`../templates`, `./templates`, `templates`). Each `templates/<id>/` needs a `meta.json` (`{ title, description }`, used as the select label/hint) or it is ignored. Available languages are inferred from which of `ts/` and `js/` subdirs exist. Scaffolding = copy `shared/` (views, README, `gitignore`, etc.) into the target, then copy the language dir (`ts/` or `js/`) over it (language files win). Templates are sorted by title. Current ids: `express`, `fastify`, `elysia`, `koa`, `hono`, `h3`, `fivem`.
+- **AI guide** — the chosen assistant's instructions file is generated (not copied from the template) and written into the project root: `claude` -> `CLAUDE.md`, `codex` -> `AGENTS.md`, `cursor` -> `.cursorrules`, `gemini` -> `GEMINI.md`, `copilot` -> `.github/copilot-instructions.md`; `none` writes nothing. The content covers `.kire` syntax, Kirewire component conventions (decorators `@Component`/`@prop` for TS; `ownMeta(Counter).name = "..."` for JS), and tells the assistant to read each package's `llms.txt` (`node_modules/kire/llms.txt`, `node_modules/@kirejs/wire/llms.txt`, `node_modules/@kirejs/<name>/llms.txt`) instead of crawling `node_modules` source.
+- **Version stamping** — template `package.json` files pin `kire` / `@kirejs/*` to the placeholder `0.0.0-develop`. At build time (`tools/build.ts`, `stampTemplateVersions`) the copy in `publish/` has those replaced with `^<published version>` (dependencies, devDependencies, peerDependencies), so scaffolded apps install matching versions.
+
+## CLI flags
+
+Parsed by `parseFlags` (no validation errors; bad values fall back to prompts):
+
+- `<name>` — first non-flag positional argument = project name (letters, digits, `.`, `_`, `-` when prompted).
+- `--template <id>` / `-t <id>` / `--template=<id>` — template id; unknown id -> prompted.
+- `--ts` / `--typescript`, `--js` / `--javascript`, or `--language <ts|js>` / `-l` — language; ignored if the template does not ship that language. A template with only one language uses it silently.
+- `--ai <claude|codex|cursor|gemini|copilot|none>` / `--ai=<v>` — AI guide; unknown value -> prompted. Prompt labels: Claude Code, Codex / generic, Cursor, Gemini, GitHub Copilot, None.
+
+## Usage
+
+```bash
+npm create kire my-app -- --template express --ts --ai claude
+npx create-kire my-app -t hono --js --ai none
+```
+
+## Notes
+
+- Templates ship `gitignore` (npm strips real `.gitignore` files when publishing); the scaffolder renames it to `.gitignore`.
+- The scaffolder rewrites `package.json` `name` to the project name (re-serialised with tabs).
+- If the target directory exists and is non-empty, the CLI asks for confirmation (default no; cancelling exits 0). It then merges/overwrites files in place.
+- Cancelling any prompt exits 0 with "Scaffolding cancelled."; no templates found -> exit 1.
+- The JS variants need no build step and no decorators; the TS variants use decorators.
+- To add a template: create `templates/<id>/{meta.json,shared/,ts/,js/}` — no code change needed.

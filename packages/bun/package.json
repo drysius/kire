@@ -1,0 +1,44 @@
+{
+	"name": "@kirejs/bun",
+	"description": "Bun integration for Kire — Bun.serve view() helper and one-line Kirewire setup with native WebSocket.",
+	"version": "0.2.4",
+	"main": "dist/cjs/index.cjs",
+	"module": "dist/esm/index.js",
+	"types": "dist/types/index.d.ts",
+	"typings": "dist/types/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/types/index.d.ts",
+			"import": "./dist/esm/index.js",
+			"require": "./dist/cjs/index.cjs"
+		}
+	},
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/drysius/kire.git"
+	},
+	"keywords": [
+		"bun",
+		"kire",
+		"ssr",
+		"kirewire",
+		"typescript"
+	],
+	"author": "drysius",
+	"license": "MIT",
+	"dependencies": {
+		"kire": "workspace:../../core"
+	},
+	"peerDependencies": {
+		"@kirejs/wire": "workspace:*"
+	},
+	"peerDependenciesMeta": {
+		"@kirejs/wire": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@kirejs/wire": "workspace:*"
+	}
+}

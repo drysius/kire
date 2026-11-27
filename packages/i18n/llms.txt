@@ -1,0 +1,64 @@
+# @kirejs/i18n — Localization for Kire
+
+> A Kire plugin providing `@lang` / `@choice` directives and `__()`, `trans()`, `trans_choice()` helpers with Laravel-style placeholders and pluralization.
+
+Translations are plain nested objects keyed by locale. Keys are dotted (`messages.welcome`). If a key is missing in the active locale, the fallback locale is tried; if still missing, the key itself is returned (like Laravel). The plugin is `KireI18n` (also the default export).
+
+## Options (`I18nOptions`)
+
+- `locale` — active locale (default `"en"`).
+- `fallback` — fallback locale (default `"en"`).
+- `translations` — `Record<locale, TranslationTree>`, where a tree is nested `{ [key]: string | TranslationTree }`.
+
+## Template API
+
+- **`@lang(key, replacements?)`** — outputs the translation, HTML-escaped. Also accepts `key=` / `replacements=` attributes.
+- **`@choice(key, count, replacements?)`** — pluralized translation chosen by `count`; `:count` is available automatically.
+- **Globals** — `__(key, repl?)` and `trans(key, repl?)` (same function), `trans_choice(key, count, repl?)`, and `$i18n` (the translator object).
+
+## Placeholders
+
+`:name` is replaced by `replacements.name`; the curly form `{name}` also works.
+
+## Pluralization
+
+Message segments are separated by `|`:
+- `one|many` — positional: count 1 uses the first segment, any other count the last.
+- Explicit conditions: `{0} none|{1} one item|[2,*] :count items` — `{n}` exact match, `[min,max]` inclusive range, `*` for infinity. Explicit matches are checked before the positional fallback.
+
+## Programmatic API
+
+- `createTranslator({ locale, fallback, translations })` returns `{ trans, choice, resolve }`.
+- `choosePlural(message, count)` and `applyReplacements(message, replacements)` are exported helpers.
+- Types: `Translations`, `TranslationTree`, `TranslatorConfig`, `Translator`, `I18nOptions`.
+
+## Usage
+
+```ts
+import { Kire } from "kire";
+import KireI18n from "@kirejs/i18n";
+
+const kire = new Kire();
+kire.plugin(KireI18n, {
+  locale: "pt",
+  fallback: "en",
+  translations: {
+    en: { messages: { welcome: "Welcome, :name", items: "{0} No items|{1} One item|[2,*] :count items" } },
+    pt: { messages: { welcome: "Bem-vindo, :name" } },
+  },
+});
+```
+
+```kire
+<h1>@lang("messages.welcome", { name: user.name })</h1>
+<p>@choice("messages.items", cart.length)</p>
+<p>{{ __("messages.welcome", { name: "Ana" }) }}</p>
+```
+
+## Notes
+
+- The locale is fixed when the plugin loads; there is no runtime locale switcher in the plugin itself.
+- Output is escaped; use raw echo only for trusted translations that contain HTML.
+- Missing keys render the key itself, which makes gaps easy to spot.
+- Capitalization modifiers (`:Name`, `:NAME`) are not implemented; placeholders are substituted as-is.
+- A flat key containing dots (e.g. `"a.b": "x"`) is matched before nested lookup.

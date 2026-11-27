@@ -1,0 +1,48 @@
+# @kirejs/express — Express integration
+
+> Wire Kire (and optionally Kirewire) into Express as a view engine plus a typed `res.view()` helper.
+
+`kireExpress` builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, registers Kire as the Express view engine (so `res.render(name, data)` works like EJS/Eta), and adds `res.view(dotted.name, data)` which renders and sends HTML. Install it with `app.use(...)` or by passing the app directly.
+
+## API
+
+```ts
+import express from "express";
+import { kireExpress } from "@kirejs/express";
+
+const app = express();
+app.use(kireExpress({ views: "resources/views" }));          // style 1: middleware (has .engine)
+// const engine = kireExpress(app, { views: "resources/views" }); // style 2: direct, returns Kire engine
+
+app.get("/", (req, res) => res.view("home", { title: "Hi" }));       // dotted path, sends text/html
+app.get("/about", (req, res) => res.view("pages.about"));
+app.get("/x", (req, res) => res.render("home", { title: "Hi" }));    // standard Express render
+```
+
+Two call styles exist:
+- `kireExpress(options)` returns a middleware (`KireExpressMiddleware`) with an `.engine` property. The view engine is configured lazily on the first request using `req.app`.
+- `kireExpress(app, options)` configures the app immediately and returns the `Kire` engine.
+
+Options (`KireExpressOptions`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration }`
+
+- `res.view(name, data?)` is typed through a global `Express.Response` augmentation; it returns a Promise and calls `res.type("html").send(html)`.
+- `res.render` maps the absolute view file back to a relative name (no extension) and calls `engine.view`; Express-internal keys (`settings`, `cache`, `_locals`, `_parents`) are stripped from locals.
+- Also exported: `buildEngine(options)` and the option types (`KireExpressOptions`, `WireIntegration`, `PluginEntry`).
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })` into the engine, mounts the update endpoint (default `POST /_wire`), and serves the client runtime at `scriptUrl` (default `/kirewire.js`, resolved from `@kirejs/wire`'s `dist/client/auto.js` unless `clientScript` is given).
+
+```ts
+app.use(express.json());
+app.use(kireExpress({ views: "resources/views", wire: { instance: wire } }));
+```
+
+## Notes
+
+- Use dotted view paths with `res.view` (`pages.about` -> `pages/about.kire`).
+- Mount `express.json()` BEFORE `kireExpress` when using `wire`: the middleware style reads `req.body` for `POST /_wire`. In direct style the `expressAdapter` from `@kirejs/wire` mounts the route (`store` is passed to it).
+- In middleware style the wire endpoints are handled inline and short-circuit the chain; other requests continue via `next()`.
+- Pass `engine` to share one Kire instance across apps; `plugins`/`globals` are still applied to it.
+- `production: true` disables source maps and enables caching.

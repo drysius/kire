@@ -1,0 +1,48 @@
+# @kirejs/h3 — h3 (unjs) integration
+
+> Wire Kire (and optionally Kirewire) into h3 through a returned `{ view, middleware, engine }` handle.
+
+`kireH3(options)` builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, and returns a `KireH3` handle. Unlike the other integrations it does not decorate the request: you call `kire.view(dotted.name, data)` yourself inside handlers (it returns an HTML `Response` that h3 sends as-is), and you optionally mount `kire.middleware` to serve the Kirewire endpoints.
+
+## API
+
+```ts
+import { H3, serve } from "h3";
+import { kireH3 } from "@kirejs/h3";
+
+const kire = kireH3({ views: "resources/views" });
+const app = new H3();
+
+app.use(kire.middleware); // only does work when `wire` is set; otherwise passes through
+
+app.get("/", () => kire.view("home", { title: "Hi" }));
+app.get("/about", () => kire.view("pages.about", { who: "Kire" }));
+serve(app, { port: 3000 });
+```
+
+There is a single call style: `kireH3(options): KireH3`. The handle has:
+- `engine`: the `Kire` instance.
+- `view(name, data?)`: `Promise<Response>` with `content-type: text/html; charset=utf-8`.
+- `middleware(event, next)`: h3 middleware; serves wire endpoints when `wire` is set, else calls `next()`.
+
+Options (`KireH3Options`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration }`
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws at creation if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })`; `kire.middleware` then answers `POST <path>` (default `/_wire`; reads `event.req.text()`, calls `handleUpdate`, replies `Response.json(body, { status })`) and `GET <scriptUrl>` (default `/kirewire.js`) serving the client runtime resolved from `@kirejs/wire` or `clientScript`.
+
+```ts
+const kire = kireH3({ views: "resources/views", wire: { instance: wire } });
+app.use(kire.middleware);
+```
+
+## Notes
+
+- Written for the h3 v2 API (`new H3()`, `event.req`, `event.url.pathname`); the middleware relies on those properties.
+- You MUST register `app.use(kire.middleware)` for wire to work; `wire` alone does not mount routes.
+- Because `view` is not on the event, import/share the `kire` handle between modules (or export it) to render from route files.
+- Use dotted view paths (`pages.about` -> `pages/about.kire`).
+- Wire reads the raw text body, so no body-parser is needed.
+- `store` exists on the shared `WireIntegration` type but is not used by the h3 wiring.
+- `production: true` disables source maps and enables caching.

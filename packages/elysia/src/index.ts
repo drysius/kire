@@ -69,9 +69,16 @@ export function kireElysia(options: KireElysiaOptions): Elysia {
 		const wire = options.wire;
 		const wirePath = wire.path ?? "/_wire";
 		const scriptUrl = wire.scriptUrl ?? "/kirewire.js";
+		const ws = wire.ws ? (wire.ws === true ? {} : wire.ws) : null;
+		const wsPath = ws ? (ws.path ?? "/_wire/ws") : undefined;
 
 		engine.plugin(
-			wirePkg.kirewirePlugin(wire.instance, { scriptUrl, path: wirePath }),
+			wirePkg.kirewirePlugin(wire.instance, {
+				scriptUrl,
+				path: wirePath,
+				wsPath,
+				channel: ws?.channel,
+			}),
 		);
 
 		app = app.post(wirePath, async ({ body, set }: any) => {
@@ -79,6 +86,44 @@ export function kireElysia(options: KireElysiaOptions): Elysia {
 			set.status = result.status;
 			return result.body;
 		});
+
+		if (ws) {
+			const hub = ws.hub ?? new wirePkg.Hub();
+			// Bridge Elysia's event-based ws lifecycle to serveWs's callback model:
+			// stash each connection's registered handlers keyed by the raw socket.
+			const conns = new Map<any, { msg?: (d: string) => void; close?: () => void }>();
+			const key = (socket: any) => socket.raw ?? socket;
+			app = app.ws(wsPath as string, {
+				open(socket: any) {
+					const h: { msg?: (d: string) => void; close?: () => void } = {};
+					conns.set(key(socket), h);
+					wirePkg.serveWs(
+						wire.instance,
+						hub,
+						{
+							send: (data: string) => socket.send(data),
+							onMessage: (cb: (d: string) => void) => {
+								h.msg = cb;
+							},
+							onClose: (cb: () => void) => {
+								h.close = cb;
+							},
+						},
+						{ channel: ws.channel },
+					);
+				},
+				message(socket: any, message: any) {
+					const data =
+						typeof message === "string" ? message : JSON.stringify(message);
+					conns.get(key(socket))?.msg?.(data);
+				},
+				close(socket: any) {
+					const k = key(socket);
+					conns.get(k)?.close?.();
+					conns.delete(k);
+				},
+			});
+		}
 
 		const clientScript = resolveClientScript(wire);
 		if (clientScript) {

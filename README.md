@@ -54,7 +54,7 @@ console.log(html);
 The recommended editor companion is `KIRE IntelliSense`:
 
 - Marketplace: <https://marketplace.visualstudio.com/items?itemName=Kire.kire-intellisense>
-- Source: [`vs-kire/`](./vs-kire)
+- Source: [vs-kire/](https://github.com/drysius/kire/tree/main/vs-kire)
 
 The extension reads metadata from Kire core and workspace schemas such as `kire.schema.js`. That is how directives, elements, attributes, examples, package ownership, and hover documentation show up inside `.kire` files.
 

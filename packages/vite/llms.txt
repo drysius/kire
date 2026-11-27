@@ -1,0 +1,73 @@
+# @kirejs/vite — Vite plugin + `@vite` directive for Kire
+
+> Connects Kire templates to Vite: a Vite plugin (dev hot file, manifest build, optional `.kire` bundling) and a Kire plugin providing a Laravel-style `@vite(...)` directive.
+
+This package has two halves that run in different places. The **Vite plugin** (default export, `kireVite`) runs inside Vite and writes/removes a "hot file" and configures manifest output. The **Kire plugin** (`KireVite`) runs inside your server's Kire engine and registers `@vite(...)`, which at render time decides between dev tags (hot file present) and production tags (read `manifest.json`).
+
+## Concepts
+
+- **Hot file** — in `vite dev`, the plugin writes `<publicDirectory>/hot` (default `public/hot`) containing the dev server URL once the HTTP server is listening; it is deleted on server close and at `build` start. Its presence makes `@vite` emit dev tags.
+- **Manifest** — in `vite build`, the plugin defaults `build.manifest = "manifest.json"`, `build.outDir = <publicDirectory>/<buildDirectory>`, `emptyOutDir = true`, and sets `rollupOptions.input` from `input` (each only where the user has not set it). `@vite` reads that manifest at render time (cached by mtime).
+- **Dev tags** — `<script type="module" src="{url}/@vite/client">` plus per entry: `.css` -> `<link rel=stylesheet>`, images -> preload link, js/ts/extensionless -> `<script type="module">`.
+- **Prod tags** — for each entry, follows manifest `imports` recursively and emits stylesheet links, `modulepreload` links and `<script type="module">`, deduplicated. URLs are `/<buildDirectory>/<file>` or prefixed by `assetUrl`. Manifest paths containing `..` or starting with `/` are rejected.
+- **Two plugin modes** (selected by `kire: true`):
+  - Asset mode (default): hot file + manifest config + full-reload on changed files.
+  - Template mode (`kire: true`): precompiles all `.kire` views into one bundle file via `kire.compileAndBuild(...)` (production Kire, silent) at `buildStart`, on dev start, and whenever a `.kire` file changes/adds/unlinks (recompiles are serialized with rerun coalescing); then triggers a full reload.
+- **Refresh** — `refresh` (default `true`) controls which changed files send `{ type: "full-reload" }` over the Vite websocket; pass `string[]` to restrict to specific paths/globs.
+
+## API / Usage
+
+Exports of `@kirejs/vite`: default `kireVite`, named `kireVite`, `KireVite` (the Kire plugin), `renderViteTags(entries?, options?)`, `resolveRuntimePaths`, `readHotServerUrl`, `writeHotFile`, `removeHotFile`, option/manifest types, and utils (`normalizeInput`, `matchesRefresh`, ...).
+
+Vite plugin options (`KireVitePluginOptions`):
+
+```ts
+// shared
+{ publicDirectory?: "public"; buildDirectory?: "build"; manifestFilename?: "manifest.json";
+  hotFile?: string; assetUrl?: string; cwd?: string }
+// asset mode (kire?: false)
+{ input?: string | string[]; refresh?: boolean | string[]; devServerUrl?: string }
+// template mode
+{ kire: true; root?: "views"; namespaces?: Record<string, string | string[]>;
+  directories?: string[]; outfile?: ".kire.builded.js"; refresh?: boolean | string[] }
+```
+
+`vite.config.ts`:
+
+```ts
+import { defineConfig } from "vite";
+import kire from "@kirejs/vite";
+
+export default defineConfig({
+	plugins: [
+		kire({ input: ["css/app.css", "js/app.js"] }), // assets
+		// kire({ kire: true, root: "views", namespaces: { ui: "views/ui" } }), // bundle .kire
+	],
+});
+```
+
+Server side (the render options must match the Vite plugin's directories):
+
+```ts
+import { Kire } from "kire";
+import { KireVite } from "@kirejs/vite";
+const kire = new Kire().plugin(KireVite, { publicDirectory: "public", buildDirectory: "build", input: ["js/app.js"] });
+```
+
+```kire
+@vite()                                   {{-- uses configured `input` --}}
+@vite("js/app.js")
+@vite(["css/app.css", "js/app.js"])
+```
+
+`KireVite` options (`KireViteRenderOptions`): the shared options plus `input`, `devServerUrl`, `throwOnMissingEntry` (default `true`; when `false` a missing entry becomes `<!-- kire-vite: missing "x" -->`). It also registers the global `$vite(entries?)`.
+
+## Notes
+
+- Both `.plugin(KireVite)` (server) and `kire()` in `vite.config` (build tool) are needed; they share only the filesystem (hot file, manifest).
+- With no entries (no argument and no `input`) `@vite` outputs an empty string.
+- If there is no hot file and no manifest, `@vite` throws `[kire-vite] Manifest not found: ...`. Run `vite build` or `vite dev` first.
+- A stale `public/hot` left by a crashed dev server makes production render dev tags; delete it.
+- Hot-file URL precedence: `devServerUrl` option > `server.origin` > Vite resolved URLs > host/port fallback.
+- Template mode resolves directories/namespace paths against the Kire `root` first, then the project root.
+- Internal plugin names: `@kirejs/vite:assets` (`enforce: "pre"`) and `@kirejs/vite:kire`.

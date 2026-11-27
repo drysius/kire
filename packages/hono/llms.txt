@@ -1,0 +1,43 @@
+# @kirejs/hono — Hono integration
+
+> Wire Kire (and optionally Kirewire) into Hono with a typed `c.var.view()` context helper.
+
+`kireHono(options)` returns a Hono `MiddlewareHandler`. It builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, and on each request sets a `view` context variable: `c.var.view(dotted.name, data)` renders the template and returns an HTML `Response` (via `c.html`). Install it with `app.use(...)`.
+
+## API
+
+```ts
+import { Hono } from "hono";
+import { kireHono } from "@kirejs/hono";
+
+const app = new Hono();
+app.use(kireHono({ views: "resources/views" }));
+
+app.get("/", (c) => c.var.view("home", { title: "Hi" }));
+app.get("/about", (c) => c.var.view("pages.about"));
+```
+
+There is a single call style: `kireHono(options): MiddlewareHandler`. No `(app, options)` form, and the engine is not exposed on the return value (pass your own `engine` in options if you need a handle).
+
+Options (`KireHonoOptions`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration }`
+
+- The helper lives on the context variable map, typed through `declare module "hono"` (`ContextVariableMap.view`). Read it as `c.var.view` (or `c.get("view")`), NOT `c.view`.
+- Its type is `(name, data?) => Response | Promise<Response>`; return it directly from the handler.
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws at middleware creation if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })` and handles two requests inline in the middleware (skipping later handlers): `POST <path>` (default `/_wire`; reads `await c.req.text()` and passes it to `handleUpdate`, replying with `c.json(body, status)`) and `GET <scriptUrl>` (default `/kirewire.js`) serving the client runtime resolved from `@kirejs/wire` or `clientScript`.
+
+```ts
+app.use(kireHono({ views: "resources/views", wire: { instance: wire } }));
+```
+
+## Notes
+
+- Register the middleware before routes that call `c.var.view`, and at the app root so path matching (`c.req.path`) hits `/_wire` and `/kirewire.js`.
+- Use dotted view paths (`pages.about` -> `pages/about.kire`).
+- Wire reads the raw text body, so no JSON body-parser middleware is needed.
+- The client script is read with `node:fs`, so on non-Node runtimes (Workers) provide your own delivery for it.
+- `store` exists on the shared `WireIntegration` type but is not used by the Hono wiring.
+- `production: true` disables source maps and enables caching.

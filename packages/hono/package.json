@@ -32,10 +32,14 @@
 	},
 	"peerDependencies": {
 		"@kirejs/wire": "workspace:*",
-		"hono": "^4"
+		"hono": "^4",
+		"ws": "^8"
 	},
 	"peerDependenciesMeta": {
 		"@kirejs/wire": {
+			"optional": true
+		},
+		"ws": {
 			"optional": true
 		}
 	},

@@ -8,7 +8,7 @@ import { Counter } from "./counter.js";
 const resource = GetCurrentResourceName();
 const views = `${GetResourcePath(resource)}/views`;
 
-const wire = new Kirewire({ secret: process.env.APP_SECRET ?? "change-me" });
+const wire = new Kirewire({ secret: process.env.APP_SECRET });
 wire.component(Counter);
 
 const fivem = kireFivem({ views, wire: { instance: wire } });

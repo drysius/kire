@@ -143,7 +143,15 @@ class Builder {
 	}
 
 	private async copyMetaFiles(pkg: PackageInfo): Promise<void> {
-		const files = ["README.md", "LICENSE", "kire.schema.js"];
+		// AGENT.md ships too: package READMEs link to ./AGENT.md, so it must exist
+		// in the published tarball or the link 404s on npm.
+		const files = [
+			"README.md",
+			"AGENT.md",
+			"LICENSE",
+			"kire.schema.js",
+			"llms.txt",
+		];
 		for (const file of files) {
 			const src = `${pkg.path}/${file}`;
 			if (existsSync(src)) {

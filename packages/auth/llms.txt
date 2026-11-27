@@ -1,0 +1,46 @@
+# @kirejs/auth — Authentication directives for Kire
+
+> Adds Blade-style `@auth`, `@guest`, `@can` etc. directives backed by two callbacks you supply (`getUser`, `canPerm`).
+
+The plugin holds no auth logic itself. You pass `getUser(ctx)` (returns the current user or a falsy value) and `canPerm(perm, user)` (returns boolean). They are stored as globals (`$auth_getUser`, `$auth_can`) and every directive awaits them, so templates using these directives are compiled async. `getUser` is invoked with the template's `$props` (render locals) as `ctx`, so the user must be reachable from locals (e.g. `kire.view(path, { req })` or `{ user }`).
+
+## Directives / API
+
+- **`KireAuth`** (named export and default) — the plugin. Options: `{ getUser, canPerm }`. Defaults: `getUser` -> `null`, `canPerm` -> `false` (everything denied until configured). Type `AuthOptions` is exported.
+- **`@auth` ... `@end`** — renders block if `getUser` is truthy.
+- **`@logged`, `@authenticated`** — aliases of `@auth`.
+- **`@guest`, `@notlogged`, `@noauth`** — render block if `getUser` is falsy.
+- **`@user`** (no children) — assigns the user to a variable named `user` (declared for tooling): `@user` then `{{ user.name }}`.
+- **`@can(perm)`** ... `@end` — block if `canPerm(perm, user)` is true.
+- **`@notcan(perm)`** ... `@end` — block if `canPerm` is false.
+- **`@canany(perms)`** ... `@end` — `perms` is an array (or single value); block if any permission passes.
+
+All block directives accept the related-branch form (`@else`) for the alternative content, and close with `@end`.
+
+## Usage
+
+```ts
+import { Kire } from "kire";
+import KireAuth from "@kirejs/auth";
+
+const kire = new Kire();
+kire.plugin(KireAuth, {
+  getUser: (ctx) => ctx.user ?? null,
+  canPerm: (perm, user) => !!user?.permissions?.includes(perm),
+});
+
+await kire.render(`
+@auth
+  <p>Hello {{ user?.name }}</p>
+  @can('edit_posts') <button>Edit</button> @end
+@else
+  <a href="/login">Login</a>
+@end`, { user: { name: "Ann", permissions: ["edit_posts"] } });
+```
+
+## Notes
+
+- Callbacks may be sync or async; they are called once per directive occurrence (no memoization), so cache inside `getUser` if it hits a DB.
+- Without options everything behaves as logged-out and unauthorized.
+- `@user` writes to `user`; use `@user` before reading `user` in the template (or just use the `getUser` result via locals).
+- Because directives call `await`, render with `async: true`-capable usage (`await kire.render/view`).

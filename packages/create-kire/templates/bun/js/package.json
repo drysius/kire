@@ -1,0 +1,14 @@
+{
+	"name": "kire-bun-app",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "bun --watch main.js",
+		"start": "bun main.js"
+	},
+	"dependencies": {
+		"@kirejs/bun": "0.0.0-develop",
+		"@kirejs/wire": "0.0.0-develop",
+		"kire": "0.0.0-develop"
+	}
+}

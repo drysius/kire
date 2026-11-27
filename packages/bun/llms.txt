@@ -1,0 +1,59 @@
+# @kirejs/bun — Bun integration
+
+> Wire Kire (and optionally Kirewire) into a native `Bun.serve` app — a `view()` helper and a composable Kirewire handler with native WebSocket.
+
+Unlike the router integrations (express/fastify/…), Bun has no framework router.
+`kireBun(options)` builds the engine once (loading `plugins` and `globals`) and
+returns pieces you compose into your own `Bun.serve` `fetch`: a `view()` that
+renders a dotted Kire view path to an HTML `Response`, a `wire()` handler for the
+Kirewire endpoints, and a native `websocket` handler.
+
+## API
+
+```ts
+import { kireBun } from "@kirejs/bun";
+
+const kire = kireBun({ views: "views", wire: { instance: wire, ws: true } });
+
+Bun.serve({
+  async fetch(req, server) {
+    const res = await kire.wire(req, server);
+    if (res !== null) return res;            // wire route, or undefined on WS upgrade
+    const { pathname } = new URL(req.url);
+    if (pathname === "/") return kire.view("home", { title: "Hi" });
+    return new Response("Not Found", { status: 404 });
+  },
+  websocket: kire.websocket,                 // undefined unless wire.ws is set
+});
+```
+
+Options (`KireBunOptions`): `{ views, extension? = "kire", production?, engine?, plugins?, globals?, wire? }` — the shared Kire integration shape.
+
+Returned `KireBun`:
+- `engine` — the configured `Kire` instance.
+- `view(name, data?) => Promise<Response>` — renders a (dotted) view path as `text/html`.
+- `wire(req, server?) => Promise<Response | undefined | null>` — returns a `Response`
+  for a Kirewire endpoint (`POST /_wire`, the client script), `undefined` when it
+  performed a WebSocket upgrade (return it from `fetch`), or `null` when the request
+  is not a wire route (continue with your own routing).
+- `websocket` — Bun `websocket` handler, present only when `wire.ws` is enabled.
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store?, ws? }` requires
+`@kirejs/wire` (optional peer; throws if missing). It loads `kirewirePlugin`,
+handles `POST /_wire`, and auto-serves the client runtime (resolved from
+`@kirejs/wire`'s `dist/client/auto.js`, or `clientScript`).
+
+## WebSocket
+
+Bun owns its server, so `wire.ws` works directly when declared — no extra
+dependency. `ws: true` uses the default path `/_wire/ws`; `ws: { path?, channel?, hub? }`
+customizes it. The injected client script carries `data-kirewire-ws`, so the
+browser connects over Bun's native WebSocket. Pass `kire.websocket` to `Bun.serve`.
+
+## Notes
+
+- `new Kirewire({ secret })` — pass a stable secret in production; if omitted, a
+  random per-process one is generated (snapshots won't verify across instances).
+- No router: you own routing in `fetch`; `kire.wire` is checked first, then your routes.

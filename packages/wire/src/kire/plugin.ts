@@ -6,6 +6,18 @@ export interface KirewirePluginOptions {
 	scriptUrl?: string;
 	/** Update endpoint the client posts to (default `/_wire`). */
 	path?: string;
+	/**
+	 * WebSocket endpoint path. When set, `@kirewireScripts` tells the client to
+	 * use the duplex WebSocket transport (instead of HTTP POST) by emitting
+	 * `data-kirewire-ws`. The value is a path (e.g. `/_wire/ws`); the client
+	 * resolves it against the page origin as `ws(s)://…`.
+	 */
+	wsPath?: string;
+	/**
+	 * Server-push channel the client subscribes to on connect (SSE/WebSocket).
+	 * Emitted as `data-kirewire-channel`.
+	 */
+	channel?: string;
 }
 
 /** Build a `{ key: expr }` params object literal from element attributes. */
@@ -77,13 +89,19 @@ export function kirewirePlugin(
 			// tells the auto-boot bundle which endpoint to post updates to.
 			const scriptUrl = options.scriptUrl ?? "/kirewire.js";
 			const updatePath = options.path ?? "/_wire";
+			const wsAttr = options.wsPath
+				? ` data-kirewire-ws="${options.wsPath}"`
+				: "";
+			const channelAttr = options.channel
+				? ` data-kirewire-channel="${options.channel}"`
+				: "";
 			kire.directive({
 				name: "kirewireScripts",
 				description: "Inject the Kirewire client runtime script tag.",
 				example: "@kirewireScripts",
 				onCall: (api: any) => {
 					api.append(
-						`<script src="${scriptUrl}" data-kirewire-url="${updatePath}" defer></script>`,
+						`<script src="${scriptUrl}" data-kirewire-url="${updatePath}"${wsAttr}${channelAttr} defer></script>`,
 					);
 				},
 			});

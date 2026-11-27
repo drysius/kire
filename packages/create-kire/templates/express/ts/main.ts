@@ -4,7 +4,7 @@ import { Kirewire } from "@kirejs/wire";
 import express from "express";
 import { Counter } from "./counter";
 
-const wire = new Kirewire({ secret: process.env.APP_SECRET ?? "change-me" });
+const wire = new Kirewire({ secret: process.env.APP_SECRET });
 wire.component(Counter);
 
 const app = express();

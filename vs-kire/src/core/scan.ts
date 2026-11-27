@@ -10,6 +10,12 @@ const runtimeRequire = createRequire(import.meta.url);
 
 type KireCtor = new (options?: any) => any;
 
+interface ResolvedKire {
+	Kire: KireCtor;
+	/** Version of the resolved Kire runtime, for schema metadata/hovers. */
+	version: string;
+}
+
 // ESM modules can never be unloaded, so the `import()` fallback (used when
 // `require` rejects a schema file) must only re-import when the file actually
 // changed; otherwise every "reload schemas" would leak one module instance.
@@ -25,23 +31,35 @@ function isWorkspaceTrusted(): boolean {
 	return trusted !== false;
 }
 
-function tryLoadKireFromBase(basePath: string): KireCtor | null {
+function tryLoadKireFromBase(basePath: string): ResolvedKire | null {
 	try {
 		const requireFromBase = createRequire(basePath);
 		const mod = requireFromBase("kire") as { Kire?: KireCtor };
 		if (typeof mod?.Kire === "function") {
-			return mod.Kire;
+			return { Kire: mod.Kire, version: resolveKireVersion(requireFromBase) };
 		}
 	} catch {}
 	return null;
 }
 
-async function tryLoadBundledKire(): Promise<KireCtor | null> {
+/** Read the resolved `kire` package's version from its package.json. */
+function resolveKireVersion(requireFromBase: NodeRequire): string {
+	try {
+		const pkgPath = requireFromBase.resolve("kire/package.json");
+		const pkg = JSON.parse(runtimeRequire("node:fs").readFileSync(pkgPath, "utf8"));
+		if (typeof pkg?.version === "string") return pkg.version;
+	} catch {}
+	return "0.0.0";
+}
+
+async function tryLoadBundledKire(): Promise<ResolvedKire | null> {
 	try {
 		const bundledUrl = new URL("./kire-runtime.js", import.meta.url);
 		const mod = await import(bundledUrl.href);
 		if (typeof mod?.Kire === "function") {
-			return mod.Kire as KireCtor;
+			const version =
+				typeof mod?.KIRE_VERSION === "string" ? mod.KIRE_VERSION : "0.0.0";
+			return { Kire: mod.Kire as KireCtor, version };
 		}
 	} catch (error) {
 		kireLog(
@@ -52,7 +70,7 @@ async function tryLoadBundledKire(): Promise<KireCtor | null> {
 	return null;
 }
 
-async function resolveKireConstructor(): Promise<KireCtor> {
+async function resolveKireConstructor(): Promise<ResolvedKire> {
 	if (!isWorkspaceTrusted()) {
 		const bundled = await tryLoadBundledKire();
 		if (bundled) {
@@ -67,15 +85,15 @@ async function resolveKireConstructor(): Promise<KireCtor> {
 
 	const folders = vscode.workspace.workspaceFolders || [];
 	for (const folder of folders) {
-		const kireCtor = tryLoadKireFromBase(
+		const resolved = tryLoadKireFromBase(
 			join(folder.uri.fsPath, "package.json"),
 		);
-		if (kireCtor) {
+		if (resolved) {
 			kireLog(
 				"debug",
-				`Using workspace Kire runtime from ${folder.uri.fsPath}`,
+				`Using workspace Kire runtime from ${folder.uri.fsPath} (v${resolved.version})`,
 			);
-			return kireCtor;
+			return resolved;
 		}
 	}
 
@@ -608,7 +626,7 @@ export async function loadSchemas(): Promise<void> {
 	kireStore.getState().clear();
 	kireLog("info", "Starting schema load.");
 
-	const Kire = await resolveKireConstructor();
+	const { Kire, version: kireVersion } = await resolveKireConstructor();
 	const engine = new Kire({
 		production: true,
 		silent: true,
@@ -620,9 +638,9 @@ export async function loadSchemas(): Promise<void> {
 		annotateSchemaPackage(
 			extractEngineSchema(engine, {
 				name: "kire",
-				version: "0.0.0",
+				version: kireVersion,
 			}),
-			{ name: "kire", version: "0.0.0" },
+			{ name: "kire", version: kireVersion },
 		),
 	);
 

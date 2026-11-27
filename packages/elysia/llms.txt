@@ -1,0 +1,43 @@
+# @kirejs/elysia — Elysia integration
+
+> Wire Kire (and optionally Kirewire) into Elysia via a plugin that decorates the context with `view` and `kire`.
+
+`kireElysia(options)` returns an Elysia plugin instance (named `kire` by default). It builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, and decorates the route context with `view(dotted.name, data)` (returns an HTML `Response`) and `kire` (the engine). Install it with `.use(...)`.
+
+## API
+
+```ts
+import { Elysia } from "elysia";
+import { kireElysia } from "@kirejs/elysia";
+
+new Elysia()
+  .use(kireElysia({ views: "resources/views" }))
+  .get("/", ({ view }) => view("home", { title: "Hi" }))
+  .get("/about", ({ view }) => view("pages.about"))
+  .listen(3000);
+```
+
+There is a single call style: `kireElysia(options): Elysia`. No `(app, options)` form.
+
+Options (`KireElysiaOptions`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration; name?: string = "kire" }`
+
+- `view(name, data?)` is destructured from the handler context; its type is inferred by Elysia from `.decorate`. It resolves to `new Response(html, { "content-type": "text/html; charset=utf-8" })`, so return it directly from the handler.
+- `kire` on the context is the raw engine, for ad-hoc `kire.view(...)` strings or global registration.
+- `name` sets the Elysia plugin name (use a distinct one if you register more than one).
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })`, adds `POST <path>` (default `/_wire`; calls `handleUpdate(instance, body)` and sets `set.status` from the result), and `GET <scriptUrl>` (default `/kirewire.js`) serving the client runtime resolved from `@kirejs/wire` (`dist/client/auto.js`) or `clientScript`.
+
+```ts
+new Elysia().use(kireElysia({ views: "resources/views", wire: { instance: wire } }));
+```
+
+## Notes
+
+- Use dotted view paths (`pages.about` -> `pages/about.kire`).
+- Elysia parses JSON bodies itself, so no body-parser is needed for `/_wire`.
+- `view` returns a `Response`; the content-type is set for you.
+- `store` exists on the shared `WireIntegration` type but is not used by the Elysia wiring.
+- `production: true` disables source maps and enables caching.

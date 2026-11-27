@@ -1,0 +1,54 @@
+# @kirejs/tailwind — Tailwind v4 compilation from Kire templates
+
+> Adds `<tailwind>` and `@tailwind` blocks that compile Tailwind CSS at render time against the class names actually used in the rendered page.
+
+Plugs into Kire as `KireTailwind` (default export; wraps `tailwindcss` v4's `compile()`). Tailwind v4 only emits utilities for the candidate class names it is handed, so the plugin renders the whole page first, scans the HTML for classes, then compiles each declared CSS block against them. No build step or content globs are needed.
+
+## Concepts
+
+- **Block** — a `<tailwind>...css...</tailwind>` element or `@tailwind ... @end` directive holding CSS source (`@theme`, `@apply`, `@import`, etc.). At its location the template emits a unique marker `<!--KIRE_TW_<uid>-->` and registers `{ marker, css }` in a per-render `__twBlocks` list.
+- **Finalization (runtime)** — in the template epilogue (after the whole body, so candidates cover the full page) `renderTailwindBlocks` runs: `extractCandidates(html)` collects tokens from every `class="..."` / `class='...'` attribute, each block is compiled, and its marker is replaced.
+- **Auto import** — if the block CSS lacks `@import "tailwindcss"`, it is prepended, so a block may hold only custom CSS and still get every utility used on the page.
+- **Output modes** — default: marker replaced by `<style>compiled</style>`. If `@kirejs/assets` is active (its `__kire_assets` exists) the CSS is registered as a hashed `css` asset, the marker is removed, and the CSS is served through `@assets()` instead.
+- **Cache** — compiled results are cached in a Map keyed by `css + sorted candidate set` (max 200 entries, oldest evicted). Same classes + same CSS means no recompile.
+- **Loader** — `loadStylesheet` resolves `tailwindcss` to `tailwindcss/index.css` and other `@import`s via `require.resolve` from the base dir (unresolved imports yield empty content). `loadModule` loads `@plugin`/`@config` JS modules via require, falling back to ESM `import()`. The plugin passes both to `compile()`.
+
+## API / Usage
+
+Exports: `KireTailwind` (default), `compileCSSWithTailwind(css, options, candidates = [])`, `extractCandidates(html)`, `renderTailwindBlocks(html, blocks, ctx)`, `loadStylesheet(id, base)`, `loadModule(id, base)`, types `TailwindBlock`, `RenderTailwindContext`, `AssetsRuntime`, `TailwindCompileOptions` (the second argument type of tailwindcss `compile`).
+
+Plugin options are `TailwindCompileOptions`, passed to Tailwind's `compile` with `loadStylesheet`/`loadModule` supplied by the plugin and `from` unset.
+
+```ts
+import { Kire } from "kire";
+import { KireAssets } from "@kirejs/assets";
+import { KireTailwind } from "@kirejs/tailwind";
+
+const kire = new Kire().plugin(KireAssets).plugin(KireTailwind); // assets first (optional)
+```
+
+```kire
+<div class="rounded-xl p-6 bg-brand">Hello</div>
+
+<tailwind>
+	@theme { --color-brand: #16a34a; }
+	.btn { @apply rounded bg-brand px-4 py-2 text-white; }
+</tailwind>
+
+@tailwind
+	.card { @apply border p-6; }
+@end
+
+@tailwind(cssExpr)   {{-- CSS from an expression --}}
+```
+
+Standalone: `await compileCSSWithTailwind('@import "tailwindcss";', {}, extractCandidates(html))`.
+
+## Notes
+
+- Passing no candidates to `compileCSSWithTailwind` yields only base/preflight CSS (the classic "no utilities" failure).
+- Candidate detection is a static regex over `class="..."` in the output HTML. Classes built only in JS or in other attributes are not seen; render them in some `class` attribute or use `@source inline(...)` in the CSS.
+- Templates using these blocks are async (the plugin calls `markAsync()`); render with `await`.
+- `tailwindcss` (v4) must be installed; `@plugin`/`@import` resolve from the working directory.
+- Put the block anywhere (usually `<head>`); several blocks are compiled independently, each against the whole page's classes.
+- Without `@kirejs/assets` every render inlines the full CSS in the HTML (the compile itself is cached).

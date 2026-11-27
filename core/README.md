@@ -73,8 +73,8 @@ bun test core/tests
 
 ## Related Packages
 
-- Root overview: [`../README.md`](../README.md)
-- VS Code extension: [`../vs-kire/README.md`](../vs-kire/README.md)
+- Root overview: [kire repository](https://github.com/drysius/kire#readme)
+- VS Code extension: [KIRE IntelliSense](https://github.com/drysius/kire/tree/main/vs-kire#readme)
 
 ## License
 

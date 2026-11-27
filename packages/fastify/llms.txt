@@ -1,0 +1,45 @@
+# @kirejs/fastify — Fastify integration
+
+> Wire Kire (and optionally Kirewire) into Fastify with a typed `reply.view()` helper.
+
+`kireFastify` builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, and decorates the Fastify reply with `view(dotted.name, data)`, which renders the template and sends it as `text/html; charset=utf-8`. Install it with `app.register(...)` or by passing the app directly.
+
+## API
+
+```ts
+import Fastify from "fastify";
+import { kireFastify } from "@kirejs/fastify";
+
+const app = Fastify();
+app.register(kireFastify({ views: "resources/views" }));          // style 1: plugin
+// const engine = kireFastify(app, { views: "resources/views" });  // style 2: direct, returns Kire engine
+
+app.get("/", (req, reply) => reply.view("home", { title: "Hi" }));
+app.get("/about", (req, reply) => reply.view("pages.about"));
+```
+
+Two call styles exist:
+- `kireFastify(options)` returns a Fastify plugin (`KireFastifyPlugin`) with an `.engine` property. It sets `Symbol.for("skip-override")` so the decorator is app-wide (same effect as `fastify-plugin`).
+- `kireFastify(app, options)` applies the setup immediately (detected by `app.decorateReply`) and returns the `Kire` engine.
+
+Options (`KireFastifyOptions`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration }`
+
+- `reply.view(name, data?)` is typed via a `declare module "fastify"` augmentation of `FastifyReply`; it is async and resolves to the reply (`Promise<this>`).
+- The decorator is only added if `view` is not already decorated on the reply.
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })`, registers `POST <path>` (default `/_wire`, calls `handleUpdate(instance, req.body)`), and registers `GET <scriptUrl>` (default `/kirewire.js`) serving the client runtime resolved from `@kirejs/wire` (`dist/client/auto.js`) or `clientScript`.
+
+```ts
+app.register(kireFastify({ views: "resources/views", wire: { instance: wire } }));
+```
+
+## Notes
+
+- Use dotted view paths (`pages.about` -> `pages/about.kire`).
+- Fastify parses JSON bodies by default, so `req.body` is available to the wire endpoint with no extra parser.
+- In plugin style the wire routes are registered inside the plugin; because encapsulation is skipped they live on the root app.
+- `store` is declared in the shared `WireIntegration` type but the Fastify wiring does not currently use it.
+- `production: true` disables source maps and enables caching.

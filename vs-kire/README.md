@@ -51,8 +51,8 @@ bun run build
 
 ## Related Docs
 
-- Repo overview: [`../README.md`](../README.md)
-- Core package: [`../core/README.md`](../core/README.md)
+- Repo overview: [kire repository](https://github.com/drysius/kire#readme)
+- Core package: [kire core](https://github.com/drysius/kire/tree/main/core#readme)
 
 ## License
 

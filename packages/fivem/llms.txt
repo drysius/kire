@@ -1,0 +1,54 @@
+# @kirejs/fivem — Kire + Kirewire for FiveM NUI
+
+> Wires a Kire engine and Kirewire into a FiveM resource, where the NUI browser talks to the server through `RegisterNuiCallback` instead of HTTP.
+
+FiveM has no HTTP server for the UI. The NUI page (a browser embedded in the game) posts Kirewire updates to a NUI callback, and the resource replies with the usual `{ snapshot, html, effects }`. `kireFivem(opts)` builds the Kire engine, loads `kirewirePlugin`, and returns the pieces you plug into FiveM natives. Requires `@kirejs/wire` and `kire`.
+
+## API
+
+- **`kireFivem(options)`** — returns `{ engine, render, handler, path, broadcaster }`.
+  - `engine` — the configured `Kire` instance (yours via `options.engine`, or a new one built from `views`).
+  - `render(view, data?)` — renders a `.kire` view to HTML (`engine.view`); may return a Promise. Use it to push the initial NUI page.
+  - `handler` — a `NuiCallback`; pass to `RegisterNuiCallback(path, handler)`. Internally `createFiveMHandler(wire, () => engine.fork())`, so each call gets a request-scoped fork.
+  - `path` — NUI callback name, default `"_wire"`.
+  - `broadcaster(sendNuiMessage)` — builds a `FiveMBroadcaster` from the host's `SendNuiMessage` (it receives a JSON string). Pass it to `new Kirewire({ broadcaster })` for server-to-NUI push effects.
+- **`createFiveMHandler`, `FiveMBroadcaster`** — re-exported from `@kirejs/wire` for manual wiring.
+- **Types** — `KireFivemOptions`, `PluginEntry` (a plugin or `[plugin, options]`).
+
+## Options (`KireFivemOptions`)
+
+- `views` (required) — directory holding the `.kire` NUI views.
+- `wire` (required) — `{ instance, path?, scriptUrl? }`: the `Kirewire` instance, callback name (default `_wire`), and the URL the NUI page loads the client runtime from (default `/kirewire.js`).
+- `extension` (default `kire`), `production`, `engine` (reuse an existing engine), `plugins` (plugin or `[plugin, opts]` entries), `globals` (exposed to every view).
+
+## Usage
+
+```ts
+import { Kirewire } from "@kirejs/wire";
+import { kireFivem } from "@kirejs/fivem";
+
+const wire = new Kirewire({ secret: "change-me" });
+wire.component(Counter);
+
+const fivem = kireFivem({ views: "views", wire: { instance: wire } });
+RegisterNuiCallback(fivem.path, fivem.handler);
+
+// push the initial page to the NUI browser
+SendNuiMessage(JSON.stringify({ type: "page", html: await fivem.render("counter") }));
+```
+
+Push effects (server to NUI):
+
+```ts
+const broadcaster = fivem.broadcaster((json) => SendNuiMessage(json));
+// give `broadcaster` to the Kirewire constructor options
+```
+
+## Notes
+
+- Not HTTP: there is no route and no `res.view`. You deliver the initial HTML via `SendNuiMessage`; later updates flow through the registered NUI callback.
+- The NUI page must be able to load the Kirewire client script at `scriptUrl` (ship it with the NUI files) and its transport must post to the same callback `path`.
+- `render` may be async depending on the engine; always `await` it.
+- `wire.path` has no leading slash; the plugin is configured internally with `/${path}`.
+- `handler` forks the engine per call, so per-request globals do not leak between calls.
+- Keep one `Kirewire` instance for the resource lifetime; component state lives there.

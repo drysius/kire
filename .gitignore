@@ -9,7 +9,6 @@ dist
 # Project to test Kire logic
 MultiChat
 **/bun.lock
-**/llms.txt
 
 # studing livewire implementations
 livewire

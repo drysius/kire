@@ -1,0 +1,92 @@
+# kire — core engine
+
+> Kire is a Blade-inspired template engine that compiles templates into optimized JavaScript functions.
+
+The `kire` package (source in `core/`) holds the lexer, compiler, runtime, native directives/elements and the plugin/type APIs. Everything else in the monorepo (`@kirejs/*`: wire, vite, i18n, framework integrations...) is layered on top via plugins.
+
+Render data-flow: `kire.render(template, locals)` -> `Lexer.parse` produces an AST (`Node[]`) -> `Compiler.compile` emits a JS code string -> `createKireFunction` wraps it as a `KireTplFunction` -> executed with locals, returning an HTML string (or a Promise when the template is async). Results are cached by filepath (`view`/`getOrCompile`) or by template source text (`render`), so each template compiles once.
+
+## Concepts
+
+- **Kire class** — the engine (`new Kire<Async>(options)`). Holds config, directive/element registries, globals/props, platform and cache. Import: `import { Kire, kirePlugin } from "kire"`.
+- **Lexer / AST** — `new Lexer(src, kire).parse()` yields `Node[]`. A `Node` has `type: "text" | "interpolation" | "directive" | "js" | "element"` plus `content`, `name`, `args`, `attributes`, children.
+- **Compiler** — turns `Node[]` into a JS function body string. Directive/element handlers receive a `CompilerApi` (`write`, `append`, `renderChildren`, `uid`, `getAttribute`, ...) and emit code instead of rendering.
+- **KireTplFunction** — compiled template function with `meta: { async, path, source, code, map, dependencies }`. Called with `this` = Kire instance.
+- **KireCacheEntry** — cached state per template: `ast`, `fn`, `code`, `async`, `time` (mtime), `dependencies`, `source`.
+- **Platform abstraction (`KirePlatform`)** — filesystem/path/env/runtime layer (`readFile`, `exists`, `stat`, `resolve`...). Node platform is auto-detected, a browser platform is used otherwise; override with `options.platform`. `core/src/browser.ts` is the browser entry.
+- **Globals vs props** — `$globals` are engine-wide values (`kire.$global(k, v)`, alias `$ctx`); `$props` are default locals (`kire.$prop(k, v)`); per-render `locals` override props, and the optional third `render/view` argument adds per-call globals. Template identifiers resolve from props, then globals, then `globalThis` (unless `use_global: false`).
+- **fork()** — creates a request-scoped child Kire: shares the parent's cache/config reads, isolates its own globals/props/config writes (store proxies fall back to the parent). Use one fork per HTTP request. Register fork setup with `onFork(cb)`.
+- **Naming convention** — `~` prefixed members are private storage (`~directives`, `~elements`, `~store`); `$` prefixed getters are the public surface (`$globals`, `$props`, `$config`, `$cache`, `$files`, `$root`, `$production`, `$async`). Never touch `~` fields from outside.
+- **Plugins** — `KirePlugin { name?, sort?, options?, load(kire, opts) }`; build with `kirePlugin(defaultOptions, (kire, opts) => {...})` and load with `kire.plugin(p, opts)`.
+- **Async detection** — the compiler scans generated code for `await`; if found the template function is async and returns a Promise. A Kire created with `async: false` throws if a template turns out to be async.
+- **Schema metadata** — directives/elements/attributes/types carry `description`, `example`, `signature`, `declares`, ... consumed by the VS Code extension (`kireSchema`, `defineSchema`).
+
+## Public API
+
+Constructor options (`KireOptions`): `root` (view directory), `extension` (default view extension, e.g. `".kire"`), `production` (cache forever, skip mtime checks), `async` (default true), `silent`, `strict_directives`, `local_variable`, `max_renders` (cache size bound), `use_global`, `files` (virtual/pre-compiled templates `Record<string, string | KireTplFunction>`), `platform` (partial override), `emptykire` (skip native directives/elements), `parent` (internal, used by fork).
+
+```ts
+import { Kire } from "kire";
+
+const kire = new Kire({ root: "./views", production: false });
+kire.$global("appName", "Demo");
+
+const html = await kire.render("Hello {{ name }} from {{ appName }}", { name: "Ada" });
+const page = await kire.view("pages.home", { user });   // resolves root + dotted path + extension
+```
+
+Methods on `Kire`:
+- `parse(src): Node[]`; `parseDetailed(src): { nodes, errors }` (tolerated structural problems, used by tooling).
+- `compile(src, filename = "template.kire", extraGlobals = [], isDependency = false): KireCacheEntry` — compile without caching by path (`entry.code` is the generated JS; useful for debugging).
+- `render(template, locals?, globals?, filename?)` — compile (cached by source text, bounded by `max_renders`) and run an inline template string.
+- `view(path, locals?, globals?)` — load a file (or `files` entry) via `getOrCompile(path)`, then run.
+- `run(tplFn, locals, globals?)` — execute an already compiled `KireTplFunction`; errors are wrapped in `KireError`.
+- `getOrCompile(path)`, `resolvePath(p)`, `readFile(p)`, `namespace(name, path)` (map a `name.` or `name/` view prefix to a directory), `compileAndBuild(dirs, outFile)` (precompile directories to a bundle).
+- `fork()`, `onFork(cb)`, `plugin(p, opts?)` (alias `use`), `cached(name)` (per-module cache bucket), `existVar(pattern, cb)` (hook when an identifier is used).
+- Registration: `directive(def)`, `element(def)`, `attribute(def)`, `type({ variable, type: "global" | "context" | "prop", tstype, comment })`, `kireSchema(def)`.
+- Also exported: `kirePlugin`, `defineSchema`, `Lexer`, `Compiler`, `createKireFunction`, `KireError`, `escapeHtml`, `NullProtoObj`, and all types.
+
+```ts
+import { Kire, kirePlugin } from "kire";
+
+const Shout = kirePlugin({}, (kire) => {
+	kire.directive({
+		name: "shout",
+		description: "Uppercase output",
+		example: "@shout('hi')",
+		onCall(api) { api.append("HI"); },
+	});
+	kire.element({
+		name: "my-box",
+		onCall(api) { api.append("<div>"); api.renderChildren(); api.append("</div>"); },
+	});
+});
+new Kire().plugin(Shout);
+```
+
+`DirectiveDefinition`: `name`, `onCall(api)`, `closeBy`, `relatedTo`, `children`, `scope(args)` / `isDependency(args)` (variables a directive introduces / templates it depends on), `signature`, `declares`, `exposes`, `description`, `example`. `ElementDefinition` is similar with `name: string | RegExp`, `raw` (unescaped inner content) and `void`.
+
+## Directives & echo syntax
+
+Echo: `{{ expr }}` escaped; `{{{ expr }}}` and `{!! expr !!}` raw; `{{-- comment --}}` dropped; `@{{ ... }}` / `@{!! ... !!}` emitted literally; `@verbatim ... @endverbatim` emits its body untouched.
+
+Native directives (registered by the `KireDirectives` plugin, name `@kirejs/core`):
+- Conditionals: `@if/@elseif/@else/@unless`, `@isset`, `@empty`, `@switch/@case/@default`.
+- Loops: `@for`, `@each`, `@foreach` (Blade `x as y` and `k => v`), `@forelse`, `@while`, `@break`, `@continue`; loops expose `$loop`.
+- Layout: `@define/@defined`, `@stack`, `@push/@prepend`, `@pushOnce/@prependOnce`.
+- Composition: `@include`, `@includeIf/When/Unless/First`; `@component`, `@slot`, `@yield`, `@section`, `@show`, `@layout`, `@extends`; `@props` (declare props/defaults, remainder goes into `$attributes`), `@aware`.
+- Attributes: `@attr`, `@attrs`, `@class`, `@style`, `@checked`, `@selected`, `@disabled`, `@readonly`, `@required`.
+- Misc: `@once`, `@error`, `@csrf`, `@method`, `@const`, `@let`, `@interface` (types for tooling only), `@json`, `@dump`, `@dd`, `@env`, `@production`, `@inject` (from `$globals.services`), `@session` (from `$globals.session`).
+
+Native elements: raw `<style>`/`<script>`, control-flow `<kire:if|elseif|else|for|empty|switch|case|default>`, and `<kire:*>` aliases of directives (`kire:include`, `kire:component`, `kire:layout`, `kire:slot`, `kire:section`, `kire:yield`, `kire:define`, `kire:stack`, `kire:push`, ...).
+
+## Notes / gotchas
+
+- Caching: file templates are cached by resolved path; in non-production mode the file mtime is checked and recompiled when changed, in `production` the cached function is reused forever. Inline `render()` caches by exact source string, bounded by `max_renders`; the file cache evicts oldest entries beyond `2 * max_renders`.
+- Circular `@include`/`@component` dependencies throw "Circular dependency detected".
+- `fork()` shares the cache but isolates globals/props; values set on a fork never leak to the parent or sibling forks. Fork props are copied into locals at run time.
+- `run()` executes the template with a per-call context object (`Object.create(kire)`), so per-render `globals` do not mutate the instance and `@once` keeps per-render state.
+- Hash maps use `NullProtoObj` (prototype-less) to avoid prototype pollution; pass `new NullProtoObj()` style locals if keys are untrusted.
+- Async detection (`compiler/js-scanner.ts`) strips string literals and comments before looking for `await`, so the word `await` in template text does not make a template async.
+- Debugging order: `kire.parse(src)` (AST) -> `kire.compile(src).code` (generated JS) -> fix the layer that is wrong (lexer vs compiler).
+- Core is generic: auth, markdown, i18n, vite, wire etc. are separate plugins, not built in.

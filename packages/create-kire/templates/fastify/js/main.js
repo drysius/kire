@@ -4,7 +4,7 @@ import { Kirewire } from "@kirejs/wire";
 import Fastify from "fastify";
 import { Counter } from "./counter.js";
 
-const wire = new Kirewire({ secret: process.env.APP_SECRET ?? "change-me" });
+const wire = new Kirewire({ secret: process.env.APP_SECRET });
 wire.component(Counter);
 
 const app = Fastify();

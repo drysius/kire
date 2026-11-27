@@ -3,6 +3,24 @@ import type { Kire, KirePlugin } from "kire";
 /** A Kire plugin, optionally with its options. */
 export type PluginEntry = KirePlugin<any> | [KirePlugin<any>, any];
 
+/** WebSocket transport options for the Kirewire integration. */
+export interface WireWsOptions {
+	/** WebSocket endpoint path (default `/_wire/ws`). */
+	path?: string;
+	/** Server-push channel the client subscribes to on connect. */
+	channel?: string;
+	/** Shared Kirewire `Hub` for server pushes (optional; one is created if omitted). */
+	hub?: any;
+	/**
+	 * Node `http.Server` to attach the WebSocket upgrade to. Required for Hono
+	 * (the middleware does not own the server): pass the server returned by
+	 * `app.listen(...)` or `http.createServer(app)`. Without it WebSocket is
+	 * skipped, the client stays on HTTP, and a warning is logged. Needs the `ws`
+	 * package installed.
+	 */
+	server?: any;
+}
+
 /** Optional Kirewire (reactive components) integration. */
 export interface WireIntegration {
 	/** A Kirewire instance (from `@kirejs/wire`). */
@@ -15,6 +33,12 @@ export interface WireIntegration {
 	clientScript?: string;
 	/** Optional file-upload store. */
 	store?: any;
+	/**
+	 * Enable the duplex WebSocket transport. `true` uses the default path
+	 * `/_wire/ws`; an object customizes it. When active, the injected client
+	 * script connects over WebSocket instead of HTTP POST.
+	 */
+	ws?: boolean | WireWsOptions;
 }
 
 export interface KireHonoOptions {

@@ -132,15 +132,56 @@ function setupWire(app: any, engine: Kire<boolean>, wire: any): void {
 
 	const wirePath = wire.path ?? "/_wire";
 	const scriptUrl = wire.scriptUrl ?? "/kirewire.js";
+	const ws = wire.ws ? (wire.ws === true ? {} : wire.ws) : null;
+	const wsPath = ws ? (ws.path ?? "/_wire/ws") : undefined;
 
 	engine.plugin(
-		wirePkg.kirewirePlugin(wire.instance, { scriptUrl, path: wirePath }),
+		wirePkg.kirewirePlugin(wire.instance, {
+			scriptUrl,
+			path: wirePath,
+			wsPath,
+			channel: ws?.channel,
+		}),
 	);
 
 	app.post(wirePath, async (req: any, reply: any) => {
 		const result = await wirePkg.handleUpdate(wire.instance, req.body);
 		reply.status(result.status).send(result.body);
 	});
+
+	if (ws) {
+		let wsPlugin: any;
+		try {
+			wsPlugin = require("@fastify/websocket");
+		} catch {
+			throw new Error(
+				"@kirejs/fastify: wire.ws requires `@fastify/websocket` to be installed.",
+			);
+		}
+		const hub = ws.hub ?? new wirePkg.Hub();
+		// Register the plugin, then the WS route (order matters: the route uses it).
+		app.register(wsPlugin.default ?? wsPlugin);
+		app.get(
+			wsPath,
+			{ websocket: true },
+			// @fastify/websocket passes the raw ws socket (v11+) or a connection
+			// whose `.socket` is the ws (older). Support both.
+			(conn: any) => {
+				const socket = conn?.socket ?? conn;
+				wirePkg.serveWs(
+					wire.instance,
+					hub,
+					{
+						send: (data: string) => socket.send(data),
+						onMessage: (cb: (d: string) => void) =>
+							socket.on("message", (d: any) => cb(d.toString())),
+						onClose: (cb: () => void) => socket.on("close", cb),
+					},
+					{ channel: ws.channel },
+				);
+			},
+		);
+	}
 
 	const clientScript = resolveClientScript(wire);
 	if (clientScript) {

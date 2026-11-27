@@ -33,10 +33,14 @@
 	},
 	"peerDependencies": {
 		"@kirejs/wire": "workspace:*",
-		"h3": "^2"
+		"h3": "^2",
+		"ws": "^8"
 	},
 	"peerDependenciesMeta": {
 		"@kirejs/wire": {
+			"optional": true
+		},
+		"ws": {
 			"optional": true
 		}
 	},

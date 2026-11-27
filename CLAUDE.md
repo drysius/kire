@@ -27,12 +27,13 @@ packages/
   koa/           → Koa integration (ctx.view + Kirewire setup)
   hono/          → Hono integration (c.var.view + Kirewire setup)
   h3/            → h3 (unjs) integration (view()/middleware + Kirewire setup)
+  bun/           → native Bun.serve integration (view() + composable wire handler + native WS)
   fivem/         → FiveM NUI integration (render + RegisterNuiCallback handler)
   create-kire/   → `npm create kire` scaffolding CLI + templates
 benchmark/       → engine benchmarks
 docs/            → documentation site (built with Kire + Kirewire); content in docs/resources/content
 vs-kire/         → VS Code extension
-tools/           → build, publish, benchmark, llms & install scripts
+tools/           → build, publish, benchmark & install scripts
 ```
 
 **Package manager:** Bun
@@ -51,7 +52,6 @@ bun test packages/wire/tests      # wire tests only
 bun run tools/playwright.ts       # E2E browser tests
 bun run tools/build.ts            # build all packages → publish/
 bun run tools/publish.ts          # publish packages
-bun run tools/llms.ts  (bun llms) # regenerate llms.txt context files
 bun run check                     # Biome check across the workspace
 ```
 
@@ -247,14 +247,17 @@ abstract class LiveComponent {
 | `packages/koa` | Koa integration: `kireKoa(opts)` middleware — `ctx.view(dotted, data)` | `index.ts` |
 | `packages/hono` | Hono integration: `kireHono(opts)` middleware — `c.var.view(dotted, data)` | `index.ts` |
 | `packages/h3` | h3 (unjs) integration: `kireH3(opts)` → `{ view, middleware }` | `index.ts` |
+| `packages/bun` | native `Bun.serve` integration: `kireBun(opts)` → `{ engine, view, wire, websocket }` to compose into `fetch`; no framework router | `index.ts` |
 | `packages/fivem` | FiveM NUI integration: `kireFivem(opts)` → `{ engine, render, handler, broadcaster }`; wraps `createFiveMHandler`/`FiveMBroadcaster` | `index.ts` |
 | `packages/create-kire` | `npm create kire` CLI (@clack/prompts): scaffolds a framework template in TS or JS from `templates/<id>/{meta.json,shared,ts,js}` | `src/index.ts` |
 
-Integration packages (express/fastify/elysia/koa/hono/h3) each support two call styles where idiomatic and a typed `view` helper; `wire: { instance }` mounts Kirewire + auto-serves the client. `fivem` is NUI-based (no HTTP). Alpine.js interop: unknown `@attrs` pass through, and `start({ alpine })` re-runs `Alpine.initTree` after each morph.
+Integration packages (express/fastify/elysia/koa/hono/h3) each support two call styles where idiomatic and a typed `view` helper; `wire: { instance }` mounts Kirewire + auto-serves the client. `bun` has no framework/router — `kireBun` returns `{ engine, view, wire, websocket }` to compose into a `Bun.serve` `fetch`. `fivem` is NUI-based (no HTTP).
+
+Kirewire WebSocket transport (`wire.ws`): Elysia, Fastify and Bun own their server so WS works directly when declared (Elysia native `.ws()`, Fastify `@fastify/websocket`, Bun native `websocket`). Express/Koa/Hono/h3 are middleware and don't own the server, so `wire.ws` needs a Node `http.Server` (via `wire.ws.server`) + the optional `ws` package; without it they warn and stay on HTTP. The injected client script carries `data-kirewire-ws` so the browser connects over WebSocket automatically. Alpine.js interop: unknown `@attrs` pass through, and `start({ alpine })` re-runs `Alpine.initTree` after each morph.
 
 Integration packages share a shape: `{ views, extension?, production?, engine?, plugins?, globals?, wire? }`.
 - Express/Fastify each accept two call styles: `(options)` returning a middleware/plugin (`app.use(...)` / `app.register(...)`), or `(app, options)` returning the engine. Both add a **typed** `res.view`/`reply.view` (module augmentation on `Express.Response` / `FastifyReply`); Elysia infers `view` on its context.
-- `wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer): it loads `kirewirePlugin`, mounts the update endpoint, and auto-serves the client runtime (resolved from `@kirejs/wire/client`, or `clientScript`).
+- `wire: { instance, path?, scriptUrl?, clientScript?, store?, ws? }` requires `@kirejs/wire` (optional peer): it loads `kirewirePlugin`, mounts the update endpoint, and auto-serves the client runtime (resolved from `@kirejs/wire/client`, or `clientScript`). `ws?: boolean | { path?, channel?, hub?, server? }` enables the WebSocket transport (see above).
 
 ---
 

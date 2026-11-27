@@ -1,0 +1,61 @@
+# @kirejs/assets — inline asset capture, hashed serving, and `@svg`
+
+> Captures inline `<style>`/`<script>` blocks and SVGs from templates, stores them in an in-memory hash cache, and injects `<link>`/`<script>` tags at `@assets()` that point to hash-named URLs served by framework middleware.
+
+This is a Kire plugin (`KireAssets`, also the default export). Instead of leaving inline CSS/JS scattered in the HTML, it dedupes them (important for components rendered many times, e.g. Kirewire), gives each a content hash, and serves them as long-cached files. The "manifest" here is the in-process hash -> asset cache, not a Vite manifest.
+
+## Concepts
+
+- **Asset** — `{ hash, content, type: "js" | "css" | "mjs" | "svg" }`, keyed by `md5(content).slice(0, 8)` in `kire.cached("@kirejs/assets")`. The cache holds at most 500 entries (oldest evicted).
+- **Capture** — the plugin overrides the native `<style>` and `<script>` elements: non-empty inline content is hashed, cached, and its hash pushed into the per-render `__kire_assets.styles/scripts` (deduplicated). The element itself emits nothing inline.
+- **Opt-outs** — `<style nocache>`, `<script nocache>` and any `<script src="...">` are emitted untouched.
+- **Module detection** — a script becomes `mjs` (`<script type="module">`) if `type="module"` or its content contains `import `, `export ` or `import.`; otherwise `js` (emitted with `defer`).
+- **Injection** — `@assets()` writes the placeholder `<!-- KIRE:assets -->`. In the template epilogue the placeholder is replaced by `<link rel="stylesheet" href="/_kire/<hash>.css" />` and script tags; with no placeholder the tags are appended to the end of the output.
+- **Serving** — URLs are `/<prefix>/<hash>.<ext>` (or `<domain>/<prefix>/...`). `createKireFS(kire)` returns request handlers that look the hash up and respond with `Cache-Control: public, max-age=31536000, immutable`.
+- **SVG** — `@svg(path, attrs?)` loads a file (via `kire.readFile`) or an http(s) URL, caches it as `svg`, and renders `<img src="/_kire/<hash>.svg" ...attrs />`. Remote fetches are SSRF-guarded (no loopback/private/link-local hosts, http/https only) with a 5s timeout; failures render `<!-- SVG not found: ... -->`.
+
+## API / Usage
+
+Exports: `KireAssets` (default), `createKireFS`, types `KireAsset`, `KireAssetsOptions`.
+
+```ts
+interface KireAssetsOptions { prefix?: string /* "_kire" */; domain?: string /* "" */; uniqueLink?: boolean }
+```
+
+(`uniqueLink` is declared in the type but not used by the current plugin.)
+
+Setup:
+
+```ts
+import { Kire } from "kire";
+import { KireAssets, createKireFS } from "@kirejs/assets";
+
+const kire = new Kire().plugin(KireAssets, { prefix: "_kire" });
+const fs = createKireFS(kire);
+app.use(fs.express); // Express: calls next() when the path is not an asset
+// Fastify: app.get("/_kire/*", fs.fastify)   Hono: app.use("/_kire/*", fs.hono)
+// Elysia: handler fs.elysia (receives the context)
+```
+
+Template:
+
+```kire
+<head>
+	@assets()
+</head>
+<style>.card { color: red; }</style>
+<script>console.log("hi")</script>
+@svg("./icons/logo.svg", { class: "h-4 w-4" })
+```
+
+Registered globals: `$addAsset(content, type = "js")` returns the hash (manual registration); `$loadSVGAsset(path)` returns the hash or `null`.
+
+## Notes
+
+- The serving route must match `prefix`; request paths must end in `/<8 hex>.(js|css|mjs|svg)` or they are ignored (this blocks path traversal).
+- Assets live in process memory. After a restart or eviction a previously emitted URL 404s until a render re-registers it; multi-instance deployments need sticky routing or pre-warming.
+- `createKireFS.fastify` replies 404 on a miss, so mount it only on the asset prefix route; `.express`/`.hono` fall through with `next()`.
+- Inline `<style>`/`<script>` content with `{{ }}` interpolation is stored with the interpolation text unevaluated; use `nocache` for dynamic inline code.
+- Assets only appear if `@assets()` (or the append fallback) runs for that render.
+- `@kirejs/tailwind` offloads its compiled CSS here when this plugin is active (load `KireAssets` first).
+- Declares an optional `_assets` field on `KireContext` via module augmentation.

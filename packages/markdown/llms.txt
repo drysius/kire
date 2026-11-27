@@ -1,0 +1,35 @@
+# @kirejs/markdown — Markdown rendering for Kire
+
+> Renders Markdown (via `marked`) to HTML and then through Kire, exposing `@markdown`, `@mdslots`, `kire.mdrender` and `kire.mdview`.
+
+Markdown source is converted to HTML (YAML frontmatter at the top is stripped), then the resulting HTML is compiled/rendered as a Kire template, so Kire syntax (`{{ }}`, directives) works in prose. Code in `<pre>`/`<code>` blocks is protected (`@`, `{{`, `}}` are entity-escaped) so examples are shown literally; `@scope/pkg` style tokens are also escaped.
+
+## Directives / API
+
+- **`KireMarkdown`** (named + default export) — plugin. Option: `codeBlockClass?: string` — if set, each `<pre><code>` is wrapped in `<div class="..." data-kire-code-wrapper="1">` and `<pre>` gets `data-code-lang="<lang>"` (from `language-xxx`, default `text`).
+- **`@markdown(source)`** — `source` is a markdown string, a `.md`/`.markdown` path, or a glob pattern (e.g. `docs/*.md`); globs render each matched file in sorted order and concatenate.
+- **`@mdslots(pattern, name?)`** — loads files matching the glob and stores `{ [file]: renderedHtml }` in the global `name` (default `'$mdslot'`); emits an HTML comment marker. Use to build indexes/lists.
+- **`kire.mdrender(content, locals?)`** — `Promise<string>`: render a markdown string.
+- **`kire.mdview(path, locals?)`** — `Promise<string>`: render a markdown file (resolved against `kire.$root`/`resolvePath`); returns `""` and warns on failure unless `$silent`.
+- Globals: `$mdrender(source)`, `$readdir(pattern)`.
+
+## Usage
+
+```ts
+import { Kire } from "kire";
+import KireMarkdown from "@kirejs/markdown";
+
+const kire = new Kire({ root: "./content" });
+kire.plugin(KireMarkdown, { codeBlockClass: "code-block" });
+
+const html = await kire.mdrender("# Hi {{ name }}\n\n```js\n{{ literal }}\n```", { name: "Ann" });
+const page = await kire.mdview("posts/first.md", { user });
+// in a template:  @markdown('posts/*.md')
+```
+
+## Notes
+
+- All rendering is async; always `await`.
+- In production (`kire.$production`) compiled file templates and glob results are cached (`@kirejs/markdown` cache namespace); in dev they are re-read each time.
+- Glob scan skips `.git`, `node_modules`, `dist`, `coverage`, `publish`, test output dirs; it also includes virtual files in `kire.$files`.
+- Since output is rendered as a Kire template, untrusted markdown can execute Kire expressions; only render trusted content.

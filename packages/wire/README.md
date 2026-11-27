@@ -1,10 +1,10 @@
 # @kirejs/wire — Kirewire
 
-Server-driven reactive components for [Kire](../../core). Components live on the
+Server-driven reactive components for [Kire](https://www.npmjs.com/package/kire). Components live on the
 server; the browser sends actions and morphs returned HTML. Built-in signal
 reactivity (no Alpine dependency) and first-class SSE/WebSocket transport.
 
-See [`../../REACTIVE-DESIGN.md`](../../REACTIVE-DESIGN.md) for the full architecture.
+See [REACTIVE-DESIGN.md](https://github.com/drysius/kire/blob/main/REACTIVE-DESIGN.md) for the full architecture.
 
 ## Define a component
 
@@ -32,7 +32,10 @@ import { Kire } from "kire";
 import { Kirewire, kirewirePlugin, handleUpdate, Hub } from "@kirejs/wire";
 
 const hub = new Hub();
-const wire = new Kirewire({ secret: process.env.APP_SECRET!, broadcaster: hub });
+// `secret` signs component snapshots. If omitted, a random per-process secret is
+// generated with a warning — fine for dev, but set a stable one in production so
+// snapshots verify across restarts and multiple instances.
+const wire = new Kirewire({ secret: process.env.APP_SECRET, broadcaster: hub });
 wire.component(Counter);
 
 const kire = new Kire({ root: "views" });

@@ -1,0 +1,54 @@
+# @kirejs/utils — Laravel-like template helpers for Kire
+
+> A Kire plugin that exposes `Str`, `Arr`, `Route`, `Html`, `errors`/`old` helpers and `@error` / `@old` directives to templates.
+
+`KireUtils` (also the default export) registers globals available in every template, plus validation-feedback helpers modelled on Laravel (MessageBag, old input). `Str` and `Arr` are static singletons; `Route`, `Html`, `errors` and `_old` are created per engine and re-created on every `fork()`, so each request can carry its own URL, errors and old input.
+
+## Helpers (template globals)
+
+- **Str** (`StrManager`) — `limit(value, limit=100, end="...")`, `title`, `lower`, `upper`, `slug(value, sep="-")`, `contains(haystack, needle|needles[])`, `replaceFirst(search, replace, subject)`, `replaceLast(...)`. Note the argument order of replace* is (search, replace, subject).
+- **Arr** (`ArrManager`) — `get(obj, "a.b.c", default)` dot-notation read, `has(obj, key|keys[])`, `random(array, n?)` (throws if n exceeds length), `wrap(value)` (null/undefined becomes `[]`).
+- **Route** (`RouteManager`) — current request context: `set(path, name?)`, `setUrl(URL)`, `current()` (path), `url()` (full URL), `to(path)` (absolute URL from the current origin, or the path unchanged if no URL set), `currentRouteName()`, `is(...patterns)` (string with `*` wildcards / Laravel-like params, or RegExp; matches path or route name), `params(pattern)` (extracted params or null), `startsWith`, `endsWith`, `contains`.
+- **Html** (`HtmlManager`) — tag builders that resolve URLs through `Route.to`: `attributes(obj)` (true renders a bare attribute, false/null/undefined omitted, values escaped), `script(src, attrs?)`, `style(href, attrs?)`, `meta(attrs)`, `favicon(href)`, `link(href, text, attrs?)`, `image(src, alt?, attrs?)`, `toHtmlString(html)`. They return HTML strings, so emit with raw echo (`{{{ }}}`).
+- **MessageBag** — validation errors: `new MessageBag({ field: ["msg"] })`, `first(key, format?)` (`format` uses `:message`), `get(key)`, `all()`, `has(key)`, `any()`.
+- **errors** — global `MessageBag` (empty by default). **old(key, default)** and **url(path)** — global functions; `old` reads the old-input map via `Arr.get`.
+
+## Directives
+
+- `@error('field') ... @end` — renders the body when `errors.has(field)`; exposes `$message` (the first message).
+- `@old('field', default?)` — outputs the escaped old input value.
+
+## Engine methods added by the plugin
+
+- `kire.route(url | URL, name?)` — set the current URL/path (and optional route name); returns `this`.
+- `kire.withInput(obj)` — set old input.
+- `kire.withErrors(record | MessageBag)` — set errors.
+
+## Usage
+
+```ts
+import { Kire } from "kire";
+import KireUtils from "@kirejs/utils";
+
+const kire = new Kire();
+kire.plugin(KireUtils);
+
+const req = kire.fork()
+  .route("https://app.test/users/1", "users.show")
+  .withInput({ email: "a@b.c" })
+  .withErrors({ email: ["Invalid email"] });
+```
+
+```kire
+<input name="email" value="@old('email')">
+@error('email') <span>{{ $message }}</span> @end
+<a href="{{ url('/users') }}">{{ Str.title('all users') }}</a>
+{{{ Html.script('/app.js', { defer: true }) }}}
+```
+
+## Notes
+
+- Call `route` / `withInput` / `withErrors` on a fork (per request); on the root engine they would leak between requests.
+- `MessageBag.get` is exact-key only (no dot-notation).
+- `Route.to` returns the path unchanged until a full `URL` has been set via `route()`.
+- `Str.slug` strips non-word characters (no transliteration).

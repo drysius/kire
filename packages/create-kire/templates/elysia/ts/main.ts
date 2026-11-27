@@ -4,7 +4,7 @@ import { Kirewire } from "@kirejs/wire";
 import { Elysia } from "elysia";
 import { Counter } from "./counter";
 
-const wire = new Kirewire({ secret: process.env.APP_SECRET ?? "change-me" });
+const wire = new Kirewire({ secret: process.env.APP_SECRET });
 wire.component(Counter);
 
 const user = { name: "Ada Lovelace", role: "admin" };

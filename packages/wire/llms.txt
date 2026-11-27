@@ -1,0 +1,125 @@
+# @kirejs/wire — Kirewire
+
+> Server-driven reactive components (Livewire-style) for Kire: state lives on the server, the browser sends actions and morphs the returned HTML.
+
+A Kirewire component is a TypeScript class (`LiveComponent`) whose public properties are its state and whose public methods are actions the browser can call. The page is server-rendered first (SSR) via `@wire("name")`; the root element is stamped with `wire:id`, `wire:name` and a signed `wire:snapshot`. A small client runtime (own signal reactivity, no Alpine required) discovers those roots and wires up `wire:*` attributes.
+
+Round-trip: a `wire:click` (or model change, poll, etc.) POSTs `{ snapshot, updates, calls }` -> the server verifies the HMAC checksum -> hydrates the component from the snapshot -> applies property `updates` -> runs each `call` (action) -> re-renders the view (unless renderless) -> dehydrates into a fresh signed snapshot -> responds `{ snapshot, effects }` -> the client morphs the new HTML into the DOM and runs effects.
+
+## Concepts
+
+- **LiveComponent** — abstract base class. Subclass it, register it, implement `render()` (default renders the view named after the component).
+- **Public props = reactive state** — own, enumerable, non-function properties not prefixed with `$`/`_`. They are serialized into the snapshot and injected into the view scope.
+- **Public methods = actions** — callable from the client (`wire:click="increment"`, `$wire.increment()`). If any method has `@action`, only `@action` methods are callable; otherwise any method defined on the subclass is.
+- **Serialization boundary** — `$`/`_`-prefixed members are framework-internal: never serialized, never callable as actions.
+- **Snapshot** — `{ v, data, memo, checksum }`. `data` is the dehydrated public state, `memo` holds `id`, `name`, `listeners`, `children`, and feature fields. The client echoes the latest snapshot on every request; the server returns a new one.
+- **Hydrate / dehydrate** — hydrate: snapshot -> live instance fields. Dehydrate: instance -> snapshot (`takeSnapshot`, `hydrateData`, `dehydrateData`).
+- **Checksum signing** — HMAC-SHA256 over `{v, data, memo-without-children}` using the required `secret`. Tampered snapshots are rejected (HTTP 419) before any hydration. Keep the secret stable across restarts.
+- **Synths** — non-primitive state (Date, Map, Set, BigInt, arrays, objects, class instances via `defineSynth`/`modelSynth`, `WireFile`) is (de)hydrated through a `SynthRegistry`, not raw JSON. Class hydration uses an allowlist.
+- **Effects** — what a response carries besides the snapshot: `html`, `returns` (action return values), `dispatches` (events), `redirect`, `scripts`, plus feature-added keys.
+- **Features** — pluggable pipeline hooks (`boot`, `mount`, `hydrate`, `update`, `call`, `render`, `dehydrate`) via `FeatureBus`; built-ins cover lifecycle, locked, validation, lazy, url, magic, file upload.
+- **Hub + channels** — `Hub` is an in-memory `Broadcaster`. Pass it as `new Kirewire({ broadcaster: hub })`; components call `this.$broadcast(channel, effects)`; SSE/WS connections `hub.subscribe(channel, ...)` and forward `ServerPush` frames `{ v, channel, to?, effects }`. Swap in a Redis/NATS-backed Broadcaster for multi-server.
+- **Transports** — HTTP (request/response only), SSE (HTTP sends + server push), WebSocket (duplex + push), FiveM NUI (no HTTP). Plain HTTP clients get "push" via `wire:poll`.
+- **Protocol version** — `PROTOCOL_VERSION = 1`; requests are batched (`UpdateRequest.components[]`).
+
+## Decorators
+
+Standard TC39 decorators exported from `@kirejs/wire`; they register metadata via `addInitializer` (no `Symbol.metadata` needed).
+
+- `@Component("name")` — class; names the component for the registry / `@wire("name")`.
+- `@prop` — field; declare a reactive, client-writable property.
+- `@locked` — field; reactive but the client can never write it (mass-assignment protection).
+- `@computed` — getter; value is injected into the view scope, read-only.
+- `@renderless` — method; runs without re-rendering (response has no `html`).
+- `@on("event")` — method; invoked when the named event is dispatched (stored in `memo.listeners`).
+- `@validate(rule)` — field; attach a validation rule/schema (errors surface as `$errors` in the view).
+- `@action` — method; explicit allowlist of client-callable methods.
+- `@lazy` — class; defer first render until the component intersects the viewport.
+- `@url` — field; keep the property in sync with the URL query string.
+
+No-decorator (plain JS) usage: `ownMeta(Counter).name = "counter"` then `wire.component(Counter)`; `wire.component("name", Ctor)` also registers under an explicit name.
+
+## Component API
+
+```ts
+import { Kirewire, LiveComponent, Component, prop, locked, computed, on } from "@kirejs/wire";
+
+@Component("counter")
+class Counter extends LiveComponent {
+  @prop count = 0;
+  @locked @prop userId!: string;
+  mount(p: { userId: string }) { this.userId = p.userId; } // receives @wire params
+  increment() { this.count++; }
+  @computed get doubled() { return this.count * 2; }
+  @on("reset") reset() { this.count = 0; }
+  render() { return this.view("components.counter"); }
+}
+```
+
+`LiveComponent` surface:
+- `$id` (instance id, set by runtime), `$name` (registered name), `$kire` (request-scoped Kire fork), `$context` (`RequestContext`).
+- `render()` — returns HTML (string or Promise); default is `this.view(this.$name)`.
+- `view(path, extra?)` — renders a Kire view with scope = public state + `@computed` values + `$errors` + `extra`. Throws if no engine is attached.
+- `$dispatch(event, ...params)` — queue a client event; `$dispatchTo(name, event, ...params)` — target components by name; `$dispatchSelf(event, ...params)` — only this component.
+- `$broadcast(channel, effects)` — push to subscribed clients (only set when a `broadcaster` is configured).
+- `getPublicState()`, `computedValues()`, `isInternalKey()`, `isCallableAction()` — introspection helpers.
+
+Reserved (never callable as actions): `constructor`, `render`, `view`, `mount`, `boot`, `booted`, `getPublicState`, `hydrated`, `dehydrating`, and any `$`/`_`-prefixed member.
+
+Mount-time params (`@wire("c", { a: 1 })`) seed matching public properties before `mount(params)` runs. Other exports: `WireForm`/`FormValidationError` (form objects), `paginate`/`Page`, `WireFile`/`MemoryFileStore`/`handleUpload` (uploads), `store`, `getDeep`/`setDeep`, `sign`/`verify`.
+
+## Server & transports
+
+Setup:
+
+```ts
+import { Kire } from "kire";
+import { Kirewire, kirewirePlugin, handleUpdate, Hub } from "@kirejs/wire";
+
+const hub = new Hub();
+const wire = new Kirewire({ secret: process.env.APP_SECRET!, broadcaster: hub });
+wire.component(Counter);
+
+const kire = new Kire({ root: "views" });
+kire.plugin(kirewirePlugin(wire, { scriptUrl: "/kirewire.js", path: "/_wire" }));
+
+app.post("/_wire", async (req, res) => {
+  const { status, body } = await handleUpdate(wire, req.body, kire.fork());
+  res.status(status).json(body);
+});
+```
+
+`KirewireOptions`: `secret` (required), `synth`, `registry`, `features`, `broadcaster`. Key methods: `component()`, `mount()`, `update()`, `handle(UpdateRequest, engine?)`, `renderMount()`.
+
+Kire template side (`kirewirePlugin`, exposes the instance as the `__kirewire` global):
+- `@wire("name", { ...params })` — mount a component (directive).
+- `<wire:name :prop="expr" plain="str" />`, `<kirewire:name />`, `<livewire:name />` — same, as a void element; `:attr` is a JS expression, plain attrs are strings; `@`/`wire:` attrs are ignored.
+- `@kirewireScripts` — emits `<script src="/kirewire.js" data-kirewire-url="/_wire" defer>` (both configurable via plugin options).
+
+Client start (explicit): `import { start } from "@kirejs/wire/client"; start({ url, token, transport, channel, navigate, alpine })`.
+
+Transports (client classes in `@kirejs/wire/client`, server counterparts in `@kirejs/wire`):
+- `HttpTransport(url = "/_wire", token?)` — POST JSON with `x-kirewire: 1`. Server: `handleUpdate()` returns `{ status, body }` (400 bad body, 419 corrupt snapshot, 500 failure); `nodeHttpAdapter(wire, engineFactory?)` for raw Node.
+- `SseTransport(http, channelUrl = "/_wire/sse")` — sends via HTTP, receives pushes via `EventSource` (`?channel=`). Server: `serveSse(hub, channel, conn)` with `SseConnection { write, onClose }` and `SSE_HEADERS`.
+- `WebSocketTransport(url)` — duplex, correlates by incrementing id. Server: `serveWs(wire, hub, conn, { channel?, engineFactory? })` with `WsConnection { send(data), onMessage(cb), onClose(cb) }`. Framing: client -> `{ id, request }`; server -> `{ id, response }` for replies and `{ push }` for channel pushes.
+- `FiveMTransport(resource?, callback = "_wire")` — NUI `fetch` to `https://<resource>/<callback>`. Server: `createFiveMHandler(wire, engineFactory?)` for `RegisterNuiCallback`, and `FiveMBroadcaster(sendNuiMessage)` as the broadcaster (frames `{ type: "kirewire:push", push }`).
+
+Adapters (`adapters/`): `expressAdapter(app, wire, { path, uploadPath, ssePath, store, hub, engineFactory })` registers POST `/_wire`, optional POST `/_wire/upload` (needs `store`), optional GET `/_wire/sse` (needs `hub`). `createFetchHandler(wire, opts)` returns a Web-standard `(Request) => Promise<Response>` with the same options (Bun, Deno, Workers, Hono, Elysia). The framework packages (`@kirejs/express|fastify|elysia|koa|hono|h3`) offer `wire: { instance }` for one-line setup.
+
+## Wire client directives
+
+`wire:click`, `wire:submit`, `wire:change`, `wire:keydown`, `wire:model` (`.live`, `.blur`, `.lazy`), `wire:init`, `wire:poll` (`.Nms`), `wire:loading`, `wire:confirm`, `wire:snapshot`, `wire:dirty` (+ `wire:target`, `.class`/`.remove`), `wire:offline`, `wire:ignore`, `wire:key`, `wire:navigate`.
+
+Expressions: `wire:click="increment"` calls a method; `wire:click="count++"` is a local expression. Not yet ported from Livewire: `wire:transition`, `wire:stream`, `wire:replace`.
+
+## Notes / gotchas
+
+- `secret` is mandatory; a changed secret invalidates all open pages (419 "Page expired").
+- Components must render a single root element; the runtime injects `wire:id`/`wire:name`/`wire:snapshot` into its first opening tag (a `<div>` wrapper is added if the output has no tag).
+- Pass a per-request `kire.fork()` (or `engineFactory`) so `view()` has an engine; without `$kire`, `view()` throws.
+- `@renderless` or `call.meta.renderless` skips render; the snapshot is still re-issued.
+- The client may add/remove child components without invalidating the checksum (`memo.children` is excluded from signing).
+- Unknown/non-callable method names throw server-side and surface as a 500.
+- Alpine interop: `start({ alpine })` (auto-detects `window.Alpine`) re-runs `Alpine.initTree` after each morph; wrap persistent Alpine islands in `wire:ignore`.
+- `@kirejs/wire/client` exports ESM only; the server entry ships ESM and CJS. `kire` is a dependency.
+- Security model: HMAC snapshots, `$`/`_`/reserved method blocking, `@action` allowlist, `@locked`, `@validate`, synth allowlist.

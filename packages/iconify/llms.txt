@@ -1,0 +1,33 @@
+# @kirejs/iconify — Iconify icons as inline SVG
+
+> Provides an `@icon(...)` directive and `<iconify />` element that fetch SVGs from the Iconify API and inline them.
+
+Icons are resolved at render time over the network: the plugin requests `{apiUrl}/{prefix}/{name}.svg` (default `https://api.iconify.design`) with optional query params, caches the SVG text in memory (per Kire cache namespace `@kirejs/iconify`), and merges a class and extra attributes into the `<svg>` tag. There is no local icon-set bundle; offline use requires pointing `apiUrl` to a self-hosted Iconify API.
+
+## Directives / API
+
+- **`KireIconify`** (named + default export) — plugin. Options `IconifyOptions`: `apiUrl?` (default `https://api.iconify.design`), `defaultClass?` (class used when none given).
+- **`@icon(name, className?, attrs?)`** — e.g. `@icon('mdi:home', 'text-blue-500', { width: '24' })`. In `attrs`, the keys `width, height, color, flip, rotate, box` are sent as API query params; any other keys become attributes on the `<svg>`.
+- **`<iconify icon="mdi:home" class="..." width="24" />`** (void element) — `icon` or `i` is the name; `class`/`className`; `size` expands to width+height; API keys as above go to the query, remaining attributes are set on the `<svg>`. Missing name renders an HTML comment.
+- **`fetchIcon(name, apiUrl, params?, cache?)`**, **`processSvgAttributes(svg, className?, attrs?)`** — exported helpers from `api.ts`. Also registered as global `fetchIcon` in templates.
+
+Name forms: `prefix:name` (preferred), `prefix-name` (split at first `-`), or bare `name` (defaults to prefix `mdi`). Prefix/name must match `[a-z0-9-]`; otherwise an HTML comment is output.
+
+## Usage
+
+```ts
+import { Kire } from "kire";
+import KireIconify from "@kirejs/iconify";
+
+const kire = new Kire();
+kire.plugin(KireIconify, { defaultClass: "icon" });
+
+await kire.render(`@icon('lucide:check', 'w-4') <iconify icon="mdi:home" size="24" color="red" />`);
+```
+
+## Notes
+
+- Network call on first use of each icon+params combination; subsequent renders hit the in-memory cache. Failures (non-2xx / network) yield `<!-- Icon not found: ... -->` or `<!-- Error loading icon: ... -->` instead of throwing.
+- Templates using icons are async; always `await` render.
+- Attribute values are HTML-escaped when merged (element form); existing `class` on the SVG is kept after the supplied class.
+- Directive vs element differ slightly in attribute merging: the element uses `processSvgAttributes`, the directive does a regex replace.

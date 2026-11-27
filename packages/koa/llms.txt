@@ -1,0 +1,47 @@
+# @kirejs/koa — Koa integration
+
+> Wire Kire (and optionally Kirewire) into Koa with a typed `ctx.view()` helper.
+
+`kireKoa(options)` returns a Koa middleware (with an `.engine` property). It builds a Kire engine (or reuses `options.engine`), loads `plugins` and `globals`, and on each request sets `ctx.view(dotted.name, data)`, which renders the template, sets `ctx.type = "html"` and `ctx.body = html`. Install it with `app.use(...)`.
+
+## API
+
+```ts
+import Koa from "koa";
+import Router from "@koa/router";
+import { kireKoa } from "@kirejs/koa";
+
+const app = new Koa();
+const router = new Router();
+app.use(kireKoa({ views: "resources/views" }));
+
+router.get("/", (ctx) => ctx.view("home", { title: "Hi" }));
+router.get("/about", (ctx) => ctx.view("pages.about"));
+app.use(router.routes());
+```
+
+There is a single call style: `kireKoa(options): KireKoaMiddleware`. No `(app, options)` form. The engine is also reachable as `middleware.engine`.
+
+Options (`KireKoaOptions`):
+`{ views: string; extension?: string = "kire"; production?: boolean; engine?: Kire; plugins?: (KirePlugin | [KirePlugin, opts])[]; globals?: Record<string, unknown>; wire?: WireIntegration }`
+
+- `ctx.view(name, data?)` is typed through a `declare module "koa"` augmentation of `DefaultContext`; it returns a Promise resolving to `ctx`.
+- It assigns the body rather than returning it, so `await ctx.view(...)` or `return ctx.view(...)` both work.
+- Also exported: `buildEngine(options)` and the option types.
+
+## Kirewire setup
+
+`wire: { instance, path?, scriptUrl?, clientScript?, store? }` requires `@kirejs/wire` (optional peer; throws if missing). It loads `kirewirePlugin(instance, { scriptUrl, path })` and handles two requests inline in the middleware (short-circuiting `next`): `POST <path>` (default `/_wire`, calls `handleUpdate(instance, ctx.request.body)`, sets `ctx.status`/`ctx.body`) and `GET <scriptUrl>` (default `/kirewire.js`) serving the client runtime resolved from `@kirejs/wire` or `clientScript`.
+
+```ts
+app.use(bodyParser());
+app.use(kireKoa({ views: "resources/views", wire: { instance: wire } }));
+```
+
+## Notes
+
+- A body parser (for example `koa-bodyparser`) MUST run before `kireKoa` when `wire` is enabled; the update endpoint reads `ctx.request.body`.
+- Use dotted view paths (`pages.about` -> `pages/about.kire`).
+- Wire endpoints are matched by `ctx.method` and `ctx.path`, so mount the middleware at the app root, not under a prefixed router.
+- `store` exists on the shared `WireIntegration` type but is not used by the Koa wiring.
+- `production: true` disables source maps and enables caching.

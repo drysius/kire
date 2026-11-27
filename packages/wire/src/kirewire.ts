@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import type { Kire } from "kire";
 import type { LiveComponent } from "./component";
 import type {
@@ -24,8 +24,13 @@ import { createDefaultSynthRegistry } from "./synth/builtins";
 import type { SynthRegistry } from "./synth/registry";
 
 export interface KirewireOptions {
-	/** HMAC secret for snapshot checksums. Required; keep it stable per app. */
-	secret: string;
+	/**
+	 * HMAC secret for snapshot checksums. If omitted, a random per-process secret
+	 * is generated (with a warning): fine for local dev, but snapshots signed by
+	 * one process won't verify in another, so set a stable secret in production
+	 * and across multiple instances.
+	 */
+	secret?: string;
 	synth?: SynthRegistry;
 	registry?: ComponentRegistry;
 	features?: FeatureBus;
@@ -71,8 +76,19 @@ export class Kirewire {
 	readonly broadcaster?: Broadcaster;
 
 	constructor(opts: KirewireOptions) {
-		if (!opts.secret) throw new Error("Kirewire requires a `secret`.");
-		this.secret = opts.secret;
+		if (opts.secret) {
+			this.secret = opts.secret;
+		} else {
+			// No secret provided: generate a random per-process one so setup still
+			// works out of the box. Warn, because snapshots won't verify across
+			// restarts or multiple instances — production should set a stable secret.
+			this.secret = randomBytes(32).toString("hex");
+			console.warn(
+				"[kirewire] No `secret` provided; using a random per-process secret. " +
+					"Set a stable `secret` in production (and across instances) so component " +
+					"snapshots verify after restarts.",
+			);
+		}
 		this.synth = opts.synth ?? createDefaultSynthRegistry();
 		this.registry = opts.registry ?? new ComponentRegistry();
 		this.features = opts.features ?? createDefaultFeatures();
