@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 import { LiveComponent } from "../src/component";
 import { Component, prop } from "../src/decorators";
 import { Kirewire } from "../src/kirewire";
@@ -52,6 +52,18 @@ describe("FiveM server bridge", () => {
 });
 
 describe("FiveM client transport", () => {
+	// This suite replaces `globalThis.fetch` (and the FiveM `GetParentResourceName`
+	// shim). Restore them afterwards so the mock doesn't leak into other test files
+	// (Bun shares one process) and break their real `fetch()` calls.
+	const realFetch = globalThis.fetch;
+	const realGetParent = (globalThis as Record<string, unknown>)
+		.GetParentResourceName;
+	afterAll(() => {
+		(globalThis as Record<string, unknown>).fetch = realFetch;
+		(globalThis as Record<string, unknown>).GetParentResourceName =
+			realGetParent;
+	});
+
 	test("send POSTs to the NUI resource URL and returns the JSON response", async () => {
 		const calls: Array<{ url: string; body: unknown }> = [];
 		(globalThis as Record<string, unknown>).GetParentResourceName = () => "my-resource";
