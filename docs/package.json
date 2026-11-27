@@ -9,7 +9,8 @@
 		"dev": "bun run --watch main.ts",
 		"start": "NODE_ENV=production bun run main.ts",
 		"console": "bun run app/console/index.ts",
-		"test": "bun test ./tests"
+		"test": "bun test ./tests",
+		"test:e2e:install": "playwright install --with-deps chromium"
 	},
 	"dependencies": {
 		"@elysiajs/static": "^1.4.7",
