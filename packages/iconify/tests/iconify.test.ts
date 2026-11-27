@@ -1,11 +1,22 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, mock } from "bun:test";
 import { Kire } from "kire";
 import { KireIconify } from "../src/index";
 
 describe("KireIconify", () => {
+	// These tests replace `global.fetch` by direct assignment, which `mock.restore()`
+	// does NOT undo. Capture the real fetch and restore it so the mock doesn't leak
+	// into other test files (Bun runs them in the same process) — otherwise the
+	// framework-integration tests' real `fetch()` calls would hit this mock.
+	const realFetch = global.fetch;
+
 	// Reset mocks before each test
 	beforeEach(() => {
 		mock.restore();
+		global.fetch = realFetch;
+	});
+
+	afterAll(() => {
+		global.fetch = realFetch;
 	});
 
 	it("should fetch and render icon with class injection (Element)", async () => {
